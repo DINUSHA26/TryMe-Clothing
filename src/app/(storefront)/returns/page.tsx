@@ -1,8 +1,8 @@
 import { Separator } from "@/components/ui/separator";
 
 export const metadata = {
-  title: "Return & Exchanges Policy | Fashion Dora",
-  description: "Fashion Dora's return and exchange policy — learn about the 24-hour return window, eligibility, and refund process.",
+  title: "Return & Exchanges Policy | Try Me",
+  description: "Try Me's return and exchange policy — learn about the 24-hour return window, eligibility, and refund process.",
 };
 
 export default function ReturnsPage() {
@@ -19,7 +19,7 @@ export default function ReturnsPage() {
           <p>
             We want you to be completely satisfied with your purchase. If you are not happy with
             an item, you may request a return within the timeframe outlined below. Returns are
-            subject to eligibility criteria and must be initiated through your Fashion Dora account.
+            subject to eligibility criteria and must be initiated through your Try Me account.
           </p>
         </section>
 
@@ -93,7 +93,7 @@ export default function ReturnsPage() {
           <h2 className="text-xl font-semibold">7. Refund Process</h2>
           <p>
             Once the returned item is received and inspected by the vendor, your refund will
-            be processed. Approved refunds are credited to your <strong>Fashion Dora wallet</strong>.
+            be processed. Approved refunds are credited to your <strong>Try Me wallet</strong>.
             Wallet funds can be used for future purchases on the platform.
           </p>
           <p>
@@ -102,7 +102,7 @@ export default function ReturnsPage() {
           </p>
           <p>
             Refunds to original payment method (card) are not currently supported. All refunds
-            are issued to the Fashion Dora wallet.
+            are issued to the Try Me wallet.
           </p>
         </section>
 
@@ -132,10 +132,10 @@ export default function ReturnsPage() {
           <p>
             For return and refund queries, please contact us at{" "}
             <a
-              href="mailto:support@fashiondora.lk"
+              href="mailto:support@tryme.lk"
               className="text-primary underline underline-offset-4"
             >
-              support@fashiondora.lk
+              support@tryme.lk
             </a>.
           </p>
         </section>

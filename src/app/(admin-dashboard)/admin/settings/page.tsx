@@ -111,7 +111,7 @@ export default function AdminSettingsPage() {
             <div>
               <Label>Email</Label>
               <Input
-                value="admin@fashiondora.lk"
+                value="admin@tryme.lk"
                 disabled
                 className="mt-1.5"
               />
@@ -202,7 +202,7 @@ export default function AdminSettingsPage() {
           <div className="space-y-4">
             <div>
               <Label>Platform Name</Label>
-              <Input value="Fashion Dora" disabled className="mt-1.5" />
+              <Input value="Try Me" disabled className="mt-1.5" />
             </div>
             <div>
               <Label>Default Commission Rate</Label>

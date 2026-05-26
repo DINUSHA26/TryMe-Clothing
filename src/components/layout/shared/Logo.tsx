@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface LogoProps {
   variant?: "full" | "icon" | "text";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "mobile" | "md" | "lg" | "xl";
   className?: string;
   href?: string;
 }
@@ -20,22 +20,37 @@ export function Logo({
   const sizeClasses = {
     sm: {
       container: "gap-2",
-      image: 36,
+      width: 48,   // small size for collapsed sidebars
+      height: 24,
       text: "text-base",
+    },
+    mobile: {
+      container: "gap-1.5",
+      width: 90,  // dedicated responsive mobile header size (optimized to prevent icon clipping)
+      height: 28,
+      text: "text-lg",
     },
     md: {
       container: "gap-3",
-      image: 48,
+      width: 140,  // default size for footer, standard sidebar, etc.
+      height: 44,
       text: "text-2xl",
     },
     lg: {
       container: "gap-4",
-      image: 72,
+      width: 180,  // large size for storefront header (little big logo)
+      height: 56,
       text: "text-3xl",
+    },
+    xl: {
+      container: "gap-4",
+      width: 220,  // extra large for login pages
+      height: 70,
+      text: "text-4xl",
     },
   };
 
-  const classes = sizeClasses[size];
+  const classes = sizeClasses[size] || sizeClasses.md;
 
   return (
     <Link
@@ -44,36 +59,24 @@ export function Logo({
     >
       {variant !== "text" && (
         <div className="relative flex items-center justify-center">
-          {/* Light Mode Logo (Black Monogram) */}
-          <div className="block dark:hidden">
-            <Image
-              src="/logo-black.png"
-              alt="Fashion Dora"
-              width={classes.image}
-              height={classes.image}
-              className="object-contain"
-              priority
-            />
-          </div>
-          {/* Dark Mode Logo (White Monogram) */}
-          <div className="hidden dark:block">
-            <Image
-              src="/logo-white.png"
-              alt="Fashion Dora"
-              width={classes.image}
-              height={classes.image}
-              className="object-contain"
-              priority
-            />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Try Me"
+            width={classes.width}
+            height={classes.height}
+            className="object-contain"
+            priority
+          />
         </div>
       )}
       {variant !== "icon" && (
         <span className={cn("font-bold text-foreground tracking-tight hidden min-[400px]:inline-block", classes.text)}>
-          Fashion Dora
+          Try Me
         </span>
       )}
     </Link>
   );
 }
+
+
 

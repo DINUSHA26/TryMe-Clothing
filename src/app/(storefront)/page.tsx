@@ -117,7 +117,7 @@ export default function Home() {
           >
             <Image
               src={src}
-              alt={`Fashion Dora Hero Banner ${index + 1}`}
+              alt={`Try Me Hero Banner ${index + 1}`}
               fill
               sizes="100vw"
               className="object-cover"
@@ -129,7 +129,7 @@ export default function Home() {
 
         <div className="container relative z-20 h-full flex flex-col items-center justify-center text-center px-4 md:px-6 pointer-events-none">
           <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 text-white pointer-events-auto">
-            Welcome to Fashion Dora
+            Welcome to Try Me
           </h1>
           <p className="text-base md:text-xl text-white/85 mb-6 md:mb-8 max-w-2xl mx-auto pointer-events-auto">
             Sri Lanka&apos;s premier multi-vendor e-commerce platform. Shop from
@@ -358,7 +358,7 @@ export default function Home() {
         <div className="container px-4 md:px-6 text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to Start Shopping?</h2>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of satisfied customers shopping on Fashion Dora. Create
+            Join thousands of satisfied customers shopping on Try Me. Create
             an account today and get started.
           </p>
           <Button size="lg" asChild>

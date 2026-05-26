@@ -41,7 +41,7 @@ export function AdminMobileNav({ isOpen, onClose }: AdminMobileNavProps) {
       <SheetContent side="left" className="w-[85vw] max-w-[280px] p-0">
         <SheetHeader className="p-4 text-left">
           <SheetTitle>
-            <Logo variant="full" href="/admin" />
+            <Logo variant="icon" href="/admin" />
           </SheetTitle>
         </SheetHeader>
 

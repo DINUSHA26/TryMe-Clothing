@@ -29,7 +29,7 @@ export function UserMenu() {
     return (
       <>
         {/* Mobile: icon only to save header space */}
-        <Button variant="default" size="icon" className="md:hidden" asChild>
+        <Button variant="default" size="icon" className="md:hidden h-8 w-8" asChild>
           <Link href="/login" aria-label="Login">
             <LogIn className="w-4 h-4" />
           </Link>
@@ -53,9 +53,9 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
+          <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
               {userInitials}
             </AvatarFallback>
           </Avatar>

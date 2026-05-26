@@ -27,15 +27,15 @@ export function CartButton() {
       <Button
         variant="ghost"
         size="icon"
-        className="relative"
+        className="relative h-8 w-8 sm:h-10 sm:w-10"
         onClick={() => setOpen(true)}
         aria-label={`Shopping cart with ${itemCount} items`}
       >
-        <ShoppingCart className="h-5 w-5" />
+        <ShoppingCart className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
         {itemCount > 0 && (
           <Badge
             variant="destructive"
-            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center p-0 text-[9px] sm:text-xs"
           >
             {itemCount}
           </Badge>

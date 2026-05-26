@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Fashion Dora - Multi-Vendor Marketplace",
+  title: "Try Me - Multi-Vendor Marketplace",
   description: "Sri Lanka's premier multi-vendor e-commerce platform",
 };
 

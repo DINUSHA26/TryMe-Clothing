@@ -43,7 +43,7 @@ export function VendorWaitingRoom() {
             </h1>
             
             <p className="text-gray-600 mb-8 leading-relaxed">
-              Welcome to the Fashion Dora family! We've received your registration details. 
+              Welcome to the Try Me family! We've received your registration details. 
               Our admin team is currently verifying your business information. 
               This typically takes <strong>24-48 hours</strong>.
             </p>

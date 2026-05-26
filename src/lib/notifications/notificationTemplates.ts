@@ -180,7 +180,7 @@ export function generateNotificationContent(
     case NotificationType.SYSTEM_ANNOUNCEMENT:
       return {
         title: metadata?.announcementType || "System Announcement",
-        message: metadata?.messagePreview || "Important announcement from Fashion Dora. Please read.",
+        message: metadata?.messagePreview || "Important announcement from Try Me. Please read.",
         link: null, // No specific link for announcements
       };
 
@@ -188,8 +188,8 @@ export function generateNotificationContent(
       return {
         title: "Scheduled Maintenance",
         message: metadata?.maintenanceWindow
-          ? `Fashion Dora will undergo scheduled maintenance on ${metadata.maintenanceWindow}. Some features may be temporarily unavailable.`
-          : "Fashion Dora will undergo scheduled maintenance. Some features may be temporarily unavailable.",
+          ? `Try Me will undergo scheduled maintenance on ${metadata.maintenanceWindow}. Some features may be temporarily unavailable.`
+          : "Try Me will undergo scheduled maintenance. Some features may be temporarily unavailable.",
         link: null,
       };
 

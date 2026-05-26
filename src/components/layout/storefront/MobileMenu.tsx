@@ -59,7 +59,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       <SheetContent side="left" className="w-[85vw] max-w-[280px] p-0">
         <SheetHeader className="p-4 flex flex-row items-center justify-between space-y-0 text-left mt-2">
           <SheetTitle className="flex-1">
-            <Logo variant="full" href="/" />
+            <Logo variant="icon" href="/" />
           </SheetTitle>
           <div className="flex-none sm:hidden">
             <ThemeToggle />

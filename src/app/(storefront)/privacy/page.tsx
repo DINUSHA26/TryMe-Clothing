@@ -1,8 +1,8 @@
 import { Separator } from "@/components/ui/separator";
 
 export const metadata = {
-  title: "Privacy Policy | Fashion Dora",
-  description: "Read Fashion Dora's Privacy Policy to understand how we collect, use, and protect your personal data.",
+  title: "Privacy Policy | Try Me",
+  description: "Read Try Me's Privacy Policy to understand how we collect, use, and protect your personal data.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -17,12 +17,12 @@ export default function PrivacyPolicyPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">1. Introduction</h2>
           <p>
-            Fashion Dora (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) is committed to protecting your privacy.
+            Try Me (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) is committed to protecting your privacy.
             This Privacy Policy explains what personal data we collect, how we use it, and your
-            rights regarding that data when you use our platform at <strong>fashiondora.lk</strong>.
+            rights regarding that data when you use our platform at <strong>tryme.lk</strong>.
           </p>
           <p>
-            By using Fashion Dora, you consent to the data practices described in this policy.
+            By using Try Me, you consent to the data practices described in this policy.
           </p>
         </section>
 
@@ -183,10 +183,10 @@ export default function PrivacyPolicyPage() {
             No system is 100% secure. If you suspect a security breach, please contact us
             immediately at{" "}
             <a
-              href="mailto:support@fashiondora.lk"
+              href="mailto:support@tryme.lk"
               className="text-primary underline underline-offset-4"
             >
-              support@fashiondora.lk
+              support@tryme.lk
             </a>
             .
           </p>
@@ -207,10 +207,10 @@ export default function PrivacyPolicyPage() {
           <p>
             To exercise any of these rights, please email us at{" "}
             <a
-              href="mailto:support@fashiondora.lk"
+              href="mailto:support@tryme.lk"
               className="text-primary underline underline-offset-4"
             >
-              support@fashiondora.lk
+              support@tryme.lk
             </a>
             . We will respond within 30 days.
           </p>
@@ -219,7 +219,7 @@ export default function PrivacyPolicyPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">10. Children&apos;s Privacy</h2>
           <p>
-            Fashion Dora is not intended for children under the age of 16. We do not knowingly
+            Try Me is not intended for children under the age of 16. We do not knowingly
             collect personal data from children. If you believe a child has provided us with
             personal data, please contact us and we will delete it promptly.
           </p>
@@ -240,13 +240,13 @@ export default function PrivacyPolicyPage() {
             is handled, please contact us:
           </p>
           <p className="text-muted-foreground">
-            Fashion Dora<br />
+            Try Me<br />
             Email:{" "}
             <a
-              href="mailto:support@fashiondora.lk"
+              href="mailto:support@tryme.lk"
               className="text-primary underline underline-offset-4"
             >
-              support@fashiondora.lk
+              support@tryme.lk
             </a>
           </p>
         </section>

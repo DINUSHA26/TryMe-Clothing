@@ -27,22 +27,22 @@ export function ChatButton({ className }: ChatButtonProps) {
     <Button
       variant="ghost"
       size="icon"
-      className={cn('relative', className)}
+      className={cn('relative h-8 w-8 sm:h-10 sm:w-10', className)}
       onClick={() => openChat()}
       aria-label="Open messages"
     >
-      <MessageCircle className={cn('h-5 w-5', isConnected ? 'text-foreground' : 'text-muted-foreground')} />
+      <MessageCircle className={cn('h-[18px] w-[18px] sm:h-5 sm:w-5', isConnected ? 'text-foreground' : 'text-muted-foreground')} />
       
       {/* Unread badge */}
       {totalUnread > 0 && (
-        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+        <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-primary text-[8px] sm:text-[10px] font-bold text-primary-foreground">
           {totalUnread > 99 ? '99+' : totalUnread}
         </span>
       )}
       
       {/* Connection status indicator (subtle) */}
       {!isConnected && (
-        <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-destructive border-2 border-background" />
+        <span className="absolute bottom-0 right-0 h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-destructive border-2 border-background" />
       )}
     </Button>
   );

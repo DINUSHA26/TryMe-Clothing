@@ -88,7 +88,7 @@ export default function VendorRegisterPage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Vendor Registration</h1>
             <p className="text-gray-500 text-sm mt-2 text-center">
-              Join Fashion Dora and start selling to thousands of customers.
+              Join Try Me and start selling to thousands of customers.
             </p>
           </div>
 

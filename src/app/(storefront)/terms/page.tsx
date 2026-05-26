@@ -1,8 +1,8 @@
 import { Separator } from "@/components/ui/separator";
 
 export const metadata = {
-  title: "Terms & Conditions | Fashion Dora",
-  description: "Read Fashion Dora's Terms & Conditions governing the use of our multi-vendor e-commerce platform.",
+  title: "Terms & Conditions | Try Me",
+  description: "Read Try Me's Terms & Conditions governing the use of our multi-vendor e-commerce platform.",
 };
 
 export default function TermsPage() {
@@ -17,12 +17,12 @@ export default function TermsPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">1. Introduction</h2>
           <p>
-            Welcome to Fashion Dora (&quot;Platform&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). By accessing or using
-            our website at <strong>fashiondora.lk</strong>, you agree to be bound by these Terms &amp;
+            Welcome to Try Me (&quot;Platform&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). By accessing or using
+            our website at <strong>tryme.lk</strong>, you agree to be bound by these Terms &amp;
             Conditions. If you do not agree, please do not use our platform.
           </p>
           <p>
-            Fashion Dora is a multi-vendor e-commerce marketplace operating in Sri Lanka, connecting
+            Try Me is a multi-vendor e-commerce marketplace operating in Sri Lanka, connecting
             customers with independent vendors selling fashion and lifestyle products.
           </p>
         </section>
@@ -63,12 +63,12 @@ export default function TermsPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">4. Ordering &amp; Payments</h2>
           <p>
-            All prices on Fashion Dora are listed in Sri Lankan Rupees (LKR). When you place an
+            All prices on Try Me are listed in Sri Lankan Rupees (LKR). When you place an
             order, payment is processed through <strong>PayHere</strong>, our payment gateway.
             We accept Visa, Mastercard, and other methods supported by PayHere.
           </p>
           <p>
-            Payments are held in <strong>escrow</strong> by Fashion Dora until you confirm delivery
+            Payments are held in <strong>escrow</strong> by Try Me until you confirm delivery
             of your order. Vendor funds are not released until delivery is confirmed by the customer.
           </p>
           <p>
@@ -89,7 +89,7 @@ export default function TermsPage() {
             from the order details page in your account.
           </p>
           <p>
-            If an order is cancelled, any payment made will be refunded to your Fashion Dora wallet.
+            If an order is cancelled, any payment made will be refunded to your Try Me wallet.
           </p>
         </section>
 
@@ -107,7 +107,7 @@ export default function TermsPage() {
 
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">7. Vendor Terms</h2>
-          <p>Vendors on Fashion Dora agree to the following:</p>
+          <p>Vendors on Try Me agree to the following:</p>
           <ul className="list-disc list-inside space-y-1 text-muted-foreground pl-2">
             <li>List only products they are legally authorised to sell</li>
             <li>Provide accurate product descriptions, images, and pricing</li>
@@ -130,7 +130,7 @@ export default function TermsPage() {
           <p>Users must not:</p>
           <ul className="list-disc list-inside space-y-1 text-muted-foreground pl-2">
             <li>Share personal contact details (phone numbers, email, social media) in chat messages</li>
-            <li>Attempt to conduct transactions outside the Fashion Dora platform</li>
+            <li>Attempt to conduct transactions outside the Try Me platform</li>
             <li>Post false, misleading, or defamatory content</li>
             <li>Sell counterfeit, illegal, or prohibited goods</li>
             <li>Engage in fraudulent orders, chargebacks, or abuse of the dispute system</li>
@@ -151,10 +151,10 @@ export default function TermsPage() {
           <p>
             For platform-related disputes, please contact us at{" "}
             <a
-              href="mailto:support@fashiondora.lk"
+              href="mailto:support@tryme.lk"
               className="text-primary underline underline-offset-4"
             >
-              support@fashiondora.lk
+              support@tryme.lk
             </a>
             .
           </p>
@@ -163,12 +163,12 @@ export default function TermsPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">10. Intellectual Property</h2>
           <p>
-            All content on Fashion Dora — including logos, design, text, and software — is the
-            property of Fashion Dora or its licensors. You may not reproduce, distribute, or create
+            All content on Try Me — including logos, design, text, and software — is the
+            property of Try Me or its licensors. You may not reproduce, distribute, or create
             derivative works without our prior written consent.
           </p>
           <p>
-            Vendors retain ownership of their product content but grant Fashion Dora a non-exclusive
+            Vendors retain ownership of their product content but grant Try Me a non-exclusive
             licence to display it on the platform.
           </p>
         </section>
@@ -176,8 +176,8 @@ export default function TermsPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">11. Limitation of Liability</h2>
           <p>
-            Fashion Dora acts as a marketplace intermediary. We are not the seller of record for
-            any product listed by vendors. To the fullest extent permitted by law, Fashion Dora
+            Try Me acts as a marketplace intermediary. We are not the seller of record for
+            any product listed by vendors. To the fullest extent permitted by law, Try Me
             is not liable for:
           </p>
           <ul className="list-disc list-inside space-y-1 text-muted-foreground pl-2">
@@ -194,7 +194,7 @@ export default function TermsPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">12. Privacy</h2>
           <p>
-            Your use of Fashion Dora is also governed by our{" "}
+            Your use of Try Me is also governed by our{" "}
             <a href="/privacy" className="text-primary underline underline-offset-4">
               Privacy Policy
             </a>
@@ -225,10 +225,10 @@ export default function TermsPage() {
           <p>
             If you have any questions about these terms, please contact us at{" "}
             <a
-              href="mailto:support@fashiondora.lk"
+              href="mailto:support@tryme.lk"
               className="text-primary underline underline-offset-4"
             >
-              support@fashiondora.lk
+              support@tryme.lk
             </a>
             .
           </p>

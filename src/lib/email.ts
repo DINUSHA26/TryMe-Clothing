@@ -4,8 +4,8 @@ import { getAppUrl } from "./env";
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const EMAIL_FROM = process.env.EMAIL_FROM && process.env.EMAIL_FROM !== "onboarding@resend.dev" ? process.env.EMAIL_FROM : "Fashion Dora <otp@fashiondora.lk>";
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Fashion Dora";
+const EMAIL_FROM = process.env.EMAIL_FROM && process.env.EMAIL_FROM !== "onboarding@resend.dev" ? process.env.EMAIL_FROM : "Try Me <otp@tryme.lk>";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Try Me";
 
 export const emailService = {
   /**

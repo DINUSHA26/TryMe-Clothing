@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 
 export const metadata = {
-  title: "Help Center | Fashion Dora",
-  description: "Find answers to common questions about ordering, shipping, returns, payments, and your Fashion Dora account.",
+  title: "Help Center | Try Me",
+  description: "Find answers to common questions about ordering, shipping, returns, payments, and your Try Me account.",
 };
 
 const faqs = [
@@ -16,7 +16,7 @@ const faqs = [
       },
       {
         q: "Can I cancel my order?",
-        a: 'Yes. You can cancel an order within 24 hours of placing it, provided it has not yet been shipped. Go to My Orders, open the order, and click "Cancel Order". A full refund will be credited to your Fashion Dora wallet.',
+        a: 'Yes. You can cancel an order within 24 hours of placing it, provided it has not yet been shipped. Go to My Orders, open the order, and click "Cancel Order". A full refund will be credited to your Try Me wallet.',
       },
       {
         q: "How do I track my order?",
@@ -33,11 +33,11 @@ const faqs = [
     items: [
       {
         q: "What payment methods are accepted?",
-        a: "We accept Visa and Mastercard via PayHere, Sri Lanka's secure payment gateway. Your card details are entered directly on PayHere's encrypted page — Fashion Dora never sees or stores your card number.",
+        a: "We accept Visa and Mastercard via PayHere, Sri Lanka's secure payment gateway. Your card details are entered directly on PayHere's encrypted page — Try Me never sees or stores your card number.",
       },
       {
         q: "Is my payment secure?",
-        a: "Yes. All payments are processed through PayHere with SSL encryption. Fashion Dora uses an escrow model — your money is held safely until you confirm delivery of your order.",
+        a: "Yes. All payments are processed through PayHere with SSL encryption. Try Me uses an escrow model — your money is held safely until you confirm delivery of your order.",
       },
       {
         q: "When does the vendor receive my payment?",
@@ -45,7 +45,7 @@ const faqs = [
       },
       {
         q: "I was charged but my order shows Payment Failed. What should I do?",
-        a: "This can happen if the payment gateway timed out. Please wait a few minutes and check your order status again. If your bank was charged but the order remains in a failed state, contact us at support@fashiondora.lk with your order number.",
+        a: "This can happen if the payment gateway timed out. Please wait a few minutes and check your order status again. If your bank was charged but the order remains in a failed state, contact us at support@tryme.lk with your order number.",
       },
     ],
   },
@@ -75,7 +75,7 @@ const faqs = [
       },
       {
         q: "How are refunds processed?",
-        a: "Approved refunds are credited to your Fashion Dora wallet. Wallet funds can be used for future purchases on the platform. Refunds back to your original card are not currently supported.",
+        a: "Approved refunds are credited to your Try Me wallet. Wallet funds can be used for future purchases on the platform. Refunds back to your original card are not currently supported.",
       },
       {
         q: "Who pays for return shipping?",
@@ -88,7 +88,7 @@ const faqs = [
     items: [
       {
         q: "How do I log in?",
-        a: "Fashion Dora uses passwordless login for customers. Enter your email address and we will send you a one-time PIN (OTP) via email. Enter the PIN to log in — no password needed.",
+        a: "Try Me uses passwordless login for customers. Enter your email address and we will send you a one-time PIN (OTP) via email. Enter the PIN to log in — no password needed.",
       },
       {
         q: "How do I manage my delivery addresses?",
@@ -153,14 +153,13 @@ export default function HelpCenterPage() {
         <p className="text-muted-foreground">
           Email us at{" "}
           <a
-            href="mailto:support@fashiondora.lk"
+            href="mailto:support@tryme.lk"
             className="text-primary underline underline-offset-4"
           >
-            support@fashiondora.lk
+            support@tryme.lk
           </a>
         </p>
       </div>
     </div>
   );
 }
-

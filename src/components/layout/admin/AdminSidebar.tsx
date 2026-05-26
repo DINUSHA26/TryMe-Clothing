@@ -91,11 +91,7 @@ export function AdminSidebar({
     >
       {/* Logo */}
       <div className="p-4 flex items-center justify-between">
-        {isCollapsed ? (
-          <Logo variant="icon" className="mx-auto" />
-        ) : (
-          <Logo variant="full" href="/admin" />
-        )}
+        <Logo variant="icon" href="/admin" className={cn(isCollapsed && "mx-auto")} size={isCollapsed ? "sm" : "md"} />
       </div>
 
       <Separator />

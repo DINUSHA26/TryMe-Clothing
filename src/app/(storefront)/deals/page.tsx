@@ -82,7 +82,7 @@ export default function DealsPage() {
           <h1 className="text-3xl md:text-4xl font-bold">Today&apos;s Deals</h1>
         </div>
         <p className="text-muted-foreground max-w-xl mx-auto">
-          Exclusive discount codes from Fashion Dora and our trusted vendors.
+          Exclusive discount codes from Try Me and our trusted vendors.
           Copy a code and use it at checkout to save instantly.
         </p>
 

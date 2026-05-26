@@ -80,7 +80,7 @@ function NewArrivalsContent() {
           <h1 className="text-3xl font-bold">New Arrivals</h1>
         </div>
         <p className="text-muted-foreground">
-          The latest products added to Fashion Dora — freshest items first.
+          The latest products added to Try Me — freshest items first.
         </p>
         {!loading && (
           <Badge variant="secondary" className="w-fit">

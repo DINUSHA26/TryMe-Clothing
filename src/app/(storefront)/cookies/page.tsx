@@ -1,8 +1,8 @@
 import { Separator } from "@/components/ui/separator";
 
 export const metadata = {
-  title: "Cookie Policy | Fashion Dora",
-  description: "Learn how Fashion Dora uses cookies and similar technologies on our platform.",
+  title: "Cookie Policy | Try Me",
+  description: "Learn how Try Me uses cookies and similar technologies on our platform.",
 };
 
 export default function CookiePolicyPage() {
@@ -24,13 +24,13 @@ export default function CookiePolicyPage() {
           <p>
             Similar technologies include <strong>localStorage</strong> (browser storage) and
             <strong> session tokens</strong> (secure cookies used for authentication). This
-            policy covers all such technologies used by Fashion Dora.
+            policy covers all such technologies used by Try Me.
           </p>
         </section>
 
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">2. How We Use Cookies</h2>
-          <p>Fashion Dora uses cookies and similar technologies for the following purposes:</p>
+          <p>Try Me uses cookies and similar technologies for the following purposes:</p>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse mt-2">
@@ -88,7 +88,7 @@ export default function CookiePolicyPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">4. Guest Cart (localStorage)</h2>
           <p>
-            When you browse Fashion Dora without logging in and add items to your cart, those items
+            When you browse Try Me without logging in and add items to your cart, those items
             are saved in your browser&apos;s <strong>localStorage</strong> — not on our servers.
             This data stays on your device until you clear your browser storage or log in
             (at which point it is merged with your account cart and cleared from localStorage).
@@ -98,7 +98,7 @@ export default function CookiePolicyPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">5. Analytics &amp; Tracking Cookies</h2>
           <p>
-            Fashion Dora does <strong>not</strong> currently use any third-party analytics,
+            Try Me does <strong>not</strong> currently use any third-party analytics,
             advertising, or tracking cookies. We do not use Google Analytics, Facebook Pixel,
             or similar tools.
           </p>
@@ -158,10 +158,10 @@ export default function CookiePolicyPage() {
           <p>
             If you have questions about our use of cookies, please contact us at{" "}
             <a
-              href="mailto:support@fashiondora.lk"
+              href="mailto:support@tryme.lk"
               className="text-primary underline underline-offset-4"
             >
-              support@fashiondora.lk
+              support@tryme.lk
             </a>
             .
           </p>

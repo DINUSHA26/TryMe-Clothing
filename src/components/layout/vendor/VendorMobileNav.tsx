@@ -47,7 +47,7 @@ export function VendorMobileNav({ isOpen, onClose }: VendorMobileNavProps) {
       <SheetContent side="left" className="w-[85vw] max-w-[280px] p-0">
         <SheetHeader className="p-4 text-left">
           <SheetTitle>
-            <Logo variant="full" href="/vendor" />
+            <Logo variant="icon" href="/vendor" />
           </SheetTitle>
         </SheetHeader>
 

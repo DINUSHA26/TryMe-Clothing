@@ -4,7 +4,7 @@ import { PasswordChangeForm } from "@/components/auth/PasswordChangeForm";
 import { Store, Lock } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Change Password - Vendor - Fashion Dora",
+  title: "Change Password - Vendor - Try Me",
   description: "Change your vendor password",
 };
 

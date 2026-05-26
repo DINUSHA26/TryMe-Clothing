@@ -3,8 +3,8 @@ import { Separator } from "@/components/ui/separator";
 import { Mail, Clock, MessageSquare, AlertCircle } from "lucide-react";
 
 export const metadata = {
-  title: "Contact Us | Fashion Dora",
-  description: "Get in touch with the Fashion Dora support team. We're here to help with orders, payments, disputes, and general enquiries.",
+  title: "Contact Us | Try Me",
+  description: "Get in touch with the Try Me support team. We're here to help with orders, payments, disputes, and general enquiries.",
 };
 
 export default function ContactPage() {
@@ -28,10 +28,10 @@ export default function ContactPage() {
             For general enquiries, order issues, and account questions.
           </p>
           <a
-            href="mailto:support@fashiondora.lk"
+            href="mailto:support@tryme.lk"
             className="text-sm text-primary underline underline-offset-4 font-medium"
           >
-            support@fashiondora.lk
+            support@tryme.lk
           </a>
         </div>
 
@@ -99,7 +99,7 @@ export default function ContactPage() {
         </p>
         <p className="text-sm text-muted-foreground leading-7">
           When emailing us about an order, please include your <strong>order number</strong> (e.g.
-          FD-20260101-001) so we can look it up quickly.
+          TM-20260101-001) so we can look it up quickly.
         </p>
       </section>
 
@@ -109,13 +109,13 @@ export default function ContactPage() {
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">Vendor Enquiries</h2>
         <p className="text-sm text-muted-foreground leading-7">
-          Interested in selling on Fashion Dora? Vendor accounts are created by our admin team.
+          Interested in selling on Try Me? Vendor accounts are created by our admin team.
           Email us at{" "}
           <a
-            href="mailto:vendors@fashiondora.lk"
+            href="mailto:vendors@tryme.lk"
             className="text-primary underline underline-offset-4"
           >
-            vendors@fashiondora.lk
+            vendors@tryme.lk
           </a>{" "}
           with your business name and a brief description of what you sell. We will get back to you
           as soon as possible.

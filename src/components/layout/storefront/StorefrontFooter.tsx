@@ -16,7 +16,7 @@ export function StorefrontFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* About Section */}
           <div className="space-y-4">
-            <Logo variant="full" href="/" />
+            <Logo variant="icon" href="/" />
             <p className="text-sm text-muted-foreground">
               Sri Lanka&apos;s premier multi-vendor e-commerce platform. Shop from
               trusted vendors with secure escrow payments.
@@ -153,7 +153,7 @@ export function StorefrontFooter() {
 
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>© {currentYear} Fashion Dora. All rights reserved.</p>
+          <p>© {currentYear} Try Me. All rights reserved.</p>
           <div className="flex flex-wrap gap-4 justify-center md:justify-start">
             <Link
               href="/privacy"

@@ -109,11 +109,7 @@ export function VendorSidebar({
     >
       {/* Logo */}
       <div className="p-4 flex items-center justify-between">
-        {isCollapsed ? (
-          <Logo variant="icon" className="mx-auto" />
-        ) : (
-          <Logo variant="full" href="/vendor" />
-        )}
+        <Logo variant="icon" href="/vendor" className={cn(isCollapsed && "mx-auto")} size={isCollapsed ? "sm" : "md"} />
       </div>
 
       <Separator />

@@ -1,8 +1,8 @@
 import { Separator } from "@/components/ui/separator";
 
 export const metadata = {
-  title: "Shipping Policy | Fashion Dora",
-  description: "Learn about Fashion Dora's shipping policy, delivery timelines, and shipping costs across Sri Lanka.",
+  title: "Shipping Policy | Try Me",
+  description: "Learn about Try Me's shipping policy, delivery timelines, and shipping costs across Sri Lanka.",
 };
 
 export default function ShippingPolicyPage() {
@@ -17,10 +17,10 @@ export default function ShippingPolicyPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">1. Overview</h2>
           <p>
-            Fashion Dora is a multi-vendor marketplace. Each product on our platform is sold and shipped
+            Try Me is a multi-vendor marketplace. Each product on our platform is sold and shipped
             directly by independent vendors. Shipping timelines, costs, and carriers are set by
             individual vendors. This policy explains how shipping works across all orders placed
-            on Fashion Dora.
+            on Try Me.
           </p>
         </section>
 
@@ -110,7 +110,7 @@ export default function ShippingPolicyPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">7. Delays &amp; Lost Packages</h2>
           <p>
-            Fashion Dora is not responsible for delays caused by third-party carriers, customs,
+            Try Me is not responsible for delays caused by third-party carriers, customs,
             or circumstances beyond our or the vendor's control. If your order has not arrived
             within the estimated timeframe, please:
           </p>
@@ -124,7 +124,7 @@ export default function ShippingPolicyPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">8. Incorrect Delivery Address</h2>
           <p>
-            Please ensure your delivery address is accurate before placing an order. Fashion Dora
+            Please ensure your delivery address is accurate before placing an order. Try Me
             and our vendors are not responsible for failed deliveries due to an incorrect or
             incomplete address provided by the customer. Address changes after order placement
             cannot be guaranteed.
@@ -136,10 +136,10 @@ export default function ShippingPolicyPage() {
           <p>
             For shipping-related queries, please contact us at{" "}
             <a
-              href="mailto:support@fashiondora.lk"
+              href="mailto:support@tryme.lk"
               className="text-primary underline underline-offset-4"
             >
-              support@fashiondora.lk
+              support@tryme.lk
             </a>.
           </p>
         </section>

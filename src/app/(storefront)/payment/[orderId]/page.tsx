@@ -288,7 +288,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                   </div>
                   <div className="flex justify-between border-b pb-2">
                     <span className="text-muted-foreground">Account Name:</span>
-                    <span className="font-medium text-right">Fashion Dora</span>
+                    <span className="font-medium text-right">Try Me</span>
                   </div>
                   <div className="flex justify-between border-b pb-2">
                     <span className="text-muted-foreground">Account Number:</span>
