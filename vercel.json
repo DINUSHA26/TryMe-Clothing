@@ -1,0 +1,35 @@
+{
+    "framework": "nextjs",
+    "crons": [
+        {
+            "path": "/api/cron/track-orders",
+            "schedule": "0 */6 * * *"
+        }
+    ],
+    "buildCommand": "npm run build",
+    "installCommand": "npm install --legacy-peer-deps",
+    "regions": [
+        "sin1"
+    ],
+    "cleanUrls": true,
+    "images": {
+        "sizes": [
+            256,
+            384,
+            512,
+            640,
+            750,
+            828,
+            1080,
+            1200,
+            1920,
+            2048,
+            3840
+        ],
+        "domains": [
+            "res.cloudinary.com",
+            "images.unsplash.com"
+        ],
+        "minimumCacheTTL": 60
+    }
+}
