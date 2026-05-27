@@ -74,7 +74,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             <p className="text-muted-foreground text-center mb-4">
               Your cart is empty
             </p>
-            <Button onClick={() => onOpenChange(false)} asChild>
+            <Button onClick={() => onOpenChange(false)} className="bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" asChild>
               <Link href="/products">Browse Products</Link>
             </Button>
           </div>

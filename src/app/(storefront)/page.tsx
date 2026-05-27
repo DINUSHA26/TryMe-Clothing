@@ -128,15 +128,15 @@ export default function Home() {
         ))}
 
         <div className="container relative z-20 h-full flex flex-col items-center justify-center text-center px-4 md:px-6 pointer-events-none">
-          <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 text-white pointer-events-auto">
-            Welcome to Try Me
+          <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 text-[#FF6600] pointer-events-auto">
+            Welcome to TryMe
           </h1>
           <p className="text-base md:text-xl text-white/85 mb-6 md:mb-8 max-w-2xl mx-auto pointer-events-auto">
             Sri Lanka&apos;s premier multi-vendor e-commerce platform. Shop from
             trusted vendors with secure escrow payments.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pointer-events-auto -mt-3 md:mt-0 pb-4 md:pb-0">
-            <Button size="lg" asChild>
+            <Button size="lg" className="bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" asChild>
               <Link href="/products">
                 Browse Products
                 <ArrowRight className="ml-2 h-5 w-5" />

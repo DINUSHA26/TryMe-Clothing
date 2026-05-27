@@ -26,8 +26,8 @@ function CustomerLoginContent() {
         {/* Logo/Header */}
         <div className="text-center mb-8 flex flex-col items-center">
           <Logo variant="icon" size="lg" className="mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to Try Me
+          <h1 className="text-3xl font-bold text-[#FF6600] mb-2">
+            Welcome to TryMe
           </h1>
           <p className="text-gray-600">Sign in with your email or phone</p>
         </div>

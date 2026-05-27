@@ -149,7 +149,7 @@ export default function DealsPage() {
           <p className="text-muted-foreground mb-6">
             Check back soon — new deals are added regularly.
           </p>
-          <Button asChild>
+          <Button className="bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" asChild>
             <Link href="/products">Browse Products</Link>
           </Button>
         </div>

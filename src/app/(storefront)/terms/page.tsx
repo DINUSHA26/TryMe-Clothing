@@ -17,7 +17,7 @@ export default function TermsPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">1. Introduction</h2>
           <p>
-            Welcome to Try Me (&quot;Platform&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). By accessing or using
+            Welcome to TryMe (&quot;Platform&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). By accessing or using
             our website at <strong>tryme.lk</strong>, you agree to be bound by these Terms &amp;
             Conditions. If you do not agree, please do not use our platform.
           </p>

@@ -206,7 +206,7 @@ function FollowedStoresContent() {
                 </p>
                 <Link
                   href="/products"
-                  className="inline-flex items-center gap-1.5 bg-primary text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full hover:bg-primary/95 transition-all"
+                  className="inline-flex items-center gap-1.5 bg-[#FF6600] hover:bg-[#E65C00] text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full transition-all"
                 >
                   Browse Products <ArrowRight className="h-3.5 w-3.5" />
                 </Link>

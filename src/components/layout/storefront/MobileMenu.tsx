@@ -76,7 +76,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           <>
             <div className="px-4 py-3 bg-muted/50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-[#FF6600] text-white flex items-center justify-center font-semibold">
                   <User className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -134,7 +134,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           ) : (
             <Button
               variant="default"
-              className="w-full justify-start"
+              className="w-full justify-start bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200"
               onClick={handleLogin}
             >
               <LogIn className="w-5 h-5 mr-2" />

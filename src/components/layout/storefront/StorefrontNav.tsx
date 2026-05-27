@@ -24,7 +24,7 @@ export function StorefrontNav() {
   }
 
   return (
-    <nav className="hidden md:block border-b bg-background">
+    <nav className="hidden md:block border-b bg-[#FF6600]">
       <div className="container flex items-center justify-center space-x-8 h-12 px-4 md:px-6">
         {navItems.map((item) => {
           if (item.label === "Categories" && item.href === "/categories") {
@@ -38,10 +38,10 @@ export function StorefrontNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary relative pb-3",
+                "text-sm font-medium transition-colors hover:text-white relative pb-3",
                 isItemActive
-                  ? "text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
-                  : "text-muted-foreground"
+                  ? "text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white font-semibold"
+                  : "text-white/80"
               )}
             >
               {item.label}

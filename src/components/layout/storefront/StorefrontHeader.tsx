@@ -61,7 +61,7 @@ export function StorefrontHeader({ onMobileMenuToggle }: StorefrontHeaderProps) 
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-4 h-9 w-full bg-muted/50 border-none focus-visible:ring-1 text-sm"
+            className="pl-9 pr-4 h-9 w-full bg-muted/50 border border-[#FF6600] focus-visible:ring-1 focus-visible:ring-[#FF6600] focus-visible:border-[#FF6600] text-sm"
           />
         </form>
 
@@ -102,7 +102,7 @@ export function StorefrontHeader({ onMobileMenuToggle }: StorefrontHeaderProps) 
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-4 h-9 w-full bg-muted/50 border-none focus-visible:ring-1 text-sm"
+            className="pl-9 pr-4 h-9 w-full bg-muted/50 border border-[#FF6600] focus-visible:ring-1 focus-visible:ring-[#FF6600] focus-visible:border-[#FF6600] text-sm"
           />
         </form>
       </div>

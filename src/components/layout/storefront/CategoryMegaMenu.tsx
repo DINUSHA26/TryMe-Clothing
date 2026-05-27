@@ -120,10 +120,10 @@ export function CategoryMegaMenu() {
             <button
                 onClick={toggleMenu}
                 className={cn(
-                    "flex items-center gap-1 text-sm font-medium transition-colors hover:text-primary relative pb-3",
+                    "flex items-center gap-1 text-sm font-medium transition-colors hover:text-white relative pb-3",
                     isOpen
-                        ? "text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
-                        : "text-muted-foreground"
+                        ? "text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white font-semibold"
+                        : "text-white/80"
                 )}
             >
                 <span className="flex items-center gap-2">

@@ -17,7 +17,7 @@ export function EmptyCart() {
       </p>
 
       <Link href="/products">
-        <Button size="lg">
+        <Button size="lg" className="bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200">
           Browse Products
         </Button>
       </Link>
