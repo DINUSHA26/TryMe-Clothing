@@ -7,8 +7,13 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Try Me - Multi-Vendor Marketplace",
-  description: "Sri Lanka's premier multi-vendor e-commerce platform",
+  title: "Try Me | Sri Lanka's Premier Multi-Vendor Marketplace",
+  description: "tryme.lk Fast & Free Delivery — Explore tryme.lk for premium online shopping in Sri Lanka. Shop now! Shop smarter with tryme.lk! Your premium online shopping destination for fashion, electronics, and daily essentials. 100% Authentic Products. Trusted Brands.",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
