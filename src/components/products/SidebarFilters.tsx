@@ -461,7 +461,7 @@ export function SidebarFilters({ categories, vendors, activeCategoryId, basePath
                         <div className="shrink-0 border-t px-6 py-4 bg-background">
                             <Button
                                 onClick={applyMobileFilters}
-                                className="w-full h-12 text-base font-bold tracking-widest uppercase"
+                                className="w-full h-12 text-base font-bold tracking-widest uppercase bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200"
                             >
                                 Apply Filters
                             </Button>

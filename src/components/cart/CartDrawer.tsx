@@ -176,7 +176,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <div className="flex flex-col gap-2">
                 <Button
                   size="lg"
-                  className="w-full"
+                  className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200"
                   onClick={() => onOpenChange(false)}
                   asChild
                 >

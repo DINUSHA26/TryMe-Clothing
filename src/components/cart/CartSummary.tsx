@@ -75,7 +75,7 @@ export function CartSummary({
       {showCheckoutButton && (
         <Button
           size="lg"
-          className="w-full"
+          className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200"
           disabled={itemCount === 0 || hasStockIssues}
           onClick={onCheckout}
           asChild={!onCheckout}

@@ -325,7 +325,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           <div className="space-y-2">
             {inputMode === "phone" ? (
               <div className="flex gap-2 items-center">
-                <div className="flex h-10 items-center justify-center px-4 border border-gray-200 rounded-md bg-gray-50 text-sm font-medium text-gray-900 whitespace-nowrap">
+                <div className="flex h-10 items-center justify-center px-4 border border-gray-200 dark:border-gray-300 rounded-md bg-gray-50 dark:bg-white text-sm font-medium text-gray-900 dark:text-black whitespace-nowrap">
                   <span className="text-gray-500 text-xs mr-1">LK</span>+94
                 </div>
                 <Input
@@ -334,7 +334,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
                   placeholder="Please enter your phone number"
                   {...identifierForm.register("identifier")}
                   disabled={isLoading}
-                  className="flex-1"
+                  className="flex-1 bg-white dark:bg-white text-black dark:text-black placeholder:text-gray-400 dark:placeholder:text-gray-400 border border-gray-300 dark:border-gray-300 focus-visible:ring-[#FF6600]"
                 />
               </div>
             ) : (
@@ -344,7 +344,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
                 placeholder="Please enter your email"
                 {...identifierForm.register("identifier")}
                 disabled={isLoading}
-                className="w-full"
+                className="w-full bg-white dark:bg-white text-black dark:text-black placeholder:text-gray-400 dark:placeholder:text-gray-400 border border-gray-300 dark:border-gray-300 focus-visible:ring-[#FF6600]"
               />
             )}
             {identifierForm.formState.errors.identifier && (
@@ -358,7 +358,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
 
           <Button 
             type="submit" 
-            className={`w-full ${inputMode === 'phone' ? 'bg-[#f97316] hover:bg-[#ea580c] text-white' : 'bg-gray-900 hover:bg-gray-800 text-white'}`} 
+            className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" 
             disabled={isLoading}
           >
             {isLoading ? (
@@ -387,7 +387,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           maxLength={6}
           {...otpForm.register("code")}
           disabled={isLoading}
-          className="text-center text-2xl font-mono tracking-widest"
+          className="text-center text-2xl font-mono tracking-widest bg-white dark:bg-white text-black dark:text-black placeholder:text-gray-400 dark:placeholder:text-gray-400 border border-gray-300 dark:border-gray-300 focus-visible:ring-[#FF6600]"
         />
         {otpForm.formState.errors.code && (
           <p className="text-sm text-red-500">
@@ -400,7 +400,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         </p>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button type="submit" className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" disabled={isLoading}>
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

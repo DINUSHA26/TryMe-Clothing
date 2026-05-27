@@ -40,7 +40,7 @@ export function SearchBar({
           className="pl-10"
         />
       </div>
-      <Button type="submit">Search</Button>
+      <Button type="submit" className="bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200">Search</Button>
     </form>
   );
 }

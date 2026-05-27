@@ -358,10 +358,10 @@ export default function Home() {
         <div className="container px-4 md:px-6 text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to Start Shopping?</h2>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of satisfied customers shopping on Try Me. Create
+            Join thousands of satisfied customers shopping on TryMe. Create
             an account today and get started.
           </p>
-          <Button size="lg" asChild>
+          <Button size="lg" className="bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" asChild>
             <Link href="/login">Get Started</Link>
           </Button>
         </div>

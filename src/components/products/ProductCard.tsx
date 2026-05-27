@@ -163,7 +163,7 @@ export function ProductCard({ product }: ProductCardProps) {
                   <button
                     onClick={handleQuickAdd}
                     disabled={isAdding}
-                    className="w-full bg-[#00155a] py-2 md:py-3 text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] hover:bg-[#00155a]/90 transition-all shadow-[0_-4px_10px_rgba(0,0,0,0.1)] flex items-center justify-center gap-1 md:gap-2 group/btn active:scale-95"
+                    className="w-full bg-[#FF6600] py-2 md:py-3 text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] hover:bg-[#E65C00] transition-all shadow-[0_-4px_10px_rgba(0,0,0,0.1)] flex items-center justify-center gap-1 md:gap-2 group/btn active:scale-95"
                   >
                     {isAdding ? (
                       <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />

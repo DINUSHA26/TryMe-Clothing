@@ -215,7 +215,7 @@ export function ProductFilters({
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-4">
-              <Button onClick={applyFilters} className="flex-1">
+              <Button onClick={applyFilters} className="flex-1 bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200">
                 Apply Filters
               </Button>
               {hasActiveFilters && (

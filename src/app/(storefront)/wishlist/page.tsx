@@ -134,7 +134,7 @@ export default function WishlistPage() {
                     <p className="text-muted-foreground max-w-sm mb-8">
                         Browse our latest collections and find your new favorite styles to save them here for later.
                     </p>
-                    <Button size="lg" className="rounded-full px-10 font-black tracking-widest uppercase text-sm" asChild>
+                    <Button size="lg" className="rounded-full px-10 font-black tracking-widest uppercase text-sm bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" asChild>
                         <Link href="/products">
                             Explore Products
                         </Link>

@@ -198,7 +198,7 @@ export function AddToCartButton({
           onClick={handleAddToCart}
           disabled={!canAdd || isAdding}
           className={cn(
-            "flex-1 h-12 text-sm font-bold uppercase tracking-widest transition-all bg-primary hover:bg-primary/90"
+            "flex-1 h-12 text-sm font-bold uppercase tracking-widest transition-all bg-[#FF6600] hover:bg-[#E65C00] text-white border-none"
           )}
         >
           <ShoppingCart className="mr-2 h-4 w-4" />
