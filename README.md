@@ -175,7 +175,7 @@ Order Placed → Payment Confirmed → Processing → Shipped → Delivered (fun
 
 ### Auto-Tracking
 - Delivery auto-tracking is enabled via **AfterShip**.
-- **Implementation**: Handled by a **Vercel Cron Job** (`/api/cron/track-orders`) that runs every 6 hours.
+- **Implementation**: Handled by a **Vercel Cron Job** (`/api/cron/track-orders`) that runs daily.
 - **Workflow**: If the carrier reports delivery → order status is set to `DELIVERED` → vendor funds are released.
 - **Requirement**: `AFTERSHIP_API_KEY` must be set in the environment variables.
 - **Manual Trigger**: Admins can manually trigger a check by hitting the cron endpoint (requires `CRON_SECRET` if configured).
