@@ -39,12 +39,12 @@ export function ChatRoomCard({ room, isSelected, onClick }: ChatRoomCardProps) {
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-3 rounded-lg text-left transition-colors',
+        'w-full min-w-0 p-3 rounded-lg text-left transition-colors',
         'hover:bg-muted/50',
         isSelected && 'bg-muted'
       )}
     >
-      <div className="flex gap-3">
+      <div className="flex gap-3 min-w-0 w-full">
         {/* Avatar */}
         <Avatar className="h-12 w-12 flex-shrink-0">
           <AvatarFallback>{participantInitial}</AvatarFallback>

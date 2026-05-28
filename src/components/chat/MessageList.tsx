@@ -49,7 +49,7 @@ export function MessageList({ roomId }: MessageListProps) {
   }
 
   return (
-    <ScrollArea className="flex-1 px-4">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 w-full">
       <div className="py-4 space-y-4">
         {roomMessages.map((message) => (
           <MessageBubble
@@ -75,6 +75,6 @@ export function MessageList({ roomId }: MessageListProps) {
         {/* Scroll anchor */}
         <div ref={scrollRef} />
       </div>
-    </ScrollArea>
+    </div>
   );
 }

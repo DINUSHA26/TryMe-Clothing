@@ -48,8 +48,8 @@ export function ChatRoomList() {
       </div>
 
       {/* Room list */}
-      <ScrollArea className="flex-1">
-        <div className="p-2">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">
+        <div className="p-2 w-full">
           {rooms.map((room) => (
             <ChatRoomCard
               key={room.id}
@@ -59,7 +59,7 @@ export function ChatRoomList() {
             />
           ))}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
