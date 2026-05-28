@@ -37,7 +37,7 @@ export function ChatWindow({ roomId }: ChatWindowProps) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="w-full h-full flex flex-col">
       {/* Header */}
       <ChatHeader room={room} />
 

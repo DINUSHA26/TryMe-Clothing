@@ -18,12 +18,12 @@ export function ChatDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeChat()}>
-      <DialogContent className="max-w-5xl h-[80vh] p-0 gap-0">
+      <DialogContent className="w-[95vw] sm:w-full max-w-5xl h-[80vh] p-0 gap-0">
         <DialogTitle className="sr-only">Messaging</DialogTitle>
         <DialogDescription className="sr-only">
           Real-time chat between customers and vendors regarding orders.
         </DialogDescription>
-        <div className="flex h-full overflow-hidden">
+        <div className="flex w-full h-full overflow-hidden">
           {/* Mobile: Show room list OR chat window */}
           {isMobile ? (
             selectedRoomId ? (

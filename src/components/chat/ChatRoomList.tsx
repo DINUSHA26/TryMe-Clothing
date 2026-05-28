@@ -40,7 +40,7 @@ export function ChatRoomList() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="w-full h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b">
         <h2 className="font-semibold text-lg">Messages</h2>
