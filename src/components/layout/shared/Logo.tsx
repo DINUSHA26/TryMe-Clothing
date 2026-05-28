@@ -26,8 +26,8 @@ export function Logo({
     },
     mobile: {
       container: "gap-1.5",
-      width: 90,  // dedicated responsive mobile header size (optimized to prevent icon clipping)
-      height: 28,
+      width: 130,  // dedicated responsive mobile header size (optimized to prevent icon clipping)
+      height: 40,
       text: "text-lg",
     },
     md: {
