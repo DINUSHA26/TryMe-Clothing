@@ -144,6 +144,7 @@ model User {
   role               UserRole
   firstName          String?
   lastName           String?
+  avatar             String?
   isActive           Boolean   @default(true)
   mustChangePassword Boolean   @default(false) // For vendors on first login
   emailVerified      Boolean   @default(false)

@@ -57,7 +57,16 @@ export async function POST(request: NextRequest) {
     // Find or create customer user
     let user = await prisma.user.findUnique({
       where: { phone },
-      include: { customer: true },
+      include: {
+        customer: true,
+        vendor: {
+          select: {
+            id: true,
+            status: true,
+            businessName: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -71,7 +80,16 @@ export async function POST(request: NextRequest) {
             create: {},
           },
         },
-        include: { customer: true },
+        include: {
+          customer: true,
+          vendor: {
+            select: {
+              id: true,
+              status: true,
+              businessName: true,
+            },
+          },
+        },
       });
     } else {
       if (!user.customer) {
@@ -85,6 +103,20 @@ export async function POST(request: NextRequest) {
           data: { phoneVerified: true },
         });
       }
+      // Re-fetch since user was updated
+      user = await prisma.user.findUnique({
+        where: { id: user.id },
+        include: {
+          customer: true,
+          vendor: {
+            select: {
+              id: true,
+              status: true,
+              businessName: true,
+            },
+          },
+        },
+      }) || user;
     }
 
     // Generate tokens
@@ -104,7 +136,9 @@ export async function POST(request: NextRequest) {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
+          avatar: (user as any).avatar,
           mustChangePassword: user.mustChangePassword,
+          vendor: user.vendor,
         },
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,

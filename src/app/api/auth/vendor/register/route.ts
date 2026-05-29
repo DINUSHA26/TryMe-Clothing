@@ -104,9 +104,11 @@ export async function POST(request: NextRequest) {
         user: {
           id: result.user.id,
           email: result.user.email,
+          phone: result.user.phone,
           role: result.user.role,
           firstName: result.user.firstName,
           lastName: result.user.lastName,
+          avatar: (result.user as any).avatar,
           vendor: {
             id: result.vendor.id,
             status: result.vendor.status,

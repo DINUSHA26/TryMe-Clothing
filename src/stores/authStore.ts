@@ -5,9 +5,11 @@ import { UserRole } from "@prisma/client";
 interface User {
   id: string;
   email: string | null;
+  phone: string | null;
   role: UserRole;
   firstName: string | null;
   lastName: string | null;
+  avatar: string | null;
   mustChangePassword: boolean;
   vendor?: {
     id: string;

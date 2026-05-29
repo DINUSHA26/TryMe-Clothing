@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
+          avatar: (user as any).avatar, // cast to any to bypass temporary prisma client type mismatch
           emailVerified: user.emailVerified,
           phoneVerified: user.phoneVerified,
           mustChangePassword: user.mustChangePassword,

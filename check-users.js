@@ -17,12 +17,15 @@ async function checkUsers() {
         id: true,
         email: true,
         role: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
         isActive: true,
         createdAt: true,
         vendor: {
           select: {
             businessName: true,
-            isApproved: true,
+            status: true,
           },
         },
       },
@@ -42,10 +45,11 @@ async function checkUsers() {
     users.forEach((user, index) => {
       console.log(`${index + 1}. ${user.email}`);
       console.log(`   Role: ${user.role}`);
-      console.log(`   Active: ${user.isActive}`);
+      console.log(`   Name: ${user.firstName || 'N/A'} ${user.lastName || 'N/A'}`);
+      console.log(`   Avatar: ${user.avatar || 'N/A'}`);
       if (user.vendor) {
         console.log(`   Business: ${user.vendor.businessName}`);
-        console.log(`   Approved: ${user.vendor.isApproved}`);
+        console.log(`   Status: ${user.vendor.status}`);
       }
       console.log(`   Created: ${user.createdAt.toLocaleString()}`);
       console.log('─'.repeat(80));

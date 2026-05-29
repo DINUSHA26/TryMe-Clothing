@@ -44,6 +44,7 @@ const protectedRoutes: Record<string, Role[]> = {
   "/api/pusher/auth": ["CUSTOMER", "VENDOR", "ADMIN"],
   "/api/upload": ["CUSTOMER", "VENDOR", "ADMIN"],
   "/api/notifications": ["CUSTOMER", "ADMIN", "VENDOR"],
+  "/api/profile": ["CUSTOMER", "VENDOR", "ADMIN"],
   // ── Role-restricted API routes ────────────────────────────────────────────
   "/api/admin": ["ADMIN"],
   "/api/vendor": ["VENDOR"],

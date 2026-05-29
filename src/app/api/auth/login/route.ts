@@ -126,9 +126,11 @@ export async function POST(request: NextRequest) {
         user: {
           id: user.id,
           email: user.email,
+          phone: user.phone,
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
+          avatar: (user as any).avatar,
           mustChangePassword: user.mustChangePassword,
           vendor: user.vendor,
         },

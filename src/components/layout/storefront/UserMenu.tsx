@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthStore } from "@/stores/authStore";
 
 export function UserMenu() {
@@ -54,7 +54,8 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
-          <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+          <Avatar key={(user as any).avatar || "no-avatar"} className="h-7 w-7 sm:h-8 sm:w-8">
+            <AvatarImage src={(user as any).avatar || undefined} alt={user.firstName || "User"} />
             <AvatarFallback className="bg-[#FF6600] text-white text-xs sm:text-sm font-semibold">
               {userInitials}
             </AvatarFallback>
@@ -111,7 +112,7 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link href="/profile" className="cursor-pointer">
             <User className="w-4 h-4 mr-2" />
-            Profile
+            Edit Profile
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

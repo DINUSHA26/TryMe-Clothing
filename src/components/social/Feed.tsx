@@ -78,7 +78,8 @@ export function Feed() {
         <div className="space-y-6">
             {/* Create Post Header */}
             <div className="bg-white dark:bg-slate-950 border-2 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                <Avatar>
+                <Avatar key={(user as any)?.avatar || "no-avatar"}>
+                    <AvatarImage src={(user as any)?.avatar || undefined} alt={user?.firstName || "User"} />
                     <AvatarFallback>{user ? getInitials(user.firstName, user.lastName, user.email) : "G"}</AvatarFallback>
                 </Avatar>
                 <Button
