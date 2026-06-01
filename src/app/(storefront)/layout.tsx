@@ -19,7 +19,7 @@ export default function StorefrontLayout({
   const handleMobileMenuClose = useCallback(() => setMobileMenuOpen(false), []);
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden">
+    <div className="flex min-h-screen flex-col overflow-x-clip">
       {/* Real-time chat initialization */}
       <ChatInitializer />
       

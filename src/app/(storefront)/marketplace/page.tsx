@@ -320,64 +320,68 @@ export default function MarketplacePortalPage() {
 
       {/* ikman.lk style Category Header - Filtered Search View Only */}
       {hasActiveFilters && (
-        <div className="bg-white border-b border-gray-150 py-5 px-4 shadow-sm">
-          <div className="max-w-6xl mx-auto space-y-4">
-            {/* Title and search row */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
-                  {currentSearch 
-                    ? `Search results for "${currentSearch}"`
-                    : `New and Used ${selectedCategoryData?.name || ""} for Sale in ${currentLocalArea || currentDistrict}`
-                  }
-                </h1>
-                {/* Breadcrumbs */}
-                <div className="flex flex-wrap items-center gap-1 text-[11px] text-gray-400 mt-1 font-medium">
-                  <span className="hover:underline hover:text-gray-900 cursor-pointer" onClick={() => router.push("/marketplace")}>Home</span>
-                  <span>&gt;</span>
-                  <span className="hover:underline hover:text-gray-900 cursor-pointer" onClick={() => router.push("/marketplace?category=")}>All ads</span>
-                  {selectedCategoryData && (
-                    <>
-                      <span>&gt;</span>
-                      <span className="hover:underline hover:text-gray-900 cursor-pointer" onClick={() => updateFilters({ category: selectedCategoryData.slug, subCategory: null, page: 1 })}>
-                        {selectedCategoryData.name}
-                      </span>
-                    </>
-                  )}
-                  {currentSubCategory && selectedSubCategoryData && (
-                    <>
-                      <span>&gt;</span>
-                      <span className="font-semibold text-gray-700">
-                        {selectedSubCategoryData.name}
-                      </span>
-                    </>
-                  )}
+        <>
+          {/* Non-sticky breadcrumbs, title and search box */}
+          <div className="bg-white px-4 pt-5 pb-3">
+            <div className="max-w-6xl mx-auto">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
+                    {currentSearch 
+                      ? `Search results for "${currentSearch}"`
+                      : `New and Used ${selectedCategoryData?.name || ""} for Sale in ${currentLocalArea || currentDistrict}`
+                    }
+                  </h1>
+                  {/* Breadcrumbs */}
+                  <div className="flex flex-wrap items-center gap-1 text-[11px] text-gray-400 mt-1 font-medium">
+                    <span className="hover:underline hover:text-gray-900 cursor-pointer" onClick={() => router.push("/marketplace")}>Home</span>
+                    <span>&gt;</span>
+                    <span className="hover:underline hover:text-gray-900 cursor-pointer" onClick={() => router.push("/marketplace?category=")}>All ads</span>
+                    {selectedCategoryData && (
+                      <>
+                        <span>&gt;</span>
+                        <span className="hover:underline hover:text-gray-900 cursor-pointer" onClick={() => updateFilters({ category: selectedCategoryData.slug, subCategory: null, page: 1 })}>
+                          {selectedCategoryData.name}
+                        </span>
+                      </>
+                    )}
+                    {currentSubCategory && selectedSubCategoryData && (
+                      <>
+                        <span>&gt;</span>
+                        <span className="font-semibold text-gray-700">
+                          {selectedSubCategoryData.name}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
+
+                {/* Right Side: Search Box */}
+                <form onSubmit={handleSearchSubmit} className="w-full md:w-[420px] flex gap-2 relative">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="What are you looking for?"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      className="w-full pl-5 pr-14 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-full text-xs focus:outline-none focus:ring-2 focus:ring-[#FF6600] focus:bg-white transition-all"
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#ffc800] hover:bg-[#e6b400] text-gray-950 p-2.5 rounded-full shadow-sm transition-colors"
+                      aria-label="Search"
+                    >
+                      <Search className="h-4 w-4" />
+                    </button>
+                  </div>
+                </form>
               </div>
-
-              {/* Right Side: Search Box */}
-              <form onSubmit={handleSearchSubmit} className="w-full md:w-[420px] flex gap-2 relative">
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    placeholder="What are you looking for?"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    className="w-full pl-5 pr-14 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-full text-xs focus:outline-none focus:ring-2 focus:ring-[#FF6600] focus:bg-white transition-all"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#ffc800] hover:bg-[#e6b400] text-gray-950 p-2.5 rounded-full shadow-sm transition-colors"
-                    aria-label="Search"
-                  >
-                    <Search className="h-4 w-4" />
-                  </button>
-                </div>
-              </form>
             </div>
+          </div>
 
-            {/* Filter pills row */}
-            <div className="relative flex items-center pt-3 border-t border-gray-100 w-full group/filterbar">
+          {/* Sticky Filter pills row */}
+          <div className="bg-white border-b border-gray-150 py-3 px-4 shadow-sm sticky top-[112px] sm:top-[64px] z-30">
+            <div className="max-w-6xl mx-auto relative flex items-center w-full group/filterbar">
               {/* Left scroll button */}
               {showLeftScroll && (
                 <button
@@ -621,7 +625,7 @@ export default function MarketplacePortalPage() {
               )}
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Main Container */}
