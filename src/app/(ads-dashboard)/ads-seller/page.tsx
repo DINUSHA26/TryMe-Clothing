@@ -83,15 +83,15 @@ export default function AdsSellerDashboardHome() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-black text-white p-6 md:p-8 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
-        <div className="absolute right-0 bottom-0 top-0 opacity-10 pointer-events-none translate-x-12 translate-y-6">
+      <div className="bg-white border border-gray-100 p-6 md:p-8 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
+        <div className="absolute right-0 bottom-0 top-0 opacity-5 pointer-events-none translate-x-12 translate-y-6 text-[#FF6600]">
           <Megaphone className="h-64 w-64 rotate-12" />
         </div>
         <div className="space-y-1.5 relative z-10">
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gray-900">
             Welcome back, {sellerName}!
           </h1>
-          <p className="text-gray-300 text-sm max-w-xl leading-relaxed">
+          <p className="text-gray-500 text-sm max-w-xl leading-relaxed">
             Manage your classified listings, track views, and update your mini-website storefront profile from here.
           </p>
         </div>

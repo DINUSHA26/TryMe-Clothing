@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { LogOut, ShoppingBag, AlertTriangle } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -78,6 +78,37 @@ export function AdsSellerMobileNav({ isOpen, onClose }: AdsSellerMobileNavProps)
                       {item.badge}
                     </span>
                   )}
+                </Link>
+              );
+            })}
+
+            {/* My Shopping Section */}
+            <div className="pt-4 pb-2 px-3">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                My Shopping
+              </span>
+              <Separator className="mt-2 opacity-50" />
+            </div>
+
+            {[
+              { label: "My Orders", href: "/orders", icon: ShoppingBag },
+              { label: "My Disputes", href: "/my-disputes", icon: AlertTriangle },
+            ].map((item) => {
+              const isItemActive = isActive(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                    isItemActive
+                      ? "bg-[#FF6600] text-white"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  )}
+                >
+                  <item.icon className="w-5 h-5 shrink-0" />
+                  <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               );
             })}

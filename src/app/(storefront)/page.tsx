@@ -58,8 +58,8 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch featured products (latest 8 products)
-        const productsResponse = await fetch("/api/products?limit=8&sortBy=createdAt&sortOrder=desc");
+        // Fetch featured products (latest 10 products)
+        const productsResponse = await fetch("/api/products?limit=10&sortBy=createdAt&sortOrder=desc");
         const productsData = await productsResponse.json();
         if (productsData.success) {
           setFeaturedProducts(productsData.data.products);
@@ -71,13 +71,13 @@ export default function Home() {
         let allCategories: Category[] = [];
         if (categoriesData.success && categoriesData.data.categories) {
           allCategories = categoriesData.data.categories;
-          setCategories(allCategories.slice(0, 6)); // Show first 6 active categories
+          setCategories(allCategories.slice(0, 8)); // Show first 8 active categories
         }
 
         // Fetch products for Women's wear
         const womensCategory = allCategories.find(c => c.slug === "womens-clothing");
         if (womensCategory) {
-          const womensResponse = await fetch(`/api/products?categoryId=${womensCategory.id}&limit=4`);
+          const womensResponse = await fetch(`/api/products?categoryId=${womensCategory.id}&limit=5`);
           const womensData = await womensResponse.json();
           if (womensData.success) {
             setWomensProducts(womensData.data.products);
@@ -88,7 +88,7 @@ export default function Home() {
         // Fetch products for Men's wear
         const mensCategory = allCategories.find(c => c.slug === "mens-clothing");
         if (mensCategory) {
-          const mensResponse = await fetch(`/api/products?categoryId=${mensCategory.id}&limit=4`);
+          const mensResponse = await fetch(`/api/products?categoryId=${mensCategory.id}&limit=5`);
           const mensData = await mensResponse.json();
           if (mensData.success) {
             setMensProducts(mensData.data.products);
@@ -188,8 +188,8 @@ export default function Home() {
             </Button>
           </div>
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="space-y-4">
                   <Skeleton className="aspect-[4/3] w-full rounded-xl" />
                   <Skeleton className="h-4 w-1/2 mx-auto" />
@@ -197,7 +197,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
               {categories.map((category) => (
                 <Link
                   key={category.id}
@@ -211,7 +211,7 @@ export default function Home() {
                           src={category.image}
                           alt={category.name}
                           fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           className="object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -256,8 +256,8 @@ export default function Home() {
             </Button>
           </div>
           {loading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+              {Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="space-y-3">
                   <Skeleton className="aspect-square w-full rounded-xl" />
                   <Skeleton className="h-4 w-3/4" />
@@ -266,7 +266,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <ProductGrid products={featuredProducts} />
+            <ProductGrid products={featuredProducts} columns={5} />
           )}
         </div>
       </section>
@@ -284,8 +284,8 @@ export default function Home() {
             </Link>
           </div>
           {womensLoading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+              {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="space-y-3">
                   <Skeleton className="aspect-square w-full rounded-xl" />
                   <Skeleton className="h-4 w-3/4" />
@@ -294,7 +294,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <ProductGrid products={womensProducts} />
+            <ProductGrid products={womensProducts} columns={5} />
           )}
         </div>
       </section>
@@ -312,8 +312,8 @@ export default function Home() {
             </Link>
           </div>
           {mensLoading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+              {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="space-y-3">
                   <Skeleton className="aspect-square w-full rounded-xl" />
                   <Skeleton className="h-4 w-3/4" />
@@ -322,7 +322,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <ProductGrid products={mensProducts} />
+            <ProductGrid products={mensProducts} columns={5} />
           )}
         </div>
       </section>
