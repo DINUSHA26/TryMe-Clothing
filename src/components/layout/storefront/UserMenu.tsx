@@ -87,6 +87,14 @@ export function UserMenu() {
             </Link>
           </DropdownMenuItem>
         )}
+        {user.role === "ADS_SELLER" && (
+          <DropdownMenuItem asChild>
+            <Link href="/ads-seller" className="cursor-pointer">
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              Ads Seller Dashboard
+            </Link>
+          </DropdownMenuItem>
+        )}
         {user.role === "CUSTOMER" && (
           <>
             <DropdownMenuItem asChild>

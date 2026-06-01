@@ -163,3 +163,5 @@ export interface VendorDashboardStats {
   walletBalance: WalletSummary;
   recentOrders: OrderWithDetails[];
 }
+
+export * from "./ads";

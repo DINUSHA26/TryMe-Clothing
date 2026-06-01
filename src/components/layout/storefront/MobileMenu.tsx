@@ -52,6 +52,8 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
     navItems.push({ href: "/admin", label: "Admin Dashboard", icon: User });
   } else if (isAuthenticated && user?.role === "VENDOR") {
     navItems.push({ href: "/vendor", label: "Vendor Dashboard", icon: User });
+  } else if (isAuthenticated && user?.role === "ADS_SELLER") {
+    navItems.push({ href: "/ads-seller", label: "Ads Seller Dashboard", icon: User });
   }
 
   return (

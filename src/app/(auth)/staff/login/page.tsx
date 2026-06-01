@@ -57,6 +57,15 @@ function StaffLoginContent() {
                                     Become a Vendor
                                 </Link>
                             </p>
+                            <p className="text-sm text-gray-600">
+                                Want to ads with us?{" "}
+                                <Link
+                                    href="/ads-seller/register"
+                                    className="text-orange-600 hover:text-orange-700 font-medium hover:underline"
+                                >
+                                    Become an Ads Seller
+                                </Link>
+                            </p>
                         </div>
                     </div>
                 </div>

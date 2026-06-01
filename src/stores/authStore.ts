@@ -17,6 +17,13 @@ interface User {
     businessName: string;
     isShopOpen: boolean;
   } | null;
+  adsSeller?: {
+    id: string;
+    status: string;
+    slug: string;
+    primaryCategory: string;
+    businessName?: string | null;
+  } | null;
 }
 
 interface AuthState {

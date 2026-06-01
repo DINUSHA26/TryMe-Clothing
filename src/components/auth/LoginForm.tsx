@@ -70,7 +70,7 @@ export function LoginForm({ redirectUrl, userType }: LoginFormProps) {
           return;
         }
       } else {
-        if (userRole !== "ADMIN" && userRole !== "VENDOR") {
+        if (userRole !== "ADMIN" && userRole !== "VENDOR" && userRole !== "ADS_SELLER") {
           toast.error("This is a staff-only portal. Customers should use the regular login page.");
           await fetch("/api/auth/logout", { method: "POST" });
           return;
@@ -98,10 +98,19 @@ export function LoginForm({ redirectUrl, userType }: LoginFormProps) {
       toast.success("Login successful!");
 
       // Redirect
-      if (redirectUrl && redirectUrl.startsWith("/") && !redirectUrl.startsWith("//")) {
-        router.push(redirectUrl);
+      if (userRole === "ADS_SELLER") {
+        const adsSeller = result.data.user.adsSeller;
+        if (adsSeller?.status === "PENDING") {
+          router.push("/ads-seller/pending");
+        } else {
+          router.push(redirectUrl || "/ads-seller");
+        }
       } else {
-        router.push("/");
+        if (redirectUrl && redirectUrl.startsWith("/") && !redirectUrl.startsWith("//")) {
+          router.push(redirectUrl);
+        } else {
+          router.push("/");
+        }
       }
     } catch (error) {
       console.error("Login error:", error);

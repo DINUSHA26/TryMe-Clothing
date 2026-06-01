@@ -104,6 +104,19 @@ export function requireCustomer(request: NextRequest): TokenPayload {
   return user;
 }
 
+/**
+ * Require ads seller role - returns ads seller user or throws 403
+ */
+export function requireAdsSeller(request: NextRequest): TokenPayload {
+  const user = requireAuth(request);
+
+  if (user.role !== (UserRole as any).ADS_SELLER && (user.role as string) !== "ADS_SELLER") {
+    throw new AuthError("Forbidden: Ads Seller access required", 403);
+  }
+
+  return user;
+}
+
 import { prisma } from "./prisma";
 
 /**

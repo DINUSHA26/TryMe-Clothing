@@ -17,6 +17,7 @@ enum UserRole {
   ADMIN
   VENDOR
   CUSTOMER
+  ADS_SELLER
 }
 
 enum OrderStatus {
@@ -155,6 +156,7 @@ model User {
   // Relations
   vendor                  Vendor?
   customer                Customer?
+  adsSeller               AdsSeller?
   sentMessages            ChatMessage[]           @relation("SentMessages")
   notifications           Notification[]
   notificationPreferences NotificationPreference?
@@ -837,6 +839,248 @@ model SavedPost {
   @@unique([userId, postId])
   @@index([userId])
   @@index([postId])
+}
+
+// ==================== CLASSIFIED ADS SYSTEM MODELS ====================
+
+enum AdStatus {
+  PENDING     // Submitted, awaiting admin approval
+  ACTIVE      // Approved and live
+  EXPIRED     // Plan expired or manually expired by admin
+  REJECTED    // Rejected by admin
+  PAUSED      // Paused by seller
+}
+
+enum AdsPlanType {
+  FREE
+  BASIC
+  PRO
+  PREMIUM
+}
+
+enum AdsPlanBillingCycle {
+  LIFETIME    // Free plan — never expires
+  MONTHLY
+  YEARLY
+}
+
+enum AdsSubscriptionStatus {
+  ACTIVE
+  PENDING_APPROVAL
+  EXPIRED
+  CANCELLED
+}
+
+enum AdsPaymentStatus {
+  PENDING
+  PENDING_APPROVAL
+  COMPLETED
+  FAILED
+  REFUNDED
+  REJECTED
+}
+
+// Type of form field rendered in the dynamic specification form
+enum AdFieldType {
+  TEXT        // Single line text input
+  TEXTAREA    // Multi-line text
+  SELECT      // Dropdown (single selection)
+  RADIO       // Radio button group (single selection)
+  CHECKBOX    // Checkbox group (multiple selection)
+  NUMBER      // Numeric input
+}
+
+// Ads Seller profile (parallel to Vendor model)
+model AdsSeller {
+  id              String        @id @default(cuid())
+  userId          String        @unique
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName    String?
+  phone           String
+  primaryCategory String        // Top-level category they registered under
+  status          VendorStatus  @default(PENDING)  // Reuse PENDING/ACTIVE/INACTIVE
+  slug            String        @unique            // e.g. "dinusha-mobiles"
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Mini-website storefront content
+  aboutContent    String?       @db.Text
+  contactInfo     Json?         // { phone, whatsapp, facebook, instagram, mapEmbedUrl }
+
+  // Relations
+  servicePages    AdsSellerPage[]
+  ads             ClassifiedAd[]
+  subscriptions   AdsSubscription[]
+}
+
+// Mini-website custom service pages
+model AdsSellerPage {
+  id          String    @id @default(cuid())
+  sellerId    String
+  seller      AdsSeller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  title       String
+  content     String    @db.Text
+  slug        String
+  sortOrder   Int       @default(0)
+  isPublished Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([sellerId, slug])
+}
+
+// Admin-defined ad pricing plans
+model AdsPlan {
+  id            String              @id @default(cuid())
+  name          String
+  type          AdsPlanType         @unique
+  maxAds        Int
+  price         Decimal             @db.Decimal(10, 2)
+  billingCycle  AdsPlanBillingCycle
+  isActive      Boolean             @default(true)
+  features      Json?               // ["Top Ad facility", "Priority listing", ...]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  subscriptions AdsSubscription[]
+}
+
+// Active/past seller subscriptions
+model AdsSubscription {
+  id          String                @id @default(cuid())
+  sellerId    String
+  seller      AdsSeller             @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  planId      String
+  plan        AdsPlan               @relation(fields: [planId], references: [id])
+  status      AdsSubscriptionStatus @default(ACTIVE)
+  startsAt    DateTime              @default(now())
+  expiresAt   DateTime?             // null = LIFETIME (Free plan)
+  adsUsed     Int                   @default(0)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  payment     AdsPayment?
+
+  @@index([sellerId, status])
+}
+
+// Payment record for plan purchases
+model AdsPayment {
+  id               String           @id @default(cuid())
+  subscriptionId   String           @unique
+  subscription     AdsSubscription  @relation(fields: [subscriptionId], references: [id])
+  amount           Decimal          @db.Decimal(10, 2)
+  currency         String           @default("LKR")
+  status           AdsPaymentStatus @default(PENDING)
+  payherePaymentId String?          @unique
+  paymentMethod    String?
+  paymentHash      String?
+  bankSlipUrl      String?          // Cloudinary URL for uploaded bank transfer slip
+  notificationData Json?
+  paidAt           DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([status])
+}
+
+// Top-level classified categories (Mobiles, Vehicles, Property, etc.)
+model AdsCategory {
+  id           String          @id @default(cuid())
+  name         String          @unique  // "Mobiles"
+  slug         String          @unique  // "mobiles"
+  icon         String?                  // emoji or icon name: "📱"
+  sortOrder    Int             @default(0)
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+
+  subCategories AdsSubCategory[]
+  ads           ClassifiedAd[]
+}
+
+// Sub-categories within a top-level category
+model AdsSubCategory {
+  id          String      @id @default(cuid())
+  categoryId  String
+  category    AdsCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String                   // "Mobile Phones"
+  slug        String                   // "mobile-phones"
+  icon        String?
+  sortOrder   Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+
+  // The set of dynamic fields defined for this sub-category
+  fieldDefinitions AdFieldDefinition[]
+  ads              ClassifiedAd[]
+
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+}
+
+// Defines ONE field that appears in the dynamic form for a sub-category
+model AdFieldDefinition {
+  id             String         @id @default(cuid())
+  subCategoryId  String
+  subCategory    AdsSubCategory @relation(fields: [subCategoryId], references: [id], onDelete: Cascade)
+  
+  fieldKey       String         // Internal key stored in ad specs JSON: "brand", "ram", "condition"
+  label          String         // Display label: "Brand", "RAM", "Condition"
+  fieldType      AdFieldType    // TEXT | SELECT | RADIO | CHECKBOX | NUMBER
+  options        Json?          // For SELECT/RADIO/CHECKBOX: ["Samsung","Apple","Huawei"]
+  isRequired     Boolean        @default(false)
+  isOptional     Boolean        @default(true)   // Shows "(optional)" label
+  sortOrder      Int            @default(0)
+  placeholder    String?        // For TEXT/NUMBER fields
+  helpText       String?        // Shown below the field
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([subCategoryId])
+  @@index([subCategoryId, sortOrder])
+}
+
+// The classified ad itself
+model ClassifiedAd {
+  id              String          @id @default(cuid())
+  sellerId        String
+  seller          AdsSeller       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  // Category & location
+  categoryId      String
+  category        AdsCategory     @relation(fields: [categoryId], references: [id])
+  subCategoryId   String
+  subCategory     AdsSubCategory  @relation(fields: [subCategoryId], references: [id])
+  district        String          // "Colombo"
+  localArea       String?         // "Nugegoda"
+  
+  // Core ad content
+  title           String
+  description     String          @db.Text
+  price           Decimal?        @db.Decimal(10, 2)  // null = "Contact for price"
+  priceNegotiable Boolean         @default(false)
+  images          String[]                             // Cloudinary URLs (up to 6)
+  
+  // Dynamic specifications stored as JSON
+  specifications  Json?
+  
+  // Moderation & display
+  status          AdStatus        @default(PENDING)
+  isTopAd         Boolean         @default(false)
+  views           Int             @default(0)
+  rejectionReason String?
+  adminNote       String?
+  expiresAt       DateTime?
+  publishedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([sellerId])
+  @@index([categoryId, subCategoryId])
+  @@index([status, isTopAd])
+  @@index([district, localArea])
+  @@index([createdAt])
 }
 
 

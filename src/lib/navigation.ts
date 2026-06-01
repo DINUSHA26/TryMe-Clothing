@@ -17,6 +17,9 @@ import {
   ShoppingBag,
   Percent,
   MessageSquare,
+  Megaphone,
+  CreditCard,
+  LayoutGrid,
 } from "lucide-react";
 
 export interface NavItem {
@@ -103,6 +106,26 @@ export const adminNavItems: NavItem[] = [
     href: "/admin/settings",
     icon: Settings,
   },
+  {
+    label: "Ads Sellers",
+    href: "/admin/ads-sellers",
+    icon: Megaphone,
+  },
+  {
+    label: "Ads Plans",
+    href: "/admin/ads-plans",
+    icon: CreditCard,
+  },
+  {
+    label: "Marketplace Ads",
+    href: "/admin/marketplace",
+    icon: LayoutGrid,
+  },
+  {
+    label: "Plan Payments",
+    href: "/admin/ads-plan-payments",
+    icon: CreditCard,
+  },
 ];
 
 export const vendorNavItems: NavItem[] = [
@@ -148,6 +171,44 @@ export const vendorNavItems: NavItem[] = [
   },
 ];
 
+export const adsSellerNavItems: NavItem[] = [
+  {
+    label: "Storefront",
+    href: "/",
+    icon: Home,
+  },
+  {
+    label: "Dashboard",
+    href: "/ads-seller",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "My Ads",
+    href: "/ads-seller/my-ads",
+    icon: LayoutGrid,
+  },
+  {
+    label: "Post an Ad",
+    href: "/ads-seller/post-ad",
+    icon: Megaphone,
+  },
+  {
+    label: "Pricing Plans",
+    href: "/ads-seller/plans",
+    icon: CreditCard,
+  },
+  {
+    label: "My Storefront",
+    href: "/ads-seller/storefront",
+    icon: Store,
+  },
+  {
+    label: "Settings",
+    href: "/ads-seller/settings",
+    icon: Settings,
+  },
+];
+
 export const storefrontNavItems: NavItem[] = [
   {
     label: "Home",
@@ -165,9 +226,14 @@ export const storefrontNavItems: NavItem[] = [
     icon: FolderTree,
   },
   {
+    label: "Marketplace",
+    href: "/marketplace",
+    icon: LayoutGrid,
+  },
+  {
     label: "Social",
     href: "/social",
-    icon: MessageSquare, // Assuming MessageSquare is imported at the top
+    icon: MessageSquare,
   },
   {
     label: "Vendors",

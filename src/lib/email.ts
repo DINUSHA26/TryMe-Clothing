@@ -1412,4 +1412,159 @@ export const emailService = {
       return { success: false, error };
     }
   },
+
+  /**
+   * Send Welcome/Approval email to new Ads Seller
+   */
+  async sendAdsSellerWelcomeEmail(to: string, businessName: string, email: string) {
+    try {
+      const loginUrl = `${getAppUrl()}/staff/login`;
+      const { data, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `Welcome to ${APP_NAME} - Your Ads Seller Account Approved`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Welcome to ${APP_NAME}</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #FF6600;">Account Approved!</h2>
+    <p>Dear ${businessName || "Ads Seller"},</p>
+    <p>We are pleased to inform you that your Ads Seller registration has been approved by the administrators.</p>
+    <p>You can now log in and start publishing your classified ads on our marketplace.</p>
+    <div style="background: #f4f4f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
+      <p style="margin: 0 0 5px;"><strong>Your Login Credentials:</strong></p>
+      <p style="margin: 0 0 5px;"><strong>Email:</strong> ${email}</p>
+      <p style="margin: 0;"><strong>Staff Login Portal:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
+    </div>
+    <a href="${loginUrl}" style="display: inline-block; padding: 12px 24px; background: #FF6600; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Login Now</a>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send Registration Received email to Ads Seller
+   */
+  async sendAdsSellerRegistrationEmail(to: string, businessName: string) {
+    try {
+      const { data, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Ads Seller Registration Received`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Registration Under Review</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #FF6600;">Registration Received</h2>
+    <p>Dear ${businessName || "Ads Seller"},</p>
+    <p>Thank you for registering to become an Ads Seller on ${APP_NAME}.</p>
+    <p>Your application is currently under review by our moderation team. You will receive an email notification as soon as your account is activated (usually within 24 hours).</p>
+    <p>If you have any questions, feel free to contact us.</p>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send Ad Approved notification
+   */
+  async sendAdApprovedEmail(to: string, sellerName: string, adTitle: string, adId: string) {
+    try {
+      const adUrl = `${getAppUrl()}/marketplace/${adId}`;
+      const { data, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Your Ad is Live!`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ad Approved</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #22c55e;">Your Ad is Live!</h2>
+    <p>Hello ${sellerName},</p>
+    <p>Good news! Your classified ad <strong>"${adTitle}"</strong> has been approved and is now live on our marketplace.</p>
+    <a href="${adUrl}" style="display: inline-block; padding: 12px 24px; background: #22c55e; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 15px;">View Ad on Marketplace</a>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send Ad Rejected notification
+   */
+  async sendAdRejectedEmail(to: string, sellerName: string, adTitle: string, reason: string) {
+    try {
+      const dashboardUrl = `${getAppUrl()}/ads-seller/my-ads`;
+      const { data, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Action Required: Your Ad was Rejected`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ad Rejected</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #ef4444;">Ad Review Completed</h2>
+    <p>Hello ${sellerName},</p>
+    <p>Your classified ad <strong>"${adTitle}"</strong> was reviewed and unfortunately, could not be approved for publication.</p>
+    <div style="background: #fef2f2; padding: 15px; border-left: 4px solid #ef4444; border-radius: 6px; margin: 20px 0;">
+      <p style="margin: 0 0 5px; color: #ef4444; font-weight: bold;">Reason for rejection:</p>
+      <p style="margin: 0; color: #991b1b;">${reason || "Violation of marketplace guidelines"}</p>
+    </div>
+    <p>You can edit your ad and submit it again for approval by visiting your dashboard.</p>
+    <a href="${dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #ef4444; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Go to Dashboard</a>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
 };

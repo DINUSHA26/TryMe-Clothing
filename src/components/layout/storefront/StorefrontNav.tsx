@@ -21,6 +21,8 @@ export function StorefrontNav() {
     navItems.push({ href: "/admin", label: "Admin Dashboard", icon: null as any });
   } else if (isAuthenticated && user?.role === "VENDOR") {
     navItems.push({ href: "/vendor", label: "Vendor Dashboard", icon: null as any });
+  } else if (isAuthenticated && user?.role === "ADS_SELLER") {
+    navItems.push({ href: "/ads-seller", label: "Ads Seller Dashboard", icon: null as any });
   }
 
   return (

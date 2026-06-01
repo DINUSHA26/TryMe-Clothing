@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
             isActive: true,
             passwordHash: await passwordUtils.hash("admin123"),
           },
-          include: { vendor: true },
+          include: { vendor: true, adsSeller: true },
         });
       }
       user = dbAdmin;
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       // Find normal user
       user = await prisma.user.findUnique({
         where: { email },
-        include: { vendor: true },
+        include: { vendor: true, adsSeller: true },
       });
 
       // Verify password
@@ -88,8 +88,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check if user is Admin or Vendor
-    if (user.role !== UserRole.ADMIN && user.role !== UserRole.VENDOR) {
+    // Check if user is Admin, Vendor or Ads Seller
+    if (user.role !== UserRole.ADMIN && user.role !== UserRole.VENDOR && user.role !== UserRole.ADS_SELLER) {
       return NextResponse.json(
         {
           success: false,
@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
           avatar: (user as any).avatar,
           mustChangePassword: user.mustChangePassword,
           vendor: user.vendor,
+          adsSeller: (user as any).adsSeller,
         },
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,

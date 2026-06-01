@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 // Plain string role type — avoids importing @prisma/client in Edge Runtime
-type Role = "ADMIN" | "VENDOR" | "CUSTOMER";
+type Role = "ADMIN" | "VENDOR" | "CUSTOMER" | "ADS_SELLER";
 
 // Verify JWT using jose (Edge Runtime compatible)
 async function verifyToken(token: string): Promise<{ userId: string; email: string; role: Role } | null> {
@@ -42,12 +42,17 @@ const protectedRoutes: Record<string, Role[]> = {
   // ── Shared API routes ─────────────────────────────────────────────────────
   "/api/chat": ["CUSTOMER", "VENDOR", "ADMIN"],
   "/api/pusher/auth": ["CUSTOMER", "VENDOR", "ADMIN"],
-  "/api/upload": ["CUSTOMER", "VENDOR", "ADMIN"],
+  "/api/upload": ["CUSTOMER", "VENDOR", "ADMIN", "ADS_SELLER"],
   "/api/notifications": ["CUSTOMER", "ADMIN", "VENDOR"],
   "/api/profile": ["CUSTOMER", "VENDOR", "ADMIN"],
   // ── Role-restricted API routes ────────────────────────────────────────────
   "/api/admin": ["ADMIN"],
   "/api/vendor": ["VENDOR"],
+  "/ads-seller": ["ADS_SELLER"],
+  "/api/ads/seller": ["ADS_SELLER"],
+  "/api/admin/ads-sellers": ["ADMIN"],
+  "/api/admin/ads-plans": ["ADMIN"],
+  "/api/admin/marketplace": ["ADMIN"],
 };
 
 // Public routes that don't require authentication
@@ -65,6 +70,7 @@ const publicRoutes = [
   "/api/auth/refresh",
   "/api/auth/otp",
   "/api/payments/webhook", // PayHere webhook must be public
+  "/api/ads/seller/payment/payhere/webhook", // PayHere ads webhook must be public
   "/api/products",
   "/api/categories",
   "/api/vendors",
@@ -78,6 +84,10 @@ const publicRoutes = [
   "/new-arrivals",
   "/vendor/register",
   "/cart",
+  "/marketplace",
+  "/ads-seller/register",
+  "/api/ads/public",
+  "/api/ads/auth",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -127,7 +137,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const url = request.nextUrl.clone();
-    if (pathname.startsWith("/admin") || pathname.startsWith("/vendor")) {
+    if (pathname.startsWith("/admin") || pathname.startsWith("/vendor") || pathname.startsWith("/ads-seller")) {
       url.pathname = "/staff/login";
     } else {
       url.pathname = "/login";
@@ -145,7 +155,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const url = request.nextUrl.clone();
-    if (pathname.startsWith("/admin") || pathname.startsWith("/vendor")) {
+    if (pathname.startsWith("/admin") || pathname.startsWith("/vendor") || pathname.startsWith("/ads-seller")) {
       url.pathname = "/staff/login";
     } else {
       url.pathname = "/login";
