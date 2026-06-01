@@ -26,6 +26,8 @@ export default function Home() {
   const [womensLoading, setWomensLoading] = useState(true);
   const [mensLoading, setMensLoading] = useState(true);
   const [adsCategoriesLoading, setAdsCategoriesLoading] = useState(true);
+  const [homeStories, setHomeStories] = useState<any[]>([]);
+  const [storiesLoading, setStoriesLoading] = useState(true);
 
   const getCategoryCount = (category: any) => {
     if (!category.subCategories) return 0;
@@ -111,6 +113,19 @@ export default function Home() {
           setAdsCategories(adsCatData.data.slice(0, 5)); // First 5 categories
         }
         setAdsCategoriesLoading(false);
+
+        // Fetch stories
+        try {
+          const storiesResponse = await fetch("/api/social/stories");
+          const storiesData = await storiesResponse.json();
+          if (storiesData.success && storiesData.data.groupedStories) {
+            setHomeStories(storiesData.data.groupedStories.slice(0, 5));
+          }
+        } catch (storiesError) {
+          console.error("Error fetching homepage stories:", storiesError);
+        } finally {
+          setStoriesLoading(false);
+        }
       } catch (error) {
         console.error("Error fetching homepage data:", error);
       } finally {
@@ -336,6 +351,72 @@ export default function Home() {
                     <div className="min-w-0">
                       <h3 className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 leading-tight break-words">{cat.name}</h3>
                       <p className="text-[10px] sm:text-xs text-gray-400 font-semibold mt-0.5">{adCount.toLocaleString()} ads</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Latest Stories Section */}
+      <section className="py-10 md:py-16 bg-muted/30">
+        <div className="container px-4 md:px-6">
+          <div className="flex items-center justify-between gap-2 mb-6 md:mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold leading-none">Latest Stories</h2>
+            <Button variant="ghost" asChild>
+              <Link href="/social">
+                View All
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          {storiesLoading ? (
+            <div className="flex overflow-x-auto gap-4 pb-4 md:grid md:grid-cols-4 lg:grid-cols-5 md:gap-6 md:overflow-x-visible md:pb-0 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent snap-x">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-[3/4] w-[140px] sm:w-[160px] md:w-auto rounded-2xl shrink-0 snap-start" />
+              ))}
+            </div>
+          ) : homeStories.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground text-sm font-medium italic bg-white dark:bg-slate-900 border rounded-2xl">
+              No active stories at the moment.
+            </div>
+          ) : (
+            <div className="flex overflow-x-auto gap-4 pb-4 md:grid md:grid-cols-4 lg:grid-cols-5 md:gap-6 md:overflow-x-visible md:pb-0 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent snap-x">
+              {homeStories.map((group) => {
+                const latestStory = group.stories[0];
+                if (!latestStory) return null;
+
+                return (
+                  <Link
+                    key={group.userId}
+                    href="/social"
+                    className="relative aspect-[3/4] w-[140px] sm:w-[160px] md:w-auto rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 block group border shrink-0 snap-start"
+                  >
+                    <Image
+                      src={latestStory.imageUrl}
+                      alt={group.displayName}
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/75" />
+
+                    {/* Profile ring */}
+                    <div className="absolute top-3 left-3 h-8 w-8 sm:h-9 sm:w-9 rounded-full border-2 border-primary bg-white dark:bg-slate-900 shadow-md overflow-hidden flex items-center justify-center">
+                      {group.logoUrl ? (
+                        <img src={group.logoUrl} alt={group.displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs font-bold text-primary">{group.displayName.substring(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+
+                    {/* Name overlay */}
+                    <div className="absolute bottom-3 left-3 right-3 text-center">
+                      <p className="text-xs sm:text-sm font-extrabold text-white leading-tight line-clamp-2 drop-shadow">
+                        {group.displayName}
+                      </p>
                     </div>
                   </Link>
                 );

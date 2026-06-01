@@ -696,16 +696,6 @@ export function StoriesTray() {
                   )}
                 </button>
                 <button
-                  onClick={() => {
-                    setIsPaused(true);
-                    setProgress(0);
-                  }}
-                  className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
-                  title="Stop Story"
-                >
-                  <Square className="h-4 w-4 fill-white text-white" />
-                </button>
-                <button
                   onClick={closeViewer}
                   className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
                   title="Close Viewer"

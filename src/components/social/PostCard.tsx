@@ -188,7 +188,7 @@ export function PostCard({ post }: { post: SocialPostType }) {
                     <img 
                         src={post.images[0]} 
                         alt="Post image" 
-                        className="w-full h-auto max-h-[700px] object-contain mx-auto" 
+                        className="w-full h-auto max-h-[500px] md:max-h-[420px] object-contain mx-auto" 
                     />
                 </div>
             );
