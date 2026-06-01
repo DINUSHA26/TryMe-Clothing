@@ -693,7 +693,7 @@ export default function MarketplacePortalPage() {
           /* ---------------- SEARCH LISTING STATE ---------------- */
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Left Filter pane: Subcategory list */}
-            <div className="space-y-6 lg:col-span-1">
+            <div className="hidden lg:block space-y-6 lg:col-span-1">
               <CardBorderWrapper>
                 <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
                   <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">All Categories</span>

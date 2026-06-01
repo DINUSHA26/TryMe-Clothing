@@ -3,8 +3,192 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChevronRight, ChevronLeft, ArrowLeft, Loader2, Search } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronLeft,
+  ArrowLeft,
+  Loader2,
+  Search,
+  Smartphone,
+  Headphones,
+  Wrench,
+  Watch,
+  Laptop,
+  Mouse,
+  Tv,
+  Cast,
+  Camera,
+  Mic,
+  Settings,
+  Fan,
+  Gamepad2,
+  Speaker,
+  Car,
+  Bike,
+  Truck,
+  Bus,
+  Compass,
+  HardHat,
+  Tractor,
+  Key,
+  Ship,
+  Map,
+  Home,
+  Building2,
+  Briefcase,
+  Sofa,
+  Bath,
+  Sprout,
+  Palette,
+  Lamp,
+  Utensils,
+  PawPrint,
+  Bone,
+  HeartPulse,
+  Scissors,
+  Plane,
+  Music,
+  Heart,
+  Printer,
+  Sun,
+  Layers,
+  FileText,
+  Stethoscope,
+  Hammer,
+  Dumbbell,
+  Activity,
+  Ticket,
+  BookOpen,
+  Baby,
+  Trophy,
+  ShoppingBag,
+  Shirt,
+  Footprints,
+  Gem,
+  Glasses,
+  GraduationCap,
+  School,
+  Leaf,
+  Package,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const SUBCATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  // Mobiles
+  "mobile-phones": Smartphone,
+  "mobile-phone-accessories": Headphones,
+  "mobile-spare-parts": Wrench,
+  "smartwatches-fitness": Watch,
+
+  // Electronics
+  "computers-tablets": Laptop,
+  "computer-accessories": Mouse,
+  "tvs": Tv,
+  "tv-video-accessories": Cast,
+  "cameras": Camera,
+  "audio-mp3": Mic,
+  "home-appliances": Settings,
+  "electrical-fittings": Fan,
+  "video-games": Gamepad2,
+  "other-electronics": Speaker,
+
+  // Vehicles
+  "cars": Car,
+  "motorbikes": Bike,
+  "three-wheelers": Car,
+  "bicycles": Bike,
+  "vans": Truck,
+  "buses": Bus,
+  "lorries-trucks": Truck,
+  "heavy-duty": HardHat,
+  "tractors": Tractor,
+  "auto-services": Wrench,
+  "rentals": Key,
+  "auto-parts": Settings,
+  "vehicle-maintenance": Wrench,
+  "boats": Ship,
+
+  // Property
+  "land": Map,
+  "houses": Home,
+  "apartments": Building2,
+  "commercial-properties": Briefcase,
+
+  // Home & Garden
+  "furniture": Sofa,
+  "bathroom-sanitary": Bath,
+  "garden": Sprout,
+  "home-decor": Palette,
+  "kitchen-items": Utensils,
+  "other-home-items": Home,
+
+  // Animals
+  "pets": PawPrint,
+  "pet-food": Bone,
+  "vet-services": HeartPulse,
+  "farm-animals": PawPrint,
+  "animal-accessories": Scissors,
+  "other-animals": PawPrint,
+
+  // Services
+  "trade-services": Wrench,
+  "domestic-services": Home,
+  "events-entertainment": Music,
+  "health-wellbeing": Heart,
+  "travel-tourism": Plane,
+  "other-services": Briefcase,
+
+  // Business & Industry
+  "office-equipment-supplies": Printer,
+  "solar-generators": Sun,
+  "industry-machinery": Wrench,
+  "raw-materials": Layers,
+  "licences-titles": FileText,
+  "medical-equipment": Stethoscope,
+  "building-materials": Hammer,
+  "other-business-services": Briefcase,
+
+  // Hobby, Sport & Kids
+  "musical-instruments": Music,
+  "sports-fitness": Dumbbell,
+  "sports-supplements": Activity,
+  "travel-tickets": Ticket,
+  "art-collectibles": Palette,
+  "music-books-movies": BookOpen,
+  "childrens-items": Baby,
+  "other-hobby-items": Trophy,
+
+  // Fashion & Beauty
+  "bags-luggage": ShoppingBag,
+  "clothing": Shirt,
+  "shoes-footwear": Footprints,
+  "jewellery": Gem,
+  "sunglasses-opticians": Glasses,
+  "watches": Watch,
+  "fashion-accessories": Sparkles,
+  "beauty-products": Sparkles,
+  "other-personal-items": Heart,
+
+  // Essentials
+  "grocery-essentials": ShoppingBag,
+
+  // Education
+  "higher-education": GraduationCap,
+  "textbooks": BookOpen,
+  "tuition": BookOpen,
+  "vocational-institutes": School,
+  "other-education": GraduationCap,
+
+  // Agriculture
+  "crops-seeds": Sprout,
+  "farming-machinery": Tractor,
+  "other-agriculture": Leaf,
+
+  // Other
+  "other-items": Package,
+};
+
 
 interface FieldDefinition {
   id: string;
@@ -321,7 +505,24 @@ export function CategoryPicker({
                             : "text-gray-700 hover:bg-gray-50 hover:text-[#FF6600]"
                         )}
                       >
-                        <span className="truncate">{sub.name}</span>
+                        <span className="flex items-center gap-1.5 md:gap-3 min-w-0">
+                          <span className="text-sm md:text-xl flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg bg-white shadow-sm border border-gray-50 flex-shrink-0">
+                            {(() => {
+                              if (sub.icon) return sub.icon;
+                              const IconComponent = SUBCATEGORY_ICONS[sub.slug];
+                              if (IconComponent) {
+                                return (
+                                  <IconComponent className={cn(
+                                    "h-4 w-4 md:h-5 md:w-5 text-gray-500 transition-colors group-hover:text-[#FF6600]",
+                                    selectedSubId === sub.id && "text-[#FF6600]"
+                                  )} />
+                                );
+                              }
+                              return "📁";
+                            })()}
+                          </span>
+                          <span className="truncate">{sub.name}</span>
+                        </span>
                         <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-transparent group-hover:text-[#FF6600] group-hover:translate-x-0.5 transition-all hidden sm:block" />
                       </button>
                     ))}
