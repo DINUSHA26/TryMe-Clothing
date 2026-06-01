@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, Square } from "lucide-react";
+import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/authStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -135,6 +136,8 @@ export function StoriesTray() {
   const [isPaused, setIsPaused] = useState(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastActiveStoryRef = useRef<string>("");
+  const [isUpdatingStory, setIsUpdatingStory] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   // ── File handlers ────────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -386,6 +389,87 @@ export function StoriesTray() {
 
   const selfGroup = groupedStories.find((g) => g.isSelf);
 
+  const handleDeleteStory = async (storyId: string) => {
+    try {
+      setIsUpdatingStory(true);
+      setIsPaused(true);
+
+      const res = await fetch(`/api/social/stories/${storyId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success("Story deleted successfully!");
+        clearCache();
+        
+        if (activeGroupIndex !== null) {
+          const currentGroup = groupedStories[activeGroupIndex];
+          if (currentGroup.stories.length <= 1) {
+            closeViewer();
+          } else {
+            setActiveStoryIndex(0);
+            setIsPaused(false);
+          }
+        }
+        await fetchStories();
+      } else {
+        toast.error(data.error || "Failed to delete story");
+        setIsPaused(false);
+      }
+    } catch (error) {
+      toast.error("Failed to delete story");
+      setIsPaused(false);
+    } finally {
+      setIsUpdatingStory(false);
+    }
+  };
+
+  const handleEditFileChange = async (e: React.ChangeEvent<HTMLInputElement>, storyId: string) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      try {
+        setIsUpdatingStory(true);
+        setIsPaused(true);
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("folder", "social");
+
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+        const uploadData = await uploadRes.json();
+        if (!uploadData.success || !uploadData.data?.url) {
+          toast.error(uploadData.error || "Failed to upload image.");
+          setIsPaused(false);
+          return;
+        }
+
+        const res = await fetch(`/api/social/stories/${storyId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl: uploadData.data.url }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          toast.success("Story updated successfully!");
+          clearCache();
+          await fetchStories();
+          setIsPaused(false);
+        } else {
+          toast.error(data.error || "Failed to update story");
+          setIsPaused(false);
+        }
+      } catch (error) {
+        toast.error("Failed to update story");
+        setIsPaused(false);
+      } finally {
+        setIsUpdatingStory(false);
+        e.target.value = "";
+      }
+    }
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="w-full relative py-2">
@@ -629,6 +713,21 @@ export function StoriesTray() {
               className="w-full h-full object-contain"
             />
 
+            {groupedStories[activeGroupIndex]?.isSelf && (
+              <input
+                type="file"
+                accept="image/*"
+                ref={editFileInputRef}
+                className="hidden"
+                onChange={(e) =>
+                  handleEditFileChange(
+                    e,
+                    groupedStories[activeGroupIndex].stories[activeStoryIndex].id
+                  )
+                }
+              />
+            )}
+
             {/* Cached indicator inside viewer */}
             {isFromCache && (
               <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1 z-30">
@@ -695,6 +794,39 @@ export function StoriesTray() {
                     <Pause className="h-4 w-4 fill-white text-white" />
                   )}
                 </button>
+                {groupedStories[activeGroupIndex].isSelf && (
+                  <DropdownMenu onOpenChange={(open) => {
+                    if (open) {
+                      setIsPaused(true);
+                    } else {
+                      setIsPaused(false);
+                    }
+                  }}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                        title="Story Options"
+                      >
+                        {isUpdatingStory ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-white" />
+                        ) : (
+                          <MoreHorizontal className="h-4 w-4" />
+                        )}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-36">
+                      <DropdownMenuItem onClick={() => editFileInputRef.current?.click()}>
+                        <Edit2 className="h-4 w-4 mr-2" /> Edit Image
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
+                        onClick={() => handleDeleteStory(groupedStories[activeGroupIndex].stories[activeStoryIndex].id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete Story
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
                 <button
                   onClick={closeViewer}
                   className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
