@@ -6,6 +6,7 @@ import { Search, MapPin, Grid, ChevronDown, ListFilter, RefreshCw, Star, Tag, X,
 import { useToast } from "@/hooks/use-toast";
 import { LocationPicker } from "@/components/ads/LocationPicker";
 import { CategoryPicker } from "@/components/ads/CategoryPicker";
+import { RefineSearchDialog } from "@/components/ads/RefineSearchDialog";
 import { AdCard } from "@/components/ads/AdCard";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +28,7 @@ export default function MarketplacePortalPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isRefineOpen, setIsRefineOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -400,10 +402,14 @@ export default function MarketplacePortalPage() {
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
                 {/* Refine pill */}
-                <div className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#FF6600]/30 bg-[#FF6600]/5 text-xs text-[#FF6600] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setIsRefineOpen(true)}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#FF6600]/30 bg-[#FF6600]/5 text-xs text-[#FF6600] font-bold hover:bg-[#FF6600]/10 transition-colors"
+                >
                   <ListFilter className="h-3.5 w-3.5" />
                   <span>Refine</span>
-                </div>
+                </button>
 
                 {/* Location pill */}
                 <button
@@ -851,6 +857,29 @@ export default function MarketplacePortalPage() {
         showResetAndPostCount={true}
         initialCategoryId={selectedCategoryData?.id}
         initialSubCategoryId={selectedSubCategoryData?.id}
+      />
+      <RefineSearchDialog
+        isOpen={isRefineOpen}
+        onClose={() => setIsRefineOpen(false)}
+        categories={categories}
+        selectedCategoryData={selectedCategoryData}
+        selectedSubCategoryData={selectedSubCategoryData}
+        currentDistrict={currentDistrict}
+        currentLocalArea={currentLocalArea}
+        currentMinPrice={currentMinPrice}
+        currentMaxPrice={currentMaxPrice}
+        currentSort={currentSort}
+        currentSearch={currentSearch}
+        activeSpecs={activeSpecs}
+        onOpenLocation={() => {
+          setIsLocationOpen(true);
+        }}
+        onOpenCategory={() => {
+          setIsCategoryOpen(true);
+        }}
+        onApply={(filters) => {
+          updateFilters(filters);
+        }}
       />
     </div>
   );
