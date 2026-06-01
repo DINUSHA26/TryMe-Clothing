@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff } from "lucide-react";
+import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, Square } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -132,7 +132,9 @@ export function StoriesTray() {
   const [activeGroupIndex, setActiveGroupIndex] = useState<number | null>(null);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number>(0);
   const [progress, setProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActiveStoryRef = useRef<string>("");
 
   // ── File handlers ────────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,17 +256,33 @@ export function StoriesTray() {
       return;
     }
 
-    setProgress(0);
+    const storyKey = `${activeGroupIndex}-${activeStoryIndex}`;
+    const isNewStory = lastActiveStoryRef.current !== storyKey;
+
+    if (isNewStory) {
+      setProgress(0);
+      lastActiveStoryRef.current = storyKey;
+    }
+
+    if (isPaused) {
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      return;
+    }
+
     const duration = 5000;
     const stepTime = 50;
     const steps = duration / stepTime;
-    let currentStep = 0;
+
+    // Start from current progress if resuming, otherwise 0
+    const startProgress = isNewStory ? 0 : progress;
+    let currentStep = Math.round((startProgress / 100) * steps);
 
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
 
     progressIntervalRef.current = setInterval(() => {
       currentStep++;
-      setProgress((currentStep / steps) * 100);
+      const nextProgress = (currentStep / steps) * 100;
+      setProgress(nextProgress);
       if (currentStep >= steps) {
         clearInterval(progressIntervalRef.current!);
         handleNextStory();
@@ -274,7 +292,7 @@ export function StoriesTray() {
     return () => {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
-  }, [activeGroupIndex, activeStoryIndex]);
+  }, [activeGroupIndex, activeStoryIndex, isPaused]);
 
   // ── Create story ─────────────────────────────────────────────────────────
   const handleCreateStory = async () => {
@@ -357,11 +375,13 @@ export function StoriesTray() {
   const openViewer = (groupIndex: number) => {
     setActiveGroupIndex(groupIndex);
     setActiveStoryIndex(0);
+    setIsPaused(false);
   };
 
   const closeViewer = () => {
     setActiveGroupIndex(null);
     setActiveStoryIndex(0);
+    setIsPaused(false);
   };
 
   const selfGroup = groupedStories.find((g) => g.isSelf);
@@ -663,16 +683,47 @@ export function StoriesTray() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={closeViewer}
-                className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
-              >
-                <X className="h-5 w-5 stroke-[2.5]" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsPaused(!isPaused)}
+                  className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                  title={isPaused ? "Play Story" : "Pause Story"}
+                >
+                  {isPaused ? (
+                    <Play className="h-4 w-4 fill-white text-white" />
+                  ) : (
+                    <Pause className="h-4 w-4 fill-white text-white" />
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsPaused(true);
+                    setProgress(0);
+                  }}
+                  className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                  title="Stop Story"
+                >
+                  <Square className="h-4 w-4 fill-white text-white" />
+                </button>
+                <button
+                  onClick={closeViewer}
+                  className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                  title="Close Viewer"
+                >
+                  <X className="h-5 w-5 stroke-[2.5]" />
+                </button>
+              </div>
             </div>
 
             {/* Mobile tap zones */}
-            <div className="absolute inset-x-0 top-20 bottom-0 flex z-10">
+            <div 
+              className="absolute inset-x-0 top-20 bottom-0 flex z-10"
+              onMouseDown={() => setIsPaused(true)}
+              onMouseUp={() => setIsPaused(false)}
+              onMouseLeave={() => setIsPaused(false)}
+              onTouchStart={() => setIsPaused(true)}
+              onTouchEnd={() => setIsPaused(false)}
+            >
               <div onClick={handlePrevStory} className="w-1/3 h-full cursor-w-resize" />
               <div onClick={handleNextStory} className="w-2/3 h-full cursor-e-resize" />
             </div>

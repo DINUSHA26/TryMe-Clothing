@@ -182,10 +182,14 @@ export function PostCard({ post }: { post: SocialPostType }) {
         if (post.images.length === 1) {
             return (
                 <div
-                    className="relative w-full aspect-[4/5] sm:aspect-video rounded-xl overflow-hidden mt-3 border cursor-pointer hover:opacity-95 transition"
+                    className="w-full rounded-xl overflow-hidden mt-3 border cursor-pointer hover:opacity-95 transition bg-slate-50 dark:bg-slate-900/50"
                     onClick={() => openGallery(0)}
                 >
-                    <Image src={post.images[0]} alt="Post image" fill className="object-cover" />
+                    <img 
+                        src={post.images[0]} 
+                        alt="Post image" 
+                        className="w-full h-auto max-h-[700px] object-contain mx-auto" 
+                    />
                 </div>
             );
         }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { ArrowRight, Shield, Truck, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface Category {
   id: string;
@@ -20,9 +21,16 @@ export default function Home() {
   const [womensProducts, setWomensProducts] = useState<any[]>([]);
   const [mensProducts, setMensProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [adsCategories, setAdsCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [womensLoading, setWomensLoading] = useState(true);
   const [mensLoading, setMensLoading] = useState(true);
+  const [adsCategoriesLoading, setAdsCategoriesLoading] = useState(true);
+
+  const getCategoryCount = (category: any) => {
+    if (!category.subCategories) return 0;
+    return category.subCategories.reduce((sum: number, sub: any) => sum + (sub._count?.ads || 0), 0);
+  };
 
   // Carousel State
   const heroImages = [
@@ -77,7 +85,7 @@ export default function Home() {
         // Fetch products for Women's wear
         const womensCategory = allCategories.find(c => c.slug === "womens-clothing");
         if (womensCategory) {
-          const womensResponse = await fetch(`/api/products?categoryId=${womensCategory.id}&limit=5`);
+          const womensResponse = await fetch(`/api/products?categoryId=${womensCategory.id}&limit=6`);
           const womensData = await womensResponse.json();
           if (womensData.success) {
             setWomensProducts(womensData.data.products);
@@ -88,13 +96,21 @@ export default function Home() {
         // Fetch products for Men's wear
         const mensCategory = allCategories.find(c => c.slug === "mens-clothing");
         if (mensCategory) {
-          const mensResponse = await fetch(`/api/products?categoryId=${mensCategory.id}&limit=5`);
+          const mensResponse = await fetch(`/api/products?categoryId=${mensCategory.id}&limit=6`);
           const mensData = await mensResponse.json();
           if (mensData.success) {
             setMensProducts(mensData.data.products);
           }
         }
         setMensLoading(false);
+
+        // Fetch ads categories
+        const adsCatResponse = await fetch("/api/ads/public/categories");
+        const adsCatData = await adsCatResponse.json();
+        if (adsCatData.success) {
+          setAdsCategories(adsCatData.data.slice(0, 5)); // First 5 categories
+        }
+        setAdsCategoriesLoading(false);
       } catch (error) {
         console.error("Error fetching homepage data:", error);
       } finally {
@@ -271,11 +287,69 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Ads Categories Section */}
+      <section className="py-10 md:py-16">
+        <div className="container px-4 md:px-6">
+          <div className="flex items-center justify-between gap-2 mb-6 md:mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold leading-none">Browse items by category</h2>
+            <Button variant="ghost" asChild>
+              <Link href="/marketplace">
+                View All
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          {adsCategoriesLoading ? (
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex items-center gap-2.5 sm:gap-4 p-3 sm:p-5 md:p-6 bg-white border border-gray-100 rounded-2xl shadow-sm",
+                    i === 4 && "hidden lg:flex"
+                  )}
+                >
+                  <Skeleton className="w-10 sm:w-14 h-10 sm:h-14 rounded-xl sm:rounded-2xl shrink-0" />
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {adsCategories.map((cat, index) => {
+                const adCount = getCategoryCount(cat);
+                return (
+                  <Link
+                    key={cat.id}
+                    href={`/marketplace?category=${cat.slug}`}
+                    className={cn(
+                      "flex items-center gap-2.5 sm:gap-4 p-3 sm:p-5 md:p-6 bg-white border border-gray-100 rounded-2xl hover:border-orange-100 hover:bg-orange-50/10 text-left transition-all hover:shadow-md hover:-translate-y-1 duration-300",
+                      index === 4 && "hidden lg:flex"
+                    )}
+                  >
+                    <span className="text-xl sm:text-3xl w-10 sm:w-14 h-10 sm:h-14 rounded-xl sm:rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+                      {cat.icon || "📁"}
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 leading-tight break-words">{cat.name}</h3>
+                      <p className="text-[10px] sm:text-xs text-gray-400 font-semibold mt-0.5">{adCount.toLocaleString()} ads</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Women's Wear Section */}
       <section className="py-10 md:py-16">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">WOMEN&apos;S WEAR</h2>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">WOMEN&apos;S WEAR</h2>
             <p className="text-muted-foreground max-w-2xl mb-4">
               Elevate your style with our latest women&apos;s fashion. Shop chic and trendy pieces now!
             </p>
@@ -285,8 +359,8 @@ export default function Home() {
           </div>
           {womensLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className={cn("space-y-3", i === 5 && "lg:hidden")}>
                   <Skeleton className="aspect-square w-full rounded-xl" />
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
@@ -303,7 +377,7 @@ export default function Home() {
       <section className="py-10 md:py-16 bg-muted/30">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">MEN&apos;S WEAR</h2>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">MEN&apos;S WEAR</h2>
             <p className="text-muted-foreground max-w-2xl mb-4">
               Upgrade your wardrobe with our newest men&apos;s fashion. Shop stylish and modern pieces today!
             </p>
@@ -313,8 +387,8 @@ export default function Home() {
           </div>
           {mensLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className={cn("space-y-3", i === 5 && "lg:hidden")}>
                   <Skeleton className="aspect-square w-full rounded-xl" />
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />

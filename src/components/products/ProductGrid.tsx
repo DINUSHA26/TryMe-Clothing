@@ -1,4 +1,5 @@
 import { ProductCard } from "./ProductCard";
+import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -46,8 +47,14 @@ export function ProductGrid({ products, columns }: ProductGridProps) {
 
   return (
     <div className={`grid gap-6 ${gridClass}`}>
-      {products.map((product) => (
-        <div key={product.id} className={columns === 1 ? "md:max-w-xl mx-auto w-full" : "w-full"}>
+      {products.map((product, index) => (
+        <div
+          key={product.id}
+          className={cn(
+            columns === 1 ? "md:max-w-xl mx-auto w-full" : "w-full",
+            columns === 5 && products.length === 6 && index === 5 && "lg:hidden"
+          )}
+        >
           <ProductCard product={product} />
         </div>
       ))}
