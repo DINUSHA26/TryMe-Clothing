@@ -33,12 +33,13 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { title, content, isPublished, sortOrder } = body;
+    const { title, content, imageUrl, isPublished, sortOrder } = body;
 
     const updateData: any = {};
     if (content !== undefined) updateData.content = content;
     if (isPublished !== undefined) updateData.isPublished = isPublished;
     if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
 
     if (title && title !== page.title) {
       updateData.title = title;

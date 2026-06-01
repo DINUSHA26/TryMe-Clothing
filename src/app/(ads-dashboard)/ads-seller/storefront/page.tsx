@@ -76,6 +76,7 @@ export default function StorefrontBuilderPage() {
   const [editingPage, setEditingPage] = useState<any>(null);
   const [pageTitle, setPageTitle] = useState("");
   const [pageContent, setPageContent] = useState("");
+  const [pageImageUrl, setPageImageUrl] = useState("");
   const [isSavingPage, setIsSavingPage] = useState(false);
 
   const fetchStorefrontSettings = async () => {
@@ -223,6 +224,7 @@ export default function StorefrontBuilderPage() {
     setEditingPage(null);
     setPageTitle("");
     setPageContent("");
+    setPageImageUrl("");
     setIsPageDialogOpen(true);
   };
 
@@ -230,7 +232,49 @@ export default function StorefrontBuilderPage() {
     setEditingPage(page);
     setPageTitle(page.title);
     setPageContent(page.content);
+    setPageImageUrl(page.imageUrl || "");
     setIsPageDialogOpen(true);
+  };
+
+  const handleServiceImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "storefronts");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        setPageImageUrl(result.data.url);
+        toast({
+          title: "Success",
+          description: "Service image uploaded successfully!",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Upload Failed",
+          description: result.error || "Failed to upload image",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An error occurred during file upload.",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSavePage = async () => {
@@ -256,6 +300,7 @@ export default function StorefrontBuilderPage() {
         body: JSON.stringify({
           title: pageTitle,
           content: pageContent,
+          imageUrl: pageImageUrl || null,
         }),
       });
       const result = await res.json();
@@ -715,7 +760,18 @@ export default function StorefrontBuilderPage() {
                     <TableBody>
                       {pages.map((p) => (
                         <TableRow key={p.id} className="hover:bg-gray-50/50">
-                          <TableCell className="font-semibold text-gray-900 text-xs">{p.title}</TableCell>
+                          <TableCell className="font-semibold text-gray-900 text-xs">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-150 overflow-hidden flex items-center justify-center shrink-0">
+                                {p.imageUrl ? (
+                                  <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <ImageIcon className="h-4 w-4 text-gray-300" />
+                                )}
+                              </div>
+                              <span className="truncate max-w-[160px]">{p.title}</span>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-gray-500 text-xs font-mono">{p.slug}</TableCell>
                           <TableCell>
                             <Badge
@@ -785,6 +841,33 @@ export default function StorefrontBuilderPage() {
                 className="border-gray-200 text-xs rounded-xl"
               />
             </div>
+
+            {/* Service Image Upload */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-gray-700">Service Image</Label>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-200 overflow-hidden flex items-center justify-center text-gray-400 shrink-0 relative">
+                  {pageImageUrl ? (
+                    <img src={pageImageUrl} alt="Service preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon className="h-6 w-6 text-gray-300" />
+                  )}
+                </div>
+                <div className="space-y-1.5 flex-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    disabled={isUploading || isSavingPage}
+                    onChange={handleServiceImageUpload}
+                    className="text-xs border-gray-200 cursor-pointer"
+                  />
+                  <p className="text-[9px] text-gray-400 leading-normal">
+                    Square or landscape image. Max file size: 5MB.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="pageContent" className="text-xs font-bold text-gray-700">
                 Page Content

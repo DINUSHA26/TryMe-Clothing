@@ -920,6 +920,7 @@ model AdsSellerPage {
   seller      AdsSeller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   title       String
   content     String    @db.Text
+  imageUrl    String?
   slug        String
   sortOrder   Int       @default(0)
   isPublished Boolean   @default(true)

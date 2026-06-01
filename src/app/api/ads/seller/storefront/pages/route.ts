@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, content, isPublished = true, sortOrder = 0 } = body;
+    const { title, content, imageUrl, isPublished = true, sortOrder = 0 } = body;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
         sellerId: seller.id,
         title,
         content,
+        imageUrl,
         slug,
         isPublished,
         sortOrder,

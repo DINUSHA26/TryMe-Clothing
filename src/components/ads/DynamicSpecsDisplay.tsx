@@ -22,6 +22,10 @@ export function DynamicSpecsDisplay({
   const rows: { label: string; value: string }[] = [];
 
   fieldDefinitions.forEach((field) => {
+    if (field.fieldKey === "otherTransmission" && specifications["transmission"] !== "Other") {
+      return;
+    }
+
     const rawVal = specifications[field.fieldKey];
     if (rawVal === undefined || rawVal === null || rawVal === "") return;
 

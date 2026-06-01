@@ -49,6 +49,26 @@ export function DynamicSpecsForm({
 
   const handleFieldChange = (fieldKey: string, val: any) => {
     const updated = { ...values, [fieldKey]: val };
+    
+    // Reset dependent fields if parent field changes
+    fieldDefinitions.forEach((fd) => {
+      if (fd.fieldKey !== fieldKey) {
+        let fdOptions: any = fd.options;
+        if (typeof fdOptions === "string") {
+          try {
+            fdOptions = JSON.parse(fdOptions);
+          } catch {}
+        }
+        if (fdOptions && !Array.isArray(fdOptions) && typeof fdOptions === "object") {
+          const oldParentVal = values[fieldKey];
+          const newParentVal = val;
+          if (fdOptions[oldParentVal] && oldParentVal !== newParentVal) {
+            updated[fd.fieldKey] = "";
+          }
+        }
+      }
+    });
+
     setValues(updated);
     onChange(updated);
   };
@@ -64,24 +84,47 @@ export function DynamicSpecsForm({
     handleFieldChange(fieldKey, updatedList);
   };
 
-  // Safe parse options JSON
-  const parseOptions = (options: any): string[] => {
-    if (!options) return [];
-    if (Array.isArray(options)) return options;
-    try {
-      if (typeof options === "string") {
-        return JSON.parse(options);
+  // Safe parse options JSON dynamically
+  const getFieldOptions = (field: FieldDefinition): string[] => {
+    const rawOptions = field.options;
+    if (!rawOptions) return [];
+    
+    let parsed: any = rawOptions;
+    if (typeof rawOptions === "string") {
+      try {
+        parsed = JSON.parse(rawOptions);
+      } catch {
+        return [];
       }
-    } catch {
-      // Fail-safe
     }
+
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+
+    if (parsed && typeof parsed === "object") {
+      // It's a key-value mapping (e.g. brand -> models).
+      // Find if any other field's current value matches a key in this mapping.
+      for (const otherKey of Object.keys(values)) {
+        const otherVal = values[otherKey];
+        if (otherVal && parsed[otherVal]) {
+          return parsed[otherVal];
+        }
+      }
+      return [];
+    }
+
     return [];
   };
 
   return (
     <div className="space-y-5">
       {fieldDefinitions.map((field) => {
-        const optionsList = parseOptions(field.options);
+        if (field.fieldKey === "otherTransmission" && values["transmission"] !== "Other") {
+          return null;
+        }
+
+        const optionsList = getFieldOptions(field);
         const val = values[field.fieldKey];
 
         return (

@@ -18,8 +18,16 @@ import {
   ArrowLeft,
   ChevronRight,
   FileText,
+  Image as ImageIcon,
 } from "lucide-react";
 import { formatDistance, format } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export default function PublicSellerStorefrontPage() {
   const params = useParams();
@@ -29,6 +37,7 @@ export default function PublicSellerStorefrontPage() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"ads" | "about" | "contact" | "services">("ads");
+  const [selectedServicePage, setSelectedServicePage] = useState<any>(null);
 
   const fetchStorefrontData = async () => {
     setIsLoading(true);
@@ -274,25 +283,85 @@ export default function PublicSellerStorefrontPage() {
                 No custom services or additional pages published by this store.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {servicePages.map((page: any) => (
-                  <Card key={page.id} className="border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-                    <CardContent className="p-6 space-y-3">
-                      <h3 className="text-base font-bold text-gray-900 flex items-center gap-1.5">
-                        <FileText className="h-4.5 w-4.5 text-[#FF6600]" />
-                        <span>{page.title}</span>
-                      </h3>
-                      <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed line-clamp-4">
-                        {page.content}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <div
+                    key={page.id}
+                    onClick={() => setSelectedServicePage(page)}
+                    className="group bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 flex flex-col"
+                  >
+                    {/* Top Image */}
+                    <div className="w-full aspect-[4/3] bg-gray-50 overflow-hidden relative shrink-0">
+                      {page.imageUrl ? (
+                        <img
+                          src={page.imageUrl}
+                          alt={page.title}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-tr from-orange-50 to-orange-100/50 flex flex-col items-center justify-center text-orange-400 gap-1.5">
+                          <ImageIcon className="h-8 w-8 text-orange-300" />
+                          <span className="text-[10px] font-bold tracking-wider uppercase text-orange-400/80">Services</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Info */}
+                    <div className="p-4.5 flex flex-col justify-between flex-1 gap-3">
+                      <div className="space-y-1.5">
+                        <h3 className="text-sm font-bold text-gray-900 group-hover:text-[#FF6600] transition-colors leading-tight line-clamp-2">
+                          {page.title}
+                        </h3>
+                        <p className="text-[11px] text-gray-400 leading-relaxed line-clamp-2">
+                          {page.content}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 text-[11px] text-blue-600 font-bold mt-1">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                        <span>{seller.businessName || "Verified Shop"}</span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
           </div>
         )}
-      </div>
+
+      {/* Custom Service Page Details Dialog */}
+      <Dialog open={!!selectedServicePage} onOpenChange={(open) => !open && setSelectedServicePage(null)}>
+        <DialogContent className="max-w-xl rounded-3xl p-6 bg-white border border-gray-100 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+          {selectedServicePage && (
+            <>
+              <DialogHeader className="pb-4 border-b border-gray-50 text-left shrink-0">
+                <DialogTitle className="text-lg font-black text-gray-900 tracking-tight leading-snug">
+                  {selectedServicePage.title}
+                </DialogTitle>
+                <DialogDescription className="text-xs flex items-center gap-1 text-[#FF6600] font-bold">
+                  <Store className="h-3.5 w-3.5" />
+                  <span>{seller.businessName || "Verified Shop"}</span>
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="overflow-y-auto pr-1 py-4 space-y-4 flex-1">
+                {selectedServicePage.imageUrl && (
+                  <div className="w-full aspect-video rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                    <img
+                      src={selectedServicePage.imageUrl}
+                      alt={selectedServicePage.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="text-sm text-gray-650 whitespace-pre-line leading-relaxed">
+                  {selectedServicePage.content}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  </div>
   );
 }

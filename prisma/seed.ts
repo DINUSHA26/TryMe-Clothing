@@ -331,14 +331,37 @@ async function main() {
           slug: "cars",
           sortOrder: 1,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned", "Imported"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Toyota", "Suzuki", "Honda", "Nissan", "Mitsubishi", "Hyundai", "Kia", "Mercedes-Benz", "BMW", "Audi", "Other"] },
-            { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 3, placeholder: "e.g. 2018" },
-            { fieldKey: "transmission", label: "Transmission", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 4, options: ["Automatic", "Manual", "Tiptronic"] },
-            { fieldKey: "fuelType", label: "Fuel Type", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 5, options: ["Petrol", "Diesel", "Hybrid", "Electric"] },
-            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 6, placeholder: "e.g. 75000" },
-            { fieldKey: "engineCapacity", label: "Engine Capacity (cc)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 7, placeholder: "e.g. 1500" },
-            { fieldKey: "bodyType", label: "Body Type", fieldType: AdFieldType.SELECT, isRequired: false, isOptional: true, sortOrder: 8, options: ["Saloon", "Hatchback", "SUV / 4x4", "Station Wagon", "Coupe / Sports", "Other"] }
+            {
+              fieldKey: "model",
+              label: "Model",
+              fieldType: AdFieldType.SELECT,
+              isRequired: true,
+              isOptional: false,
+              sortOrder: 3,
+              options: {
+                Toyota: ["Corolla", "Premio", "Allion", "Vitz", "Prius", "Axio", "Aqua", "Belta", "Camry", "Yaris", "CH-R", "Land Cruiser", "Prado", "Other"],
+                Suzuki: ["Alto", "Wagon R", "Swift", "Every", "Celerio", "Spacia", "Hustler", "Vitara", "Other"],
+                Honda: ["Civic", "Fit", "Vezel", "Grace", "Insight", "Shuttle", "Accord", "CR-V", "Other"],
+                Nissan: ["Sunny", "X-Trail", "Leaf", "March", "Dayz", "Bluebird", "Teana", "Other"],
+                Mitsubishi: ["Lancer", "Montero", "Outlander", "Pajero", "L200", "Attrage", "Other"],
+                Hyundai: ["Tucson", "Elantra", "Accent", "Santa Fe", "Grand i10", "Ioniq", "Other"],
+                Kia: ["Sportage", "Sorento", "Picanto", "Rio", "Optima", "Stonic", "Other"],
+                "Mercedes-Benz": ["C-Class", "E-Class", "S-Class", "CLA", "GLA", "GLC", "A-Class", "Other"],
+                BMW: ["3 Series", "5 Series", "7 Series", "X1", "X3", "X5", "i3", "Other"],
+                Audi: ["A3", "A4", "A5", "A6", "Q2", "Q3", "Q5", "Other"],
+                Other: ["Other"]
+              }
+            },
+            { fieldKey: "modelYear", label: "Year of Manufacture", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 4, options: Array.from({ length: 2026 - 1970 + 1 }, (_, i) => (2026 - i).toString()) },
+            { fieldKey: "transmission", label: "Transmission", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 5, options: ["Automatic", "Manual", "Tiptronic", "Other"] },
+            { fieldKey: "otherTransmission", label: "Other transmission", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 6, placeholder: "Specify transmission" },
+            { fieldKey: "fuelType", label: "Fuel Type", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 7, options: ["Petrol", "Diesel", "Hybrid", "Electric"] },
+            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 8, placeholder: "e.g. 75000" },
+            { fieldKey: "engineCapacity", label: "Engine Capacity (cc)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 9, placeholder: "e.g. 1500" },
+            { fieldKey: "trim", label: "Trim / Edition", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 10, placeholder: "Enter edition." },
+            { fieldKey: "bodyType", label: "Body Type", fieldType: AdFieldType.SELECT, isRequired: false, isOptional: true, sortOrder: 11, options: ["Saloon", "Hatchback", "SUV / 4x4", "Station Wagon", "Coupe / Sports", "Other"] }
           ]
         },
         {
@@ -346,11 +369,12 @@ async function main() {
           slug: "motorbikes",
           sortOrder: 2,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Yamaha", "Honda", "Bajaj", "TVS", "Suzuki", "Hero", "Vespa", "KTM", "Other"] },
             { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 3, placeholder: "e.g. 2020" },
             { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 15000" },
-            { fieldKey: "engineCapacity", label: "Engine Capacity (cc)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 5, placeholder: "e.g. 125" }
+            { fieldKey: "engineCapacity", label: "Engine Capacity (cc)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 5, placeholder: "e.g. 125" },
+            { fieldKey: "trim", label: "Trim / Edition", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 6, placeholder: "Enter edition." }
           ]
         },
         {
@@ -358,10 +382,11 @@ async function main() {
           slug: "three-wheelers",
           sortOrder: 3,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Bajaj", "Piaggio", "TVS", "Mahindra", "Other"] },
             { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 3, placeholder: "e.g. 2015" },
-            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 60000" }
+            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 60000" },
+            { fieldKey: "trim", label: "Trim / Edition", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 5, placeholder: "Enter edition." }
           ]
         },
         {
@@ -369,7 +394,7 @@ async function main() {
           slug: "bicycles",
           sortOrder: 4,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
             { fieldKey: "bicycleType", label: "Bicycle Type", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Mountain Bike", "BMX", "Road Bike", "Hybrid Bike", "Kids Bike", "Other"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: false, isOptional: true, sortOrder: 3, options: ["Lumala", "Raleigh", "Giant", "Hero", "DSI", "Other"] }
           ]
@@ -379,12 +404,30 @@ async function main() {
           slug: "vans",
           sortOrder: 5,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned", "Imported"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Toyota", "Nissan", "Suzuki", "Mazda", "Mitsubishi", "Other"] },
-            { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 3, placeholder: "e.g. 2016" },
-            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 80000" },
-            { fieldKey: "transmission", label: "Transmission", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 5, options: ["Automatic", "Manual"] },
-            { fieldKey: "fuelType", label: "Fuel Type", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 6, options: ["Diesel", "Petrol", "Hybrid"] }
+            {
+              fieldKey: "model",
+              label: "Model",
+              fieldType: AdFieldType.SELECT,
+              isRequired: true,
+              isOptional: false,
+              sortOrder: 3,
+              options: {
+                Toyota: ["HiAce", "TownAce", "LiteAce", "Noah", "Voxy", "Alphard", "Vellfire", "Regius", "KDH", "Other"],
+                Nissan: ["Caravan", "Urvan", "NV200", "NV350", "Serena", "Vanette", "Other"],
+                Suzuki: ["Carry", "Every", "APV", "Landy", "Other"],
+                Mazda: ["Bongo", "Biante", "Flair", "Other"],
+                Mitsubishi: ["Delica", "L300", "Minicab", "Other"],
+                Other: ["Other"]
+              }
+            },
+            { fieldKey: "modelYear", label: "Year of Manufacture", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 4, options: Array.from({ length: 2026 - 1970 + 1 }, (_, i) => (2026 - i).toString()) },
+            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 5, placeholder: "e.g. 80000" },
+            { fieldKey: "transmission", label: "Transmission", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 6, options: ["Automatic", "Manual", "Other"] },
+            { fieldKey: "otherTransmission", label: "Other transmission", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 7, placeholder: "Specify transmission" },
+            { fieldKey: "fuelType", label: "Fuel Type", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 8, options: ["Diesel", "Petrol", "Hybrid"] },
+            { fieldKey: "trim", label: "Trim / Edition", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 9, placeholder: "Enter edition." }
           ]
         },
         {
@@ -392,10 +435,11 @@ async function main() {
           slug: "buses",
           sortOrder: 6,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Leyland", "Tata", "Isuzu", "Mitsubishi", "Toyota", "Nissan", "Other"] },
             { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 3, placeholder: "e.g. 2012" },
-            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 150000" }
+            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 150000" },
+            { fieldKey: "trim", label: "Trim / Edition", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 5, placeholder: "Enter edition." }
           ]
         },
         {
@@ -403,10 +447,11 @@ async function main() {
           slug: "lorries-trucks",
           sortOrder: 7,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Isuzu", "Tata", "Mitsubishi", "Mahindra", "Toyota", "Nissan", "Daihatsu", "Other"] },
             { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 3, placeholder: "e.g. 2015" },
-            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 120000" }
+            { fieldKey: "mileage", label: "Mileage (km)", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 120000" },
+            { fieldKey: "trim", label: "Trim / Edition", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 5, placeholder: "Enter edition." }
           ]
         },
         {
@@ -414,10 +459,11 @@ async function main() {
           slug: "heavy-duty",
           sortOrder: 8,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
             { fieldKey: "vehicleType", label: "Vehicle Type", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Excavator", "Forklift", "Roller", "Loader", "Crane", "Other"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 3, options: ["Caterpillar", "Komatsu", "JCB", "Toyota", "Hitachi", "Other"] },
-            { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 2010" }
+            { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 4, placeholder: "e.g. 2010" },
+            { fieldKey: "trim", label: "Trim / Edition", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 5, placeholder: "Enter edition." }
           ]
         },
         {
@@ -425,9 +471,10 @@ async function main() {
           slug: "tractors",
           sortOrder: 9,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Massey Ferguson", "Tafe", "Kubota", "Sonalika", "Mahindra", "John Deere", "Other"] },
-            { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 3, placeholder: "e.g. 2018" }
+            { fieldKey: "modelYear", label: "Model Year", fieldType: AdFieldType.NUMBER, isRequired: true, isOptional: false, sortOrder: 3, placeholder: "e.g. 2018" },
+            { fieldKey: "trim", label: "Trim / Edition", fieldType: AdFieldType.TEXT, isRequired: false, isOptional: true, sortOrder: 4, placeholder: "Enter edition." }
           ]
         },
         {
@@ -451,7 +498,7 @@ async function main() {
           slug: "auto-parts",
           sortOrder: 12,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
             { fieldKey: "partType", label: "Part Type", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Engine Parts", "Body Parts", "Wheels & Tyres", "Audio & Video Systems", "Car Care & Accessories", "Other"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: false, isOptional: true, sortOrder: 3, options: ["Toyota", "Nissan", "Honda", "Pioneer", "Michelin", "Other"] }
           ]
@@ -469,7 +516,7 @@ async function main() {
           slug: "boats",
           sortOrder: 14,
           fields: [
-            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New"] },
+            { fieldKey: "condition", label: "Condition", fieldType: AdFieldType.RADIO, isRequired: true, isOptional: false, sortOrder: 1, options: ["Used", "Brand New", "Reconditioned"] },
             { fieldKey: "boatType", label: "Boat Type", fieldType: AdFieldType.SELECT, isRequired: true, isOptional: false, sortOrder: 2, options: ["Speed Boat", "Jet Ski", "Yacht", "Fishing Boat", "Motor Boat", "Other"] },
             { fieldKey: "brand", label: "Brand", fieldType: AdFieldType.SELECT, isRequired: false, isOptional: true, sortOrder: 3, options: ["Yamaha", "Sea-Doo", "Kawasaki", "Generic", "Other"] }
           ]
@@ -1116,14 +1163,15 @@ async function main() {
         where: { subCategoryId: dbSub.id }
       });
 
-      for (const field of sub.fields) {
+      for (const f of sub.fields) {
+        const field = f as any;
         await prisma.adFieldDefinition.create({
           data: {
             subCategoryId: dbSub.id,
             fieldKey: field.fieldKey,
             label: field.label,
             fieldType: field.fieldType,
-            options: field.options || null,
+            options: field.options ? (field.options as any) : undefined,
             isRequired: field.isRequired,
             isOptional: field.isOptional,
             sortOrder: field.sortOrder,
