@@ -306,7 +306,7 @@ export default function Home() {
       <section className="py-10 md:py-16">
         <div className="container px-4 md:px-6">
           <div className="flex items-center justify-between gap-2 mb-6 md:mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold leading-none">Browse items by category</h2>
+            <h2 className="text-2xl md:text-3xl font-bold leading-none">marketplace category</h2>
             <Button variant="ghost" asChild>
               <Link href="/marketplace">
                 View All
