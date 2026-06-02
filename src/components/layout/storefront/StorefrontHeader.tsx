@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Menu, Search, X, Globe } from "lucide-react";
+import { Menu, Search, X, Globe, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Logo } from "../shared/Logo";
@@ -67,6 +67,11 @@ export function StorefrontHeader({ onMobileMenuToggle }: StorefrontHeaderProps) 
 
         {/* Actions */}
         <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2 ml-auto shrink-0 flex-nowrap py-1">
+          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 sm:h-10 sm:w-10" asChild aria-label="Marketplace">
+            <Link href="/marketplace">
+              <Store className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+            </Link>
+          </Button>
           <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 sm:h-10 sm:w-10" asChild aria-label="Social">
             <Link href="/social">
               <Globe className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
