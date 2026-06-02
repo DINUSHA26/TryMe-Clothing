@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Heart, MessageCircle, MoreHorizontal, Flag, Bookmark, Share2, Copy } from "lucide-react";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/authStore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { CommentSection } from "./CommentSection";
 import { PostGalleryModal } from "./PostGalleryModal";
@@ -18,10 +18,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 export function PostCard({ post }: { post: SocialPostType }) {
     const { isAuthenticated, user } = useAuthStore();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const [isLiked, setIsLiked] = useState(user ? post.likes.some(l => l.userId === user.id) : false);
     const [likesCount, setLikesCount] = useState(post.likes.length);
-    const [showComments, setShowComments] = useState(false);
+    const [showComments, setShowComments] = useState(searchParams.get("post") === post.id);
     const [galleryOpen, setGalleryOpen] = useState(false);
     const [galleryIndex, setGalleryIndex] = useState(0);
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -53,7 +54,8 @@ export function PostCard({ post }: { post: SocialPostType }) {
     const handleLike = async () => {
         if (!isAuthenticated) {
             toast.error("Please login to like this post");
-            router.push("/login?redirect=/social");
+            const returnUrl = encodeURIComponent(`/social?post=${post.id}`);
+            router.push(`/login?returnUrl=${returnUrl}`);
             return;
         }
 
@@ -80,7 +82,8 @@ export function PostCard({ post }: { post: SocialPostType }) {
     const handleSave = async () => {
         if (!isAuthenticated) {
             toast.error("Please login to save this post");
-            router.push("/login?redirect=/social");
+            const returnUrl = encodeURIComponent(`/social?post=${post.id}`);
+            router.push(`/login?returnUrl=${returnUrl}`);
             return;
         }
 
@@ -170,7 +173,8 @@ export function PostCard({ post }: { post: SocialPostType }) {
 
     const handleReport = () => {
         if (!isAuthenticated) {
-            router.push("/login?redirect=/social");
+            const returnUrl = encodeURIComponent(`/social?post=${post.id}`);
+            router.push(`/login?returnUrl=${returnUrl}`);
             return;
         }
         toast.success("Post reported. Our team will review it.");
@@ -243,7 +247,7 @@ export function PostCard({ post }: { post: SocialPostType }) {
     };
 
     return (
-        <Card className="rounded-2xl shadow-sm border-2 overflow-hidden">
+        <Card id={`post-${post.id}`} className="rounded-2xl shadow-sm border-2 overflow-hidden">
             <CardHeader className="p-4 flex flex-row items-start space-y-0 gap-3 pb-2">
                 <Avatar className="h-10 w-10 border shadow-sm">
                     {post.user.vendor?.logo && <AvatarImage src={post.user.vendor.logo} />}
@@ -308,16 +312,24 @@ export function PostCard({ post }: { post: SocialPostType }) {
                 <div className="flex w-full justify-between gap-1">
                     <Button
                         variant="ghost"
-                        className={`flex-1 rounded-xl text-muted-foreground font-semibold px-1 sm:px-4 text-xs sm:text-sm ${isLiked ? "text-primary" : ""}`}
+                        className={`flex-1 rounded-xl text-muted-foreground font-semibold px-1 sm:px-4 text-xs sm:text-sm ${isLiked ? "text-red-500 hover:text-red-600" : ""}`}
                         onClick={handleLike}
                     >
-                        <Heart className={`h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 ${isLiked ? "fill-primary" : ""}`} />
+                        <Heart className={`h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
                         <span className="truncate">Like</span>
                     </Button>
                     <Button
                         variant="ghost"
                         className="flex-1 rounded-xl text-muted-foreground font-semibold px-1 sm:px-4 text-xs sm:text-sm"
-                        onClick={() => setShowComments(!showComments)}
+                        onClick={() => {
+                            if (!isAuthenticated) {
+                                toast.error("Please login to comment");
+                                const returnUrl = encodeURIComponent(`/social?post=${post.id}`);
+                                router.push(`/login?returnUrl=${returnUrl}`);
+                                return;
+                            }
+                            setShowComments(!showComments);
+                        }}
                     >
                         <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                         <span className="truncate">Comment</span>

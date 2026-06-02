@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { PostCard } from "./PostCard";
+import { useSearchParams } from "next/navigation";
 import { CreatePostModal } from "./CreatePostModal";
 import { Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,6 +39,27 @@ export function Feed() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const searchParams = useSearchParams();
+    const highlightPostId = searchParams.get("post");
+
+    useEffect(() => {
+        if (highlightPostId && posts.length > 0) {
+            const timer = setTimeout(() => {
+                const element = document.getElementById(`post-${highlightPostId}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "center" });
+                    
+                    // Highlight the post card with a gorgeous premium red pulse border!
+                    element.classList.add("ring-2", "ring-red-500", "ring-offset-2", "transition-all", "duration-500");
+                    const removeTimer = setTimeout(() => {
+                        element.classList.remove("ring-2", "ring-red-500", "ring-offset-2");
+                    }, 3000);
+                    return () => clearTimeout(removeTimer);
+                }
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [highlightPostId, posts]);
 
     const fetchPosts = async (pageNum = 1, append = false) => {
         try {

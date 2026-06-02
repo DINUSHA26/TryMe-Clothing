@@ -51,7 +51,8 @@ export function CommentSection({ postId }: CommentSectionProps) {
         e.preventDefault();
         if (!isAuthenticated) {
             toast.error("Please login to comment");
-            router.push("/login?redirect=/social");
+            const returnUrl = encodeURIComponent(`/social?post=${postId}`);
+            router.push(`/login?returnUrl=${returnUrl}`);
             return;
         }
         if (!newComment.trim()) return;
@@ -99,6 +100,13 @@ export function CommentSection({ postId }: CommentSectionProps) {
                 <form onSubmit={handleSubmit} className="flex-1 flex gap-2">
                     <Input
                         value={newComment}
+                        onFocus={() => {
+                            if (!isAuthenticated) {
+                                toast.error("Please login to comment");
+                                const returnUrl = encodeURIComponent(`/social?post=${postId}`);
+                                router.push(`/login?returnUrl=${returnUrl}`);
+                            }
+                        }}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder={isAuthenticated ? "Write a comment..." : "Login to comment..."}
                         className="rounded-full bg-slate-50 dark:bg-slate-900 border-none focus-visible:ring-1"

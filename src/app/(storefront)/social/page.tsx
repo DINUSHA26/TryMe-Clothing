@@ -2,6 +2,8 @@
 
 import { Feed } from "@/components/social/Feed";
 import { StoriesTray } from "@/components/social/StoriesTray";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function SocialPage() {
     return (
@@ -16,7 +18,9 @@ export default function SocialPage() {
                 <StoriesTray />
             </div>
 
-            <Feed />
+            <Suspense fallback={<div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+                <Feed />
+            </Suspense>
         </div>
     );
 }

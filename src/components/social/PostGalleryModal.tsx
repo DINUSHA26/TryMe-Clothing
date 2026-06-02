@@ -42,6 +42,8 @@ export function PostGalleryModal({
     handleSave
 }: PostGalleryModalProps) {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
+    const { isAuthenticated } = useAuthStore();
+    const router = useRouter();
 
     const getInitials = (firstName?: string | null, lastName?: string | null, email?: string | null) => {
         if (firstName && lastName) return `${firstName[0]}${lastName[0]}`;
@@ -153,16 +155,22 @@ export function PostGalleryModal({
                             <div className="flex w-full border-y py-1">
                                 <Button
                                     variant="ghost"
-                                    className={`flex-1 rounded-xl text-muted-foreground font-semibold ${isLiked ? "text-primary" : ""}`}
+                                    className={`flex-1 rounded-xl text-muted-foreground font-semibold ${isLiked ? "text-red-500 hover:text-red-600" : ""}`}
                                     onClick={handleLike}
                                 >
-                                    <Heart className={`h-5 w-5 mr-2 ${isLiked ? "fill-primary" : ""}`} />
+                                    <Heart className={`h-5 w-5 mr-2 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
                                     Like
                                 </Button>
                                 <Button
                                     variant="ghost"
                                     className="flex-1 rounded-xl text-muted-foreground font-semibold"
                                     onClick={() => {
+                                        if (!isAuthenticated) {
+                                            toast.error("Please login to comment");
+                                            const returnUrl = encodeURIComponent(`/social?post=${post.id}`);
+                                            router.push(`/login?returnUrl=${returnUrl}`);
+                                            return;
+                                        }
                                         const input = document.querySelector('input[placeholder*="comment"]') as HTMLInputElement;
                                         if (input) input.focus();
                                     }}
