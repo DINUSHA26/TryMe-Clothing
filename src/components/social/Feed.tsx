@@ -30,6 +30,8 @@ export interface SocialPostType {
     likes: { userId: string }[];
     savedBy?: { userId: string }[];
     _count: { comments: number };
+    productTag?: string | null;
+    productSlug?: string | null;
 }
 
 export function Feed() {

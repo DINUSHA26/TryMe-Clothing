@@ -66,10 +66,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const { content, images } = await request.json();
+        const { content, images, productTag } = await request.json();
 
         if (!content && (!images || images.length === 0)) {
             return NextResponse.json({ success: false, error: "Post must have content or images" }, { status: 400 });
+        }
+
+        // Resolve product slug if tag is provided
+        let productSlug: string | null = null;
+        if (productTag) {
+            productSlug = await resolveProductSlug(productTag);
         }
 
         const post = await prisma.socialPost.create({
@@ -77,6 +83,8 @@ export async function POST(request: NextRequest) {
                 userId: user.userId,
                 content,
                 images: images || [],
+                productTag: productTag || null,
+                productSlug: productSlug || null,
             },
             include: {
                 user: {
@@ -103,4 +111,38 @@ export async function POST(request: NextRequest) {
         console.error("[POST /api/social] Error:", error);
         return NextResponse.json({ success: false, error: "Failed to create post" }, { status: 500 });
     }
+}
+
+async function resolveProductSlug(tag: string): Promise<string | null> {
+    if (!tag) return null;
+    const trimmedTag = tag.trim();
+    if (!trimmedTag) return null;
+
+    // 1. Check if it's a URL (contains /products/)
+    if (trimmedTag.includes("/products/")) {
+        const parts = trimmedTag.split("/products/");
+        if (parts.length > 1) {
+            const slugPart = parts[1].split("?")[0].split("#")[0].trim();
+            const product = await prisma.product.findUnique({
+                where: { slug: slugPart },
+                select: { slug: true }
+            });
+            if (product) return product.slug;
+        }
+    }
+
+    // 2. Treat as a SKU (check Product first, then ProductVariant)
+    const productBySku = await prisma.product.findFirst({
+        where: { sku: { equals: trimmedTag, mode: "insensitive" } },
+        select: { slug: true }
+    });
+    if (productBySku) return productBySku.slug;
+
+    const variantBySku = await prisma.productVariant.findFirst({
+        where: { sku: { equals: trimmedTag, mode: "insensitive" } },
+        include: { product: { select: { slug: true } } }
+    });
+    if (variantBySku && variantBySku.product) return variantBySku.product.slug;
+
+    return null;
 }

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ImagePlus, X, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ImagePlus, X, Loader2, Tag } from "lucide-react";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
@@ -25,6 +26,7 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
     const [images, setImages] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
+    const [productTag, setProductTag] = useState("");
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -88,7 +90,7 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
             const res = await fetch("/api/social", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content, images: imageUrls }),
+                body: JSON.stringify({ content, images: imageUrls, productTag }),
             });
 
             const data = await res.json();
@@ -98,6 +100,7 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
                 setContent("");
                 setImages([]);
                 setPreviewUrls([]);
+                setProductTag("");
                 onClose();
             } else {
                 toast.error(data.error || "Failed to create post");
@@ -147,6 +150,19 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
                                 ))}
                             </div>
                         )}
+
+                        <div className="space-y-2 border rounded-xl p-3 bg-slate-50/50 dark:bg-slate-900/30">
+                            <div className="flex items-center gap-2 text-[#FF6600]">
+                                <Tag className="h-4 w-4" />
+                                <label className="text-xs font-bold uppercase tracking-wider">Tag a Product</label>
+                            </div>
+                            <Input
+                                placeholder="Enter Product URL or SKU"
+                                className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus-visible:ring-1 focus-visible:ring-[#FF6600] text-sm"
+                                value={productTag}
+                                onChange={(e) => setProductTag(e.target.value)}
+                            />
+                        </div>
 
                         <div className="flex items-center justify-between border rounded-xl p-3">
                             <span className="font-semibold text-sm">Add to your post</span>

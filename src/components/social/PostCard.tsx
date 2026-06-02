@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Heart, MessageCircle, MoreHorizontal, Flag, Bookmark, Share2, Copy } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, Flag, Bookmark, Share2, Copy, ShoppingBag, Tag } from "lucide-react";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -301,6 +301,28 @@ export function PostCard({ post }: { post: SocialPostType }) {
                     </div>
                 )}
                 {renderImages()}
+
+                {post.productSlug && (
+                    <div className="mt-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center text-[#FF6600]">
+                                <Tag className="h-4 w-4" />
+                            </div>
+                            <div className="text-left">
+                                <p className="text-xs font-bold text-foreground">Tagged Product</p>
+                                <p className="text-[10px] text-muted-foreground">Available on TryMe Store</p>
+                            </div>
+                        </div>
+                        <Button
+                            size="sm"
+                            className="bg-[#FF6600] hover:bg-[#E65C00] text-white font-bold rounded-lg text-xs flex items-center gap-1.5 px-4 shadow-sm transition active:scale-95"
+                            onClick={() => router.push(`/products/${post.productSlug}`)}
+                        >
+                            <ShoppingBag className="h-3.5 w-3.5" />
+                            Shop Now
+                        </Button>
+                    </div>
+                )}
             </CardContent>
 
             <div className="px-4 py-2 flex items-center justify-between text-xs text-muted-foreground font-medium">

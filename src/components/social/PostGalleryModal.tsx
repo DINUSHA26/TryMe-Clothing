@@ -5,7 +5,7 @@ import { SocialPostType } from "./Feed";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, MoreHorizontal, Flag, Bookmark, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreHorizontal, Flag, Bookmark, ChevronLeft, ChevronRight, X, ShoppingBag, Tag } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CommentSection } from "./CommentSection";
 import { useState } from "react";
@@ -143,9 +143,31 @@ export function PostGalleryModal({
 
                     <ScrollArea className="flex-1 flex flex-col">
                         <div className="p-4">
-                            {post.content && (
-                                <p className="text-sm whitespace-pre-wrap leading-relaxed mb-4">{post.content}</p>
-                            )}
+                             {post.content && (
+                                 <p className="text-sm whitespace-pre-wrap leading-relaxed mb-4">{post.content}</p>
+                             )}
+
+                             {post.productSlug && (
+                                 <div className="mb-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                                     <div className="flex items-center gap-2">
+                                         <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center text-[#FF6600]">
+                                             <Tag className="h-4 w-4" />
+                                         </div>
+                                         <div className="text-left">
+                                             <p className="text-xs font-bold text-foreground">Tagged Product</p>
+                                             <p className="text-[10px] text-muted-foreground">Available on TryMe Store</p>
+                                         </div>
+                                     </div>
+                                     <Button
+                                         size="sm"
+                                         className="bg-[#FF6600] hover:bg-[#E65C00] text-white font-bold rounded-lg text-xs flex items-center gap-1.5 px-4 shadow-sm transition active:scale-95"
+                                         onClick={() => router.push(`/products/${post.productSlug}`)}
+                                     >
+                                         <ShoppingBag className="h-3.5 w-3.5" />
+                                         Shop Now
+                                     </Button>
+                                 </div>
+                             )}
 
                             <div className="flex items-center justify-between text-xs text-muted-foreground font-medium mb-4">
                                 <span>{likesCount > 0 ? `${likesCount} likes` : ""}</span>
