@@ -32,6 +32,7 @@ export interface SocialPostType {
     _count: { comments: number };
     productTag?: string | null;
     productSlug?: string | null;
+    tagType?: string | null;
 }
 
 export function Feed() {

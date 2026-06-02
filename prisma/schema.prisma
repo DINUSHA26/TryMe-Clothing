@@ -766,6 +766,7 @@ model SocialPost {
   updatedAt   DateTime @updatedAt
   productTag  String?
   productSlug String?
+  tagType     String?
 
   likes       SocialLike[]
   comments    SocialComment[]

@@ -72,10 +72,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: "Post must have content or images" }, { status: 400 });
         }
 
-        // Resolve product slug if tag is provided
+        // Resolve product slug/ad ID and tag type if tag is provided
         let productSlug: string | null = null;
+        let tagType: string | null = null;
         if (productTag) {
-            productSlug = await resolveProductSlug(productTag);
+            const resolved = await resolveSocialTag(productTag);
+            if (resolved) {
+                productSlug = resolved.slug;
+                tagType = resolved.type;
+            }
         }
 
         const post = await prisma.socialPost.create({
@@ -85,6 +90,7 @@ export async function POST(request: NextRequest) {
                 images: images || [],
                 productTag: productTag || null,
                 productSlug: productSlug || null,
+                tagType: tagType || null,
             },
             include: {
                 user: {
@@ -113,12 +119,27 @@ export async function POST(request: NextRequest) {
     }
 }
 
-async function resolveProductSlug(tag: string): Promise<string | null> {
+async function resolveSocialTag(tag: string): Promise<{ slug: string; type: string } | null> {
     if (!tag) return null;
     const trimmedTag = tag.trim();
     if (!trimmedTag) return null;
 
-    // 1. Check if it's a URL (contains /products/)
+    // 1. Check if it's a marketplace ad URL
+    if (trimmedTag.includes("/marketplace/")) {
+        const parts = trimmedTag.split("/marketplace/");
+        if (parts.length > 1) {
+            const adId = parts[1].split("?")[0].split("#")[0].trim();
+            const ad = await prisma.classifiedAd.findUnique({
+                where: { id: adId },
+                select: { id: true }
+            });
+            if (ad) {
+                return { slug: ad.id, type: "AD" };
+            }
+        }
+    }
+
+    // 2. Check if it's a product URL (contains /products/)
     if (trimmedTag.includes("/products/")) {
         const parts = trimmedTag.split("/products/");
         if (parts.length > 1) {
@@ -127,22 +148,22 @@ async function resolveProductSlug(tag: string): Promise<string | null> {
                 where: { slug: slugPart },
                 select: { slug: true }
             });
-            if (product) return product.slug;
+            if (product) return { slug: product.slug, type: "PRODUCT" };
         }
     }
 
-    // 2. Treat as a SKU (check Product first, then ProductVariant)
+    // 3. Treat as a SKU (check Product first, then ProductVariant)
     const productBySku = await prisma.product.findFirst({
         where: { sku: { equals: trimmedTag, mode: "insensitive" } },
         select: { slug: true }
     });
-    if (productBySku) return productBySku.slug;
+    if (productBySku) return { slug: productBySku.slug, type: "PRODUCT" };
 
     const variantBySku = await prisma.productVariant.findFirst({
         where: { sku: { equals: trimmedTag, mode: "insensitive" } },
         include: { product: { select: { slug: true } } }
     });
-    if (variantBySku && variantBySku.product) return variantBySku.product.slug;
+    if (variantBySku && variantBySku.product) return { slug: variantBySku.product.slug, type: "PRODUCT" };
 
     return null;
 }

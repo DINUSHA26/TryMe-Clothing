@@ -147,27 +147,51 @@ export function PostGalleryModal({
                                  <p className="text-sm whitespace-pre-wrap leading-relaxed mb-4">{post.content}</p>
                              )}
 
-                             {post.productSlug && (
-                                 <div className="mb-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                                     <div className="flex items-center gap-2">
-                                         <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center text-[#FF6600]">
-                                             <Tag className="h-4 w-4" />
-                                         </div>
-                                         <div className="text-left">
-                                             <p className="text-xs font-bold text-foreground">Tagged Product</p>
-                                             <p className="text-[10px] text-muted-foreground">Available on TryMe Store</p>
-                                         </div>
-                                     </div>
-                                     <Button
-                                         size="sm"
-                                         className="bg-[#FF6600] hover:bg-[#E65C00] text-white font-bold rounded-lg text-xs flex items-center gap-1.5 px-4 shadow-sm transition active:scale-95"
-                                         onClick={() => router.push(`/products/${post.productSlug}`)}
-                                     >
-                                         <ShoppingBag className="h-3.5 w-3.5" />
-                                         Shop Now
-                                     </Button>
-                                 </div>
-                             )}
+                              {post.productSlug && (
+                                  <div className="mb-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800 gap-2">
+                                      {post.tagType === "AD" ? (
+                                          <>
+                                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                  <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center text-[#FF6600] shrink-0">
+                                                      <Tag className="h-4 w-4" />
+                                                  </div>
+                                                  <div className="text-left min-w-0 flex-1">
+                                                      <p className="text-xs font-bold text-foreground truncate">Tagged Ad</p>
+                                                      <p className="text-[10px] text-muted-foreground truncate">Available on TryMe Marketplace</p>
+                                                  </div>
+                                              </div>
+                                              <Button
+                                                  size="sm"
+                                                  className="bg-[#FF6600] hover:bg-[#E65C00] text-white font-bold rounded-lg text-xs flex items-center gap-1.5 px-3 py-1.5 shadow-sm transition active:scale-95 shrink-0"
+                                                  onClick={() => router.push(`/marketplace/${post.productSlug}`)}
+                                              >
+                                                  <Tag className="h-3.5 w-3.5" />
+                                                  View Ad
+                                              </Button>
+                                          </>
+                                      ) : (
+                                          <>
+                                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                  <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center text-[#FF6600] shrink-0">
+                                                      <Tag className="h-4 w-4" />
+                                                  </div>
+                                                  <div className="text-left min-w-0 flex-1">
+                                                      <p className="text-xs font-bold text-foreground truncate">Tagged Product</p>
+                                                      <p className="text-[10px] text-muted-foreground truncate">Available on TryMe Store</p>
+                                                  </div>
+                                              </div>
+                                              <Button
+                                                  size="sm"
+                                                  className="bg-[#FF6600] hover:bg-[#E65C00] text-white font-bold rounded-lg text-xs flex items-center gap-1.5 px-3 py-1.5 shadow-sm transition active:scale-95 shrink-0"
+                                                  onClick={() => router.push(`/products/${post.productSlug}`)}
+                                              >
+                                                  <ShoppingBag className="h-3.5 w-3.5" />
+                                                  Shop Now
+                                              </Button>
+                                          </>
+                                      )}
+                                  </div>
+                              )}
 
                             <div className="flex items-center justify-between text-xs text-muted-foreground font-medium mb-4">
                                 <span>{likesCount > 0 ? `${likesCount} likes` : ""}</span>
