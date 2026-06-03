@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, MapPin, Grid, ChevronDown, ListFilter, RefreshCw, Star, Tag, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +10,7 @@ import { RefineSearchDialog } from "@/components/ads/RefineSearchDialog";
 import { AdCard } from "@/components/ads/AdCard";
 import { Button } from "@/components/ui/button";
 
-export default function MarketplacePortalPage() {
+function MarketplacePortalPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -886,6 +886,18 @@ export default function MarketplacePortalPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function MarketplacePortalPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
+        <LoaderSpinner />
+      </div>
+    }>
+      <MarketplacePortalPageContent />
+    </Suspense>
   );
 }
 

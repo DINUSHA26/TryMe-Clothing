@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -50,7 +50,7 @@ interface Product {
   };
 }
 
-export default function VendorStorePage() {
+function VendorStorePageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -450,5 +450,18 @@ export default function VendorStorePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VendorStorePage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-24 text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
+        <p className="text-xs text-muted-foreground mt-2 font-medium">Loading vendor store...</p>
+      </div>
+    }>
+      <VendorStorePageContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { useToast } from "@/hooks/use-toast";
@@ -481,7 +481,7 @@ function PaymentSuccessBanner({
 }
 
 /* ── Main Page ──────────────────────────────────────────────────────────────── */
-export default function AdsSellerPlansPage() {
+function AdsSellerPlansPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reason = searchParams.get("reason");
@@ -789,5 +789,20 @@ export default function AdsSellerPlansPage() {
         />
       )}
     </>
+  );
+}
+
+export default function AdsSellerPlansPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#FF6600] border-t-transparent" />
+          <p className="text-sm">Loading pricing plans...</p>
+        </div>
+      </div>
+    }>
+      <AdsSellerPlansPageContent />
+    </Suspense>
   );
 }
