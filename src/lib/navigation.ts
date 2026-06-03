@@ -107,6 +107,11 @@ export const adminNavItems: NavItem[] = [
     icon: Settings,
   },
   {
+    label: "Ads Dashboard",
+    href: "/admin/ads-dashboard",
+    icon: LayoutDashboard,
+  },
+  {
     label: "Ads Sellers",
     href: "/admin/ads-sellers",
     icon: Megaphone,
