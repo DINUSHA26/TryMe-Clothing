@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, LogOut, LogIn, User } from "lucide-react";
+import { X, LogOut, LogIn, User, MessageCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +13,7 @@ import { ThemeToggle } from "../shared/ThemeToggle";
 import { storefrontNavItems, customerNavItems } from "@/lib/navigation";
 import { useActiveRoute } from "@/hooks/useActiveRoute";
 import { useAuthStore } from "@/stores/authStore";
+import { useChatStore } from "@/stores/chatStore";
 import { cn } from "@/lib/utils";
 
 interface MobileMenuProps {
@@ -24,6 +25,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname();
   const { isActive } = useActiveRoute();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { openChat, rooms, isConnected } = useChatStore();
   const router = useRouter();
 
   // Close menu when route changes
@@ -117,6 +119,28 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               );
             })}
 
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  openChat();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground hover:bg-accent text-left"
+              >
+                <div className="relative flex items-center justify-center">
+                  <MessageCircle className={cn("w-5 h-5 shrink-0", isConnected ? "text-foreground" : "text-muted-foreground")} />
+                  {rooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0) > 0 && (
+                    <span className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+                      {rooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0) > 99 ? '99+' : rooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0)}
+                    </span>
+                  )}
+                  {!isConnected && (
+                    <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full bg-destructive border-2 border-background" />
+                  )}
+                </div>
+                <span className="text-sm font-medium">Chat</span>
+              </button>
+            )}
           </nav>
         </ScrollArea>
 

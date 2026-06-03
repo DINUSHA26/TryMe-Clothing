@@ -80,10 +80,10 @@ export function StorefrontHeader({ onMobileMenuToggle }: StorefrontHeaderProps) 
           <div className="hidden sm:block">
             <ThemeToggle />
           </div>
-          {/* Notification only on desktop and only for authenticated users */}
+          {/* Notification/Chat buttons (Chat hidden on mobile header, shown in mobile menu) */}
           {isAuthenticated && (
             <div className="flex items-center gap-1 md:gap-2">
-              <ChatButton className="h-8 w-8 sm:h-10 sm:w-10" />
+              <ChatButton className="hidden md:inline-flex h-8 w-8 sm:h-10 sm:w-10" />
               <div className="hidden md:flex">
                 <NotificationDropdown />
               </div>
