@@ -16,6 +16,12 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") || "";
     const isTopAd = searchParams.get("isTopAd");
     const categoryId = searchParams.get("categoryId") || "";
+    const sellerId = searchParams.get("sellerId") || "";
+    const location = searchParams.get("location") || "";
+    const minPrice = searchParams.get("minPrice") ? parseFloat(searchParams.get("minPrice")!) : null;
+    const maxPrice = searchParams.get("maxPrice") ? parseFloat(searchParams.get("maxPrice")!) : null;
+    const startDate = searchParams.get("startDate") || "";
+    const endDate = searchParams.get("endDate") || "";
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
 
@@ -49,6 +55,24 @@ export async function GET(request: NextRequest) {
       }),
       ...(categoryId && {
         categoryId,
+      }),
+      ...(sellerId && {
+        sellerId,
+      }),
+      ...(location && {
+        district: { equals: location, mode: "insensitive" },
+      }),
+      ...((minPrice !== null || maxPrice !== null) && {
+        price: {
+          ...(minPrice !== null && { gte: minPrice }),
+          ...(maxPrice !== null && { lte: maxPrice }),
+        },
+      }),
+      ...((startDate || endDate) && {
+        createdAt: {
+          ...(startDate && { gte: new Date(startDate) }),
+          ...(endDate && { lte: new Date(endDate) }),
+        },
       }),
     };
 
