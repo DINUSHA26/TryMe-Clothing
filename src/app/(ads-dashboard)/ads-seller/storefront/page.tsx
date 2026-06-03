@@ -398,16 +398,16 @@ export default function StorefrontBuilderPage() {
 
       {/* Main Tabs Layout */}
       <Tabs defaultValue="branding" className="space-y-6">
-        <TabsList className="bg-gray-100 p-1 rounded-xl">
-          <TabsTrigger value="branding" className="rounded-lg font-bold text-xs">
+        <TabsList className="bg-gray-100 p-1 rounded-xl w-full justify-start overflow-x-auto whitespace-nowrap flex-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <TabsTrigger value="branding" className="rounded-lg font-bold text-xs shrink-0">
             <Store className="h-3.5 w-3.5 mr-1.5" />
             Branding & About
           </TabsTrigger>
-          <TabsTrigger value="contact" className="rounded-lg font-bold text-xs">
+          <TabsTrigger value="contact" className="rounded-lg font-bold text-xs shrink-0">
             <MapPin className="h-3.5 w-3.5 mr-1.5" />
             Contact & Location
           </TabsTrigger>
-          <TabsTrigger value="services" className="rounded-lg font-bold text-xs">
+          <TabsTrigger value="services" className="rounded-lg font-bold text-xs shrink-0">
             <FileText className="h-3.5 w-3.5 mr-1.5" />
             Services Page CRUD
           </TabsTrigger>
@@ -430,7 +430,7 @@ export default function StorefrontBuilderPage() {
                 {/* Shop Logo upload */}
                 <div className="space-y-3">
                   <Label className="text-xs font-bold text-gray-700">Shop Logo (Square Image)</Label>
-                  <div className="flex items-center gap-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
                     <div className="w-20 h-20 rounded-xl bg-gray-50 border border-gray-200 overflow-hidden flex items-center justify-center text-gray-400 shrink-0 relative">
                       {contactInfo.logo ? (
                         <img src={contactInfo.logo} alt="Logo preview" className="w-full h-full object-cover" />
@@ -438,7 +438,7 @@ export default function StorefrontBuilderPage() {
                         <Store className="h-8 w-8 text-gray-300" />
                       )}
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 flex-1 w-full">
                       <Input
                         type="file"
                         accept="image/*"
@@ -467,7 +467,7 @@ export default function StorefrontBuilderPage() {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                       <Input
                         type="file"
                         accept="image/*"
