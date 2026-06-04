@@ -123,7 +123,7 @@ export function AdminChatViewer({ rooms, stats, showFlagged }: AdminChatViewerPr
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm">{room.order.orderNumber}</span>
                     <Badge variant="outline" className="text-xs">
-                      {room.order.status.replace(/_/g, ' ')}
+                      {(room.order.status || '').replace(/_/g, ' ')}
                     </Badge>
                     {room.hasBlockedContent && (
                       <Badge variant="destructive" className="text-xs gap-1">

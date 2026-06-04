@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
               select: {
                 id: true,
                 orderNumber: true,
+                status: true,
                 createdAt: true,
               },
             },
@@ -134,6 +135,7 @@ export async function GET(request: NextRequest) {
       },
       order: {
         orderNumber: room.orderItem.order.orderNumber,
+        status: room.orderItem.order.status,
         createdAt: room.orderItem.order.createdAt,
       },
       product: {
