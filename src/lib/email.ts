@@ -1567,4 +1567,327 @@ export const emailService = {
       return { success: false, error };
     }
   },
+
+  /**
+   * Send new order notification to a vendor
+   */
+  async sendVendorNewOrderEmail(
+    to: string,
+    data: {
+      vendorName: string;
+      orderNumber: string;
+      items: Array<{ name: string; quantity: number; price: number }>;
+      totalAmount: number;
+      customerName: string;
+      orderLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `New Order Received - ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>New Order Received</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #667eea;">New Order Received!</h2>
+    <p>Dear ${data.vendorName},</p>
+    <p>You have received a new order <strong>${data.orderNumber}</strong> from ${data.customerName}.</p>
+    
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+      <thead>
+        <tr style="border-bottom: 2px solid #e4e4e7; text-align: left;">
+          <th style="padding: 8px 0;">Product</th>
+          <th style="padding: 8px 0; text-align: center;">Qty</th>
+          <th style="padding: 8px 0; text-align: right;">Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.items.map(item => `
+          <tr style="border-bottom: 1px solid #e4e4e7;">
+            <td style="padding: 8px 0;">${item.name}</td>
+            <td style="padding: 8px 0; text-align: center;">${item.quantity}</td>
+            <td style="padding: 8px 0; text-align: right;">Rs. ${item.price.toFixed(2)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    
+    <div style="background: #f4f4f5; padding: 15px; border-radius: 6px; margin: 20px 0; text-align: right;">
+      <p style="margin: 0;"><strong>Total Vendor Earnings:</strong> Rs. ${data.totalAmount.toFixed(2)}</p>
+    </div>
+    
+    <p>Please log in to your dashboard to begin processing this order.</p>
+    <a href="${getAppUrl()}${data.orderLink}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">View Order in Dashboard</a>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send new order notification to administrators
+   */
+  async sendAdminNewOrderEmail(
+    to: string,
+    data: {
+      orderNumber: string;
+      totalAmount: number;
+      customerName: string;
+      vendorNames: string[];
+      orderLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `[Admin] New Order Placed - ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>New Order Placed</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #764ba2;">New Platform Order</h2>
+    <p>Hello Admin,</p>
+    <p>A new order <strong>${data.orderNumber}</strong> has been successfully paid and confirmed on the platform.</p>
+    
+    <div style="background: #f4f4f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
+      <p style="margin: 0 0 8px;"><strong>Customer:</strong> ${data.customerName}</p>
+      <p style="margin: 0 0 8px;"><strong>Total Amount:</strong> Rs. ${data.totalAmount.toFixed(2)}</p>
+      <p style="margin: 0;"><strong>Vendors Involved:</strong> ${data.vendorNames.join(', ')}</p>
+    </div>
+    
+    <a href="${getAppUrl()}${data.orderLink}" style="display: inline-block; padding: 12px 24px; background: #18181b; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Manage Order</a>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send order completion notification to a vendor (when escrow funds are released)
+   */
+  async sendVendorOrderCompletedEmail(
+    to: string,
+    data: {
+      vendorName: string;
+      orderNumber: string;
+      productName: string;
+      amountReleased: number;
+      walletLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `Payout Released for Order ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Escrow Funds Released</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #22c55e;">Escrow Funds Released!</h2>
+    <p>Dear ${data.vendorName},</p>
+    <p>The delivery for order item <strong>"${data.productName}"</strong> under order <strong>${data.orderNumber}</strong> has been confirmed.</p>
+    <p>Escrow funds have been successfully released and credited to your available wallet balance.</p>
+    
+    <div style="background: #f0fdf4; padding: 15px; border-left: 4px solid #22c55e; border-radius: 6px; margin: 20px 0;">
+      <p style="margin: 0 0 8px; color: #166534;"><strong>Order Number:</strong> ${data.orderNumber}</p>
+      <p style="margin: 0; color: #166534;"><strong>Amount Released:</strong> Rs. ${data.amountReleased.toFixed(2)}</p>
+    </div>
+    
+    <a href="${getAppUrl()}${data.walletLink}" style="display: inline-block; padding: 12px 24px; background: #22c55e; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">View Wallet Balance</a>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send order completion notification to administrators
+   */
+  async sendAdminOrderCompletedEmail(
+    to: string,
+    data: {
+      orderNumber: string;
+      totalAmount: number;
+      customerName: string;
+      orderLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `[Admin] Order Completed - ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Order Completed</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #22c55e;">Order Completed</h2>
+    <p>Hello Admin,</p>
+    <p>Order <strong>${data.orderNumber}</strong> has been successfully completed. Escrow funds have been released to the vendor(s).</p>
+    
+    <div style="background: #f4f4f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
+      <p style="margin: 0 0 8px;"><strong>Customer:</strong> ${data.customerName}</p>
+      <p style="margin: 0;"><strong>Total Value:</strong> Rs. ${data.totalAmount.toFixed(2)}</p>
+    </div>
+    
+    <a href="${getAppUrl()}${data.orderLink}" style="display: inline-block; padding: 12px 24px; background: #18181b; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">View Order Details</a>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send order cancelled notification to a vendor
+   */
+  async sendVendorOrderCancelledEmail(
+    to: string,
+    data: {
+      vendorName: string;
+      orderNumber: string;
+      productName: string;
+      reason?: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `Order Cancelled - ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Order Cancelled</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #ef4444;">Order Cancelled</h2>
+    <p>Dear ${data.vendorName},</p>
+    <p>We regret to inform you that order <strong>${data.orderNumber}</strong> has been cancelled.</p>
+    <p>Please stop processing the item: <strong>"${data.productName}"</strong>.</p>
+    
+    ${data.reason ? `
+    <div style="background: #fef2f2; padding: 15px; border-left: 4px solid #ef4444; border-radius: 6px; margin: 20px 0;">
+      <p style="margin: 0; color: #991b1b;"><strong>Reason for cancellation:</strong> ${data.reason}</p>
+    </div>
+    ` : ''}
+    
+    <p>If you have already shipped this item, please contact our support team immediately.</p>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send order cancelled notification to administrators
+   */
+  async sendAdminOrderCancelledEmail(
+    to: string,
+    data: {
+      orderNumber: string;
+      totalAmount: number;
+      customerName: string;
+      reason?: string;
+      orderLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `[Admin] Order Cancelled - ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Order Cancelled</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; border: 1px solid #e4e4e7;">
+    <h2 style="color: #ef4444;">Order Cancelled</h2>
+    <p>Hello Admin,</p>
+    <p>Order <strong>${data.orderNumber}</strong> has been cancelled.</p>
+    
+    <div style="background: #f4f4f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
+      <p style="margin: 0 0 8px;"><strong>Customer:</strong> ${data.customerName}</p>
+      <p style="margin: 0 0 8px;"><strong>Total Value:</strong> Rs. ${data.totalAmount.toFixed(2)}</p>
+      ${data.reason ? `<p style="margin: 0;"><strong>Reason:</strong> ${data.reason}</p>` : ''}
+    </div>
+    
+    <a href="${getAppUrl()}${data.orderLink}" style="display: inline-block; padding: 12px 24px; background: #18181b; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">View Details</a>
+    <p style="margin-top: 30px; font-size: 12px; color: #71717a;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+        `,
+      });
+      if (error) return { success: false, error };
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
 };

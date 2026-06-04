@@ -11,6 +11,7 @@ import { validateStatusTransition } from "@/lib/utils/order";
 import { refundOrder } from "@/lib/utils/wallet";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
+import { emailService } from "@/lib/email";
 
 async function requireCustomer(request: NextRequest): Promise<string | null> {
   const userId = request.headers.get("X-User-Id");
@@ -64,9 +65,23 @@ export async function POST(
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        items: true,
         payment: true,
-        customer: true,
+        customer: {
+          include: {
+            user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          },
+        },
+        items: {
+          include: {
+            vendor: {
+              select: {
+                id: true,
+                businessName: true,
+                businessEmail: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -184,6 +199,67 @@ export async function POST(
     } catch (notifError) {
       console.error("[Order Cancel] Failed to send notification:", notifError);
     }
+
+    // Trigger transactional emails asynchronously (non-blocking)
+    (async () => {
+      try {
+        if (!order) return;
+        const customerEmail = order.customer.user.email;
+        const customerName = `${order.customer.user.firstName || ""} ${order.customer.user.lastName || ""}`.trim() || "Customer";
+
+        // 1. Send Cancellation Email to Customer
+        if (customerEmail) {
+          await emailService.sendOrderCancelledEmail(customerEmail, {
+            customerName,
+            orderNumber: order.orderNumber,
+            refundAmount: order.payment && order.payment.status === "COMPLETED" ? order.totalAmount.toNumber() : undefined,
+            orderLink: `/orders/${order.id}`,
+          });
+        }
+
+        // 2. Send Cancellation Email to each Vendor in the order
+        const vendorEmails = [];
+        for (const item of order.items) {
+          const vendor = item.vendor;
+          if (vendor.businessEmail) {
+            const productSnap = item.productSnapshot as any;
+            const productName = productSnap?.name || "your product";
+            vendorEmails.push(
+              emailService.sendVendorOrderCancelledEmail(vendor.businessEmail, {
+                vendorName: vendor.businessName,
+                orderNumber: order.orderNumber,
+                productName,
+                reason,
+              })
+            );
+          }
+        }
+        await Promise.allSettled(vendorEmails);
+
+        // 3. Send Cancellation Email to Admins
+        const admins = await prisma.user.findMany({
+          where: { role: "ADMIN", isActive: true, email: { not: null } },
+          select: { email: true },
+        });
+        const adminEmails = admins
+          .map(admin => admin.email)
+          .filter((email): email is string => !!email);
+
+        await Promise.allSettled(
+          adminEmails.map(email =>
+            emailService.sendAdminOrderCancelledEmail(email, {
+              orderNumber: order.orderNumber,
+              totalAmount: order.totalAmount.toNumber(),
+              customerName,
+              reason,
+              orderLink: `/admin/orders/${order.id}`,
+            })
+          )
+        );
+      } catch (emailError) {
+        console.error("[Order Cancel API] Failed to send cancellation transactional emails:", emailError);
+      }
+    })();
 
     return NextResponse.json({
       success: true,

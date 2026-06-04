@@ -13,6 +13,7 @@ import { calculateVendorEarnings, creditVendorWallets } from "@/lib/utils/wallet
 import { createChatRoomsForOrder } from "@/lib/chat/roomManager";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
+import { emailService } from "@/lib/email";
 
 /**
  * POST /api/payments/webhook
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
         customer: {
           include: {
             user: {
-              select: { id: true },
+              select: { id: true, email: true, firstName: true, lastName: true },
             },
           },
         },
@@ -99,6 +100,7 @@ export async function POST(request: NextRequest) {
               select: {
                 id: true,
                 businessName: true,
+                businessEmail: true,
                 commissionRate: true,
               },
             },
@@ -286,6 +288,82 @@ export async function POST(request: NextRequest) {
       } catch (notifError) {
         console.error("[PayHere Webhook] Failed to send notification:", notifError);
       }
+
+      // Trigger transactional emails asynchronously (non-blocking)
+      (async () => {
+        try {
+          const customerEmail = order.customer.user.email;
+          const customerName = `${order.customer.user.firstName || ""} ${order.customer.user.lastName || ""}`.trim() || "Customer";
+
+          // 1. Send Order Confirmation Email to Customer
+          if (customerEmail) {
+            await emailService.sendOrderPaymentConfirmedEmail(customerEmail, {
+              customerName,
+              orderNumber: order.orderNumber,
+              amount: order.totalAmount.toNumber(),
+              orderLink: `/orders/${order.id}`,
+            });
+          }
+
+          // 2. Send email to each Vendor
+          const vendorItemsMap = new Map<string, typeof order.items>();
+          for (const item of order.items) {
+            const list = vendorItemsMap.get(item.vendorId) || [];
+            list.push(item);
+            vendorItemsMap.set(item.vendorId, list);
+          }
+
+          const vendorEmails = [];
+          for (const [vendorId, items] of vendorItemsMap.entries()) {
+            const vendor = items[0].vendor;
+            if (vendor.businessEmail) {
+              vendorEmails.push(
+                emailService.sendVendorNewOrderEmail(vendor.businessEmail, {
+                  vendorName: vendor.businessName,
+                  orderNumber: order.orderNumber,
+                  customerName,
+                  orderLink: `/vendor/orders/${order.id}`,
+                  totalAmount: items.reduce((sum, item) => sum + item.totalPrice.toNumber(), 0),
+                  items: items.map(item => {
+                    const snap = item.productSnapshot as any;
+                    return {
+                      name: snap?.name || "Product",
+                      quantity: item.quantity,
+                      price: item.unitPrice.toNumber(),
+                    };
+                  }),
+                })
+              );
+            }
+          }
+          await Promise.allSettled(vendorEmails);
+
+          // 3. Send email to Admins
+          const admins = await prisma.user.findMany({
+            where: { role: "ADMIN", isActive: true, email: { not: null } },
+            select: { email: true },
+          });
+          const adminEmails = admins
+            .map(admin => admin.email)
+            .filter((email): email is string => !!email);
+
+          const vendorNames = Array.from(new Set(order.items.map(item => item.vendor.businessName)));
+
+          await Promise.allSettled(
+            adminEmails.map(email =>
+              emailService.sendAdminNewOrderEmail(email, {
+                orderNumber: order.orderNumber,
+                totalAmount: order.totalAmount.toNumber(),
+                customerName,
+                vendorNames,
+                orderLink: `/admin/orders/${order.id}`,
+              })
+            )
+          );
+        } catch (emailError) {
+          console.error("Failed to send transactional emails for order confirmation (webhook):", emailError);
+        }
+      })();
     }
 
     console.log("[PayHere Webhook] Processing completed successfully:", {

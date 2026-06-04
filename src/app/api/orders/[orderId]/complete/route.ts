@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import { manualCompleteOrder } from "@/lib/utils/orderCompletion";
+import { emailService } from "@/lib/email";
 
 async function getAuthenticatedCustomer(request: NextRequest): Promise<{ customerId: string; userId: string } | null> {
   const userId = request.headers.get("X-User-Id");
@@ -50,11 +51,23 @@ export async function POST(
     // Verify order exists and belongs to this customer
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      select: {
-        id: true,
-        customerId: true,
-        orderNumber: true,
-        status: true,
+      include: {
+        customer: {
+          include: {
+            user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          },
+        },
+        items: {
+          include: {
+            vendor: {
+              select: {
+                id: true,
+                businessName: true,
+                businessEmail: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -88,6 +101,66 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    // Trigger transactional emails asynchronously (non-blocking)
+    (async () => {
+      try {
+        if (!order) return;
+        const customerEmail = order.customer.user.email;
+        const customerName = `${order.customer.user.firstName || ""} ${order.customer.user.lastName || ""}`.trim() || "Customer";
+
+        // 1. Send Completion Confirmed Email to Customer
+        if (customerEmail) {
+          await emailService.sendOrderDeliveryConfirmedEmail(customerEmail, {
+            customerName,
+            orderNumber: order.orderNumber,
+            orderLink: `/orders/${order.id}`,
+          });
+        }
+
+        // 2. Send Email to each Vendor
+        const vendorEmails = [];
+        for (const item of order.items) {
+          const vendor = item.vendor;
+          if (vendor.businessEmail) {
+            const productSnap = item.productSnapshot as any;
+            const productName = productSnap?.name || "your product";
+            vendorEmails.push(
+              emailService.sendVendorOrderCompletedEmail(vendor.businessEmail, {
+                vendorName: vendor.businessName,
+                orderNumber: order.orderNumber,
+                productName,
+                amountReleased: item.totalPrice.toNumber(),
+                walletLink: "/vendor/wallet",
+              })
+            );
+          }
+        }
+        await Promise.allSettled(vendorEmails);
+
+        // 3. Send Email to Admins
+        const admins = await prisma.user.findMany({
+          where: { role: "ADMIN", isActive: true, email: { not: null } },
+          select: { email: true },
+        });
+        const adminEmails = admins
+          .map(admin => admin.email)
+          .filter((email): email is string => !!email);
+
+        await Promise.allSettled(
+          adminEmails.map(email =>
+            emailService.sendAdminOrderCompletedEmail(email, {
+              orderNumber: order.orderNumber,
+              totalAmount: order.totalAmount.toNumber(),
+              customerName,
+              orderLink: `/admin/orders/${order.id}`,
+            })
+          )
+        );
+      } catch (emailError) {
+        console.error("[complete/route.ts] Failed to send completion transactional emails:", emailError);
+      }
+    })();
 
     // Re-fetch updated order for response
     const updatedOrder = await prisma.order.findUnique({

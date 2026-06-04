@@ -11,6 +11,7 @@ import { overrideOrderStatusSchema } from "@/lib/validations/order";
 import { releaseVendorFunds } from "@/lib/utils/wallet";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
+import { emailService } from "@/lib/email";
 
 /**
  * PATCH /api/admin/orders/[orderId]/status
@@ -43,9 +44,21 @@ export async function PATCH(
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
+        payment: true,
         customer: {
           include: {
-            user: { select: { id: true } },
+            user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          },
+        },
+        items: {
+          include: {
+            vendor: {
+              select: {
+                id: true,
+                businessName: true,
+                businessEmail: true,
+              },
+            },
           },
         },
       },
@@ -164,6 +177,118 @@ export async function PATCH(
     } catch (notifError) {
       console.error("[Admin Override Status] Failed to send notification:", notifError);
     }
+
+    // Trigger transactional emails asynchronously (non-blocking) based on new status
+    (async () => {
+      try {
+        if (!order) return;
+        const customerEmail = order.customer.user.email;
+        const customerName = `${order.customer.user.firstName || ""} ${order.customer.user.lastName || ""}`.trim() || "Customer";
+
+        if (status === "CANCELLED") {
+          // 1. Send Cancellation Email to Customer
+          if (customerEmail) {
+            await emailService.sendOrderCancelledEmail(customerEmail, {
+              customerName,
+              orderNumber: order.orderNumber,
+              refundAmount: order.payment && order.payment.status === "COMPLETED" ? order.totalAmount.toNumber() : undefined,
+              orderLink: `/orders/${order.id}`,
+            });
+          }
+
+          // 2. Send Cancellation Email to each Vendor in the order
+          const vendorEmails = [];
+          for (const item of order.items) {
+            const vendor = item.vendor;
+            if (vendor.businessEmail) {
+              const productSnap = item.productSnapshot as any;
+              const productName = productSnap?.name || "your product";
+              vendorEmails.push(
+                emailService.sendVendorOrderCancelledEmail(vendor.businessEmail, {
+                  vendorName: vendor.businessName,
+                  orderNumber: order.orderNumber,
+                  productName,
+                  reason: reason || undefined,
+                })
+              );
+            }
+          }
+          await Promise.allSettled(vendorEmails);
+
+          // 3. Send Cancellation Email to Admins
+          const admins = await prisma.user.findMany({
+            where: { role: "ADMIN", isActive: true, email: { not: null } },
+            select: { email: true },
+          });
+          const adminEmails = admins
+            .map(admin => admin.email)
+            .filter((email): email is string => !!email);
+
+          await Promise.allSettled(
+            adminEmails.map(email =>
+              emailService.sendAdminOrderCancelledEmail(email, {
+                orderNumber: order.orderNumber,
+                totalAmount: order.totalAmount.toNumber(),
+                customerName,
+                reason: reason || undefined,
+                orderLink: `/admin/orders/${order.id}`,
+              })
+            )
+          );
+        } else if (status === "DELIVERED" || status === "DELIVERY_CONFIRMED" || status === "COMPLETED") {
+          // 1. Send Completion Confirmed Email to Customer
+          if (customerEmail) {
+            await emailService.sendOrderDeliveryConfirmedEmail(customerEmail, {
+              customerName,
+              orderNumber: order.orderNumber,
+              orderLink: `/orders/${order.id}`,
+            });
+          }
+
+          // 2. Send Email to each Vendor
+          const vendorEmails = [];
+          for (const item of order.items) {
+            const vendor = item.vendor;
+            if (vendor.businessEmail) {
+              const productSnap = item.productSnapshot as any;
+              const productName = productSnap?.name || "your product";
+              vendorEmails.push(
+                emailService.sendVendorOrderCompletedEmail(vendor.businessEmail, {
+                  vendorName: vendor.businessName,
+                  orderNumber: order.orderNumber,
+                  productName,
+                  amountReleased: item.totalPrice.toNumber(),
+                  walletLink: "/vendor/wallet",
+                })
+              );
+            }
+          }
+          await Promise.allSettled(vendorEmails);
+
+          // 3. Send Email to Admins
+          const admins = await prisma.user.findMany({
+            where: { role: "ADMIN", isActive: true, email: { not: null } },
+            select: { email: true },
+          });
+          const adminEmails = admins
+            .map(admin => admin.email)
+            .filter((email): email is string => !!email);
+
+          await Promise.allSettled(
+            adminEmails.map(email =>
+              emailService.sendAdminOrderCompletedEmail(email, {
+                orderNumber: order.orderNumber,
+                totalAmount: order.totalAmount.toNumber(),
+                customerName,
+                orderLink: `/admin/orders/${order.id}`,
+              })
+            )
+          );
+        }
+      } catch (emailError) {
+        console.error("[Admin Override Status] Failed to send transactional emails:", emailError);
+      }
+    })();
 
     return NextResponse.json({
       success: true,

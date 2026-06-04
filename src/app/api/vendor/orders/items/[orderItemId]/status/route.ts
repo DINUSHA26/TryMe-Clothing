@@ -11,6 +11,7 @@ import { updateOrderItemStatusSchema } from "@/lib/validations/order";
 import { validateStatusTransition } from "@/lib/utils/order";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
+import { emailService } from "@/lib/email";
 
 /**
  * Update parent order status based on all items
@@ -115,7 +116,7 @@ export async function PATCH(
           include: {
             customer: {
               include: {
-                user: { select: { id: true } },
+                user: { select: { id: true, email: true, firstName: true, lastName: true } },
               },
             },
           },
@@ -231,6 +232,40 @@ export async function PATCH(
     } catch (notifError) {
       console.error("[Vendor Update Status] Failed to send notification:", notifError);
     }
+
+    // Trigger transactional emails asynchronously (non-blocking)
+    (async () => {
+      try {
+        const productSnapshot = orderItem.productSnapshot as any;
+        const vendorName = productSnapshot?.vendorName || "the vendor";
+        const productName = productSnapshot?.name || "your item";
+        const customerEmail = orderItem.order.customer.user.email;
+        const customerName = `${orderItem.order.customer.user.firstName || ""} ${orderItem.order.customer.user.lastName || ""}`.trim() || "Customer";
+
+        if (customerEmail) {
+          if (status === "PROCESSING") {
+            await emailService.sendOrderItemProcessingEmail(customerEmail, {
+              customerName,
+              orderNumber: orderItem.order.orderNumber,
+              productName,
+              vendorName,
+              orderLink: `/orders/${orderItem.orderId}`,
+            });
+          } else if (status === "SHIPPED") {
+            await emailService.sendOrderItemShippedEmail(customerEmail, {
+              customerName,
+              orderNumber: orderItem.order.orderNumber,
+              productName,
+              vendorName,
+              trackingNumber: trackingNumber || undefined,
+              orderLink: `/orders/${orderItem.orderId}`,
+            });
+          }
+        }
+      } catch (emailError) {
+        console.error("Failed to send transactional email for item status update:", emailError);
+      }
+    })();
 
     return NextResponse.json({
       success: true,

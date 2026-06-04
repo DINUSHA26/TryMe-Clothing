@@ -15,6 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { releaseVendorFunds } from "@/lib/utils/wallet";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
+import { emailService } from "@/lib/email";
 
 export type DeliveryTrigger = "customer" | "admin" | "tracking";
 
@@ -45,7 +46,18 @@ export async function markOrderDelivered(
     include: {
       customer: {
         include: {
-          user: { select: { id: true } },
+          user: { select: { id: true, email: true, firstName: true, lastName: true } },
+        },
+      },
+      items: {
+        include: {
+          vendor: {
+            select: {
+              id: true,
+              businessName: true,
+              businessEmail: true,
+            },
+          },
         },
       },
     },
@@ -140,6 +152,65 @@ export async function markOrderDelivered(
       notifErr
     );
   }
+
+  // Trigger transactional emails asynchronously (non-blocking)
+  (async () => {
+    try {
+      const customerEmail = order.customer.user.email;
+      const customerName = `${order.customer.user.firstName || ""} ${order.customer.user.lastName || ""}`.trim() || "Customer";
+
+      // 1. Send Delivery Confirmed Email to Customer
+      if (customerEmail) {
+        await emailService.sendOrderDeliveryConfirmedEmail(customerEmail, {
+          customerName,
+          orderNumber: order.orderNumber,
+          orderLink: `/orders/${order.id}`,
+        });
+      }
+
+      // 2. Send Email to each Vendor notifying that delivery is confirmed and funds released
+      const vendorEmails = [];
+      for (const item of order.items) {
+        const vendor = item.vendor;
+        if (vendor.businessEmail) {
+          const productSnap = item.productSnapshot as any;
+          const productName = productSnap?.name || "your product";
+          vendorEmails.push(
+            emailService.sendVendorOrderCompletedEmail(vendor.businessEmail, {
+              vendorName: vendor.businessName,
+              orderNumber: order.orderNumber,
+              productName,
+              amountReleased: item.totalPrice.toNumber(),
+              walletLink: "/vendor/wallet",
+            })
+          );
+        }
+      }
+      await Promise.allSettled(vendorEmails);
+
+      // 3. Send Email to Admins
+      const admins = await prisma.user.findMany({
+        where: { role: "ADMIN", isActive: true, email: { not: null } },
+        select: { email: true },
+      });
+      const adminEmails = admins
+        .map(admin => admin.email)
+        .filter((email): email is string => !!email);
+
+      await Promise.allSettled(
+        adminEmails.map(email =>
+          emailService.sendAdminOrderCompletedEmail(email, {
+            orderNumber: order.orderNumber,
+            totalAmount: order.totalAmount.toNumber(),
+            customerName,
+            orderLink: `/admin/orders/${order.id}`,
+          })
+        )
+      );
+    } catch (emailError) {
+      console.error("[markOrderDelivered] Failed to send completion transactional emails:", emailError);
+    }
+  })();
 
   console.log(
     `[Order] DELIVERED: ${order.orderNumber} (triggered by: ${triggeredBy})`
