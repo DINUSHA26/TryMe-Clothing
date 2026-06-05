@@ -3,13 +3,13 @@ import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBhV1NCJTnj-RdoYxyXWMICIqt2V92lzNQ",
-  authDomain: "tryme-fashion.firebaseapp.com",
-  projectId: "tryme-fashion",
-  storageBucket: "tryme-fashion.firebasestorage.app",
-  messagingSenderId: "512567038814",
-  appId: "1:512567038814:web:dbccf8e75a5b459af675cf",
-  measurementId: "G-ZX8XTGXJTS"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase only if it hasn't been initialized already (important for Next.js SSR)

@@ -23,7 +23,14 @@ export async function POST(request: NextRequest) {
     const { idToken } = validation.data;
 
     // Verify the Firebase ID token using Google's public endpoint
-    const firebaseApiKey = "AIzaSyBhV1NCJTnj-RdoYxyXWMICIqt2V92lzNQ"; // Provided in Firebase config
+    const firebaseApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    if (!firebaseApiKey) {
+      console.error("Missing NEXT_PUBLIC_FIREBASE_API_KEY env variable");
+      return NextResponse.json(
+        { success: false, error: "Firebase configuration error on server" },
+        { status: 500 }
+      );
+    }
     
     const verifyRes = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`,
