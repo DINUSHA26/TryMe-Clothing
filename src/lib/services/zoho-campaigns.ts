@@ -30,15 +30,37 @@ function getCampaignsApiUrl(accountsServer: string): string {
   return "https://campaigns.zoho.com";
 }
 
-/**
- * Retrieves the current Zoho settings from the database
- */
 export async function getZohoSettings(): Promise<ZohoSettings | null> {
   const setting = await prisma.systemSetting.findUnique({
     where: { key: SETTINGS_KEY },
   });
-  if (!setting) return null;
-  return setting.value as unknown as ZohoSettings;
+  
+  const dbSettings = setting ? (setting.value as unknown as ZohoSettings) : null;
+  
+  // Use environment variables as fallback/override for credentials
+  const clientId = process.env.ZOHO_CLIENT_ID || dbSettings?.clientId || "";
+  const clientSecret = process.env.ZOHO_CLIENT_SECRET || dbSettings?.clientSecret || "";
+  const listKey = dbSettings?.listKey || process.env.ZOHO_LIST_KEY || "";
+  const accountsServer = dbSettings?.accountsServer || "https://accounts.zoho.com";
+  const refreshToken = dbSettings?.refreshToken || process.env.ZOHO_REFRESH_TOKEN;
+  const accessToken = dbSettings?.accessToken || process.env.ZOHO_ACCESS_TOKEN;
+  const expiresAt = dbSettings?.expiresAt || (process.env.ZOHO_EXPIRES_AT ? parseInt(process.env.ZOHO_EXPIRES_AT) : undefined);
+  const isConnected = dbSettings?.isConnected || !!(refreshToken || accessToken);
+
+  if (!clientId && !clientSecret && !listKey && !setting) {
+    return null;
+  }
+
+  return {
+    clientId,
+    clientSecret,
+    accountsServer,
+    listKey,
+    refreshToken,
+    accessToken,
+    expiresAt,
+    isConnected,
+  };
 }
 
 /**
