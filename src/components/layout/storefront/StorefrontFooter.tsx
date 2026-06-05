@@ -1,14 +1,61 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Facebook, Instagram, Mail } from "lucide-react";
+import { Facebook, Instagram, Mail, CheckCircle } from "lucide-react";
 import { Logo } from "../shared/Logo";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function StorefrontFooter() {
   const currentYear = new Date().getFullYear();
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setIsSubscribed(true);
+        toast({
+          title: "Thank You!",
+          description: data.data.message || "You have successfully subscribed to our newsletter.",
+        });
+      } else {
+        throw new Error(data.error || "Failed to subscribe.");
+      }
+    } catch (err: any) {
+      toast({
+        title: "Subscription Failed",
+        description: err.message || "Something went wrong. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <footer className="border-t bg-muted/40 mt-auto">
@@ -134,18 +181,27 @@ export function StorefrontFooter() {
             <p className="text-sm text-muted-foreground">
               Subscribe to get special offers and updates.
             </p>
-            <div className="flex gap-2">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                disabled
-                className="h-11 md:h-10"
-                title="Newsletter functionality coming soon"
-              />
-              <Button disabled className="h-11 w-11 md:h-10 md:w-10" title="Newsletter functionality coming soon">
-                <Mail className="h-5 w-5 md:h-4 md:w-4" />
-              </Button>
-            </div>
+            {isSubscribed ? (
+              <div className="flex items-center gap-2 text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-lg text-sm font-medium">
+                <CheckCircle className="h-5 w-5 shrink-0" />
+                <span>Thank you for subscribing!</span>
+              </div>
+            ) : (
+              <form onSubmit={handleSubscribe} className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                  className="h-11 md:h-10"
+                />
+                <Button type="submit" disabled={isSubmitting} className="h-11 w-11 md:h-10 md:w-10 shrink-0">
+                  <Mail className="h-5 w-5 md:h-4 md:w-4" />
+                </Button>
+              </form>
+            )}
           </div>
         </div>
 

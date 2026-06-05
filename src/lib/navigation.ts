@@ -20,6 +20,7 @@ import {
   Megaphone,
   CreditCard,
   LayoutGrid,
+  Mail,
 } from "lucide-react";
 
 export interface NavItem {
@@ -105,6 +106,11 @@ export const adminNavItems: NavItem[] = [
     label: "Settings",
     href: "/admin/settings",
     icon: Settings,
+  },
+  {
+    label: "Newsletter & Zoho",
+    href: "/admin/newsletter",
+    icon: Mail,
   },
   {
     label: "Ads Dashboard",
