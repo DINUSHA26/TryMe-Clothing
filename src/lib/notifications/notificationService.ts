@@ -111,7 +111,21 @@ export async function createNotification(
       // Continue - notification is still in DB
     }
 
-    // 5. Send email if enabled (non-blocking)
+    // 5. Send push notification via OneSignal (non-blocking)
+    try {
+      const { sendPushNotification } = await import("./onesignalService");
+      await sendPushNotification({
+        userId,
+        title,
+        message,
+        link: link || undefined,
+      });
+    } catch (error) {
+      console.error("[Notifications] OneSignal push notification failed:", error);
+      // Continue - non-blocking
+    }
+
+    // 6. Send email if enabled (non-blocking)
     if (shouldSendEmail(preferences, config.category, type)) {
       try {
         await sendNotificationEmail(type, userId, metadata);
@@ -122,6 +136,7 @@ export async function createNotification(
     }
 
     return notification;
+
   } catch (error) {
     console.error("[Notifications] Failed to create notification:", error);
     return null; // Non-blocking: don't throw

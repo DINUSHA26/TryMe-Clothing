@@ -10,3 +10,5 @@ export { NotificationBell } from "./NotificationBell";
 export { NotificationDropdown } from "./NotificationDropdown";
 export { NotificationToast } from "./NotificationToast";
 export { NotificationPreferencesDialog } from "./NotificationPreferencesDialog";
+export { OneSignalInitializer } from "./OneSignalInitializer";
+

@@ -4,3 +4,5 @@
 export * from "./notificationService";
 export * from "./notificationTemplates";
 export * from "./notificationBroadcast";
+export * from "./onesignalService";
+
