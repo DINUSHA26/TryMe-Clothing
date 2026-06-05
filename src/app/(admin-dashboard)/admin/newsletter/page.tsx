@@ -323,7 +323,7 @@ export default function NewsletterAdminPage() {
     if (!settings.clientId) return "#";
     const accountsServer = settings.accountsServer || "https://accounts.zoho.com";
     const scope = "ZohoCampaigns.contact.UPDATE,ZohoCampaigns.contact.READ";
-    const redirectUri = "https://tryme.lk/zoho-callback";
+    const redirectUri = process.env.NEXT_PUBLIC_ZOHO_REDIRECT_URI || "https://tryme.lk/zoho-callback";
     return `${accountsServer}/oauth/v2/auth?scope=${scope}&client_id=${settings.clientId}&response_type=code&access_type=offline&redirect_uri=${encodeURIComponent(redirectUri)}&prompt=consent`;
   };
 
@@ -579,7 +579,7 @@ export default function NewsletterAdminPage() {
                     <div className="space-y-2">
                       <Label>Authorized Redirect URI</Label>
                       <Input
-                        value="https://tryme.lk/zoho-callback"
+                        value={process.env.NEXT_PUBLIC_ZOHO_REDIRECT_URI || "https://tryme.lk/zoho-callback"}
                         disabled
                         className="bg-muted text-muted-foreground"
                       />
@@ -697,7 +697,7 @@ export default function NewsletterAdminPage() {
                       <ul className="list-disc list-inside pl-4 mt-1 space-y-1 text-xs">
                         <li>Client Name: <code className="bg-muted px-1 py-0.5 rounded text-[11px]">TryMe Web</code></li>
                         <li>Homepage URL: <code className="bg-muted px-1 py-0.5 rounded text-[11px]">https://tryme.lk</code></li>
-                        <li>Authorized Redirect URIs: <code className="bg-muted px-1 py-0.5 rounded text-[11px]">https://tryme.lk/zoho-callback</code></li>
+                        <li>Authorized Redirect URIs: <code className="bg-muted px-1 py-0.5 rounded text-[11px]">{process.env.NEXT_PUBLIC_ZOHO_REDIRECT_URI || "https://tryme.lk/zoho-callback"}</code></li>
                       </ul>
                     </li>
                     <li>
@@ -720,7 +720,7 @@ export default function NewsletterAdminPage() {
                     <li>
                       After clicking Authorize, you will be redirected to a URL matching:
                       <div className="bg-muted p-2 rounded text-[10px] select-all overflow-x-auto whitespace-pre-wrap font-mono mt-1 text-muted-foreground border">
-                        https://tryme.lk/zoho-callback?code=<strong>[YOUR_CODE]</strong>&location=us&...
+                        {process.env.NEXT_PUBLIC_ZOHO_REDIRECT_URI || "https://tryme.lk/zoho-callback"}?code=<strong>[YOUR_CODE]</strong>&location=us&...
                       </div>
                       Copy the code parameter from the browser URL, paste it into the <strong>Zoho Authorization Code</strong> input on the left, and click <strong>Exchange & Connect</strong>.
                     </li>

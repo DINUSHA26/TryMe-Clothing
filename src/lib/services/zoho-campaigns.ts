@@ -79,7 +79,7 @@ export async function exchangeAuthCode(code: string): Promise<{ success: boolean
   const url = `${accountsServer}/oauth/v2/token`;
   
   // The redirect URI registered in your Zoho API Console
-  const redirectUri = "https://tryme.lk/zoho-callback";
+  const redirectUri = process.env.ZOHO_REDIRECT_URI || "https://tryme.lk/zoho-callback";
 
   const params = new URLSearchParams({
     code,
