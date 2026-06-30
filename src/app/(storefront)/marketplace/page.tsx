@@ -647,8 +647,12 @@ function MarketplacePortalPageContent() {
                       onClick={() => updateFilters({ category: cat.slug, page: 1 })}
                       className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-2xl hover:border-orange-100 hover:bg-orange-50/10 text-left transition-all hover:shadow-sm"
                     >
-                      <span className="text-2xl w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
-                        {cat.icon || "📁"}
+                      <span className="text-2xl w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
+                        {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
+                          <img src={cat.icon} alt={cat.name} className="w-8 h-8 object-contain" />
+                        ) : (
+                          cat.icon || "📁"
+                        )}
                       </span>
                       <div>
                         <h3 className="text-xs font-bold text-gray-900">{cat.name}</h3>
@@ -716,7 +720,14 @@ function MarketplacePortalPageContent() {
                             isCatSelected ? "font-bold text-[#FF6600] bg-orange-50/20" : "text-gray-700 hover:bg-gray-50"
                           }`}
                         >
-                          <span>{cat.icon} {cat.name}</span>
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
+                              <img src={cat.icon} alt="" className="w-4 h-4 object-contain shrink-0" />
+                            ) : (
+                              <span>{cat.icon}</span>
+                            )}
+                            <span className="truncate">{cat.name}</span>
+                          </span>
                           <span className="text-[9px] text-gray-400 font-normal bg-gray-100 px-1.5 py-0.5 rounded">{catCount}</span>
                         </button>
 

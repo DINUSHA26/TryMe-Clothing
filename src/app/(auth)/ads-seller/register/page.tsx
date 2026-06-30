@@ -369,8 +369,12 @@ export default function AdsSellerRegisterPage() {
                           : "border-gray-100 hover:border-gray-300 bg-gray-50/50 hover:bg-white text-gray-700"
                       }`}
                     >
-                      <span className="text-3xl mb-2 flex items-center justify-center w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-50">
-                        {cat.icon || "📁"}
+                      <span className="text-3xl mb-2 flex items-center justify-center w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-50 overflow-hidden">
+                        {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
+                          <img src={cat.icon} alt={cat.name} className="w-10 h-10 object-contain" />
+                        ) : (
+                          cat.icon || "📁"
+                        )}
                       </span>
                       <span className="text-xs">{cat.name}</span>
                     </button>

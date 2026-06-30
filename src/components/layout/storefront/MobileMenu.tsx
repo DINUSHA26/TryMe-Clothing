@@ -60,7 +60,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-[85vw] max-w-[280px] p-0">
+      <SheetContent side="left" className="w-[85vw] max-w-[280px] p-0 flex flex-col h-full bg-white">
         <SheetHeader className="p-4 flex flex-row items-center justify-between space-y-0 text-left mt-2">
           <SheetTitle className="flex-1">
             <Logo variant="icon" href="/" />

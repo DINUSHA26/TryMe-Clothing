@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { optimizeImageUrl } from "@/lib/imageLoader";
 import { useAuthStore } from "@/stores/authStore";
 import { ProductImageGallery } from "@/components/products/ProductImageGallery";
 import { ProductGrid } from "@/components/products/ProductGrid";
@@ -417,7 +418,7 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full bg-accent flex items-center justify-center border group-hover:border-primary transition-colors overflow-hidden">
                   {product.vendor.logo ? (
-                    <img src={product.vendor.logo} alt={product.vendor.businessName} className="w-full h-full object-cover" />
+                    <img src={optimizeImageUrl(product.vendor.logo, 100)} alt={product.vendor.businessName} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <Store className="w-6 h-6 text-primary" />
                   )}
@@ -725,7 +726,7 @@ export default function ProductDetailPage() {
           ...product.images,
           ...(product.variants?.map((v) => v.image).filter(Boolean) as string[])
         ].filter((url, index, self) => self.indexOf(url) === index).map((url) => (
-          <img key={url} src={url} alt="Preload" loading="eager" />
+          <img key={url} src={optimizeImageUrl(url, 800)} alt="Preload" loading="eager" />
         ))}
       </div>
     </div>

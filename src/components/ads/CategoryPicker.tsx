@@ -436,8 +436,12 @@ export function CategoryPicker({
                       )}
                     >
                       <span className="flex items-center gap-1.5 md:gap-3 min-w-0">
-                        <span className="text-sm md:text-xl flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg bg-white shadow-sm border border-gray-50 flex-shrink-0">
-                          {cat.icon || "📁"}
+                        <span className="text-sm md:text-xl flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg bg-white shadow-sm border border-gray-50 flex-shrink-0 overflow-hidden">
+                          {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
+                            <img src={cat.icon} alt={cat.name} className="w-5 h-5 md:w-7 md:h-7 object-contain" />
+                          ) : (
+                            cat.icon || "📁"
+                          )}
                         </span>
                         <span className="truncate">{cat.name}</span>
                       </span>

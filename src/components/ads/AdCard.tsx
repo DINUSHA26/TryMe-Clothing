@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistance } from "date-fns";
 import { Star, ShieldCheck, MapPin, Tag, Clock, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { optimizeImageUrl } from "@/lib/imageLoader";
 
 interface AdCardProps {
   ad: {
@@ -55,9 +56,10 @@ export function AdCard({ ad }: AdCardProps) {
       <div className="w-[110px] sm:w-[160px] h-[90px] sm:h-[120px] bg-gray-50 border border-gray-100 rounded-xl overflow-hidden shrink-0 relative flex items-center justify-center">
         {ad.images?.[0] ? (
           <img
-            src={ad.images[0]}
+            src={optimizeImageUrl(ad.images[0], 300)}
             alt={ad.title}
             className="w-full h-full object-contain group-hover:scale-102 transition-transform duration-500"
+            loading="lazy"
           />
         ) : (
           <span className="text-xs font-semibold text-gray-400">No Image</span>
@@ -91,7 +93,12 @@ export function AdCard({ ad }: AdCardProps) {
             <div className="flex items-center gap-1">
               <Tag className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">
-                {ad.category.icon} {ad.category.name} &gt; {ad.subCategory.name}
+                {ad.category.icon && (ad.category.icon.startsWith("/") || ad.category.icon.startsWith("http")) ? (
+                  <img src={optimizeImageUrl(ad.category.icon, 20)} alt="" className="w-3.5 h-3.5 object-contain inline-block mr-1 align-text-bottom" loading="lazy" />
+                ) : (
+                  ad.category.icon && `${ad.category.icon} `
+                )}
+                {ad.category.name} &gt; {ad.subCategory.name}
               </span>
             </div>
           </div>

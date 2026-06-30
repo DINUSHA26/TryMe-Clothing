@@ -59,24 +59,28 @@ export function ProductImageGallery({
       {/* Main Image */}
       <div className="relative aspect-square rounded-xl overflow-hidden bg-muted border group shadow-sm">
         {/* We use two images to create a crossfade effect */}
-        {images.map((image, index) => (
-          <div
-            key={image + index}
-            className={cn(
-              "absolute inset-0 transition-opacity duration-700 ease-in-out",
-              selectedImage === index ? "opacity-100 z-10" : "opacity-0 z-0"
-            )}
-          >
-            <Image
-              src={image}
-              alt={`${productName} - Image ${index + 1}`}
-              fill
-              className="object-cover transition-transform [transition-duration:2000ms] group-hover:scale-110"
-              priority={index === 0}
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
-          </div>
-        ))}
+        {images.map((image, index) => {
+          const isSelected = selectedImage === index;
+          if (!isSelected && index !== 0) return null;
+          return (
+            <div
+              key={image + index}
+              className={cn(
+                "absolute inset-0 transition-opacity duration-700 ease-in-out",
+                isSelected ? "opacity-100 z-10" : "opacity-0 z-0"
+              )}
+            >
+              <Image
+                src={image}
+                alt={`${productName} - Image ${index + 1}`}
+                fill
+                className="object-cover transition-transform [transition-duration:2000ms] group-hover:scale-110"
+                priority={index === 0}
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            </div>
+          );
+        })}
 
         {/* Navigation Arrows */}
         {images.length > 1 && (

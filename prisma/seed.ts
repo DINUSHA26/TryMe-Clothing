@@ -152,7 +152,7 @@ async function main() {
     {
       name: "Mobiles",
       slug: "mobiles",
-      icon: "📱",
+      icon: "/images/categories/mobiles.png",
       sortOrder: 1,
       subCategories: [
         {
@@ -211,7 +211,7 @@ async function main() {
     {
       name: "Electronics",
       slug: "electronics",
-      icon: "💻",
+      icon: "/images/categories/electronics.png",
       sortOrder: 2,
       subCategories: [
         {
@@ -323,7 +323,7 @@ async function main() {
     {
       name: "Vehicles",
       slug: "vehicles",
-      icon: "🚗",
+      icon: "/images/categories/vehicles.png",
       sortOrder: 3,
       subCategories: [
         {
@@ -526,7 +526,7 @@ async function main() {
     {
       name: "Property",
       slug: "property",
-      icon: "🏠",
+      icon: "/images/categories/property.png",
       sortOrder: 4,
       subCategories: [
         {
@@ -576,7 +576,7 @@ async function main() {
     {
       name: "Home & Garden",
       slug: "home-garden",
-      icon: "🛋️",
+      icon: "/images/categories/home_garden.png",
       sortOrder: 5,
       subCategories: [
         {
@@ -638,7 +638,7 @@ async function main() {
     {
       name: "Animals",
       slug: "animals",
-      icon: "🐾",
+      icon: "/images/categories/animals.png",
       sortOrder: 6,
       subCategories: [
         {
@@ -698,7 +698,7 @@ async function main() {
     {
       name: "Services",
       slug: "services",
-      icon: "🔧",
+      icon: "/images/categories/services.png",
       sortOrder: 7,
       subCategories: [
         {
@@ -754,7 +754,7 @@ async function main() {
     {
       name: "Business & Industry",
       slug: "business-industry",
-      icon: "🏭",
+      icon: "/images/categories/business_industry.png",
       sortOrder: 8,
       subCategories: [
         {
@@ -832,7 +832,7 @@ async function main() {
     {
       name: "Hobby, Sport & Kids",
       slug: "hobby-sport-kids",
-      icon: "⚽",
+      icon: "/images/categories/hobby_sport.png",
       sortOrder: 9,
       subCategories: [
         {
@@ -912,7 +912,7 @@ async function main() {
     {
       name: "Fashion & Beauty",
       slug: "fashion-beauty",
-      icon: "👗",
+      icon: "/images/categories/fashion_beauty.png",
       sortOrder: 10,
       subCategories: [
         {
@@ -1008,7 +1008,7 @@ async function main() {
     {
       name: "Essentials",
       slug: "essentials",
-      icon: "🥫",
+      icon: "/images/categories/essentials.png",
       sortOrder: 11,
       subCategories: [
         {
@@ -1025,7 +1025,7 @@ async function main() {
     {
       name: "Education",
       slug: "education",
-      icon: "🎓",
+      icon: "/images/categories/education.png",
       sortOrder: 12,
       subCategories: [
         {
@@ -1074,7 +1074,7 @@ async function main() {
     {
       name: "Agriculture",
       slug: "agriculture",
-      icon: "🌾",
+      icon: "/images/categories/agriculture.png",
       sortOrder: 13,
       subCategories: [
         {
@@ -1107,7 +1107,7 @@ async function main() {
     {
       name: "Other",
       slug: "other",
-      icon: "📦",
+      icon: "/images/categories/other.png",
       sortOrder: 14,
       subCategories: [
         {

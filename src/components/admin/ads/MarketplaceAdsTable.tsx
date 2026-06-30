@@ -187,7 +187,11 @@ export function MarketplaceAdsTable({ ads, onAdUpdated }: MarketplaceAdsTablePro
                     </TableCell>
                     <TableCell className="text-sm">
                       <div className="flex items-center gap-1.5 font-medium text-gray-800">
-                        <span>{ad.category.icon}</span>
+                        {ad.category.icon && (ad.category.icon.startsWith("/") || ad.category.icon.startsWith("http")) ? (
+                          <img src={ad.category.icon} alt="" className="w-5 h-5 object-contain shrink-0" />
+                        ) : (
+                          <span>{ad.category.icon}</span>
+                        )}
                         <span>{ad.category.name}</span>
                       </div>
                       <div className="text-xs text-muted-foreground">{ad.subCategory.name}</div>

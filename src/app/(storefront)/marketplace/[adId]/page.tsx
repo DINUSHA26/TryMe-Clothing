@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { formatDistance, format } from "date-fns";
 import Link from "next/link";
+import { optimizeImageUrl } from "@/lib/imageLoader";
 
 export default function PublicAdDetailPage() {
   const params = useParams();
@@ -155,7 +156,7 @@ export default function PublicAdDetailPage() {
               <div className="w-full h-[300px] md:h-[400px] bg-gray-50 border rounded-2xl overflow-hidden relative flex items-center justify-center">
                 {imagesList[activeImageIndex] ? (
                   <img
-                    src={imagesList[activeImageIndex]}
+                    src={optimizeImageUrl(imagesList[activeImageIndex], 800)}
                     alt={`${ad.title} preview ${activeImageIndex + 1}`}
                     className="w-full h-full object-contain"
                   />
@@ -174,7 +175,7 @@ export default function PublicAdDetailPage() {
                         activeImageIndex === index ? "border-[#FF6600]" : "border-gray-100 hover:border-gray-200"
                       }`}
                     >
-                      <img src={url} alt="thumbnail" className="w-full h-full object-cover" />
+                      <img src={optimizeImageUrl(url, 150)} alt="thumbnail" className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>
@@ -222,7 +223,7 @@ export default function PublicAdDetailPage() {
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-orange-50 border border-orange-100 rounded-xl flex items-center justify-center text-[#FF6600] overflow-hidden shrink-0">
                 {contactInfo.logo ? (
-                  <img src={contactInfo.logo} alt="Store Logo" className="w-full h-full object-cover" />
+                  <img src={optimizeImageUrl(contactInfo.logo, 100)} alt="Store Logo" className="w-full h-full object-cover" loading="lazy" />
                 ) : (
                   <User className="h-6 w-6" />
                 )}

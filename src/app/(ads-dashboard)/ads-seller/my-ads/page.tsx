@@ -212,7 +212,11 @@ export default function MyAdsPage() {
                     </TableCell>
                     <TableCell className="text-sm">
                       <div className="flex items-center gap-1 text-gray-800 font-medium">
-                        <span>{ad.category?.icon}</span>
+                        {ad.category?.icon && (ad.category.icon.startsWith("/") || ad.category.icon.startsWith("http")) ? (
+                          <img src={ad.category.icon} alt="" className="w-5 h-5 object-contain shrink-0" />
+                        ) : (
+                          <span>{ad.category?.icon}</span>
+                        )}
                         <span>{ad.category?.name}</span>
                       </div>
                       <div className="text-[10px] text-gray-400">{ad.subCategory?.name}</div>

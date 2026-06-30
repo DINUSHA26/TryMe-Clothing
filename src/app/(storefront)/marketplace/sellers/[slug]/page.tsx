@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { AdCard } from "@/components/ads/AdCard";
 import { Button } from "@/components/ui/button";
+import { optimizeImageUrl } from "@/lib/imageLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Store,
@@ -107,7 +108,7 @@ export default function PublicSellerStorefrontPage() {
         {/* Banner Cover */}
         <div className="h-[140px] md:h-[220px] relative overflow-hidden bg-gray-100">
           {contactInfo.banner ? (
-            <img src={contactInfo.banner} alt="Store Banner" className="w-full h-full object-cover" />
+            <img src={optimizeImageUrl(contactInfo.banner, 1200)} alt="Store Banner" className="w-full h-full object-cover" loading="lazy" />
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-[#FF6600] to-indigo-950" />
           )}
@@ -119,7 +120,7 @@ export default function PublicSellerStorefrontPage() {
             {/* Logo box */}
             <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-white border-4 border-white shadow-lg overflow-hidden flex items-center justify-center text-[#FF6600] font-bold shrink-0">
               {contactInfo.logo ? (
-                <img src={contactInfo.logo} alt="Store Logo" className="w-full h-full object-cover" />
+                <img src={optimizeImageUrl(contactInfo.logo, 200)} alt="Store Logo" className="w-full h-full object-cover" loading="lazy" />
               ) : (
                 <Store className="w-10 h-10 md:w-14 md:h-14" />
               )}
@@ -294,9 +295,10 @@ export default function PublicSellerStorefrontPage() {
                     <div className="w-full aspect-[4/3] bg-gray-50 overflow-hidden relative shrink-0">
                       {page.imageUrl ? (
                         <img
-                          src={page.imageUrl}
+                          src={optimizeImageUrl(page.imageUrl, 500)}
                           alt={page.title}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-tr from-orange-50 to-orange-100/50 flex flex-col items-center justify-center text-orange-400 gap-1.5">
@@ -347,7 +349,7 @@ export default function PublicSellerStorefrontPage() {
                 {selectedServicePage.imageUrl && (
                   <div className="w-full aspect-video rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
                     <img
-                      src={selectedServicePage.imageUrl}
+                      src={optimizeImageUrl(selectedServicePage.imageUrl, 800)}
                       alt={selectedServicePage.title}
                       className="w-full h-full object-cover"
                     />

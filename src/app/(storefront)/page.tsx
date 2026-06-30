@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { optimizeImageUrl } from "@/lib/imageLoader";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { ArrowRight, Shield, Truck, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
@@ -140,23 +141,28 @@ export default function Home() {
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="relative h-[300px] md:h-[400px] overflow-hidden group bg-slate-900">
-        {heroImages.map((src, index) => (
-          <div
-            key={src}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === index ? "opacity-100 z-10" : "opacity-0 z-0"
+        {heroImages.map((src, index) => {
+          const isSelected = currentSlide === index;
+          if (!isSelected && index !== 0) return null;
+          return (
+            <div
+              key={src}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                isSelected ? "opacity-100 z-10" : "opacity-0 z-0"
               }`}
-          >
-            <Image
-              src={src}
-              alt={`Try Me Hero Banner ${index + 1}`}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority={index === 0}
-            />
-            <div className="absolute inset-0 bg-black/45" />
-          </div>
-        ))}
+            >
+              <Image
+                src={src}
+                alt={`Try Me Hero Banner ${index + 1}`}
+                fill
+                sizes="100vw"
+                className="object-cover"
+                priority={index === 0}
+              />
+              <div className="absolute inset-0 bg-black/45" />
+            </div>
+          );
+        })}
 
         <div className="container relative z-20 h-full flex flex-col items-center justify-center text-center px-4 md:px-6 pointer-events-none">
           <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 text-[#FF6600] pointer-events-auto">
@@ -345,8 +351,12 @@ export default function Home() {
                       index === 4 && "hidden lg:flex"
                     )}
                   >
-                    <span className="text-xl sm:text-3xl w-10 sm:w-14 h-10 sm:h-14 rounded-xl sm:rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
-                      {cat.icon || "📁"}
+                    <span className="text-xl sm:text-3xl w-10 sm:w-14 h-10 sm:h-14 rounded-xl sm:rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                      {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
+                        <img src={optimizeImageUrl(cat.icon, 100)} alt={cat.name} className="w-8 sm:w-12 h-8 sm:h-12 object-contain" loading="lazy" />
+                      ) : (
+                        cat.icon || "📁"
+                      )}
                     </span>
                     <div className="min-w-0">
                       <h3 className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 leading-tight break-words">{cat.name}</h3>
@@ -406,7 +416,7 @@ export default function Home() {
                     {/* Profile ring */}
                     <div className="absolute top-3 left-3 h-8 w-8 sm:h-9 sm:w-9 rounded-full border-2 border-primary bg-white dark:bg-slate-900 shadow-md overflow-hidden flex items-center justify-center">
                       {group.logoUrl ? (
-                        <img src={group.logoUrl} alt={group.displayName} className="w-full h-full object-cover" />
+                        <img src={optimizeImageUrl(group.logoUrl, 64)} alt={group.displayName} className="w-full h-full object-cover" loading="lazy" />
                       ) : (
                         <span className="text-xs font-bold text-primary">{group.displayName.substring(0, 2).toUpperCase()}</span>
                       )}
