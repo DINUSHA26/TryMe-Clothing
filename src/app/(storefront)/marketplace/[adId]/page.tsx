@@ -80,6 +80,10 @@ export default function PublicAdDetailPage() {
     }
   }, [params.adId]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [params.adId]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">

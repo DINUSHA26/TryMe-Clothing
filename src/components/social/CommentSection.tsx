@@ -47,9 +47,22 @@ export function CommentSection({ postId }: CommentSectionProps) {
         fetchComments();
     }, [postId]);
 
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const saved = sessionStorage.getItem(`draft-comment-${postId}`);
+            if (saved) {
+                setNewComment(saved);
+                sessionStorage.removeItem(`draft-comment-${postId}`);
+            }
+        }
+    }, [postId]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isAuthenticated) {
+            if (newComment.trim() && typeof window !== "undefined") {
+                sessionStorage.setItem(`draft-comment-${postId}`, newComment);
+            }
             toast.error("Please login to comment");
             const returnUrl = encodeURIComponent(`/social?post=${postId}`);
             router.push(`/login?returnUrl=${returnUrl}`);
@@ -100,15 +113,8 @@ export function CommentSection({ postId }: CommentSectionProps) {
                 <form onSubmit={handleSubmit} className="flex-1 flex gap-2">
                     <Input
                         value={newComment}
-                        onFocus={() => {
-                            if (!isAuthenticated) {
-                                toast.error("Please login to comment");
-                                const returnUrl = encodeURIComponent(`/social?post=${postId}`);
-                                router.push(`/login?returnUrl=${returnUrl}`);
-                            }
-                        }}
                         onChange={(e) => setNewComment(e.target.value)}
-                        placeholder={isAuthenticated ? "Write a comment..." : "Login to comment..."}
+                        placeholder="Write a comment..."
                         className="rounded-full bg-slate-50 dark:bg-slate-900 border-none focus-visible:ring-1"
                     />
                     <Button type="submit" size="sm" className="rounded-full px-4" disabled={!newComment.trim() || submitting}>

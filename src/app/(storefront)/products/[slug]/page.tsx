@@ -175,6 +175,10 @@ export default function ProductDetailPage() {
   }, [slug, trackCategory]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [slug]);
+
+  useEffect(() => {
     if (!product?.vendor?.slug) return;
 
     const fetchVendorStats = async () => {

@@ -8,6 +8,7 @@ import { MobileMenu } from "@/components/layout/storefront/MobileMenu";
 import { ChatDialog } from "@/components/chat/ChatDialog";
 import { ChatInitializer } from "@/components/chat/ChatInitializer";
 import { CartInitializer } from "@/components/cart/CartInitializer";
+import { NewsletterPopup } from "@/components/common/NewsletterPopup";
 
 export default function StorefrontLayout({
   children,
@@ -48,6 +49,9 @@ export default function StorefrontLayout({
 
       {/* Chat Dialog — rendered once at layout level */}
       <ChatDialog />
+
+      {/* Newsletter Pop-up subscription */}
+      <NewsletterPopup />
     </div>
   );
 }

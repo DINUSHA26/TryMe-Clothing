@@ -351,7 +351,12 @@ export function PostCard({ post }: { post: SocialPostType }) {
 
             <div className="px-4 py-2 flex items-center justify-between text-xs text-muted-foreground font-medium">
                 <span>{likesCount > 0 ? `${likesCount} likes` : ""}</span>
-                <span>{post._count.comments > 0 ? `${post._count.comments} comments` : (showComments ? "0 comments" : "")}</span>
+                <span 
+                    className="cursor-pointer hover:underline hover:text-primary transition-colors"
+                    onClick={() => setShowComments(!showComments)}
+                >
+                    {post._count.comments} comments
+                </span>
             </div>
 
             <CardFooter className="p-2 border-t flex flex-col gap-2">
@@ -367,15 +372,7 @@ export function PostCard({ post }: { post: SocialPostType }) {
                     <Button
                         variant="ghost"
                         className="flex-1 rounded-xl text-muted-foreground font-semibold px-1 sm:px-4 text-xs sm:text-sm"
-                        onClick={() => {
-                            if (!isAuthenticated) {
-                                toast.error("Please login to comment");
-                                const returnUrl = encodeURIComponent(`/social?post=${post.id}`);
-                                router.push(`/login?returnUrl=${returnUrl}`);
-                                return;
-                            }
-                            setShowComments(!showComments);
-                        }}
+                        onClick={() => setShowComments(!showComments)}
                     >
                         <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                         <span className="truncate">Comment</span>
