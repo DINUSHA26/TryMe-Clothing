@@ -33,6 +33,7 @@ import { ImageGallery } from "./ImageGallery";
 import { VariantManager, ProductVariant, type VariantSettingsInfo } from "./VariantManager";
 import type { ProductFormData } from "@/types/product";
 import { createProductSchema } from "@/lib/validations/product";
+import { compressImage } from "@/lib/utils/image";
 
 interface ProductFormProps {
   mode: "create" | "edit";
@@ -48,15 +49,6 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        variant: "destructive",
-        title: "File Too Large",
-        description: "File size must be less than 5MB",
-      });
-      return;
-    }
-
     const isImage = file.type.startsWith("image/");
     if (!isImage) {
       toast({
@@ -69,8 +61,20 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
 
     setIsUploadingSizeChart(true);
     try {
+      const compressedFile = await compressImage(file);
+
+      if (compressedFile.size > 5 * 1024 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "File Too Large",
+          description: "File size must be less than 5MB",
+        });
+        setIsUploadingSizeChart(false);
+        return;
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
       formData.append("folder", "size-charts");
 
       const response = await fetch("/api/upload", {

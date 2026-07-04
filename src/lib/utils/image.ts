@@ -105,3 +105,30 @@ export function formatFileSize(bytes: number): string {
 
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
+
+/**
+ * Compress image client-side using browser-image-compression
+ * @param file - File object to compress
+ * @returns Compressed File object (or original if compression is skipped/fails)
+ */
+export async function compressImage(file: File): Promise<File> {
+  // Only compress images, and only in browser environments
+  if (typeof window === "undefined" || !file.type.startsWith("image/")) {
+    return file;
+  }
+
+  try {
+    const imageCompression = (await import("browser-image-compression")).default;
+    const options = {
+      maxSizeMB: 1, // Compress to max 1MB
+      maxWidthOrHeight: 1920, // Downscale if larger than 1920px
+      useWebWorker: true,
+    };
+    const compressedBlob = await imageCompression(file, options);
+    return compressedBlob as File;
+  } catch (error) {
+    console.error("Client-side image compression error:", error);
+    return file;
+  }
+}
+

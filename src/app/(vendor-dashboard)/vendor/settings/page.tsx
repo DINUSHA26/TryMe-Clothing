@@ -24,7 +24,7 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
-import { validateImage } from "@/lib/utils/image";
+import { validateImage, compressImage } from "@/lib/utils/image";
 
 interface VendorProfile {
   businessName: string;
@@ -91,16 +91,18 @@ export default function VendorSettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const error = await validateImage(file);
-    if (error) {
-      toast({ title: "Invalid Image", description: error, variant: "destructive" });
-      return;
-    }
-
     setIsUploading(type);
     try {
+      const compressedFile = await compressImage(file);
+      const error = await validateImage(compressedFile);
+      if (error) {
+        toast({ title: "Invalid Image", description: error, variant: "destructive" });
+        setIsUploading(null);
+        return;
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
       formData.append("folder", "vendors");
 
       const response = await fetch("/api/upload", {

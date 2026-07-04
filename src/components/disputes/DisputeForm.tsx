@@ -27,6 +27,7 @@ import {
   DISPUTE_REASON_LABELS,
   MAX_DISPUTE_EVIDENCE_IMAGES,
 } from '@/types/dispute';
+import { compressImage } from '@/lib/utils/image';
 
 interface DisputeFormProps {
   orderId: string;
@@ -76,15 +77,18 @@ export function DisputeForm({
           continue;
         }
 
+        // Compress image first
+        const compressedFile = await compressImage(file);
+
         // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
+        if (compressedFile.size > 5 * 1024 * 1024) {
           setError('Image size must be less than 5MB');
           continue;
         }
 
         // Upload to Cloudinary via API
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', compressedFile);
 
         const response = await fetch('/api/upload', {
           method: 'POST',

@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { validateImage } from "@/lib/utils/image";
+import { validateImage, compressImage } from "@/lib/utils/image";
 
 interface ImageUploadResult {
   url: string;
@@ -54,8 +54,11 @@ export function ImageUploader({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        // Validate image
-        const error = await validateImage(file);
+        // Compress image client-side first
+        const compressedFile = await compressImage(file);
+
+        // Validate image (using the compressed file)
+        const error = await validateImage(compressedFile);
         if (error) {
           toast({
             variant: "destructive",
@@ -69,7 +72,7 @@ export function ImageUploader({
 
         // Upload to server
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", compressedFile);
         formData.append("folder", "products");
 
         const response = await fetch("/api/upload", {

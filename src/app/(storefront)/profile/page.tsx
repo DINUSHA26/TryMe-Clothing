@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { compressImage } from "@/lib/utils/image";
 
 export default function ProfilePage() {
   const { user, isAuthenticated, setUser, _hasHydrated } = useAuthStore();
@@ -48,18 +49,21 @@ export default function ProfilePage() {
       return;
     }
 
-    // Validate size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be less than 5MB.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("folder", "avatars");
-
     setIsUploading(true);
     try {
+      const compressedFile = await compressImage(file);
+
+      // Validate size (max 5MB)
+      if (compressedFile.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB.");
+        setIsUploading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", compressedFile);
+      formData.append("folder", "avatars");
+
       const res = await fetch("/api/upload", {
         method: "POST",
         body: formData,

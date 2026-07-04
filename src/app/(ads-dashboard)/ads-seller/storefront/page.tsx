@@ -44,6 +44,7 @@ import {
   ExternalLink,
   FileText,
 } from "lucide-react";
+import { compressImage } from "@/lib/utils/image";
 
 export default function StorefrontBuilderPage() {
   const { toast } = useToast();
@@ -145,8 +146,9 @@ export default function StorefrontBuilderPage() {
 
     setIsUploading(true);
     try {
+      const compressedFile = await compressImage(file);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
       formData.append("folder", "storefronts");
 
       const res = await fetch("/api/upload", {
@@ -242,8 +244,9 @@ export default function StorefrontBuilderPage() {
 
     setIsUploading(true);
     try {
+      const compressedFile = await compressImage(file);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
       formData.append("folder", "storefronts");
 
       const res = await fetch("/api/upload", {

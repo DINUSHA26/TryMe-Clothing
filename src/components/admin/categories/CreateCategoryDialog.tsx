@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CategorySelector } from "./CategorySelector";
-import { validateImageFile } from "@/lib/utils/image";
+import { validateImageFile, compressImage } from "@/lib/utils/image";
 import {
   createCategorySchema,
   CreateCategoryInput,
@@ -64,22 +64,25 @@ export function CreateCategoryDialog({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate type and size only (no dimension requirement for category images)
-    const error = validateImageFile(file);
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Image",
-        description: error,
-      });
-      return;
-    }
-
     setIsUploading(true);
 
     try {
+      const compressedFile = await compressImage(file);
+
+      // Validate type and size only (no dimension requirement for category images)
+      const error = validateImageFile(compressedFile);
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Image",
+          description: error,
+        });
+        setIsUploading(false);
+        return;
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
       formData.append("folder", "categories");
 
       const response = await fetch("/api/upload", {

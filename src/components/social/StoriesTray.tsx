@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { compressImage } from "@/lib/utils/image";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CACHE_KEY = "primewear_stories_cache";
@@ -309,8 +310,9 @@ export function StoriesTray() {
       let finalImageUrl = selectedTemplate;
 
       if (uploadedFile) {
+        const compressedFile = await compressImage(uploadedFile);
         const formData = new FormData();
-        formData.append("file", uploadedFile);
+        formData.append("file", compressedFile);
         formData.append("folder", "social");
 
         const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
@@ -432,8 +434,9 @@ export function StoriesTray() {
         setIsUpdatingStory(true);
         setIsPaused(true);
 
+        const compressedFile = await compressImage(file);
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", compressedFile);
         formData.append("folder", "social");
 
         const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });

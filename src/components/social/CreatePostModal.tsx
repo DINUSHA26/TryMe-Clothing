@@ -11,6 +11,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { SocialPostType } from "./Feed";
+import { compressImage } from "@/lib/utils/image";
 
 interface CreatePostModalProps {
     isOpen: boolean;
@@ -49,8 +50,9 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
     const uploadImages = async (): Promise<string[]> => {
         const uploadedUrls: string[] = [];
         for (const image of images) {
+            const compressedFile = await compressImage(image);
             const formData = new FormData();
-            formData.append("file", image);
+            formData.append("file", compressedFile);
             formData.append("folder", "social");
 
             const res = await fetch("/api/upload", {

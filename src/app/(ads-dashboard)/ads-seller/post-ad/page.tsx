@@ -22,6 +22,7 @@ import {
   ChevronRight,
   ArrowLeft,
 } from "lucide-react";
+import { compressImage } from "@/lib/utils/image";
 
 export default function PostAdPage() {
   const router = useRouter();
@@ -92,8 +93,9 @@ export default function PostAdPage() {
     setIsUploading(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
+        const compressedFile = await compressImage(file);
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", compressedFile);
         formData.append("folder", "classified_ads");
 
         const response = await fetch("/api/upload", {
