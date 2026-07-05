@@ -33,6 +33,44 @@ export default function PublicAdDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showPhone, setShowPhone] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const minSwipeDistance = 50;
+
+  const handlePrevious = () => {
+    const list = ad?.images && ad.images.length > 0 ? ad.images : [""];
+    if (list.length <= 1) return;
+    setActiveImageIndex((prev) => (prev === 0 ? list.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    const list = ad?.images && ad.images.length > 0 ? ad.images : [""];
+    if (list.length <= 1) return;
+    setActiveImageIndex((prev) => (prev === list.length - 1 ? 0 : prev + 1));
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      handleNext();
+    } else if (isRightSwipe) {
+      handlePrevious();
+    }
+  };
 
   const getRelativeTime = (dateInput: Date | string) => {
     const date = new Date(dateInput);
@@ -175,7 +213,12 @@ export default function PublicAdDetailPage() {
 
             {/* Gallery inspect previews */}
             <div className="space-y-3">
-              <div className="w-full h-[300px] md:h-[400px] bg-gray-50 border rounded-2xl overflow-hidden relative flex items-center justify-center">
+              <div 
+                className="w-full h-[300px] md:h-[400px] bg-gray-50 border rounded-2xl overflow-hidden relative flex items-center justify-center touch-pan-y"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+              >
                 {imagesList[activeImageIndex] ? (
                   <img
                     src={optimizeImageUrl(imagesList[activeImageIndex], 800)}

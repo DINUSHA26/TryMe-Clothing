@@ -18,6 +18,11 @@ export function ProductImageGallery({
   activeImageUrl,
 }: ProductImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance in pixels
+  const minSwipeDistance = 50;
 
   // Combine prop images with active variant image if it's not already present
   const images = useMemo(() => {
@@ -54,10 +59,37 @@ export function ProductImageGallery({
     setSelectedImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      handleNext();
+    } else if (isRightSwipe) {
+      handlePrevious();
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Main Image */}
-      <div className="relative aspect-square rounded-xl overflow-hidden bg-muted border group shadow-sm">
+      <div 
+        className="relative aspect-square rounded-xl overflow-hidden bg-muted border group shadow-sm touch-pan-y"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         {/* We use two images to create a crossfade effect */}
         {images.map((image, index) => {
           const isSelected = selectedImage === index;
