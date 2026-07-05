@@ -326,14 +326,14 @@ export default function Home() {
                 <div
                   key={i}
                   className={cn(
-                    "flex items-center gap-2.5 sm:gap-4 p-3 sm:p-5 md:p-6 bg-white border border-gray-100 rounded-2xl shadow-sm",
+                    "flex flex-col items-center justify-center min-h-[170px] p-5 md:p-6 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm",
                     i === 4 && "hidden lg:flex"
                   )}
                 >
-                  <Skeleton className="w-10 sm:w-14 h-10 sm:h-14 rounded-xl sm:rounded-2xl shrink-0" />
-                  <div className="space-y-1.5 flex-1 min-w-0">
+                  <Skeleton className="w-16 sm:w-20 h-16 sm:h-20 rounded-2xl shrink-0" />
+                  <div className="space-y-1.5 w-full mt-3 flex flex-col items-center">
                     <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-3.5 w-1/3" />
                   </div>
                 </div>
               ))}
@@ -347,20 +347,20 @@ export default function Home() {
                     key={cat.id}
                     href={`/marketplace?category=${cat.slug}`}
                     className={cn(
-                      "flex items-center gap-2.5 sm:gap-4 p-3 sm:p-5 md:p-6 bg-white border border-gray-100 rounded-2xl hover:border-orange-100 hover:bg-orange-50/10 text-left transition-all hover:shadow-md hover:-translate-y-1 duration-300",
+                      "flex flex-col items-center justify-center min-h-[170px] p-5 md:p-6 bg-white border border-gray-100 rounded-[1.5rem] hover:border-orange-100 hover:bg-orange-50/10 text-center transition-all hover:shadow-md hover:-translate-y-1 duration-300",
                       index === 4 && "hidden lg:flex"
                     )}
                   >
-                    <span className="text-xl sm:text-3xl w-10 sm:w-14 h-10 sm:h-14 rounded-xl sm:rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                    <span className="text-2xl sm:text-4xl w-16 sm:w-20 h-16 sm:h-20 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
                       {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
-                        <img src={optimizeImageUrl(cat.icon, 100)} alt={cat.name} className="w-8 sm:w-12 h-8 sm:h-12 object-contain" loading="lazy" />
+                        <img src={optimizeImageUrl(cat.icon, 120)} alt={cat.name} className="w-12 sm:w-16 h-12 sm:h-16 object-contain" loading="lazy" />
                       ) : (
                         cat.icon || "📁"
                       )}
                     </span>
-                    <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 leading-tight break-words">{cat.name}</h3>
-                      <p className="text-[10px] sm:text-xs text-gray-400 font-semibold mt-0.5">{adCount.toLocaleString()} ads</p>
+                    <div className="min-w-0 mt-3 flex flex-col items-center">
+                      <h3 className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 leading-tight break-words text-center">{cat.name}</h3>
+                      <p className="text-[10px] sm:text-xs text-gray-400 font-semibold mt-1 text-center">{adCount.toLocaleString()} ads</p>
                     </div>
                   </Link>
                 );

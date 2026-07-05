@@ -645,18 +645,18 @@ function MarketplacePortalPageContent() {
                     <button
                       key={cat.id}
                       onClick={() => updateFilters({ category: cat.slug, page: 1 })}
-                      className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-2xl hover:border-orange-100 hover:bg-orange-50/10 text-left transition-all hover:shadow-sm"
+                      className="flex flex-col items-center justify-center min-h-[160px] p-5 bg-white border border-gray-100 rounded-[1.5rem] hover:border-orange-100 hover:bg-orange-50/10 text-center transition-all hover:shadow-md hover:-translate-y-1 duration-300"
                     >
-                      <span className="text-2xl w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
+                      <span className="text-xl w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                         {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
-                          <img src={cat.icon} alt={cat.name} className="w-8 h-8 object-contain" />
+                          <img src={cat.icon} alt={cat.name} className="w-12 h-12 object-contain" />
                         ) : (
                           cat.icon || "📁"
                         )}
                       </span>
-                      <div>
-                        <h3 className="text-xs font-bold text-gray-900">{cat.name}</h3>
-                        <p className="text-[10px] text-gray-400 font-medium mt-0.5">{adCount.toLocaleString()} ads</p>
+                      <div className="min-w-0 mt-3 flex flex-col items-center">
+                        <h3 className="text-xs sm:text-sm font-bold text-gray-900 leading-tight break-words text-center">{cat.name}</h3>
+                        <p className="text-[10px] text-gray-400 font-semibold mt-1 text-center">{adCount.toLocaleString()} ads</p>
                       </div>
                     </button>
                   );
