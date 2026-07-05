@@ -29,6 +29,18 @@ export default function CategoriesPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    // 1. Try to load cached categories from localStorage first
+    if (typeof window !== "undefined") {
+      try {
+        const cachedCategories = localStorage.getItem("swr_all_categories");
+        if (cachedCategories) {
+          setCategories(JSON.parse(cachedCategories));
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Failed to load cached categories:", e);
+      }
+    }
     fetchCategories();
   }, []);
 
@@ -39,6 +51,9 @@ export default function CategoriesPage() {
 
       if (data.success && data.data.categories) {
         setCategories(data.data.categories);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("swr_all_categories", JSON.stringify(data.data.categories));
+        }
       }
     } catch (error) {
       console.error("Failed to fetch categories:", error);
@@ -98,7 +113,7 @@ export default function CategoriesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredCategories.map((category) => (
+          {filteredCategories.map((category, index) => (
             <Link
               key={category.id}
               href={`/categories/${category.slug}`}
@@ -114,6 +129,7 @@ export default function CategoriesPage() {
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-200"
+                      priority={index < 4}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

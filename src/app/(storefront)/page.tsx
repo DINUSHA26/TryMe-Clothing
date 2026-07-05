@@ -67,13 +67,53 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // 1. Try to load cached data from localStorage first for instant rendering
+    if (typeof window !== "undefined") {
+      try {
+        const cachedCategories = localStorage.getItem("swr_categories");
+        const cachedAdsCategories = localStorage.getItem("swr_ads_categories");
+        const cachedFeatured = localStorage.getItem("swr_featured_products");
+        const cachedWomens = localStorage.getItem("swr_womens_products");
+        const cachedMens = localStorage.getItem("swr_mens_products");
+        const cachedStories = localStorage.getItem("swr_stories");
+
+        if (cachedCategories) {
+          setCategories(JSON.parse(cachedCategories));
+          setLoading(false);
+        }
+        if (cachedAdsCategories) {
+          setAdsCategories(JSON.parse(cachedAdsCategories));
+          setAdsCategoriesLoading(false);
+        }
+        if (cachedFeatured) {
+          setFeaturedProducts(JSON.parse(cachedFeatured));
+        }
+        if (cachedWomens) {
+          setWomensProducts(JSON.parse(cachedWomens));
+          setWomensLoading(false);
+        }
+        if (cachedMens) {
+          setMensProducts(JSON.parse(cachedMens));
+          setMensLoading(false);
+        }
+        if (cachedStories) {
+          setHomeStories(JSON.parse(cachedStories));
+          setStoriesLoading(false);
+        }
+      } catch (e) {
+        console.error("Error reading SWR cache from localStorage:", e);
+      }
+    }
+
     const fetchData = async () => {
       try {
         // Fetch featured products (latest 10 products)
         const productsResponse = await fetch("/api/products?limit=10&sortBy=createdAt&sortOrder=desc");
         const productsData = await productsResponse.json();
         if (productsData.success) {
-          setFeaturedProducts(productsData.data.products);
+          const fetchedFeatured = productsData.data.products;
+          setFeaturedProducts(fetchedFeatured);
+          localStorage.setItem("swr_featured_products", JSON.stringify(fetchedFeatured));
         }
 
         // Fetch parent categories only
@@ -82,7 +122,9 @@ export default function Home() {
         let allCategories: Category[] = [];
         if (categoriesData.success && categoriesData.data.categories) {
           allCategories = categoriesData.data.categories;
-          setCategories(allCategories.slice(0, 8)); // Show first 8 active categories
+          const slicedCategories = allCategories.slice(0, 8);
+          setCategories(slicedCategories); // Show first 8 active categories
+          localStorage.setItem("swr_categories", JSON.stringify(slicedCategories));
         }
 
         // Fetch products for Women's wear
@@ -91,7 +133,9 @@ export default function Home() {
           const womensResponse = await fetch(`/api/products?categoryId=${womensCategory.id}&limit=6`);
           const womensData = await womensResponse.json();
           if (womensData.success) {
-            setWomensProducts(womensData.data.products);
+            const fetchedWomens = womensData.data.products;
+            setWomensProducts(fetchedWomens);
+            localStorage.setItem("swr_womens_products", JSON.stringify(fetchedWomens));
           }
         }
         setWomensLoading(false);
@@ -102,7 +146,9 @@ export default function Home() {
           const mensResponse = await fetch(`/api/products?categoryId=${mensCategory.id}&limit=6`);
           const mensData = await mensResponse.json();
           if (mensData.success) {
-            setMensProducts(mensData.data.products);
+            const fetchedMens = mensData.data.products;
+            setMensProducts(fetchedMens);
+            localStorage.setItem("swr_mens_products", JSON.stringify(fetchedMens));
           }
         }
         setMensLoading(false);
@@ -111,7 +157,9 @@ export default function Home() {
         const adsCatResponse = await fetch("/api/ads/public/categories");
         const adsCatData = await adsCatResponse.json();
         if (adsCatData.success) {
-          setAdsCategories(adsCatData.data.slice(0, 5)); // First 5 categories
+          const slicedAds = adsCatData.data.slice(0, 5);
+          setAdsCategories(slicedAds); // First 5 categories
+          localStorage.setItem("swr_ads_categories", JSON.stringify(slicedAds));
         }
         setAdsCategoriesLoading(false);
 
@@ -120,7 +168,9 @@ export default function Home() {
           const storiesResponse = await fetch("/api/social/stories");
           const storiesData = await storiesResponse.json();
           if (storiesData.success && storiesData.data.groupedStories) {
-            setHomeStories(storiesData.data.groupedStories.slice(0, 5));
+            const slicedStories = storiesData.data.groupedStories.slice(0, 5);
+            setHomeStories(slicedStories);
+            localStorage.setItem("swr_stories", JSON.stringify(slicedStories));
           }
         } catch (storiesError) {
           console.error("Error fetching homepage stories:", storiesError);
@@ -235,7 +285,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-              {categories.map((category) => (
+              {categories.map((category, index) => (
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
@@ -250,6 +300,7 @@ export default function Home() {
                           fill
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           className="object-cover transition-transform duration-500 group-hover:scale-110"
+                          priority={index < 4}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <div className="absolute bottom-4 left-4 right-4 text-white">
