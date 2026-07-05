@@ -19,7 +19,7 @@ import {
   ChevronRight,
   User,
 } from "lucide-react";
-import { formatDistance, format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import Link from "next/link";
 import { optimizeImageUrl } from "@/lib/imageLoader";
 
@@ -33,6 +33,24 @@ export default function PublicAdDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showPhone, setShowPhone] = useState(false);
+
+  const getRelativeTime = (dateInput: Date | string) => {
+    const date = new Date(dateInput);
+    const now = new Date();
+    const diffDays = differenceInDays(now, date);
+    
+    if (diffDays === 0) {
+      const diffMs = now.getTime() - date.getTime();
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffHours < 1) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return diffMins <= 1 ? "Just now" : `${diffMins} minutes ago`;
+      }
+      return diffHours === 1 ? "1 hour ago" : `${diffHours} hours ago`;
+    }
+    
+    return diffDays === 1 ? "1 day ago" : `${diffDays} days ago`;
+  };
 
   const fetchAdDetails = async () => {
     setIsLoading(true);
@@ -146,11 +164,11 @@ export default function PublicAdDetailPage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  {formatDistance(new Date(ad.createdAt), new Date(), { addSuffix: true })}
+                  {getRelativeTime(ad.createdAt)}
                 </span>
                 <span className="flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" />
-                  {ad.views} page views
+                  {ad.views} views
                 </span>
               </div>
             </div>

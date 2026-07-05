@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { formatDistance } from "date-fns";
+import { differenceInDays } from "date-fns";
 import { Star, ShieldCheck, MapPin, Tag, Clock, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { optimizeImageUrl } from "@/lib/imageLoader";
@@ -35,6 +35,24 @@ interface AdCardProps {
 export function AdCard({ ad }: AdCardProps) {
   const sellerName = ad.seller.businessName || "Member";
   const locationText = ad.localArea ? `${ad.localArea}, ${ad.district}` : ad.district;
+
+  const getRelativeTime = (dateInput: Date | string) => {
+    const date = new Date(dateInput);
+    const now = new Date();
+    const diffDays = differenceInDays(now, date);
+    
+    if (diffDays === 0) {
+      const diffMs = now.getTime() - date.getTime();
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffHours < 1) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return diffMins <= 1 ? "Just now" : `${diffMins} minutes ago`;
+      }
+      return diffHours === 1 ? "1 hour ago" : `${diffHours} hours ago`;
+    }
+    
+    return diffDays === 1 ? "1 day ago" : `${diffDays} days ago`;
+  };
 
   return (
     <Link
@@ -122,9 +140,7 @@ export function AdCard({ ad }: AdCardProps) {
           <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-400 font-medium">
             <Clock className="h-3.5 w-3.5 shrink-0" />
             <span>
-              {formatDistance(new Date(ad.createdAt), new Date(), {
-                addSuffix: true,
-              })}
+              {getRelativeTime(ad.createdAt)}
             </span>
 
             {/* Featured crown icon on bottom right */}
