@@ -202,6 +202,11 @@ export function StorefrontFooter() {
                 </Button>
               </form>
             )}
+            <div className="pt-3">
+              <p className="text-sm font-bold text-muted-foreground">
+                Powered by <span className="text-foreground font-black">Synovax</span> & <span className="text-foreground font-black">FashionDora</span>
+              </p>
+            </div>
           </div>
         </div>
 
