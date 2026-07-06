@@ -19,14 +19,8 @@ import { NotificationType } from '@/types/notification';
  */
 export async function POST(req: NextRequest) {
   try {
-    // Auth check - strictly requires CUSTOMER role for new disputes
+    // Auth check - requires authentication to initiate disputes
     const user = await requireAuth(req);
-    if (user.role !== 'CUSTOMER') {
-      return NextResponse.json(
-        { success: false, error: 'Only customers can initiate disputes' },
-        { status: 403 }
-      );
-    }
     
     // Get/create customer profile
     const customer = await requireCustomerProfile(req);

@@ -374,19 +374,13 @@ export default function Home() {
           {adsCategoriesLoading ? (
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div
+                <Skeleton
                   key={i}
                   className={cn(
-                    "flex flex-col items-center justify-center min-h-[170px] p-5 md:p-6 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm",
+                    "w-full min-h-[170px] rounded-[1.5rem]",
                     i === 4 && "hidden lg:flex"
                   )}
-                >
-                  <Skeleton className="w-16 sm:w-20 h-16 sm:h-20 rounded-2xl shrink-0" />
-                  <div className="space-y-1.5 w-full mt-3 flex flex-col items-center">
-                    <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-3.5 w-1/3" />
-                  </div>
-                </div>
+                />
               ))}
             </div>
           ) : (
@@ -398,20 +392,35 @@ export default function Home() {
                     key={cat.id}
                     href={`/marketplace?category=${cat.slug}`}
                     className={cn(
-                      "flex flex-col items-center justify-center min-h-[170px] p-5 md:p-6 bg-white border border-gray-100 rounded-[1.5rem] hover:border-orange-100 hover:bg-orange-50/10 text-center transition-all hover:shadow-md hover:-translate-y-1 duration-300",
+                      "group relative flex flex-col items-center justify-center min-h-[170px] overflow-hidden rounded-[1.5rem] border border-gray-150 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 duration-300",
                       index === 4 && "hidden lg:flex"
                     )}
                   >
-                    <span className="text-2xl sm:text-4xl w-16 sm:w-20 h-16 sm:h-20 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
-                      {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
-                        <img src={optimizeImageUrl(cat.icon, 120)} alt={cat.name} className="w-12 sm:w-16 h-12 sm:h-16 object-contain" loading="lazy" />
-                      ) : (
-                        cat.icon || "📁"
-                      )}
-                    </span>
-                    <div className="min-w-0 mt-3 flex flex-col items-center">
-                      <h3 className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 leading-tight break-words text-center">{cat.name}</h3>
-                      <p className="text-[10px] sm:text-xs text-gray-400 font-semibold mt-1 text-center">{adCount.toLocaleString()} ads</p>
+                    {/* Background Image / Fallback */}
+                    {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
+                      <img
+                        src={optimizeImageUrl(cat.icon, 400)}
+                        alt={cat.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-slate-900 flex items-center justify-center text-4xl">
+                        {cat.icon || "📁"}
+                      </div>
+                    )}
+
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/20 group-hover:from-black/85 group-hover:via-black/50 group-hover:to-black/25 transition-all duration-300" />
+
+                    {/* Text Overlay */}
+                    <div className="relative z-10 p-4 flex flex-col items-center justify-center w-full min-w-0">
+                      <h3 className="text-sm sm:text-base font-black text-white leading-tight break-words text-center drop-shadow">
+                        {cat.name}
+                      </h3>
+                      <span className="text-[10px] sm:text-xs text-orange-200 font-extrabold mt-1.5 text-center px-2.5 py-0.5 bg-black/45 backdrop-blur-sm rounded-full border border-white/10 shadow-sm">
+                        {adCount.toLocaleString()} ads
+                      </span>
                     </div>
                   </Link>
                 );

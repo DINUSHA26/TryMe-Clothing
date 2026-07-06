@@ -161,7 +161,6 @@ export function VendorSidebar({
                 href: "/my-disputes",
                 icon: AlertTriangle,
               },
-              { label: "Settings", href: "/vendor/settings", icon: Settings },
             ].map((item) => {
               const isItemActive = isActive(item.href);
               return renderNavLink(item, isItemActive);

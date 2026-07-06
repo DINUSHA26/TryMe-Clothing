@@ -10,17 +10,27 @@ import { formatAddress } from "@/lib/utils/address";
 
 async function requireCustomer(request: NextRequest): Promise<string | null> {
   const userId = request.headers.get("X-User-Id");
-  const userRole = request.headers.get("X-User-Role");
 
-  if (!userId || userRole !== UserRole.CUSTOMER) {
+  if (!userId) {
     return null;
   }
 
-  const customer = await prisma.customer.findUnique({
+  let customer = await prisma.customer.findUnique({
     where: { userId },
   });
 
-  return customer?.id || null;
+  if (!customer) {
+    try {
+      customer = await prisma.customer.create({
+        data: { userId },
+      });
+    } catch (e) {
+      console.error("Failed to auto-create customer record for default address setting:", e);
+      return null;
+    }
+  }
+
+  return customer.id;
 }
 
 /**

@@ -14,17 +14,25 @@ import { emailService } from "@/lib/email";
 
 async function getAuthenticatedCustomer(request: NextRequest): Promise<{ customerId: string; userId: string } | null> {
   const userId = request.headers.get("X-User-Id");
-  const userRole = request.headers.get("X-User-Role");
 
-  if (!userId || userRole !== UserRole.CUSTOMER) {
+  if (!userId) {
     return null;
   }
 
-  const customer = await prisma.customer.findUnique({
+  let customer = await prisma.customer.findUnique({
     where: { userId },
   });
 
-  if (!customer) return null;
+  if (!customer) {
+    try {
+      customer = await prisma.customer.create({
+        data: { userId },
+      });
+    } catch (e) {
+      console.error("Failed to auto-create customer record for order completion:", e);
+      return null;
+    }
+  }
 
   return { customerId: customer.id, userId };
 }

@@ -371,7 +371,7 @@ export function getDisputeStatusFromResolution(
 export async function canViewDispute(
   disputeId: string,
   userId: string,
-  userRole: 'ADMIN' | 'CUSTOMER' | 'VENDOR'
+  userRole: string
 ): Promise<boolean> {
   disputeId = disputeId.toLowerCase();
   const dispute = await prisma.dispute.findUnique({
@@ -431,7 +431,7 @@ export async function canViewDispute(
  * Check if a user can add comments to a dispute
  */
 export function canAddDisputeComment(
-  userRole: 'ADMIN' | 'CUSTOMER' | 'VENDOR',
+  userRole: string,
   disputeStatus: DisputeStatus
 ): boolean {
   // Cannot add comments to resolved disputes
