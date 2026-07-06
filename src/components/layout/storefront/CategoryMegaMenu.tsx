@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Package, Loader2, Search, Star } from "lucide-react";
@@ -35,6 +35,27 @@ export function CategoryMegaMenu() {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const { history } = useCategoryHistory();
+    const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+
+    const updateDropdownPosition = useCallback(() => {
+        if (!menuRef.current) return;
+        const rect = menuRef.current.getBoundingClientRect();
+        const panelWidth = Math.min(950, window.innerWidth - 16);
+        const margin = 8;
+
+        // Clamp left so the panel never overflows left or right viewport edges
+        const rawLeft = rect.left;
+        const maxLeft = window.innerWidth - panelWidth - margin;
+        const clampedLeft = Math.max(margin, Math.min(rawLeft, maxLeft));
+
+        setDropdownStyle({
+            position: "fixed",
+            top: rect.bottom + 8,
+            left: clampedLeft,
+            width: panelWidth,
+            zIndex: 9999,
+        });
+    }, []);
 
     useEffect(() => {
         async function fetchRootCategories() {
@@ -97,6 +118,7 @@ export function CategoryMegaMenu() {
 
     const handleMouseEnter = () => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        updateDropdownPosition();
         setIsOpen(true);
     };
 
@@ -133,7 +155,10 @@ export function CategoryMegaMenu() {
             </button>
 
             {isOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 w-[950px] max-w-[95vw] bg-white dark:bg-slate-950 border rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)] z-[100] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300 ring-1 ring-black/5">
+                <div
+                    className="bg-white dark:bg-slate-950 border rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300 ring-1 ring-black/5"
+                    style={dropdownStyle}
+                >
                     {loading ? (
                         <div className="h-[400px] flex flex-col items-center justify-center gap-3">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
