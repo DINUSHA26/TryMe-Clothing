@@ -217,8 +217,8 @@ function PaymentModal({
   }, [payhereData]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-10">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden my-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 text-white relative">
           <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors" disabled={isSubmitting}>
@@ -607,19 +607,49 @@ function AdsSellerPlansPageContent() {
           </div>
         )}
 
+        {reason === "expired" && (
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4">
+            <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-red-800">Your subscription plan has expired!</p>
+              <p className="text-xs text-red-600 mt-0.5">
+                Renew or upgrade your plan to post more classified ads and continue selling on TryMe Marketplace.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Current plan alert */}
         {activeSub && activeSub.planId && (
-          <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4">
-            <BadgeCheck className="h-5 w-5 text-green-600 shrink-0" />
-            <p className="text-sm font-semibold text-green-800">
-              You have an active subscription.
-              {activeSub.expiresAt && (
-                <span className="text-green-600 font-normal ml-1">
-                  Expires {new Date(activeSub.expiresAt).toLocaleDateString("en-LK", { year: "numeric", month: "long", day: "numeric" })}
-                </span>
-              )}
-            </p>
-          </div>
+          (() => {
+            const isExpired = activeSub.expiresAt ? new Date() > new Date(activeSub.expiresAt) : false;
+            if (isExpired) {
+              return (
+                <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl p-4">
+                  <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                  <p className="text-sm font-semibold text-red-800">
+                    Your subscription has expired.
+                    <span className="text-red-600 font-normal ml-1">
+                      Expired on {new Date(activeSub.expiresAt!).toLocaleDateString("en-LK", { year: "numeric", month: "long", day: "numeric" })}
+                    </span>
+                  </p>
+                </div>
+              );
+            }
+            return (
+              <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4">
+                <BadgeCheck className="h-5 w-5 text-green-600 shrink-0" />
+                <p className="text-sm font-semibold text-green-800">
+                  You have an active subscription.
+                  {activeSub.expiresAt && (
+                    <span className="text-green-600 font-normal ml-1">
+                      Expires {new Date(activeSub.expiresAt).toLocaleDateString("en-LK", { year: "numeric", month: "long", day: "numeric" })}
+                    </span>
+                  )}
+                </p>
+              </div>
+            );
+          })()
         )}
 
         {/* Plans Grid */}
@@ -633,7 +663,9 @@ function AdsSellerPlansPageContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {plans.map((plan) => {
               const colors = PLAN_COLORS[plan.type] || PLAN_COLORS.FREE;
-              const isCurrentPlan = activeSub?.planId === plan.id;
+              const isExpired = activeSub?.expiresAt ? new Date() > new Date(activeSub.expiresAt) : false;
+              const isCurrentPlan = activeSub?.planId === plan.id && !isExpired;
+              const isCurrentPlanExpired = activeSub?.planId === plan.id && isExpired;
               const isPro = plan.type === "PRO";
               const isPremium = plan.type === "PREMIUM";
 
@@ -708,6 +740,13 @@ function AdsSellerPlansPageContent() {
                           <BadgeCheck className="h-4 w-4" />
                           Current Plan
                         </div>
+                      ) : isCurrentPlanExpired ? (
+                        <button
+                          onClick={() => handleSelectPlan(plan)}
+                          className="w-full py-2.5 px-4 rounded-xl text-white font-bold text-sm transition-all active:scale-95 shadow-sm bg-[#FF6600] hover:bg-[#e65c00]"
+                        >
+                          Renew Plan
+                        </button>
                       ) : parseFloat(plan.price) === 0 ? (
                         <div className="w-full text-center py-2.5 px-4 rounded-xl bg-gray-100 text-gray-500 font-semibold text-sm">
                           Free Tier

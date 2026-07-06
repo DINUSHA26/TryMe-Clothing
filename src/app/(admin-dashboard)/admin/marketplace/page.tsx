@@ -286,14 +286,7 @@ export default function AdminMarketplacePage() {
                   <SelectItem value="all">All Categories</SelectItem>
                   {categories.map((cat: any) => (
                     <SelectItem key={cat.id} value={cat.id}>
-                      <span className="flex items-center gap-2">
-                        {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
-                          <img src={cat.icon} alt="" className="w-4.5 h-4.5 object-contain" />
-                        ) : (
-                          <span>{cat.icon}</span>
-                        )}
-                        <span>{cat.name}</span>
-                      </span>
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

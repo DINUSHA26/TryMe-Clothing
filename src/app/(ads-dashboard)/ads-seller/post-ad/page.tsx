@@ -56,6 +56,33 @@ export default function PostAdPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Check subscription on mount
+  useEffect(() => {
+    fetch("/api/ads/seller/subscription")
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success) {
+          const { status, expiresAt } = result.data;
+          const isExpired = expiresAt && new Date() > new Date(expiresAt);
+          if (status !== "ACTIVE" || isExpired) {
+            toast({
+              variant: "destructive",
+              title: isExpired ? "Subscription Expired" : "No Active Plan",
+              description: isExpired
+                ? "Your subscription plan has expired. Redirecting to pricing plans..."
+                : "You must have an active subscription plan to post ads. Redirecting...",
+            });
+            setTimeout(() => {
+              router.push(`/ads-seller/plans?reason=${isExpired ? "expired" : "none"}`);
+            }, 2000);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to check subscription", err);
+      });
+  }, [router, toast]);
+
   // Set default category / location if user changes them
   const handleCategorySelect = (
     catId: string,
@@ -168,12 +195,13 @@ export default function PostAdPage() {
       if (!result.success) {
         // Plan limit or no active plan — redirect to plans page
         if (response.status === 403) {
+          const isExpired = result.error?.toLowerCase().includes("expire");
           toast({
             variant: "destructive",
-            title: "Plan Limit Reached",
+            title: isExpired ? "Subscription Expired" : "Plan Limit Reached",
             description: "Redirecting you to choose a plan...",
           });
-          setTimeout(() => router.push("/ads-seller/plans?reason=limit"), 1500);
+          setTimeout(() => router.push(`/ads-seller/plans?reason=${isExpired ? "expired" : "limit"}`), 1500);
           return;
         }
         toast({

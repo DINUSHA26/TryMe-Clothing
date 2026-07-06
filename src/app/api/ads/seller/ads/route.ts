@@ -113,6 +113,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (activeSub.expiresAt && new Date() > new Date(activeSub.expiresAt)) {
+      return NextResponse.json(
+        { success: false, error: "Your subscription plan has expired. Please renew or upgrade your plan." },
+        { status: 403 }
+      );
+    }
+
     const maxAds = activeSub.plan.maxAds;
     const currentActiveCount = await prisma.classifiedAd.count({
       where: {

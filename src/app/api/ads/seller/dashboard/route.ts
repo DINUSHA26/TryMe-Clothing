@@ -56,9 +56,13 @@ export async function GET(request: NextRequest) {
 
     // Get active subscription info
     const activeSubscription = seller.subscriptions[0];
-    const planName = activeSubscription?.plan?.name || "Free Plan";
+    let planName = activeSubscription?.plan?.name || "Free Plan";
     const adsUsed = activeSubscription?.adsUsed || 0;
     const maxAds = activeSubscription?.plan?.maxAds || 3;
+
+    if (activeSubscription?.expiresAt && new Date() > new Date(activeSubscription.expiresAt)) {
+      planName = `${planName} (Expired)`;
+    }
 
     // Get recent ads (last 5)
     const recentAds = await prisma.classifiedAd.findMany({

@@ -32,8 +32,12 @@ export async function GET(request: NextRequest) {
     const maxAds = activeSubscription?.plan?.maxAds || 3;
     const adsUsed = activeSubscription?.adsUsed || 0;
     const planId = activeSubscription?.planId || null;
-    const status = activeSubscription?.status || null;
+    let status = activeSubscription?.status || null;
     const expiresAt = activeSubscription?.expiresAt || null;
+
+    if (expiresAt && new Date() > new Date(expiresAt)) {
+      status = "EXPIRED";
+    }
 
     return NextResponse.json({
       success: true,
