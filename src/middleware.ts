@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import { jwtVerify, SignJWT } from "jose";
 
 // Plain string role type — avoids importing @prisma/client in Edge Runtime
 type Role = "ADMIN" | "VENDOR" | "CUSTOMER" | "ADS_SELLER";
@@ -17,6 +17,39 @@ async function verifyToken(token: string): Promise<{ userId: string; email: stri
   } catch {
     return null;
   }
+}
+
+// Verify Refresh JWT using jose (Edge Runtime compatible)
+async function verifyRefreshToken(token: string): Promise<{ userId: string; email: string; role: Role } | null> {
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET || "");
+    const { payload } = await jwtVerify(token, secret);
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      role: payload.role as Role,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Generate new access token in Next.js middleware (Edge Runtime compatible)
+async function generateAccessToken(payload: { userId: string; email: string; role: Role }): Promise<string> {
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("3d") // 3 days
+    .sign(secret);
+}
+
+// Generate new refresh token in Next.js middleware (Edge Runtime compatible)
+async function generateRefreshToken(payload: { userId: string; email: string; role: Role }): Promise<string> {
+  const secret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET || "");
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("3d") // 3 days
+    .sign(secret);
 }
 
 // Define route patterns and their required roles
@@ -148,7 +181,34 @@ export async function middleware(request: NextRequest) {
   }
 
   // Verify token (jose — Edge Runtime compatible)
-  const payload = await verifyToken(token);
+  let payload = await verifyToken(token);
+  let isRefreshed = false;
+  let newAccessToken = "";
+  let newRefreshToken = "";
+
+  if (!payload) {
+    // Access token is expired or invalid. Check if refresh token is present.
+    const refreshToken = request.cookies.get("refreshToken")?.value;
+    if (refreshToken) {
+      const refreshPayload = await verifyRefreshToken(refreshToken);
+      if (refreshPayload) {
+        // Valid refresh token! Generate new tokens.
+        payload = {
+          userId: refreshPayload.userId,
+          email: refreshPayload.email,
+          role: refreshPayload.role,
+        };
+        try {
+          newAccessToken = await generateAccessToken(payload);
+          newRefreshToken = await generateRefreshToken(payload);
+          isRefreshed = true;
+        } catch (err) {
+          console.error("Failed to generate tokens in middleware:", err);
+          payload = null;
+        }
+      }
+    }
+  }
 
   if (!payload) {
     // Invalid / expired token — return 401 for API or redirect to login for pages
@@ -164,6 +224,7 @@ export async function middleware(request: NextRequest) {
     url.searchParams.set("returnUrl", pathname);
     const response = NextResponse.redirect(url);
     response.cookies.delete("accessToken");
+    response.cookies.delete("refreshToken");
     return response;
   }
 
@@ -181,9 +242,29 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set("X-User-Role", payload.role);
   requestHeaders.set("X-User-Email", payload.email);
 
-  return NextResponse.next({
+  const response = NextResponse.next({
     request: { headers: requestHeaders },
   });
+
+  if (isRefreshed) {
+    // Set the new cookies so they are persisted on the browser
+    response.cookies.set("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 3 * 24 * 60 * 60, // 3 days
+      path: "/",
+    });
+    response.cookies.set("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 3 * 24 * 60 * 60, // 3 days
+      path: "/",
+    });
+  }
+
+  return response;
 }
 
 export const config = {

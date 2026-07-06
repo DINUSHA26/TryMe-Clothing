@@ -5,8 +5,8 @@ import { UserRole } from "@prisma/client";
 // Environment variables validation
 const JWT_SECRET: string = process.env.JWT_SECRET || "";
 const JWT_REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || "";
-const JWT_ACCESS_EXPIRY: string = process.env.JWT_ACCESS_EXPIRY || "7d";
-const JWT_REFRESH_EXPIRY: string = process.env.JWT_REFRESH_EXPIRY || "7d";
+const JWT_ACCESS_EXPIRY: string = process.env.JWT_ACCESS_EXPIRY || "3d";
+const JWT_REFRESH_EXPIRY: string = process.env.JWT_REFRESH_EXPIRY || "3d";
 
 // JWT secrets should be configured in environment variables.
 // If missing, verification and generation will fail at runtime.

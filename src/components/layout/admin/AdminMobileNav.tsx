@@ -89,7 +89,6 @@ export function AdminMobileNav({ isOpen, onClose }: AdminMobileNavProps) {
                 href: "/my-disputes",
                 icon: AlertTriangle,
               },
-              { label: "Settings", href: "/admin/settings", icon: Settings },
             ].map((item) => {
               const isItemActive = isActive(item.href);
 

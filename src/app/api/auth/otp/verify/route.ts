@@ -127,21 +127,21 @@ export async function POST(request: NextRequest) {
     });
 
     // Set cookies for middleware authentication
-    // accessToken - httpOnly for security, 24 hours expiry
+    // accessToken - httpOnly for security, 3 days expiry
     response.cookies.set("accessToken", tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 3 * 24 * 60 * 60, // 3 days
       path: "/",
     });
 
-    // refreshToken - httpOnly for security, 7 days expiry
+    // refreshToken - httpOnly for security, 3 days expiry
     response.cookies.set("refreshToken", tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days (matches JWT_REFRESH_EXPIRY)
+      maxAge: 3 * 24 * 60 * 60, // 3 days
       path: "/",
     });
 

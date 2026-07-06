@@ -123,7 +123,6 @@ export function AdminSidebar({
                 href: "/my-disputes",
                 icon: AlertTriangle,
               },
-              { label: "Settings", href: "/admin/settings", icon: Settings },
             ].map((item) => {
               const isItemActive = isActive(item.href);
               return renderNavLink(item, isItemActive);
