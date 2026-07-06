@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, handleAuthError } from "@/lib/auth-helpers";
+import { createNotification } from "@/lib/notifications/notificationService";
+import { NotificationType } from "@/types/notification";
 
 /**
  * POST /api/admin/ads-plan-payments/[id]/reject
@@ -8,17 +10,18 @@ import { requireAdmin, handleAuthError } from "@/lib/auth-helpers";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     requireAdmin(request);
+    const { id } = await params;
 
     const body = await request.json().catch(() => ({}));
     const reason = body.reason || "Payment rejected by admin.";
 
     const payment = await prisma.adsPayment.findUnique({
-      where: { id: params.id },
-      include: { subscription: { include: { plan: true } } },
+      where: { id },
+      include: { subscription: { include: { plan: true, seller: true } } },
     });
 
     if (!payment) {
@@ -49,6 +52,19 @@ export async function POST(
         notificationData: { reason },
       },
     });
+
+    // Send in-app notification to seller
+    try {
+      await createNotification({
+        userId: payment.subscription.seller.userId,
+        type: NotificationType.SYSTEM_ANNOUNCEMENT,
+        title: "Plan Payment Rejected",
+        message: `Your payment for the "${payment.subscription.plan.name}" plan has been rejected. Reason: ${reason}`,
+        link: "/ads-seller/plans",
+      });
+    } catch (err) {
+      console.error("Error creating plan rejection notification:", err);
+    }
 
     return NextResponse.json({
       success: true,

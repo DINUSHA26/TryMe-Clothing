@@ -43,6 +43,17 @@ interface ActiveSubscription {
   status: string;
   expiresAt: string | null;
   adsUsed: number;
+  pendingSub?: {
+    planName: string;
+    amount: number;
+    submittedAt: string;
+  } | null;
+  rejectedSub?: {
+    planName: string;
+    amount: number;
+    reason: string;
+    rejectedAt: string;
+  } | null;
 }
 
 /* ── Helpers ────────────────────────────────────────────────────────────────── */
@@ -495,6 +506,7 @@ function AdsSellerPlansPageContent() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successPlanName, setSuccessPlanName] = useState("");
   const [successIsOnline, setSuccessIsOnline] = useState(false);
+  const [isRejectedDismissed, setIsRejectedDismissed] = useState(false);
 
   // Fetch plans + current subscription
   const fetchData = async () => {
@@ -515,6 +527,8 @@ function AdsSellerPlansPageContent() {
           status: subData.data?.status || "ACTIVE",
           expiresAt: subData.data?.expiresAt || null,
           adsUsed: subData.data?.adsUsed || 0,
+          pendingSub: subData.data?.pendingSub || null,
+          rejectedSub: subData.data?.rejectedSub || null,
         });
         if (subData.data?.planName) {
           setSuccessPlanName(subData.data.planName);
@@ -616,6 +630,44 @@ function AdsSellerPlansPageContent() {
                 Renew or upgrade your plan to post more classified ads and continue selling on TryMe Marketplace.
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Pending Subscription Approval Banner */}
+        {activeSub?.pendingSub && (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <Clock className="h-5 w-5 text-amber-500 shrink-0 mt-0.5 animate-pulse" />
+            <div>
+              <p className="text-sm font-bold text-amber-800">Payment Pending Approval</p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                Your payment for the <strong>{activeSub.pendingSub.planName}</strong> plan is currently under review by our administration.
+                It will be verified and activated shortly.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Rejected Subscription Payment Banner */}
+        {activeSub?.rejectedSub && !isRejectedDismissed && (
+          <div className="flex items-start justify-between gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 relative">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-red-800">Plan Payment Rejected</p>
+                <p className="text-xs text-red-600 mt-0.5">
+                  Your payment for the <strong>{activeSub.rejectedSub.planName}</strong> plan was rejected.
+                </p>
+                <p className="text-xs text-red-700 mt-1 font-semibold">
+                  Reason: {activeSub.rejectedSub.reason}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsRejectedDismissed(true)}
+              className="text-red-400 hover:text-red-600 p-1 rounded-full hover:bg-red-100 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         )}
 
