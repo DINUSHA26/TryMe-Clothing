@@ -234,9 +234,9 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                 <CreditCard className="w-4 h-4 mr-2" />
                 Online Payment
               </TabsTrigger>
-              <TabsTrigger value="bank_transfer" disabled={processing}>
+              <TabsTrigger value="bank_transfer" disabled={true}>
                 <Building className="w-4 h-4 mr-2" />
-                Bank Transfer
+                Bank Transfer (Coming Soon)
               </TabsTrigger>
             </TabsList>
 
