@@ -37,7 +37,7 @@ export function generatePaymentHash(
   // Step 1: Hash the merchant secret and convert to uppercase
   const merchantSecretHash = crypto
     .createHash("md5")
-    .update(merchantSecret)
+    .update(merchantSecret.trim())
     .digest("hex")
     .toUpperCase();
 
@@ -74,7 +74,7 @@ export function verifyWebhookSignature(
   // Step 1: Hash the merchant secret and convert to uppercase
   const merchantSecretHash = crypto
     .createHash("md5")
-    .update(merchantSecret)
+    .update(merchantSecret.trim())
     .digest("hex")
     .toUpperCase();
 
@@ -96,7 +96,7 @@ export function verifyWebhookSignature(
   // Step 3: Compare signatures using constant-time comparison (prevents timing attacks)
   try {
     return crypto.timingSafeEqual(
-      Buffer.from(payload.md5sig),
+      Buffer.from(payload.md5sig.toUpperCase()),
       Buffer.from(expectedSignature)
     );
   } catch (error) {
