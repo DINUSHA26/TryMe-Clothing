@@ -250,11 +250,11 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         }
       }
 
-      // Redirect
+      // Redirect - Use window.location to force full reload and apply cookies correctly
       if (redirectUrl && redirectUrl.startsWith("/") && !redirectUrl.startsWith("//")) {
-        router.push(redirectUrl);
+        window.location.href = redirectUrl;
       } else {
-        router.push("/");
+        window.location.href = "/";
       }
     } catch (error) {
       console.error("Verify OTP error:", error);
