@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Decimal } from "@prisma/client/runtime/library";
 import { payhereWebhookSchema } from "@/lib/validations/payment";
 import { verifyWebhookSignature, parseStatusCode } from "@/lib/payhere";
 import { calculateVendorEarnings, creditVendorWallets } from "@/lib/utils/wallet";
@@ -381,6 +382,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   }
 }
-
-// Need to import Decimal
-import { Decimal } from "@prisma/client/runtime/library";
