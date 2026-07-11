@@ -55,6 +55,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true }); // Return 200
     }
 
+    // Find order by order number early for debugging
+    const order = await prisma.order.findUnique({
+      where: { orderNumber: webhookData.order_id },
+      include: {
+        payment: true,
+        customer: {
+          include: {
+            user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          },
+        },
+        coupon: { select: { vendorId: true } },
+        items: {
+          include: {
+            vendor: { select: { id: true, businessName: true, businessEmail: true, commissionRate: true } },
+          },
+        },
+      },
+    });
+
+    if (order) {
+      await prisma.orderStatusHistory.create({
+        data: {
+          orderId: order.id,
+          status: order.status,
+          note: `DEBUG WEBHOOK: hit with status ${webhookData.status_code}, amount ${webhookData.payhere_amount}, sig ${webhookData.md5sig}`,
+          createdBy: null,
+        }
+      });
+    }
+
     // CRITICAL: Verify webhook signature
     const isValidSignature = verifyWebhookSignature(
       {
@@ -73,42 +103,20 @@ export async function POST(request: NextRequest) {
         order_id: webhookData.order_id,
         payment_id: webhookData.payment_id,
       });
+      if (order) {
+        await prisma.orderStatusHistory.create({
+          data: {
+            orderId: order.id,
+            status: order.status,
+            note: `DEBUG WEBHOOK: Signature INVALID!`,
+            createdBy: null,
+          }
+        });
+      }
       return NextResponse.json({ success: true }); // Return 200 but don't process
     }
 
     console.log("[PayHere Webhook] Signature verified successfully");
-
-    // Find order by order number
-    const order = await prisma.order.findUnique({
-      where: { orderNumber: webhookData.order_id },
-      include: {
-        payment: true,
-        customer: {
-          include: {
-            user: {
-              select: { id: true, email: true, firstName: true, lastName: true },
-            },
-          },
-        },
-        coupon: {
-          select: {
-            vendorId: true,
-          },
-        },
-        items: {
-          include: {
-            vendor: {
-              select: {
-                id: true,
-                businessName: true,
-                businessEmail: true,
-                commissionRate: true,
-              },
-            },
-          },
-        },
-      },
-    });
 
     if (!order) {
       console.error("[PayHere Webhook] Order not found:", webhookData.order_id);
