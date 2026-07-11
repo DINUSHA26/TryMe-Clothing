@@ -197,6 +197,12 @@ export async function POST(request: NextRequest) {
             },
           });
 
+          // Update order items status
+          await tx.orderItem.updateMany({
+            where: { orderId: order.id },
+            data: { status: newOrderStatus },
+          });
+
           // If payment failed/cancelled, restore stock
           if (newOrderStatus === "CANCELLED") {
             for (const item of order.items) {
