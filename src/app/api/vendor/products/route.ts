@@ -252,6 +252,7 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             value: true,
+            priceAdjustment: true,
             stock: true,
             sku: true,
           },

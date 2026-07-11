@@ -132,6 +132,20 @@ export function ProductTable({
     })}`;
   };
 
+  const getPriceDisplay = (product: any) => {
+    const basePrice = Number(product.price);
+    if (!product.variants || product.variants.length === 0) {
+      return formatPrice(basePrice);
+    }
+    const effectivePrices = product.variants.map((v: any) => basePrice + Number(v.priceAdjustment || 0));
+    const minPrice = Math.min(...effectivePrices);
+    const maxPrice = Math.max(...effectivePrices);
+    if (minPrice === maxPrice) {
+      return formatPrice(minPrice);
+    }
+    return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
+  };
+
   if (products.length === 0) {
     return (
       <div className="rounded-lg border bg-card">
@@ -203,7 +217,7 @@ export function ProductTable({
                 </TableCell>
                 <TableCell>
                   <div>
-                    <p className="font-medium">{formatPrice(Number(product.price))}</p>
+                    <p className="font-medium">{getPriceDisplay(product)}</p>
                     {product.compareAtPrice && (
                       <p className="text-xs text-muted-foreground line-through">
                         {formatPrice(Number(product.compareAtPrice))}
@@ -332,6 +346,7 @@ export function ProductTable({
                 <TableRow>
                   <TableHead>Variant</TableHead>
                   <TableHead>SKU</TableHead>
+                  <TableHead>Price</TableHead>
                   <TableHead className="text-right">Stock</TableHead>
                 </TableRow>
               </TableHeader>
@@ -345,6 +360,9 @@ export function ProductTable({
                       </TableCell>
                       <TableCell className="text-muted-foreground text-xs font-mono">
                         {v.sku || "N/A"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatPrice(Number(viewingVariantsProduct.price) + Number(v.priceAdjustment || 0))}
                       </TableCell>
                       <TableCell className="text-right">
                         <span
