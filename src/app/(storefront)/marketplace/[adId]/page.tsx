@@ -180,7 +180,19 @@ export default function PublicAdDetailPage() {
   };
 
   const whatsappNumber = formatWhatsAppNumber(whatsappNumberRaw);
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hi, is your classified listing "${ad.title}" still available?`;
+  
+  const adUrl = typeof window !== "undefined" ? window.location.href : "";
+  const firstImage = imagesList[0] && imagesList[0] !== "" ? imagesList[0] : "";
+  const shortDesc = ad.description ? (ad.description.length > 150 ? ad.description.substring(0, 150) + "..." : ad.description) : "";
+  
+  const whatsappMessage = `Hi, is your classified listing "*${ad.title}*" still available?
+
+*Link:* ${adUrl}
+${firstImage ? `*Image:* ${firstImage}\n` : ""}
+*Description:*
+${shortDesc}`;
+
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
