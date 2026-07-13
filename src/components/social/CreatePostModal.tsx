@@ -129,60 +129,62 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
                         <Button onClick={() => router.push("/login?redirect=/social")}>Go to Login</Button>
                     </div>
                 ) : (
-                    <div className="p-4 space-y-4">
-                        <Textarea
-                            placeholder="What's on your mind?"
-                            className="resize-none border-none focus-visible:ring-0 text-lg min-h-[120px] p-0"
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                        />
-
-                        {previewUrls.length > 0 && (
-                            <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto rounded-xl p-2 border">
-                                {previewUrls.map((url, i) => (
-                                    <div key={i} className="relative aspect-square rounded-lg overflow-hidden border">
-                                        <Image src={url} alt="Preview" fill className="object-cover" />
-                                        <button
-                                            onClick={() => removeImage(i)}
-                                            className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-black/70 transition"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="space-y-2 border rounded-xl p-3 bg-slate-50/50 dark:bg-slate-900/30">
-                            <div className="flex items-center gap-2 text-[#FF6600]">
-                                <Tag className="h-4 w-4" />
-                                <label className="text-xs font-bold uppercase tracking-wider">Tag a Product</label>
-                            </div>
-                            <Input
-                                placeholder="Enter Product URL or SKU"
-                                className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus-visible:ring-1 focus-visible:ring-[#FF6600] text-sm"
-                                value={productTag}
-                                onChange={(e) => setProductTag(e.target.value)}
+                    <div className="flex flex-col">
+                        <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
+                            <Textarea
+                                placeholder="What's on your mind?"
+                                className="resize-none border-none focus-visible:ring-0 text-lg min-h-[120px] p-0"
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
                             />
-                        </div>
 
-                        <div className="flex items-center justify-between border rounded-xl p-3">
-                            <span className="font-semibold text-sm">Add to your post</span>
-                            <div className="flex gap-2">
-                                <label className="cursor-pointer p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition text-green-500">
-                                    <ImagePlus className="h-6 w-6" />
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        className="hidden"
-                                        onChange={handleImageChange}
-                                    />
-                                </label>
+                            {previewUrls.length > 0 && (
+                                <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto rounded-xl p-2 border">
+                                    {previewUrls.map((url, i) => (
+                                        <div key={i} className="relative aspect-square rounded-lg overflow-hidden border">
+                                            <Image src={url} alt="Preview" fill className="object-cover" />
+                                            <button
+                                                onClick={() => removeImage(i)}
+                                                className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-black/70 transition"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="space-y-2 border rounded-xl p-3 bg-slate-50/50 dark:bg-slate-900/30">
+                                <div className="flex items-center gap-2 text-[#FF6600]">
+                                    <Tag className="h-4 w-4" />
+                                    <label className="text-xs font-bold uppercase tracking-wider">Tag a Product</label>
+                                </div>
+                                <Input
+                                    placeholder="Enter Product URL or SKU"
+                                    className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus-visible:ring-1 focus-visible:ring-[#FF6600] text-sm"
+                                    value={productTag}
+                                    onChange={(e) => setProductTag(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between border rounded-xl p-3">
+                                <span className="font-semibold text-sm">Add to your post</span>
+                                <div className="flex gap-2">
+                                    <label className="cursor-pointer p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition text-green-500">
+                                        <ImagePlus className="h-6 w-6" />
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            className="hidden"
+                                            onChange={handleImageChange}
+                                        />
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
-                        <DialogFooter className="mt-4">
+                        <DialogFooter className="p-4 border-t">
                             <Button
                                 onClick={handleSubmit}
                                 disabled={loading || (!content.trim() && images.length === 0)}

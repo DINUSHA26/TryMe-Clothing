@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { PostCard } from "./PostCard";
@@ -42,6 +42,25 @@ export function Feed() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const observer = useRef<IntersectionObserver | null>(null);
+
+    const lastElementRef = useCallback((node: HTMLDivElement | null) => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+        
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prevPage => {
+                    const nextPage = prevPage + 1;
+                    fetchPosts(nextPage, true);
+                    return nextPage;
+                });
+            }
+        });
+        
+        if (node) observer.current.observe(node);
+    }, [loading, hasMore]);
+
     const searchParams = useSearchParams();
     const highlightPostId = searchParams.get("post");
 
@@ -136,10 +155,8 @@ export function Feed() {
             )}
 
             {!loading && hasMore && (
-                <div className="flex justify-center pt-4">
-                    <Button variant="outline" onClick={() => { setPage(p => p + 1); fetchPosts(page + 1, true); }}>
-                        Load More
-                    </Button>
+                <div ref={lastElementRef} className="flex justify-center pt-4 opacity-0 h-4">
+                    {/* Intersection Observer target for infinite scrolling */}
                 </div>
             )}
 
