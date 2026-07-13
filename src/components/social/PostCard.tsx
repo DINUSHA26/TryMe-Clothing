@@ -204,7 +204,7 @@ export function PostCard({ post }: { post: SocialPostType }) {
                     {post.images.map((img, i) => (
                         <div
                             key={i}
-                            className="relative aspect-square cursor-pointer hover:opacity-95 transition"
+                            className="relative aspect-[3/4] sm:aspect-[4/5] min-h-[250px] cursor-pointer hover:opacity-95 transition bg-slate-50 dark:bg-slate-900"
                             onClick={() => openGallery(i)}
                         >
                             <Image src={img} alt="Post image" fill className="object-cover" />
@@ -218,20 +218,20 @@ export function PostCard({ post }: { post: SocialPostType }) {
         return (
             <div className="grid grid-cols-2 gap-1 mt-3 rounded-xl overflow-hidden border">
                 <div
-                    className="relative aspect-square cursor-pointer hover:opacity-95 transition"
+                    className="relative cursor-pointer hover:opacity-95 transition min-h-[300px]"
                     onClick={() => openGallery(0)}
                 >
                     <Image src={post.images[0]} alt="Post image" fill className="object-cover" />
                 </div>
                 <div className="grid grid-rows-2 gap-1 relative">
                     <div
-                        className="relative w-full h-full cursor-pointer hover:opacity-95 transition"
+                        className="relative w-full min-h-[150px] cursor-pointer hover:opacity-95 transition"
                         onClick={() => openGallery(1)}
                     >
                         <Image src={post.images[1]} alt="Post image" fill className="object-cover" />
                     </div>
                     <div
-                        className="relative w-full h-full cursor-pointer hover:opacity-95 transition"
+                        className="relative w-full min-h-[150px] cursor-pointer hover:opacity-95 transition"
                         onClick={() => openGallery(2)}
                     >
                         <Image src={post.images[2]} alt="Post image" fill className="object-cover" />
