@@ -101,6 +101,14 @@ export default function PublicSellerStorefrontPage() {
   const { seller, servicePages = [], ads = [] } = data;
   const contactInfo = seller.contactInfo || {};
 
+  const formatWhatsAppNumber = (numStr: string) => {
+    let clean = (numStr || "").replace(/[^0-9]/g, "");
+    if (clean.startsWith("0")) {
+        clean = "94" + clean.substring(1);
+    }
+    return clean;
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       {/* Header section with cover banner */}
@@ -141,7 +149,7 @@ export default function PublicSellerStorefrontPage() {
             </div>
           </div>
           <Button variant="outline" size="sm" asChild className="rounded-xl font-bold border-gray-200 hover:bg-orange-50 hover:text-[#FF6600]">
-            <a href={`https://wa.me/${(contactInfo.whatsapp || contactInfo.phone || seller.phone).replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer">
+            <a href={`https://wa.me/${formatWhatsAppNumber(contactInfo.whatsapp || contactInfo.phone || seller.phone)}`} target="_blank" rel="noreferrer">
               Contact Business
             </a>
           </Button>
@@ -230,7 +238,7 @@ export default function PublicSellerStorefrontPage() {
                         <span className="text-xs">WhatsApp: <strong className="text-gray-800">{contactInfo.whatsapp}</strong></span>
                       </div>
                       <Button asChild className="w-full bg-[#25D366] hover:bg-[#1ebd59] text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs py-2 shadow-sm">
-                        <a href={`https://wa.me/${contactInfo.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer">
+                        <a href={`https://wa.me/${formatWhatsAppNumber(contactInfo.whatsapp)}`} target="_blank" rel="noreferrer">
                           Chat on WhatsApp
                         </a>
                       </Button>

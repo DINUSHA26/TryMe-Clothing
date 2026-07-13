@@ -169,8 +169,18 @@ export default function PublicAdDetailPage() {
   const locationText = ad.localArea ? `${ad.localArea}, ${ad.district}` : ad.district;
   const contactInfo = (ad.seller?.contactInfo as any) || {};
   const sellerPhone = contactInfo.phone || ad.seller?.phone || "";
-  const whatsappNumber = contactInfo.whatsapp || sellerPhone || "";
-  const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, "")}?text=Hi, is your classified listing "${ad.title}" still available?`;
+  const whatsappNumberRaw = contactInfo.whatsapp || sellerPhone || "";
+  
+  const formatWhatsAppNumber = (numStr: string) => {
+    let clean = (numStr || "").replace(/[^0-9]/g, "");
+    if (clean.startsWith("0")) {
+        clean = "94" + clean.substring(1);
+    }
+    return clean;
+  };
+
+  const whatsappNumber = formatWhatsAppNumber(whatsappNumberRaw);
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hi, is your classified listing "${ad.title}" still available?`;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
