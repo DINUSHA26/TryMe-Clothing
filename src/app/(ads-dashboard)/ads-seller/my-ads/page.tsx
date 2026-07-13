@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Eye, LayoutGrid, PlusCircle, RefreshCw } from "lucide-react";
+import { Trash2, Eye, LayoutGrid, PlusCircle, RefreshCw, Edit } from "lucide-react";
 import Link from "next/link";
 import { formatDistance } from "date-fns";
 
@@ -256,6 +256,11 @@ export default function MyAdsPage() {
                             </a>
                           </Button>
                         )}
+                        <Button variant="ghost" size="icon" asChild title="Edit Ad">
+                          <Link href={`/ads-seller/edit-ad/${ad.id}`}>
+                            <Edit className="h-4.5 w-4.5 text-blue-500 hover:text-blue-600" />
+                          </Link>
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"

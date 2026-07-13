@@ -14,8 +14,12 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const sort = searchParams.get("sort") || "newest";
-    const page = parseInt(searchParams.get("page") || "1");
-    const pageSize = parseInt(searchParams.get("pageSize") || "12");
+    
+    let page = parseInt(searchParams.get("page") || "1");
+    if (isNaN(page) || page < 1) page = 1;
+    
+    let pageSize = parseInt(searchParams.get("pageSize") || "12");
+    if (isNaN(pageSize) || pageSize < 1) pageSize = 12;
 
     // Build the query where parameters
     const where: Prisma.ClassifiedAdWhereInput = {
@@ -57,10 +61,15 @@ export async function GET(request: NextRequest) {
 
     // Price range filters
     if (minPrice || maxPrice) {
-      where.price = {
-        ...(minPrice && { gte: parseFloat(minPrice) }),
-        ...(maxPrice && { lte: parseFloat(maxPrice) }),
-      };
+      const minP = minPrice ? parseFloat(minPrice) : NaN;
+      const maxP = maxPrice ? parseFloat(maxPrice) : NaN;
+      
+      if (!isNaN(minP) || !isNaN(maxP)) {
+        where.price = {
+          ...(!isNaN(minP) && { gte: minP }),
+          ...(!isNaN(maxP) && { lte: maxP }),
+        };
+      }
     }
 
     // Specifications filters (any query param that is not a standard listing parameter)

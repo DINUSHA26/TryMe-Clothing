@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { CommentSection } from "./CommentSection";
 import { PostGalleryModal } from "./PostGalleryModal";
+import { CreatePostModal } from "./CreatePostModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export function PostCard({ post }: { post: SocialPostType }) {
@@ -30,7 +31,9 @@ export function PostCard({ post }: { post: SocialPostType }) {
         user && post.savedBy ? post.savedBy.some(s => s.userId === user.id) : false
     );
     const [isExpanded, setIsExpanded] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
     const isLongText = post.content ? (post.content.length > 200 || post.content.split("\n").length > 4) : false;
+    const isOwner = user?.id === post.userId;
 
     useEffect(() => {
         if (user && post.savedBy) {
@@ -180,6 +183,23 @@ export function PostCard({ post }: { post: SocialPostType }) {
         toast.success("Post reported. Our team will review it.");
     };
 
+    const handleDelete = async () => {
+        if (!confirm("Are you sure you want to delete this post?")) return;
+        
+        try {
+            const res = await fetch(`/api/social/${post.id}`, { method: "DELETE" });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Post deleted successfully");
+                window.location.reload();
+            } else {
+                toast.error(data.error || "Failed to delete post");
+            }
+        } catch {
+            toast.error("Failed to delete post");
+        }
+    };
+
     const renderImages = () => {
         if (!post.images || post.images.length === 0) return null;
 
@@ -277,9 +297,21 @@ export function PostCard({ post }: { post: SocialPostType }) {
                         <DropdownMenuItem onClick={handleShare}>
                             <Share2 className="h-4 w-4 mr-2" /> Copy Link
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleReport}>
-                            <Flag className="h-4 w-4 mr-2" /> Report Post
-                        </DropdownMenuItem>
+                        {!isOwner && (
+                            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleReport}>
+                                <Flag className="h-4 w-4 mr-2" /> Report Post
+                            </DropdownMenuItem>
+                        )}
+                        {isOwner && (
+                            <>
+                                <DropdownMenuItem onClick={() => setEditModalOpen(true)}>
+                                    <MessageCircle className="h-4 w-4 mr-2" /> Edit Post
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleDelete}>
+                                    <MoreHorizontal className="h-4 w-4 mr-2" /> Delete Post
+                                </DropdownMenuItem>
+                            </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </CardHeader>
@@ -485,6 +517,15 @@ export function PostCard({ post }: { post: SocialPostType }) {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {editModalOpen && (
+                <CreatePostModal 
+                    isOpen={editModalOpen} 
+                    onClose={() => setEditModalOpen(false)} 
+                    onSuccess={() => window.location.reload()}
+                    editPost={post}
+                />
+            )}
         </Card>
     );
 }

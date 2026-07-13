@@ -17,17 +17,19 @@ interface CreatePostModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: (post: SocialPostType) => void;
+    editPost?: SocialPostType;
 }
 
-export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalProps) {
+export function CreatePostModal({ isOpen, onClose, onSuccess, editPost }: CreatePostModalProps) {
     const { isAuthenticated } = useAuthStore();
     const router = useRouter();
 
-    const [content, setContent] = useState("");
+    const [content, setContent] = useState(editPost?.content || "");
     const [images, setImages] = useState<File[]>([]);
-    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const [previewUrls, setPreviewUrls] = useState<string[]>(editPost?.images || []);
     const [loading, setLoading] = useState(false);
-    const [productTag, setProductTag] = useState("");
+    const [productTag, setProductTag] = useState(editPost?.productTag || "");
+    const [existingImages, setExistingImages] = useState<string[]>(editPost?.images || []);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -40,9 +42,17 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
     };
 
     const removeImage = (index: number) => {
-        setImages(prev => prev.filter((_, i) => i !== index));
+        const urlToRemove = previewUrls[index];
+        if (existingImages.includes(urlToRemove)) {
+            setExistingImages(prev => prev.filter(url => url !== urlToRemove));
+        } else {
+            const fileIndex = index - existingImages.length;
+            if (fileIndex >= 0) {
+                setImages(prev => prev.filter((_, i) => i !== fileIndex));
+            }
+        }
         setPreviewUrls(prev => {
-            URL.revokeObjectURL(prev[index]);
+            if (!existingImages.includes(urlToRemove)) URL.revokeObjectURL(prev[index]);
             return prev.filter((_, i) => i !== index);
         });
     };
@@ -89,15 +99,19 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
                 imageUrls = await uploadImages();
             }
 
-            const res = await fetch("/api/social", {
-                method: "POST",
+            const url = editPost ? `/api/social/${editPost.id}` : "/api/social";
+            const method = editPost ? "PUT" : "POST";
+            const finalImages = editPost ? [...existingImages, ...imageUrls] : imageUrls;
+
+            const res = await fetch(url, {
+                method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content, images: imageUrls, productTag }),
+                body: JSON.stringify({ content, images: finalImages, productTag }),
             });
 
             const data = await res.json();
             if (data.success) {
-                toast.success("Posted successfully!");
+                toast.success(editPost ? "Post updated!" : "Posted successfully!");
                 onSuccess(data.data);
                 setContent("");
                 setImages([]);
@@ -120,7 +134,7 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-[2rem]">
                 <DialogHeader className="p-4 border-b">
-                    <DialogTitle className="text-center text-xl font-bold">Create Post</DialogTitle>
+                    <DialogTitle className="text-center text-xl font-bold">{editPost ? "Edit Post" : "Create Post"}</DialogTitle>
                 </DialogHeader>
 
                 {!isAuthenticated ? (
@@ -187,11 +201,11 @@ export function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalP
                         <DialogFooter className="p-4 border-t">
                             <Button
                                 onClick={handleSubmit}
-                                disabled={loading || (!content.trim() && images.length === 0)}
+                                disabled={loading || (!content.trim() && previewUrls.length === 0)}
                                 className="w-full rounded-xl font-bold"
                             >
                                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                                Post
+                                {editPost ? "Update Post" : "Post"}
                             </Button>
                         </DialogFooter>
                     </div>
