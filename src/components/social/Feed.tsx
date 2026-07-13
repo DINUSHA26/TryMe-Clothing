@@ -83,29 +83,47 @@ export function Feed() {
         }
     }, [highlightPostId, posts]);
 
-    const fetchPosts = async (pageNum = 1, append = false) => {
+    const fetchPosts = async (pageNum = 1, append = false, isBackground = false) => {
         try {
-            setLoading(true);
+            if (!isBackground) setLoading(true);
             const res = await fetch(`/api/social?page=${pageNum}&limit=10`);
             const data = await res.json();
 
             if (data.success) {
                 if (append) {
-                    setPosts(prev => [...prev, ...data.data.posts]);
+                    setPosts(prev => {
+                        // Prevent duplicates if background fetch runs while we already have posts
+                        const existingIds = new Set(prev.map(p => p.id));
+                        const newPosts = data.data.posts.filter((p: any) => !existingIds.has(p.id));
+                        return [...prev, ...newPosts];
+                    });
                 } else {
                     setPosts(data.data.posts);
+                    localStorage.setItem("social_feed_cache", JSON.stringify(data.data.posts));
                 }
                 setHasMore(data.data.pagination.page < data.data.pagination.totalPages);
             }
         } catch (error) {
             console.error("Failed to fetch posts:", error);
         } finally {
-            setLoading(false);
+            if (!isBackground) setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchPosts();
+        const cached = localStorage.getItem("social_feed_cache");
+        let hasCache = false;
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (parsed && parsed.length > 0) {
+                    setPosts(parsed);
+                    setLoading(false);
+                    hasCache = true;
+                }
+            } catch (e) {}
+        }
+        fetchPosts(1, false, hasCache);
     }, []);
 
     const handlePostCreated = (newPost: SocialPostType) => {

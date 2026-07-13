@@ -126,11 +126,16 @@ function MarketplacePortalPageContent() {
 
   // Fetch Category Tree with count badges
   const fetchCategoryTree = async () => {
+    const cached = localStorage.getItem("marketplace_categories_cache");
+    if (cached) {
+      try { setCategories(JSON.parse(cached)); } catch (e) {}
+    }
     try {
       const response = await fetch("/api/ads/public/categories");
       const result = await response.json();
       if (result.success) {
         setCategories(result.data);
+        localStorage.setItem("marketplace_categories_cache", JSON.stringify(result.data));
       }
     } catch (error) {
       console.error("Error loading categories tree:", error);
@@ -139,7 +144,24 @@ function MarketplacePortalPageContent() {
 
   // Fetch Listings matching filters
   const fetchListings = async () => {
-    setIsLoading(true);
+    let hasCache = false;
+    
+    // Check cache for default landing view
+    if (!hasActiveFilters && currentPage === 1) {
+      const cached = localStorage.getItem("marketplace_feed_cache");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.length > 0) {
+            setAds(parsed);
+            setIsLoading(false);
+            hasCache = true;
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (!hasCache) setIsLoading(true);
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -180,6 +202,9 @@ function MarketplacePortalPageContent() {
       if (result.success) {
         setAds(result.data.ads);
         setPagination(result.data.pagination);
+        if (!hasActiveFilters && currentPage === 1) {
+          localStorage.setItem("marketplace_feed_cache", JSON.stringify(result.data.ads));
+        }
       } else {
         toast({
           variant: "destructive",
@@ -201,11 +226,16 @@ function MarketplacePortalPageContent() {
 
   // Fetch Featured/Top Ads for the landing view
   const fetchFeaturedAds = async () => {
+    const cached = localStorage.getItem("marketplace_featured_cache");
+    if (cached) {
+      try { setFeaturedAds(JSON.parse(cached)); } catch (e) {}
+    }
     try {
       const response = await fetch("/api/ads/public?isTopAd=true&pageSize=6");
       const result = await response.json();
       if (result.success) {
         setFeaturedAds(result.data.ads);
+        localStorage.setItem("marketplace_featured_cache", JSON.stringify(result.data.ads));
       }
     } catch (err) {
       console.error("Error loading top ads:", err);
