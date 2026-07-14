@@ -9,6 +9,7 @@ import { ProductGrid } from "@/components/products/ProductGrid";
 import { ArrowRight, Shield, Truck, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { FAQSection } from "@/components/common/FAQSection";
 
 interface Category {
   id: string;
@@ -591,6 +592,9 @@ export default function Home() {
           </Button>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <FAQSection />
 
       {/* Portal Links (for development) */}
       <section className="py-12 border-t">
