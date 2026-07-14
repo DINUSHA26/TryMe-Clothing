@@ -15,7 +15,9 @@ export default function SocialPage() {
 
             {/* Facebook-style Stories Tray */}
             <div className="mb-6">
-                <StoriesTray />
+                <Suspense fallback={<div className="h-48 w-full bg-slate-100 dark:bg-slate-900 rounded-2xl animate-pulse" />}>
+                    <StoriesTray />
+                </Suspense>
             </div>
 
             <Suspense fallback={<div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>

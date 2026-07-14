@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/authStore";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { compressImage } from "@/lib/utils/image";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CACHE_KEY = "primewear_stories_cache";
@@ -115,6 +116,8 @@ const FASHION_TEMPLATES = [
 // ─── Component ────────────────────────────────────────────────────────────────
 export function StoriesTray() {
   const { isAuthenticated, user } = useAuthStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [groupedStories, setGroupedStories] = useState<GroupedStories[]>([]);
   const [loading, setLoading] = useState(true);
@@ -235,6 +238,16 @@ export function StoriesTray() {
       fetchStories();
     }
   }, [isAuthenticated]);
+
+  // ── Auto-open story creator modal after login redirect ───────────────────
+  useEffect(() => {
+    if (searchParams && searchParams.get("createStory") === "true" && isAuthenticated) {
+      setIsCreateOpen(true);
+      // Clean up query param from URL so it doesn't open again if they refresh
+      const newUrl = window.location.pathname;
+      window.history.replaceState({ ...window.history.state }, "", newUrl);
+    }
+  }, [searchParams, isAuthenticated]);
 
   // ── Online/offline browser events ───────────────────────────────────────
   useEffect(() => {
@@ -494,6 +507,7 @@ export function StoriesTray() {
           onClick={() => {
             if (!isAuthenticated) {
               toast.error("Please login to create a story.");
+              router.push("/login?returnUrl=" + encodeURIComponent("/social?createStory=true"));
               return;
             }
             setIsCreateOpen(true);
