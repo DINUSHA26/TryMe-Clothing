@@ -34,6 +34,55 @@ export function PostCard({ post }: { post: SocialPostType }) {
     const [editModalOpen, setEditModalOpen] = useState(false);
     const isLongText = post.content ? (post.content.length > 200 || post.content.split("\n").length > 4) : false;
     const isOwner = user?.id === post.userId;
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [isFollowLoading, setIsFollowLoading] = useState(false);
+
+    useEffect(() => {
+        if (post.user.vendor) {
+            setIsFollowing(post.user.vendor.isFollowing || false);
+        } else if (post.user.adsSeller) {
+            setIsFollowing(post.user.adsSeller.isFollowing || false);
+        }
+    }, [post]);
+
+    const showFollowLink = (!isAuthenticated || user?.id !== post.userId) && (post.user.vendor || post.user.adsSeller);
+
+    const handleFollowToggle = async () => {
+        if (!isAuthenticated) {
+            toast.error("Please login to follow");
+            const returnUrl = encodeURIComponent(`/social?post=${post.id}`);
+            router.push(`/login?returnUrl=${returnUrl}`);
+            return;
+        }
+
+        if (isFollowLoading) return;
+
+        try {
+            setIsFollowLoading(true);
+            const isVendor = !!post.user.vendor;
+            const slug = post.user.vendor?.slug || post.user.adsSeller?.slug;
+            if (!slug) return;
+
+            const url = isVendor 
+                ? `/api/vendors/${slug}/follow` 
+                : `/api/marketplace/sellers/${slug}/follow`;
+
+            const res = await fetch(url, { method: "POST" });
+            const data = await res.json();
+            
+            if (data.success) {
+                setIsFollowing(data.data.isFollowing);
+                toast.success(data.data.isFollowing ? "Followed successfully!" : "Unfollowed successfully.");
+            } else {
+                toast.error(data.error || "Failed to update follow status");
+            }
+        } catch (error) {
+            console.error("Error toggling follow from post card:", error);
+            toast.error("An error occurred while updating follow status");
+        } finally {
+            setIsFollowLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (user && post.savedBy) {
@@ -270,13 +319,31 @@ export function PostCard({ post }: { post: SocialPostType }) {
         <Card id={`post-${post.id}`} className="rounded-2xl shadow-sm border-2 overflow-hidden">
             <CardHeader className="p-4 flex flex-row items-start space-y-0 gap-3 pb-2">
                 <Avatar className="h-10 w-10 border shadow-sm">
-                    {post.user.vendor?.logo && <AvatarImage src={post.user.vendor.logo} />}
+                    {post.user.vendor?.logo ? (
+                        <AvatarImage src={post.user.vendor.logo} />
+                    ) : (post.user.adsSeller?.contactInfo as any)?.logo ? (
+                        <AvatarImage src={(post.user.adsSeller.contactInfo as any).logo} />
+                    ) : null}
                     <AvatarFallback>{getInitials(post.user.firstName, post.user.lastName, post.user.email)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate">
-                        {post.user.vendor?.businessName || `${post.user.firstName || "User"} ${post.user.lastName || ""}`.trim()}
-                    </p>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-sm font-bold truncate">
+                            {post.user.vendor?.businessName || post.user.adsSeller?.businessName || `${post.user.firstName || "User"} ${post.user.lastName || ""}`.trim()}
+                        </p>
+                        {showFollowLink && (
+                            <>
+                                <span className="text-[10px] text-muted-foreground shrink-0">•</span>
+                                <button
+                                    onClick={handleFollowToggle}
+                                    disabled={isFollowLoading}
+                                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline hover:opacity-90 active:scale-95 transition shrink-0"
+                                >
+                                    {isFollowing ? "Following" : "Follow"}
+                                </button>
+                            </>
+                        )}
+                    </div>
                     <p className="text-[10px] md:text-xs text-muted-foreground">
                         {new Date(post.createdAt).toLocaleDateString(undefined, {
                             month: "short", day: "numeric", hour: "numeric", minute: "2-digit"

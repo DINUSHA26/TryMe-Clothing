@@ -15,8 +15,18 @@ export interface SocialUser {
     lastName: string | null;
     email: string | null;
     vendor: {
+        id: string;
         businessName: string;
         logo: string | null;
+        slug: string;
+        isFollowing?: boolean;
+    } | null;
+    adsSeller?: {
+        id: string;
+        businessName: string;
+        slug: string;
+        contactInfo: any;
+        isFollowing?: boolean;
     } | null;
 }
 

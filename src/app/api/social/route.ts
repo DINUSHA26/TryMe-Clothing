@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
                         lastName: true,
                         email: true,
                         vendor: {
-                            select: { businessName: true, logo: true }
+                            select: { id: true, businessName: true, logo: true, slug: true }
+                        },
+                        adsSeller: {
+                            select: { id: true, businessName: true, slug: true, contactInfo: true }
                         }
                     }
                 },
@@ -38,12 +41,54 @@ export async function GET(request: NextRequest) {
             take: limit,
         });
 
+        // Map follow status if user is logged in
+        let followedVendorIds: string[] = [];
+        let followedAdsSellerIds: string[] = [];
+
+        try {
+            const user = getAuthUser(request);
+            if (user) {
+                const customer = await prisma.customer.findUnique({
+                    where: { userId: user.userId },
+                });
+                if (customer) {
+                    const vendorFollows = await prisma.vendorFollower.findMany({
+                        where: { customerId: customer.id },
+                        select: { vendorId: true },
+                    });
+                    followedVendorIds = vendorFollows.map(f => f.vendorId);
+
+                    const adsSellerFollows = await (prisma as any).adsSellerFollower.findMany({
+                        where: { customerId: customer.id },
+                        select: { adsSellerId: true },
+                    });
+                    followedAdsSellerIds = adsSellerFollows.map((f: any) => f.adsSellerId);
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching followed vendors/sellers in social feed API:", err);
+        }
+
+        const mappedPosts = posts.map(post => {
+            const author = { ...post.user };
+            if (author.vendor) {
+                (author.vendor as any).isFollowing = followedVendorIds.includes(author.vendor.id);
+            }
+            if ((author as any).adsSeller) {
+                ((author as any).adsSeller as any).isFollowing = followedAdsSellerIds.includes((author as any).adsSeller.id);
+            }
+            return {
+                ...post,
+                user: author,
+            };
+        });
+
         const total = await prisma.socialPost.count({ where: { isActive: true } });
 
         return NextResponse.json({
             success: true,
             data: {
-                posts,
+                posts: mappedPosts,
                 pagination: {
                     page,
                     limit,
@@ -99,7 +144,8 @@ export async function POST(request: NextRequest) {
                         firstName: true,
                         lastName: true,
                         email: true,
-                        vendor: { select: { businessName: true, logo: true } }
+                        vendor: { select: { id: true, businessName: true, logo: true, slug: true } },
+                        adsSeller: { select: { id: true, businessName: true, slug: true, contactInfo: true } }
                     }
                 },
                 likes: true,
