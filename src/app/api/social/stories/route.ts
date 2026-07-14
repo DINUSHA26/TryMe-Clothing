@@ -7,152 +7,44 @@ export async function GET(request: NextRequest) {
     const user = getAuthUser(request);
     const now = new Date();
 
-    // ── GUEST PATH: Show stories from top 10 popular vendors ────────────
-    if (!user) {
-      // Find the top 10 vendors ranked by follower count (most popular first)
-      const topVendors = await prisma.vendor.findMany({
-        where: {
-          status: "ACTIVE",
-          isShopOpen: true,
-        },
-        select: {
-          userId: true,
-          businessName: true,
-          logo: true,
-          slug: true,
-          _count: {
-            select: { followers: true },
-          },
-        },
-        orderBy: {
-          followers: {
-            _count: "desc",
-          },
-        },
-        take: 10,
-      });
-
-      const topVendorUserIds = topVendors.map((v) => v.userId);
-
-      // Fetch active (non-expired) stories from those top vendors
-      const publicStories = await prisma.socialStory.findMany({
-        where: {
-          expiresAt: { gt: now },
-          userId: { in: topVendorUserIds },
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              role: true,
-              vendor: {
-                select: {
-                  businessName: true,
-                  logo: true,
-                  slug: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-
-      // Group stories by user
-      const groupedStoriesMap = new Map<string, any>();
-
-      publicStories.forEach((story) => {
-        const storyUserId = story.userId;
-
-        let displayName = "User";
-        let logoUrl = null;
-        let slug = null;
-
-        if (story.user.role === "VENDOR" && story.user.vendor) {
-          displayName = story.user.vendor.businessName;
-          logoUrl = story.user.vendor.logo;
-          slug = story.user.vendor.slug;
-        } else {
-          displayName =
-            [story.user.firstName, story.user.lastName]
-              .filter(Boolean)
-              .join(" ") ||
-            story.user.email?.split("@")[0] ||
-            "User";
-        }
-
-        if (!groupedStoriesMap.has(storyUserId)) {
-          groupedStoriesMap.set(storyUserId, {
-            userId: storyUserId,
-            displayName,
-            logoUrl,
-            slug,
-            isSelf: false,
-            isFollowed: false,
-            stories: [],
-          });
-        }
-
-        groupedStoriesMap.get(storyUserId).stories.push({
-          id: story.id,
-          imageUrl: story.imageUrl,
-          createdAt: story.createdAt.toISOString(),
-        });
-      });
-
-      const groupedStories = Array.from(groupedStoriesMap.values());
-
-      return NextResponse.json({
-        success: true,
-        data: { groupedStories },
-      });
-    }
-
-    // ── AUTHENTICATED PATH: Show followed vendors + own stories + popular vendors ─────────
+    // 1. Fetch followed vendor & adsSeller user IDs if user is authenticated
     let followedUserIds: string[] = [];
-    const customer = await prisma.customer.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (customer) {
-      const follows = await prisma.vendorFollower.findMany({
-        where: { customerId: customer.id },
-        include: {
-          vendor: {
-            select: {
-              userId: true,
+    if (user) {
+      const customer = await prisma.customer.findUnique({
+        where: { userId: user.userId },
+      });
+      if (customer) {
+        // Followed boutique vendors
+        const vendorFollows = await prisma.vendorFollower.findMany({
+          where: { customerId: customer.id },
+          include: {
+            vendor: {
+              select: { userId: true },
             },
           },
-        },
-      });
-      followedUserIds = follows.map((f) => f.vendor.userId);
+        });
+        const vendorUserIds = vendorFollows.map((f) => f.vendor.userId);
+
+        // Followed classified ad sellers
+        const adsSellerFollows = await (prisma as any).adsSellerFollower.findMany({
+          where: { customerId: customer.id },
+          include: {
+            adsSeller: {
+              select: { userId: true },
+            },
+          },
+        });
+        const adsSellerUserIds = adsSellerFollows.map((f: any) => f.adsSeller.userId);
+
+        followedUserIds = Array.from(new Set([...vendorUserIds, ...adsSellerUserIds]));
+      }
     }
 
-    // Fetch top 10 popular vendors to fill the space
-    const topVendors = await prisma.vendor.findMany({
-      where: { status: "ACTIVE", isShopOpen: true },
-      select: { userId: true },
-      orderBy: { followers: { _count: "desc" } },
-      take: 10,
-    });
-    const topVendorUserIds = topVendors.map((v) => v.userId);
-
-    const allRelevantUserIds = Array.from(new Set([...followedUserIds, ...topVendorUserIds]));
-
-    const storyFilter = {
-      expiresAt: { gt: now },
-      OR: [
-        { userId: { in: allRelevantUserIds } },
-        { userId: user.userId },
-      ],
-    };
-
-    // 2. Fetch active stories (expiresAt > now) for followed vendors, popular vendors, and the user's own stories
+    // 2. Fetch ALL active stories (expiresAt > now) in the system
     const activeStories = await prisma.socialStory.findMany({
-      where: storyFilter,
+      where: {
+        expiresAt: { gt: now },
+      },
       include: {
         user: {
           select: {
@@ -163,9 +55,18 @@ export async function GET(request: NextRequest) {
             role: true,
             vendor: {
               select: {
+                id: true,
                 businessName: true,
                 logo: true,
                 slug: true,
+              },
+            },
+            adsSeller: {
+              select: {
+                id: true,
+                businessName: true,
+                slug: true,
+                contactInfo: true,
               },
             },
           },
@@ -174,15 +75,15 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Group stories by user for display in the Stories Tray
+    // 3. Group stories by user for display in the Stories Tray
     const groupedStoriesMap = new Map<string, any>();
 
     activeStories.forEach((story) => {
       const storyUserId = story.userId;
-      const isSelf = storyUserId === user.userId;
+      const isSelf = user ? storyUserId === user.userId : false;
       const isFollowed = followedUserIds.includes(storyUserId);
 
-      // Determine display name and logo
+      // Determine display name, logo and slug
       let displayName = "User";
       let logoUrl = null;
       let slug = null;
@@ -191,8 +92,17 @@ export async function GET(request: NextRequest) {
         displayName = story.user.vendor.businessName;
         logoUrl = story.user.vendor.logo;
         slug = story.user.vendor.slug;
+      } else if (story.user.adsSeller) {
+        displayName = story.user.adsSeller.businessName || "Classified Seller";
+        logoUrl = (story.user.adsSeller.contactInfo as any)?.logo || null;
+        slug = story.user.adsSeller.slug;
       } else {
-        displayName = [story.user.firstName, story.user.lastName].filter(Boolean).join(" ") || story.user.email?.split("@")[0] || "User";
+        displayName =
+          [story.user.firstName, story.user.lastName]
+            .filter(Boolean)
+            .join(" ") ||
+          story.user.email?.split("@")[0] ||
+          "User";
       }
 
       if (!groupedStoriesMap.has(storyUserId)) {
@@ -214,9 +124,9 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    let groupedStories = Array.from(groupedStoriesMap.values());
-    
-    // Sort logic: Own stories first, followed vendors next, then popular vendors
+    const groupedStories = Array.from(groupedStoriesMap.values());
+
+    // 4. Sort logic: Own stories first, followed stores/sellers next, then others
     groupedStories.sort((a, b) => {
       if (a.isSelf) return -1;
       if (b.isSelf) return 1;
