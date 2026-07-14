@@ -308,7 +308,7 @@ function MarketplacePortalPageContent() {
   const selectedSubCategoryData = selectedCategoryData?.subCategories?.find((s: any) => s.slug === currentSubCategory);
 
   return (
-    <div className="space-y-0 min-h-screen bg-gray-50/50 pb-12">
+    <div className="space-y-0 min-h-screen bg-gray-50 dark:bg-slate-950 pb-12 transition-colors">
       {/* TryMe orange header section - Landing View Only */}
       {!hasActiveFilters && (
         <div className="bg-[#FF6600] text-white py-8 px-4 border-b border-orange-700/10">
@@ -352,25 +352,25 @@ function MarketplacePortalPageContent() {
       {hasActiveFilters && (
         <>
           {/* Non-sticky breadcrumbs, title and search box */}
-          <div className="bg-white px-4 pt-5 pb-3">
+          <div className="bg-white dark:bg-slate-900 px-4 pt-5 pb-3 transition-colors">
             <div className="max-w-6xl mx-auto">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
+                  <h1 className="text-xl md:text-2xl font-black text-gray-900 dark:text-slate-100 tracking-tight">
                     {currentSearch 
                       ? `Search results for "${currentSearch}"`
                       : `New and Used ${selectedCategoryData?.name || ""} for Sale in ${currentLocalArea || currentDistrict}`
                     }
                   </h1>
                   {/* Breadcrumbs */}
-                  <div className="flex flex-wrap items-center gap-1 text-[11px] text-gray-400 mt-1 font-medium">
-                    <span className="hover:underline hover:text-gray-900 cursor-pointer" onClick={() => router.push("/marketplace")}>Home</span>
+                  <div className="flex flex-wrap items-center gap-1 text-[11px] text-gray-400 dark:text-slate-400 mt-1 font-medium">
+                    <span className="hover:underline hover:text-gray-900 dark:hover:text-white cursor-pointer" onClick={() => router.push("/marketplace")}>Home</span>
                     <span>&gt;</span>
-                    <span className="hover:underline hover:text-gray-900 cursor-pointer" onClick={() => router.push("/marketplace?category=")}>All ads</span>
+                    <span className="hover:underline hover:text-gray-900 dark:hover:text-white cursor-pointer" onClick={() => router.push("/marketplace?category=")}>All ads</span>
                     {selectedCategoryData && (
                       <>
                         <span>&gt;</span>
-                        <span className="hover:underline hover:text-gray-900 cursor-pointer" onClick={() => updateFilters({ category: selectedCategoryData.slug, subCategory: null, page: 1 })}>
+                        <span className="hover:underline hover:text-gray-900 dark:hover:text-white cursor-pointer" onClick={() => updateFilters({ category: selectedCategoryData.slug, subCategory: null, page: 1 })}>
                           {selectedCategoryData.name}
                         </span>
                       </>
@@ -378,7 +378,7 @@ function MarketplacePortalPageContent() {
                     {currentSubCategory && selectedSubCategoryData && (
                       <>
                         <span>&gt;</span>
-                        <span className="font-semibold text-gray-700">
+                        <span className="font-semibold text-gray-700 dark:text-slate-300">
                           {selectedSubCategoryData.name}
                         </span>
                       </>
@@ -394,7 +394,7 @@ function MarketplacePortalPageContent() {
                       placeholder="What are you looking for?"
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
-                      className="w-full pl-5 pr-14 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-full text-xs focus:outline-none focus:ring-2 focus:ring-[#FF6600] focus:bg-white transition-all"
+                      className="w-full pl-5 pr-14 py-3 text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-full text-xs focus:outline-none focus:ring-2 focus:ring-[#FF6600] focus:bg-white dark:focus:bg-slate-900 transition-all"
                     />
                     <button
                       type="submit"
@@ -410,22 +410,22 @@ function MarketplacePortalPageContent() {
           </div>
 
           {/* Sticky Filter pills row */}
-          <div className="bg-white border-b border-gray-150 py-3 px-4 shadow-sm sticky top-[112px] sm:top-[64px] z-30">
+          <div className="bg-white dark:bg-slate-900 border-b border-gray-150 dark:border-slate-800 py-3 px-4 shadow-sm sticky top-[112px] sm:top-[64px] z-30 transition-colors">
             <div className="max-w-6xl mx-auto relative flex items-center w-full group/filterbar">
               {/* Left scroll button */}
               {showLeftScroll && (
                 <button
                   type="button"
                   onClick={() => scroll("left")}
-                  className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center z-30 hover:bg-gray-50 transition-colors"
+                  className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-md border border-gray-200 dark:border-slate-700 flex items-center justify-center z-30 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                 >
-                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                  <ChevronLeft className="h-4 w-4 text-gray-600 dark:text-slate-300" />
                 </button>
               )}
 
               {/* Left gradient fade */}
               {showLeftScroll && (
-                <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none z-10" />
+                <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white dark:from-slate-900 via-white/80 dark:via-slate-900/80 to-transparent pointer-events-none z-10" />
               )}
 
               {/* Scrollable Container */}
@@ -439,7 +439,7 @@ function MarketplacePortalPageContent() {
                 <button
                   type="button"
                   onClick={() => setIsRefineOpen(true)}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#FF6600]/30 bg-[#FF6600]/5 text-xs text-[#FF6600] font-bold hover:bg-[#FF6600]/10 transition-colors"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#FF6600]/30 dark:border-[#FF6600]/50 bg-[#FF6600]/5 dark:bg-[#FF6600]/10 text-xs text-[#FF6600] font-bold hover:bg-[#FF6600]/10 dark:hover:bg-[#FF6600]/20 transition-colors"
                 >
                   <ListFilter className="h-3.5 w-3.5" />
                   <span>Refine</span>
@@ -449,7 +449,7 @@ function MarketplacePortalPageContent() {
                 <button
                   type="button"
                   onClick={() => setIsLocationOpen(true)}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-xs text-gray-700 font-semibold transition-all"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 dark:border-slate-850 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-xs text-gray-700 dark:text-slate-300 font-semibold transition-all"
                 >
                   <span>{currentLocalArea || currentDistrict}</span>
                   <ChevronDown className="h-3 w-3 text-gray-400" />
@@ -457,7 +457,7 @@ function MarketplacePortalPageContent() {
 
                 {/* Category filter pill */}
                 {selectedCategoryData ? (
-                  <div className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#FF6600]/30 bg-[#FF6600]/5 text-xs text-[#FF6600] font-bold">
+                  <div className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#FF6600]/30 dark:border-[#FF6600]/50 bg-[#FF6600]/5 dark:bg-[#FF6600]/10 text-xs text-[#FF6600] font-bold">
                     <span 
                       onClick={() => setIsCategoryOpen(true)}
                       className="cursor-pointer hover:underline"
@@ -476,7 +476,7 @@ function MarketplacePortalPageContent() {
                   <button
                     type="button"
                     onClick={() => setIsCategoryOpen(true)}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-xs text-gray-700 font-semibold transition-all"
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 dark:border-slate-850 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-xs text-gray-700 dark:text-slate-300 font-semibold transition-all"
                   >
                     <span>Category</span>
                     <ChevronDown className="h-3 w-3 text-gray-400" />
@@ -489,8 +489,8 @@ function MarketplacePortalPageContent() {
                     onClick={() => setOpenDropdown(openDropdown === "price" ? null : "price")}
                     className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-semibold transition-all
                       ${(currentMinPrice || currentMaxPrice) 
-                        ? "border-[#FF6600] bg-[#FF6600]/5 text-[#FF6600] font-bold" 
-                        : "border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
+                        ? "border-[#FF6600] bg-[#FF6600]/5 dark:bg-[#FF6600]/10 text-[#FF6600] font-bold" 
+                        : "border-gray-200 dark:border-slate-850 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300"
                       }`}
                   >
                     <span>
@@ -517,25 +517,25 @@ function MarketplacePortalPageContent() {
                   {openDropdown === "price" && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
-                      <div className="absolute left-0 mt-2 w-56 bg-white border border-gray-200 rounded-2xl shadow-lg z-20 p-4 space-y-3">
+                      <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-lg z-20 p-4 space-y-3">
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase">Min Price (Rs.)</label>
+                          <label className="text-[10px] font-bold text-gray-400 dark:text-slate-400 uppercase">Min Price (Rs.)</label>
                           <input
                             type="number"
                             placeholder="Min"
                             value={tempMinPrice}
                             onChange={(e) => setTempMinPrice(e.target.value)}
-                            className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#FF6600]"
+                            className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#FF6600]"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase">Max Price (Rs.)</label>
+                          <label className="text-[10px] font-bold text-gray-400 dark:text-slate-400 uppercase">Max Price (Rs.)</label>
                           <input
                             type="number"
                             placeholder="Max"
                             value={tempMaxPrice}
                             onChange={(e) => setTempMaxPrice(e.target.value)}
-                            className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#FF6600]"
+                            className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#FF6600]"
                           />
                         </div>
                         <Button
@@ -579,8 +579,8 @@ function MarketplacePortalPageContent() {
                         onClick={() => setOpenDropdown(openDropdown === field.fieldKey ? null : field.fieldKey)}
                         className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-semibold transition-all
                           ${selectedVal
-                            ? "border-[#FF6600] bg-[#FF6600]/5 text-[#FF6600] font-bold"
-                            : "border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
+                            ? "border-[#FF6600] bg-[#FF6600]/5 dark:bg-[#FF6600]/10 text-[#FF6600] font-bold"
+                            : "border-gray-200 dark:border-slate-850 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300"
                           }`}
                       >
                         <span>
@@ -604,15 +604,15 @@ function MarketplacePortalPageContent() {
                       {openDropdown === field.fieldKey && (
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
-                          <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-2xl shadow-lg z-20 py-2 max-h-60 overflow-y-auto">
+                          <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-lg z-20 py-2 max-h-60 overflow-y-auto">
                             {options.map((opt) => (
                               <button
                                 key={opt}
                                 onClick={() => {
-                                  updateFilters({ [field.fieldKey]: opt, page: 1 });
-                                  setOpenDropdown(null);
+                                    updateFilters({ [field.fieldKey]: opt, page: 1 });
+                                    setOpenDropdown(null);
                                 }}
-                                className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium"
+                                className="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-350 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white font-medium"
                               >
                                 {opt}
                               </button>
@@ -640,7 +640,7 @@ function MarketplacePortalPageContent() {
 
               {/* Right gradient fade */}
               {showRightScroll && (
-                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white via-white/80 to-transparent pointer-events-none z-10" />
+                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-slate-900 via-white/80 dark:via-slate-900/80 to-transparent pointer-events-none z-10" />
               )}
 
               {/* Right scroll button */}
@@ -648,9 +648,9 @@ function MarketplacePortalPageContent() {
                 <button
                   type="button"
                   onClick={() => scroll("right")}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center z-30 hover:bg-gray-50 transition-colors"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-md border border-gray-200 dark:border-slate-700 flex items-center justify-center z-30 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                 >
-                  <ChevronRight className="h-4 w-4 text-gray-600" />
+                  <ChevronRight className="h-4 w-4 text-gray-600 dark:text-slate-300" />
                 </button>
               )}
             </div>
@@ -667,7 +667,7 @@ function MarketplacePortalPageContent() {
 
             {/* Browse items by category */}
             <div className="space-y-4">
-              <h2 className="text-base font-black text-gray-900 tracking-tight">Browse items by category</h2>
+              <h2 className="text-base font-black text-gray-900 dark:text-slate-100 tracking-tight">Browse items by category</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {categories.map((cat) => {
                   const adCount = getCategoryCount(cat);
@@ -675,9 +675,9 @@ function MarketplacePortalPageContent() {
                     <button
                       key={cat.id}
                       onClick={() => updateFilters({ category: cat.slug, page: 1 })}
-                      className="flex flex-col items-center justify-center min-h-[160px] p-5 bg-white border border-gray-100 rounded-[1.5rem] hover:border-orange-100 hover:bg-orange-50/10 text-center transition-all hover:shadow-md hover:-translate-y-1 duration-300"
+                      className="flex flex-col items-center justify-center min-h-[160px] p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-[1.5rem] hover:border-orange-100 dark:hover:border-orange-900/30 hover:bg-orange-50/10 dark:hover:bg-orange-950/10 text-center transition-all hover:shadow-md hover:-translate-y-1 duration-300"
                     >
-                      <span className="text-xl w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                      <span className="text-xl w-16 h-16 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
                         {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
                           <img src={cat.icon} alt={cat.name} className="w-12 h-12 object-contain" />
                         ) : (
@@ -685,8 +685,8 @@ function MarketplacePortalPageContent() {
                         )}
                       </span>
                       <div className="min-w-0 mt-3 flex flex-col items-center">
-                        <h3 className="text-xs sm:text-sm font-bold text-gray-900 leading-tight break-words text-center">{cat.name}</h3>
-                        <p className="text-[10px] text-gray-400 font-semibold mt-1 text-center">{adCount.toLocaleString()} ads</p>
+                        <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 leading-tight break-words text-center">{cat.name}</h3>
+                        <p className="text-[10px] text-gray-400 dark:text-slate-400 font-semibold mt-1 text-center">{adCount.toLocaleString()} ads</p>
                       </div>
                     </button>
                   );
@@ -697,7 +697,7 @@ function MarketplacePortalPageContent() {
             {/* Featured Ads Carousel */}
             {featuredAds.length > 0 && (
               <div className="space-y-4">
-                <h2 className="text-base font-black text-gray-900 flex items-center gap-1.5">
+                <h2 className="text-base font-black text-gray-900 dark:text-slate-100 flex items-center gap-1.5">
                   <Star className="h-4.5 w-4.5 text-amber-500 fill-amber-500" />
                   <span>Featured Advertisements</span>
                 </h2>
@@ -711,14 +711,14 @@ function MarketplacePortalPageContent() {
 
             {/* Latest Ads Grid */}
             <div className="space-y-4">
-              <h2 className="text-base font-black text-gray-900">Latest Classified Ads</h2>
+              <h2 className="text-base font-black text-gray-900 dark:text-slate-100">Latest Classified Ads</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {isLoading ? (
                   <div className="col-span-2 py-12 text-center text-gray-400">
                     <LoaderSpinner />
                   </div>
                 ) : ads.length === 0 ? (
-                  <div className="col-span-2 py-12 text-center text-gray-400 bg-white border rounded-2xl">
+                  <div className="col-span-2 py-12 text-center text-gray-400 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl">
                     No classified ads available.
                   </div>
                 ) : (
@@ -733,11 +733,11 @@ function MarketplacePortalPageContent() {
             {/* Left Filter pane: Subcategory list */}
             <div className="hidden lg:block space-y-6 lg:col-span-1">
               <CardBorderWrapper>
-                <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">All Categories</span>
+                <div className="p-4 bg-gray-50 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-900 dark:text-slate-100 uppercase tracking-wider">All Categories</span>
                   <button onClick={() => updateFilters({ category: "", subCategory: null, page: 1 })} className="text-[10px] text-red-500 font-bold">Clear</button>
                 </div>
-                <div className="p-3 space-y-1.5">
+                <div className="p-3 space-y-1.5 bg-white dark:bg-slate-900 transition-colors">
                   {categories.map((cat) => {
                     const isCatSelected = currentCategory === cat.slug;
                     const catCount = getCategoryCount(cat);
@@ -747,7 +747,7 @@ function MarketplacePortalPageContent() {
                         <button
                           onClick={() => updateFilters({ category: cat.slug, subCategory: null, page: 1 })}
                           className={`w-full flex items-center justify-between text-left text-xs px-2 py-1.5 rounded-lg ${
-                            isCatSelected ? "font-bold text-[#FF6600] bg-orange-50/20" : "text-gray-700 hover:bg-gray-50"
+                            isCatSelected ? "font-bold text-[#FF6600] bg-orange-50/20 dark:bg-orange-950/20" : "text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/50"
                           }`}
                         >
                           <span className="flex items-center gap-1.5 min-w-0">
@@ -758,12 +758,12 @@ function MarketplacePortalPageContent() {
                             )}
                             <span className="truncate">{cat.name}</span>
                           </span>
-                          <span className="text-[9px] text-gray-400 font-normal bg-gray-100 px-1.5 py-0.5 rounded">{catCount}</span>
+                          <span className="text-[9px] text-gray-400 dark:text-slate-400 font-normal bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{catCount}</span>
                         </button>
 
                         {/* List subcategories if category is active */}
                         {isCatSelected && (
-                          <div className="pl-4 space-y-1 border-l border-orange-100 ml-3.5 pt-0.5">
+                          <div className="pl-4 space-y-1 border-l border-orange-100 dark:border-orange-900 ml-3.5 pt-0.5">
                             {cat.subCategories.map((sub: any) => {
                               const isSubSelected = currentSubCategory === sub.slug;
                               return (
@@ -771,11 +771,11 @@ function MarketplacePortalPageContent() {
                                   key={sub.id}
                                   onClick={() => updateFilters({ subCategory: sub.slug, page: 1 })}
                                   className={`w-full flex items-center justify-between text-[11px] px-2 py-1 rounded-lg ${
-                                    isSubSelected ? "font-bold text-[#FF6600] bg-orange-50/10" : "text-gray-500 hover:text-gray-900"
+                                    isSubSelected ? "font-bold text-[#FF6600] bg-orange-50/10 dark:bg-orange-950/10" : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
                                   }`}
                                 >
                                   <span>{sub.name}</span>
-                                  <span className="text-[8px] text-gray-400 font-normal">({sub._count?.ads || 0})</span>
+                                  <span className="text-[8px] text-gray-400 dark:text-slate-400 font-normal">({sub._count?.ads || 0})</span>
                                 </button>
                               );
                             })}
@@ -791,18 +791,18 @@ function MarketplacePortalPageContent() {
             {/* Center listing pane */}
             <div className="lg:col-span-2 space-y-4">
               {/* Refinement info row */}
-              <div className="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-3">
-                <span className="text-xs text-gray-500 font-bold">
+              <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-3 transition-colors">
+                <span className="text-xs text-gray-500 dark:text-slate-450 font-bold">
                   Showing {ads.length > 0 ? `${(pagination.page - 1) * pagination.pageSize + 1}-${Math.min(pagination.page * pagination.pageSize, pagination.totalCount)}` : "0"} of {pagination.totalCount} ads
                 </span>
 
                 {/* Sort controls */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400 font-semibold whitespace-nowrap">Sort by:</span>
+                  <span className="text-xs text-gray-400 dark:text-slate-400 font-semibold whitespace-nowrap">Sort by:</span>
                   <select
                     value={currentSort}
                     onChange={(e) => updateFilters({ sort: e.target.value, page: 1 })}
-                    className="text-xs font-semibold bg-gray-50 border border-gray-150 rounded-lg p-2 focus:outline-none"
+                    className="text-xs font-semibold bg-gray-50 dark:bg-slate-850 border border-gray-150 dark:border-slate-700 rounded-lg p-2 focus:outline-none text-gray-900 dark:text-slate-100"
                   >
                     <option value="newest">Newest first</option>
                     <option value="price-asc">Price: Low to High</option>
@@ -818,7 +818,7 @@ function MarketplacePortalPageContent() {
                   <LoaderSpinner />
                 </div>
               ) : ads.length === 0 ? (
-                <div className="py-16 text-center text-gray-400 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                <div className="py-16 text-center text-gray-400 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm">
                   No classified ads found matching your refinement filters.
                 </div>
               ) : (
@@ -829,8 +829,8 @@ function MarketplacePortalPageContent() {
 
                   {/* Pagination */}
                   {pagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <p className="text-xs text-gray-400">
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-slate-800">
+                      <p className="text-xs text-gray-400 dark:text-slate-400">
                         Page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} ads matching)
                       </p>
                       <div className="flex gap-1.5">
@@ -839,7 +839,7 @@ function MarketplacePortalPageContent() {
                           size="sm"
                           disabled={pagination.page === 1}
                           onClick={() => updateFilters({ page: pagination.page - 1 })}
-                          className="rounded-xl text-xs bg-white text-gray-900 border-gray-200"
+                          className="rounded-xl text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 border-gray-200 dark:border-slate-750 hover:bg-gray-50 dark:hover:bg-slate-800"
                         >
                           Prev
                         </Button>
@@ -848,7 +848,7 @@ function MarketplacePortalPageContent() {
                           size="sm"
                           disabled={pagination.page === pagination.totalPages}
                           onClick={() => updateFilters({ page: pagination.page + 1 })}
-                          className="rounded-xl text-xs bg-white text-gray-900 border-gray-200"
+                          className="rounded-xl text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 border-gray-200 dark:border-slate-750 hover:bg-gray-50 dark:hover:bg-slate-800"
                         >
                           Next
                         </Button>
@@ -944,7 +944,7 @@ export default function MarketplacePortalPage() {
 
 function CardBorderWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-colors">
       {children}
     </div>
   );
