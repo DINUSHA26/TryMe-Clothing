@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   ChevronRight,
   User,
+  Store,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import Link from "next/link";
@@ -35,6 +36,53 @@ export default function PublicAdDetailPage() {
   const [showPhone, setShowPhone] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+
+  useEffect(() => {
+    if (ad?.seller) {
+      setIsFollowing(ad.seller.isFollowing || false);
+      setFollowerCount(ad.seller.followerCount || 0);
+    }
+  }, [ad]);
+
+  const handleFollowToggle = async () => {
+    if (isFollowLoading) return;
+    try {
+      setIsFollowLoading(true);
+      const response = await fetch(`/api/marketplace/sellers/${ad.seller.slug}/follow`, {
+        method: "POST",
+      });
+      const result = await response.json();
+      if (result.success) {
+        setIsFollowing(result.data.isFollowing);
+        setFollowerCount(result.data.followerCount);
+        toast({
+          title: result.data.isFollowing ? "Followed!" : "Unfollowed",
+          description: result.data.isFollowing 
+            ? `You are now following ${ad.seller.businessName || "this seller"}.`
+            : `You unfollowed ${ad.seller.businessName || "this seller"}.`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to follow this seller.",
+        });
+      }
+    } catch (err) {
+      console.error("Error toggling follow:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update follow status.",
+      });
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   const minSwipeDistance = 50;
 
@@ -316,17 +364,49 @@ ${shortDesc}`;
                 )}
               </div>
               <div>
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Verified Ad Publisher</span>
                 <h4 className="font-bold text-gray-900 leading-snug">
                   {ad.seller?.businessName || `${ad.seller?.user?.firstName || "Verified"} Store`}
                 </h4>
-                <p className="text-[10px] text-gray-400 font-semibold uppercase mt-0.5 flex items-center gap-0.5">
-                  <ShieldCheck className="h-3 w-3 text-blue-500" />
-                  <span>Verified Ad Publisher</span>
-                </p>
               </div>
             </div>
 
-            <div className="space-y-3 pt-2">
+            {/* Followers count display */}
+            <div className="flex items-center gap-2 text-xs text-gray-500 font-bold">
+              <span>{followerCount} Followers</span>
+              <span className="text-gray-300">|</span>
+              <span>{ad.seller?.allAdsCount || 0} Ads</span>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-2 pt-1">
+              <Button
+                onClick={handleFollowToggle}
+                disabled={isFollowLoading}
+                className={`flex-1 rounded-xl py-5 font-bold flex items-center justify-center gap-2 border transition-all ${
+                  isFollowing
+                    ? "bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200"
+                    : "bg-slate-950 hover:bg-slate-900 text-white border-transparent"
+                }`}
+              >
+                <Store className="h-4 w-4" />
+                <span>{isFollowing ? "Following" : "Follow"}</span>
+              </Button>
+
+              {ad.seller?.slug && (
+                <Button
+                  variant="outline"
+                  asChild
+                  className="flex-1 border-gray-200 hover:bg-orange-50 hover:text-[#FF6600] hover:border-orange-200 text-gray-700 rounded-xl py-5 font-bold flex items-center justify-center gap-2 bg-white"
+                >
+                  <Link href={`/marketplace/sellers/${ad.seller.slug}`}>
+                    Shop All Items ({ad.seller?.allAdsCount || 0})
+                  </Link>
+                </Button>
+              )}
+            </div>
+
+            <div className="space-y-3 pt-2 border-t border-gray-50">
               {/* Phone reveal button */}
               {showPhone ? (
                 <div className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-50 border border-orange-100 text-[#FF6600] rounded-xl font-bold text-base shadow-sm">

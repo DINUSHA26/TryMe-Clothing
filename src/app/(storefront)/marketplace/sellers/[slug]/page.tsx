@@ -20,6 +20,7 @@ import {
   ChevronRight,
   FileText,
   Image as ImageIcon,
+  User,
 } from "lucide-react";
 import { formatDistance, format } from "date-fns";
 import {
@@ -39,6 +40,53 @@ export default function PublicSellerStorefrontPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"ads" | "about" | "contact" | "services">("ads");
   const [selectedServicePage, setSelectedServicePage] = useState<any>(null);
+
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+
+  useEffect(() => {
+    if (data?.seller) {
+      setIsFollowing(data.seller.isFollowing || false);
+      setFollowerCount(data.seller.followerCount || 0);
+    }
+  }, [data]);
+
+  const handleFollowToggle = async () => {
+    if (isFollowLoading) return;
+    try {
+      setIsFollowLoading(true);
+      const response = await fetch(`/api/marketplace/sellers/${data.seller.slug}/follow`, {
+        method: "POST",
+      });
+      const result = await response.json();
+      if (result.success) {
+        setIsFollowing(result.data.isFollowing);
+        setFollowerCount(result.data.followerCount);
+        toast({
+          title: result.data.isFollowing ? "Followed!" : "Unfollowed",
+          description: result.data.isFollowing 
+            ? `You are now following ${data.seller.businessName || "this seller"}.`
+            : `You unfollowed ${data.seller.businessName || "this seller"}.`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to follow this seller.",
+        });
+      }
+    } catch (err) {
+      console.error("Error toggling follow:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update follow status.",
+      });
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   const fetchStorefrontData = async () => {
     setIsLoading(true);
@@ -145,14 +193,32 @@ export default function PublicSellerStorefrontPage() {
                   <Calendar className="h-3.5 w-3.5" />
                   Member since {format(new Date(seller.createdAt), "yyyy")}
                 </span>
+                <span className="flex items-center gap-1">
+                  <User className="h-3.5 w-3.5" />
+                  {followerCount} Followers
+                </span>
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild className="rounded-xl font-bold border-gray-200 hover:bg-orange-50 hover:text-[#FF6600]">
-            <a href={`https://wa.me/${formatWhatsAppNumber(contactInfo.whatsapp || contactInfo.phone || seller.phone)}`} target="_blank" rel="noreferrer">
-              Contact Business
-            </a>
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              onClick={handleFollowToggle}
+              disabled={isFollowLoading}
+              className={`rounded-xl font-bold px-4 py-2 border transition-all ${
+                isFollowing
+                  ? "bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200"
+                  : "bg-slate-950 hover:bg-slate-900 text-white border-transparent"
+              }`}
+            >
+              <Store className="h-4 w-4 mr-1.5" />
+              <span>{isFollowing ? "Following" : "Follow"}</span>
+            </Button>
+            <Button variant="outline" size="sm" asChild className="rounded-xl font-bold border-gray-200 hover:bg-orange-50 hover:text-[#FF6600] bg-white px-4 py-2">
+              <a href={`https://wa.me/${formatWhatsAppNumber(contactInfo.whatsapp || contactInfo.phone || seller.phone)}`} target="_blank" rel="noreferrer">
+                Contact Business
+              </a>
+            </Button>
+          </div>
         </div>
 
         {/* Tabs Bar */}

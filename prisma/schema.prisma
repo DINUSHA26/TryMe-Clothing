@@ -222,6 +222,7 @@ model Customer {
   couponUsages      CouponUsage[]
   reviews           ProductReview[]
   followedVendors   VendorFollower[]
+  followedAdsSellers AdsSellerFollower[]
 }
 
 model ShippingAddress {
@@ -820,6 +821,21 @@ model VendorFollower {
   @@index([customerId])
 }
 
+// ==================== ADS SELLER FOLLOWER MODEL ====================
+
+model AdsSellerFollower {
+  id          String    @id @default(cuid())
+  adsSellerId String
+  adsSeller   AdsSeller @relation(fields: [adsSellerId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([adsSellerId, customerId])
+  @@index([adsSellerId])
+  @@index([customerId])
+}
+
 model SocialStory {
   id        String   @id @default(cuid())
   userId    String
@@ -915,6 +931,7 @@ model AdsSeller {
   servicePages    AdsSellerPage[]
   ads             ClassifiedAd[]
   subscriptions   AdsSubscription[]
+  followers       AdsSellerFollower[]
 }
 
 // Mini-website custom service pages

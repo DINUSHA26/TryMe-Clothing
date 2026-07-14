@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth-helpers";
 
 export async function GET(
   request: NextRequest,
@@ -47,10 +48,44 @@ export async function GET(
       },
     });
 
+    // Get follower counts and status
+    let isFollowing = false;
+    let followerCount = 0;
+
+    try {
+      followerCount = await (prisma as any).adsSellerFollower.count({
+        where: { adsSellerId: seller.id },
+      });
+
+      const user = getAuthUser(request);
+      if (user) {
+        const customer = await prisma.customer.findUnique({
+          where: { userId: user.userId },
+        });
+        if (customer) {
+          const follow = await (prisma as any).adsSellerFollower.findUnique({
+            where: {
+              adsSellerId_customerId: {
+                adsSellerId: seller.id,
+                customerId: customer.id,
+              },
+            },
+          });
+          isFollowing = !!follow;
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching seller follower stats:", err);
+    }
+
     return NextResponse.json({
       success: true,
       data: {
-        seller,
+        seller: {
+          ...seller,
+          followerCount,
+          isFollowing,
+        },
         servicePages: seller.servicePages,
         ads,
       },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth-helpers";
 
 export async function GET(
   request: NextRequest,
@@ -57,9 +58,52 @@ export async function GET(
       console.error("Failed to increment ad page views:", err);
     }
 
+    // Get seller stats (all ads count, follower count, and check follow status)
+    let isFollowing = false;
+    let followerCount = 0;
+    let allAdsCount = 0;
+
+    try {
+      allAdsCount = await prisma.classifiedAd.count({
+        where: { sellerId: ad.sellerId, status: "ACTIVE" },
+      });
+
+      followerCount = await (prisma as any).adsSellerFollower.count({
+        where: { adsSellerId: ad.sellerId },
+      });
+
+      const user = getAuthUser(request);
+      if (user) {
+        const customer = await prisma.customer.findUnique({
+          where: { userId: user.userId },
+        });
+        if (customer) {
+          const follow = await (prisma as any).adsSellerFollower.findUnique({
+            where: {
+              adsSellerId_customerId: {
+                adsSellerId: ad.sellerId,
+                customerId: customer.id,
+              },
+            },
+          });
+          isFollowing = !!follow;
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching seller follow/ads stats:", err);
+    }
+
     return NextResponse.json({
       success: true,
-      data: ad,
+      data: {
+        ...ad,
+        seller: {
+          ...ad.seller,
+          allAdsCount,
+          followerCount,
+          isFollowing,
+        },
+      },
     });
   } catch (error) {
     console.error("Error fetching classified ad details:", error);

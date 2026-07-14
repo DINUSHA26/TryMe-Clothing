@@ -3,7 +3,8 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Store, ChevronRight, Loader2, ArrowRight, Bookmark } from "lucide-react";
+import { Store, ChevronRight, Loader2, ArrowRight, Bookmark, User } from "lucide-react";
+import { AdCard } from "@/components/ads/AdCard";
 import { useAuthStore } from "@/stores/authStore";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,6 +46,10 @@ function FollowedStoresContent() {
   const [savedPosts, setSavedPosts] = useState<SocialPostType[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [storeSubTab, setStoreSubTab] = useState<"boutiques" | "sellers">("boutiques");
+  const [followedSellers, setFollowedSellers] = useState<any[]>([]);
+  const [adsUpdates, setAdsUpdates] = useState<any[]>([]);
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast.error("Please login to view followed stores.");
@@ -72,6 +77,14 @@ function FollowedStoresContent() {
         const savedData = await savedRes.json();
         if (savedData.success) {
           setSavedPosts(savedData.data.posts || []);
+        }
+
+        // Fetch followed ads sellers
+        const adsRes = await fetch("/api/marketplace/sellers/followed");
+        const adsData = await adsRes.json();
+        if (adsData.success) {
+          setFollowedSellers(adsData.data.followedSellers || []);
+          setAdsUpdates(adsData.data.adsUpdates || []);
         }
       } catch (error) {
         console.error("Error loading followed stores data:", error);
@@ -190,129 +203,230 @@ function FollowedStoresContent() {
 
       {activeTab === "stores" ? (
         <>
-          {/* Following Section */}
-          <div className="mb-12">
-            <h2 className="text-xl font-bold uppercase tracking-tight border-b pb-3 mb-6">
-              Following
-            </h2>
-            {followedVendors.length === 0 ? (
-              <div className="bg-muted/30 border border-dashed rounded-2xl p-8 text-center">
-                <Store className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="font-semibold text-slate-700 dark:text-slate-300">
-                  You are not following any stores yet.
-                </p>
-                <p className="text-xs text-muted-foreground mt-1 mb-4">
-                  Explore custom boutiques and follow their shops to get instant updates!
-                </p>
-                <Link
-                  href="/products"
-                  className="inline-flex items-center gap-1.5 bg-[#FF6600] hover:bg-[#E65C00] text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full transition-all"
-                >
-                  Browse Products <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-6 sm:gap-8">
-                {followedVendors.map((vendor) => (
-                  <Link
-                    key={vendor.id}
-                    href={`/vendors/${vendor.slug}`}
-                    className="group flex flex-col items-center text-center space-y-2 max-w-[100px]"
-                  >
-                    {/* Logo Ring */}
-                    <div className="h-20 w-20 rounded-full border-2 border-slate-100 group-hover:border-primary transition-all duration-300 overflow-hidden shadow-sm relative flex items-center justify-center bg-white dark:bg-slate-900 group-hover:scale-105">
-                      {vendor.logo ? (
-                        <img
-                          src={vendor.logo}
-                          alt={vendor.businessName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Store className="h-8 w-8 text-muted-foreground/30 group-hover:text-primary transition-colors" />
-                      )}
-                    </div>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors truncate w-full px-1">
-                      {vendor.businessName}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
+          {/* Sub tabs for Boutiques vs Classified Sellers */}
+          <div className="flex gap-4 mb-6 border-b pb-1 border-gray-100">
+            <button
+              onClick={() => setStoreSubTab("boutiques")}
+              className={`pb-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                storeSubTab === "boutiques"
+                  ? "border-[#FF6600] text-[#FF6600] font-black"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Boutique Stores ({followedVendors.length})
+            </button>
+            <button
+              onClick={() => setStoreSubTab("sellers")}
+              className={`pb-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                storeSubTab === "sellers"
+                  ? "border-[#FF6600] text-[#FF6600] font-black"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Classified Sellers ({followedSellers.length})
+            </button>
           </div>
 
-          {/* Store Updates Section */}
-          <div>
-            <h2 className="text-xl font-bold uppercase tracking-tight border-b pb-3 mb-6">
-              Store updates
-            </h2>
-            {storeUpdates.length === 0 ? (
-              <div className="text-center py-10 text-muted-foreground text-sm font-medium italic">
-                No updates from your followed stores yet.
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {storeUpdates.map((update) => (
-                  <div key={update.id} className="space-y-4">
-                    {/* Header: Logo + Text */}
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full overflow-hidden border bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm">
-                        {update.vendor.logo ? (
-                          <img
-                            src={update.vendor.logo}
-                            alt={update.vendor.businessName}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Store className="h-5 w-5 text-muted-foreground/30" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">
-                          <Link
-                            href={`/vendors/${update.vendor.slug}`}
-                            className="font-bold hover:underline"
-                          >
-                            {update.vendor.businessName}
-                          </Link>{" "}
-                          has provided a <span className="font-bold text-primary">new item</span>.
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatRelativeTime(update.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Product Card Component */}
-                    <Card className="overflow-hidden hover:border-primary transition-all duration-300 max-w-md shadow-sm">
-                      <Link href={`/products/${update.productSlug}`} className="flex flex-col">
-                        <div className="aspect-[4/3] w-full bg-slate-100 dark:bg-slate-900 relative overflow-hidden">
-                          {update.productImage ? (
+          {storeSubTab === "boutiques" ? (
+            <>
+              {/* Following Section */}
+              <div className="mb-12">
+                <h2 className="text-xl font-bold uppercase tracking-tight border-b pb-3 mb-6">
+                  Following
+                </h2>
+                {followedVendors.length === 0 ? (
+                  <div className="bg-muted/30 border border-dashed rounded-2xl p-8 text-center">
+                    <Store className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="font-semibold text-slate-700 dark:text-slate-300">
+                      You are not following any stores yet.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 mb-4">
+                      Explore custom boutiques and follow their shops to get instant updates!
+                    </p>
+                    <Link
+                      href="/products"
+                      className="inline-flex items-center gap-1.5 bg-[#FF6600] hover:bg-[#E65C00] text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full transition-all"
+                    >
+                      Browse Products <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-6 sm:gap-8">
+                    {followedVendors.map((vendor) => (
+                      <Link
+                        key={vendor.id}
+                        href={`/vendors/${vendor.slug}`}
+                        className="group flex flex-col items-center text-center space-y-2 max-w-[100px]"
+                      >
+                        {/* Logo Ring */}
+                        <div className="h-20 w-20 rounded-full border-2 border-slate-100 group-hover:border-primary transition-all duration-300 overflow-hidden shadow-sm relative flex items-center justify-center bg-white dark:bg-slate-900 group-hover:scale-105">
+                          {vendor.logo ? (
                             <img
-                              src={update.productImage}
-                              alt={update.productName}
-                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                              src={vendor.logo}
+                              alt={vendor.businessName}
+                              className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Store className="h-12 w-12 text-muted-foreground/20" />
-                            </div>
+                            <Store className="h-8 w-8 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                           )}
                         </div>
-                        <div className="p-4 space-y-1">
-                          <h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-primary">
-                            {update.productName}
-                          </h3>
-                          <p className="text-sm font-black text-primary">
-                            Rs. {update.price.toLocaleString("en-LK")}
-                          </p>
-                        </div>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors truncate w-full px-1">
+                          {vendor.businessName}
+                        </span>
                       </Link>
-                    </Card>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
+
+              {/* Store Updates Section */}
+              <div>
+                <h2 className="text-xl font-bold uppercase tracking-tight border-b pb-3 mb-6">
+                  Store updates
+                </h2>
+                {storeUpdates.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground text-sm font-medium italic">
+                    No updates from your followed stores yet.
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {storeUpdates.map((update) => (
+                      <div key={update.id} className="space-y-4">
+                        {/* Header: Logo + Text */}
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full overflow-hidden border bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm">
+                            {update.vendor.logo ? (
+                              <img
+                                src={update.vendor.logo}
+                                alt={update.vendor.businessName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Store className="h-5 w-5 text-muted-foreground/30" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              <Link
+                                href={`/vendors/${update.vendor.slug}`}
+                                className="font-bold hover:underline"
+                              >
+                                {update.vendor.businessName}
+                              </Link>{" "}
+                              has provided a <span className="font-bold text-primary">new item</span>.
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatRelativeTime(update.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Product Card Component */}
+                        <Card className="overflow-hidden hover:border-primary transition-all duration-300 max-w-md shadow-sm">
+                          <Link href={`/products/${update.productSlug}`} className="flex flex-col">
+                            <div className="aspect-[4/3] w-full bg-slate-100 dark:bg-slate-900 relative overflow-hidden">
+                              {update.productImage ? (
+                                <img
+                                  src={update.productImage}
+                                  alt={update.productName}
+                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Store className="h-12 w-12 text-muted-foreground/20" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-4 space-y-1">
+                              <h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-primary">
+                                {update.productName}
+                              </h3>
+                              <p className="text-sm font-black text-primary">
+                                Rs. {update.price.toLocaleString("en-LK")}
+                              </p>
+                            </div>
+                          </Link>
+                        </Card>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Followed Ads Sellers Section */}
+              <div className="mb-12">
+                <h2 className="text-xl font-bold uppercase tracking-tight border-b pb-3 mb-6">
+                  Following
+                </h2>
+                {followedSellers.length === 0 ? (
+                  <div className="bg-muted/30 border border-dashed rounded-2xl p-8 text-center">
+                    <Store className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="font-semibold text-slate-700 dark:text-slate-300">
+                      You are not following any classified sellers yet.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 mb-4">
+                      Explore marketplace ads and follow publishers to get instant updates!
+                    </p>
+                    <Link
+                      href="/marketplace"
+                      className="inline-flex items-center gap-1.5 bg-[#FF6600] hover:bg-[#E65C00] text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full transition-all"
+                    >
+                      Browse Marketplace <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-6 sm:gap-8">
+                    {followedSellers.map((seller) => {
+                      const logo = (seller.contactInfo as any)?.logo || null;
+                      return (
+                        <Link
+                          key={seller.id}
+                          href={`/marketplace/sellers/${seller.slug}`}
+                          className="group flex flex-col items-center text-center space-y-2 max-w-[100px]"
+                        >
+                          {/* Logo Ring */}
+                          <div className="h-20 w-20 rounded-full border-2 border-slate-100 group-hover:border-[#FF6600] transition-all duration-300 overflow-hidden shadow-sm relative flex items-center justify-center bg-white dark:bg-slate-900 group-hover:scale-105">
+                            {logo ? (
+                              <img
+                                src={logo}
+                                alt={seller.businessName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Store className="h-8 w-8 text-muted-foreground/30 group-hover:text-[#FF6600] transition-colors" />
+                            )}
+                          </div>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-[#FF6600] transition-colors truncate w-full px-1">
+                            {seller.businessName || `${seller.user?.firstName || "Verified"} Seller`}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Classified Ads Updates Section */}
+              <div>
+                <h2 className="text-xl font-bold uppercase tracking-tight border-b pb-3 mb-6">
+                  Latest Updates from Sellers
+                </h2>
+                {adsUpdates.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground text-sm font-medium italic">
+                    No active ads from your followed sellers yet.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {adsUpdates.map((ad) => (
+                      <AdCard key={ad.id} ad={ad} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </>
       ) : (
         /* Saved Posts Tab Content */
