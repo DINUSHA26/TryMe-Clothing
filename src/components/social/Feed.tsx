@@ -170,7 +170,7 @@ export function Feed() {
             />
 
             {/* Feed */}
-            <div className="space-y-6">
+            <div className="space-y-0 divide-y">
                 {posts.map((post) => (
                     <PostCard key={post.id} post={post} />
                 ))}

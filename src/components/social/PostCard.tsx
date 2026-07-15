@@ -255,17 +255,18 @@ export function PostCard({ post }: { post: SocialPostType }) {
         if (post.images.length === 1) {
             return (
                 <div
-                    className="w-full rounded-xl overflow-hidden mt-3 border cursor-pointer hover:opacity-95 transition bg-slate-50 dark:bg-slate-900/50"
+                    className="-mx-4 overflow-hidden mt-3 cursor-pointer"
                     onClick={() => openGallery(0)}
                 >
                     <img 
                         src={post.images[0]} 
                         alt="Post image" 
-                        className="w-full h-auto max-h-[500px] md:max-h-[420px] object-contain mx-auto" 
+                        className="w-full h-auto object-cover" 
                     />
                 </div>
             );
         }
+
 
         if (post.images.length === 2) {
             return (
@@ -316,7 +317,7 @@ export function PostCard({ post }: { post: SocialPostType }) {
     };
 
     return (
-        <Card id={`post-${post.id}`} className="rounded-2xl shadow-sm border-2 overflow-hidden">
+        <Card id={`post-${post.id}`} className="rounded-none shadow-none border-0 border-b overflow-hidden">
             <CardHeader className="p-4 flex flex-row items-start space-y-0 gap-3 pb-2">
                 <Avatar className="h-10 w-10 border shadow-sm">
                     {post.user.vendor?.logo ? (
@@ -383,7 +384,7 @@ export function PostCard({ post }: { post: SocialPostType }) {
                 </DropdownMenu>
             </CardHeader>
 
-            <CardContent className="p-4 pt-1">
+            <CardContent className="px-4 pt-1 pb-2">
                 {post.content && (
                     <div className="mb-2">
                         <p className={`text-sm whitespace-pre-wrap leading-relaxed ${!isExpanded && isLongText ? "line-clamp-4" : ""}`}>
