@@ -77,24 +77,30 @@ export function CreatePostModal({ isOpen, onClose, onSuccess, editPost }: Create
     };
 
     const uploadImages = async (): Promise<string[]> => {
-        const uploadedUrls: string[] = [];
-        for (const image of images) {
-            const compressedFile = await compressImage(image);
-            const formData = new FormData();
-            formData.append("file", compressedFile);
-            formData.append("folder", "social");
+        // Compress all images in parallel first
+        const compressed = await Promise.all(
+            images.map(image => compressImage(image))
+        );
 
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body: formData,
-            });
-            const data = await res.json();
-            if (data.success && data.data?.url) {
-                uploadedUrls.push(data.data.url);
-            } else {
+        // Upload all compressed images in parallel
+        const uploadedUrls = await Promise.all(
+            compressed.map(async (compressedFile) => {
+                const formData = new FormData();
+                formData.append("file", compressedFile);
+                formData.append("folder", "social");
+
+                const res = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+                const data = await res.json();
+                if (data.success && data.data?.url) {
+                    return data.data.url as string;
+                }
                 throw new Error("Failed to upload an image");
-            }
-        }
+            })
+        );
+
         return uploadedUrls;
     };
 

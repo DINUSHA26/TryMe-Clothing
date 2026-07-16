@@ -157,12 +157,10 @@ export async function checkImageModeration(imageUrl: string): Promise<ImageModer
 }
 
 /**
- * Check multiple image URLs. Returns first failed result or safe.
+ * Check multiple image URLs in parallel. Returns first failed result or safe.
  */
 export async function checkAllImages(imageUrls: string[]): Promise<ImageModerationResult> {
-    for (const url of imageUrls) {
-        const result = await checkImageModeration(url);
-        if (!result.safe) return result;
-    }
-    return { safe: true };
+    const results = await Promise.all(imageUrls.map(url => checkImageModeration(url)));
+    const failed = results.find(r => !r.safe);
+    return failed ?? { safe: true };
 }
