@@ -87,10 +87,17 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   const initRecaptcha = () => {
     if (!(window as any).recaptchaVerifier) {
       (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-        size: "invisible",
+        size: "normal",
         callback: () => {
           // reCAPTCHA solved
         },
+        "expired-callback": () => {
+           toast.error("reCAPTCHA expired. Please verify again.");
+           if ((window as any).recaptchaVerifier) {
+              (window as any).recaptchaVerifier.clear();
+              (window as any).recaptchaVerifier = undefined;
+           }
+        }
       });
     }
   };
