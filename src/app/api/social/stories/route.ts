@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, handleAuthError } from "@/lib/auth-helpers";
+import { checkImageModeration } from "@/lib/content-moderation";
 
 export async function GET(request: NextRequest) {
   try {
@@ -168,6 +169,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Image URL is required" },
         { status: 400 }
+      );
+    }
+
+    // ── Content moderation: nude / explicit image ──────────────────────────
+    const imgCheck = await checkImageModeration(imageUrl);
+    if (!imgCheck.safe) {
+      return NextResponse.json(
+        { success: false, error: imgCheck.reason || "This image contains explicit content and cannot be posted as a story." },
+        { status: 422 }
       );
     }
 

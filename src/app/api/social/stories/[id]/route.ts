@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, handleAuthError } from "@/lib/auth-helpers";
+import { checkImageModeration } from "@/lib/content-moderation";
 
 export async function PATCH(
   request: NextRequest,
@@ -43,6 +44,15 @@ export async function PATCH(
       return NextResponse.json(
         { success: false, error: "Unauthorized to edit this story" },
         { status: 403 }
+      );
+    }
+
+    // Content moderation: nude / explicit image
+    const imgCheck = await checkImageModeration(imageUrl);
+    if (!imgCheck.safe) {
+      return NextResponse.json(
+        { success: false, error: imgCheck.reason || "This image contains explicit content and cannot be used as a story." },
+        { status: 422 }
       );
     }
 

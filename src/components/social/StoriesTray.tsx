@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, Suspense } from "react";
-import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
+import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, MoreHorizontal, Edit2, Trash2, ShieldAlert } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/authStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -142,6 +142,11 @@ export function StoriesTray() {
   const lastActiveStoryRef = useRef<string>("");
   const [isUpdatingStory, setIsUpdatingStory] = useState(false);
   const editFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Moderation popup
+  const [moderationPopup, setModerationPopup] = useState<{ visible: boolean; message: string }>({ visible: false, message: "" });
+  const showModerationPopup = (msg: string) => setModerationPopup({ visible: true, message: msg });
+  const dismissModerationPopup = () => setModerationPopup({ visible: false, message: "" });
 
   // ── File handlers ────────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -350,8 +355,10 @@ export function StoriesTray() {
         handleRemoveFile();
         setSelectedTemplate("");
         setIsCreateOpen(false);
-        clearCache(); // Invalidate stale cache after new story
+        clearCache();
         fetchStories();
+      } else if (res.status === 422) {
+        showModerationPopup(data.error || "This image contains explicit or harmful content and cannot be posted.");
       } else {
         toast.error(data.error || "Failed to share story");
       }
@@ -471,6 +478,9 @@ export function StoriesTray() {
           toast.success("Story updated successfully!");
           clearCache();
           await fetchStories();
+          setIsPaused(false);
+        } else if (res.status === 422) {
+          showModerationPopup(data.error || "This image contains explicit or harmful content and cannot be used as a story.");
           setIsPaused(false);
         } else {
           toast.error(data.error || "Failed to update story");
@@ -616,6 +626,32 @@ export function StoriesTray() {
       {/* ── CREATE STORY MODAL ──────────────────────────────────────────── */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="max-w-md rounded-3xl">
+
+          {/* Moderation Popup Overlay */}
+          {moderationPopup.visible && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-3xl p-6">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-xs p-6 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
+                <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-950/50 flex items-center justify-center mb-4">
+                  <ShieldAlert className="h-7 w-7 text-red-500" />
+                </div>
+                <h3 className="text-base font-black text-foreground mb-1">Inappropriate Image Detected</h3>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Community Guidelines Violation</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">{moderationPopup.message}</p>
+                <div className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-4 text-left">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    🚫 Nude, sexually explicit, violent, or otherwise harmful content is <strong>strictly prohibited</strong> on TryMe. Repeated violations may result in account suspension.
+                  </p>
+                </div>
+                <button
+                  onClick={dismissModerationPopup}
+                  className="w-full bg-primary text-white font-bold rounded-xl py-2.5 text-sm hover:bg-primary/90 transition"
+                >
+                  Got it, I'll fix it
+                </button>
+              </div>
+            </div>
+          )}
+
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
               <Camera className="h-5 w-5 text-primary" />
