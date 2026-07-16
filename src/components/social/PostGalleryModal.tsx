@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Share2, MoreHorizontal, Flag, Bookmark, ChevronLeft, ChevronRight, X, ShoppingBag, Tag } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CommentSection } from "./CommentSection";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -44,6 +44,12 @@ export function PostGalleryModal({
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const { isAuthenticated } = useAuthStore();
     const router = useRouter();
+    const touchStartX = useRef<number | null>(null);
+
+    // Sync index when opening a new image
+    useEffect(() => {
+        setCurrentIndex(initialIndex);
+    }, [initialIndex, isOpen]);
 
     const getInitials = (firstName?: string | null, lastName?: string | null, email?: string | null) => {
         if (firstName && lastName) return `${firstName[0]}${lastName[0]}`;
@@ -59,6 +65,20 @@ export function PostGalleryModal({
         setCurrentIndex((prev) => (prev < post.images.length - 1 ? prev + 1 : 0));
     };
 
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (touchStartX.current === null) return;
+        const diff = touchStartX.current - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) handleNext();
+            else handlePrevious();
+        }
+        touchStartX.current = null;
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -71,7 +91,11 @@ export function PostGalleryModal({
                 </button>
 
                 {/* Left Side: Image Gallery */}
-                <div className="flex-1 relative flex items-center justify-center bg-black min-h-[300px] md:h-full">
+                <div
+                    className="flex-1 relative flex items-center justify-center bg-black min-h-[300px] md:h-full"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <button onClick={onClose} className="absolute top-4 left-4 z-50 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 hidden md:block">
                         <X className="h-5 w-5" />
                     </button>
@@ -99,6 +123,20 @@ export function PostGalleryModal({
                             >
                                 <ChevronRight className="h-6 w-6" />
                             </button>
+                            {/* Dot indicators */}
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                                {post.images.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => setCurrentIndex(i)}
+                                        className={`w-2 h-2 rounded-full transition-all ${
+                                            i === currentIndex
+                                                ? "bg-white scale-125"
+                                                : "bg-white/40"
+                                        }`}
+                                    />
+                                ))}
+                            </div>
                         </>
                     )}
                 </div>

@@ -317,7 +317,7 @@ export function PostCard({ post }: { post: SocialPostType }) {
     };
 
     return (
-        <Card id={`post-${post.id}`} className="rounded-none shadow-none border-0 border-b overflow-hidden">
+        <Card id={`post-${post.id}`} className="rounded-none shadow-none border-0 border-b-4 border-b-slate-300 dark:border-b-slate-700 overflow-hidden">
             <CardHeader className="p-4 flex flex-row items-start space-y-0 gap-3 pb-2">
                 <Avatar className="h-10 w-10 border shadow-sm">
                     {post.user.vendor?.logo ? (

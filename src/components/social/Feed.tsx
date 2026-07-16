@@ -147,20 +147,22 @@ export function Feed() {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Create Post Header */}
-            <div className="bg-white dark:bg-slate-950 border-2 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                <Avatar key={(user as any)?.avatar || "no-avatar"}>
-                    <AvatarImage src={(user as any)?.avatar || undefined} alt={user?.firstName || "User"} />
-                    <AvatarFallback>{user ? getInitials(user.firstName, user.lastName, user.email) : "G"}</AvatarFallback>
-                </Avatar>
-                <Button
-                    variant="outline"
-                    className="w-full justify-start text-muted-foreground rounded-full bg-slate-50 dark:bg-slate-900 border-none hover:bg-slate-100 hover:text-foreground"
-                    onClick={() => setIsCreateModalOpen(true)}
-                >
-                    {isAuthenticated ? "What's on your mind?" : "Log in to post..."}
-                </Button>
+        <div className="w-full">
+            {/* Create Post Header — padded */}
+            <div className="px-4 mb-1">
+                <div className="bg-white dark:bg-slate-950 border rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+                    <Avatar key={(user as any)?.avatar || "no-avatar"}>
+                        <AvatarImage src={(user as any)?.avatar || undefined} alt={user?.firstName || "User"} />
+                        <AvatarFallback>{user ? getInitials(user.firstName, user.lastName, user.email) : "G"}</AvatarFallback>
+                    </Avatar>
+                    <Button
+                        variant="outline"
+                        className="w-full justify-start text-muted-foreground rounded-full bg-slate-50 dark:bg-slate-900 border-none hover:bg-slate-100 hover:text-foreground"
+                        onClick={() => setIsCreateModalOpen(true)}
+                    >
+                        {isAuthenticated ? "What's on your mind?" : "Log in to post..."}
+                    </Button>
+                </div>
             </div>
 
             <CreatePostModal
@@ -169,8 +171,8 @@ export function Feed() {
                 onSuccess={handlePostCreated}
             />
 
-            {/* Feed */}
-            <div className="space-y-0 divide-y">
+            {/* Feed — full bleed, Facebook-style thick gray dividers */}
+            <div className="w-full border-t-4 border-t-slate-300 dark:border-t-slate-700">
                 {posts.map((post) => (
                     <PostCard key={post.id} post={post} />
                 ))}
@@ -194,5 +196,6 @@ export function Feed() {
                 </div>
             )}
         </div>
+
     );
 }
