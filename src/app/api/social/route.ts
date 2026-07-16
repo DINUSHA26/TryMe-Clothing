@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helpers";
+import { isTextClean, detectBadWord, checkAllImages } from "@/lib/content-moderation";
 
 export async function GET(request: NextRequest) {
     try {
@@ -115,6 +116,26 @@ export async function POST(request: NextRequest) {
 
         if (!content && (!images || images.length === 0)) {
             return NextResponse.json({ success: false, error: "Post must have content or images" }, { status: 400 });
+        }
+
+        // ── Content moderation: bad words ──────────────────────────────────────
+        if (content && !isTextClean(content)) {
+            const found = detectBadWord(content);
+            return NextResponse.json(
+                { success: false, error: `Your post contains inappropriate language${found ? ` ("${found}")` : ""}. Please remove it before posting.` },
+                { status: 422 }
+            );
+        }
+
+        // ── Content moderation: nude / explicit images ─────────────────────────
+        if (images && images.length > 0) {
+            const imgCheck = await checkAllImages(images);
+            if (!imgCheck.safe) {
+                return NextResponse.json(
+                    { success: false, error: imgCheck.reason || "One or more images contain explicit content and cannot be posted." },
+                    { status: 422 }
+                );
+            }
         }
 
         // Resolve product slug/ad ID and tag type if tag is provided

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { detectBadWord } from "@/lib/content-moderation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ImagePlus, X, Loader2, Tag } from "lucide-react";
+import { ImagePlus, X, Loader2, Tag, ShieldAlert } from "lucide-react";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
@@ -31,11 +32,29 @@ export function CreatePostModal({ isOpen, onClose, onSuccess, editPost }: Create
     const [productTag, setProductTag] = useState(editPost?.productTag || "");
     const [existingImages, setExistingImages] = useState<string[]>(editPost?.images || []);
 
+    // Bad word state
+    const [hasBadWord, setHasBadWord] = useState(false);
+    const [badWordFound, setBadWordFound] = useState<string | null>(null);
+
+    // Moderation popup state
+    const [moderationPopup, setModerationPopup] = useState<{
+        visible: boolean;
+        type: "badword" | "image" | null;
+        message: string;
+    }>({ visible: false, type: null, message: "" });
+
+    const showModerationPopup = (type: "badword" | "image", message: string) => {
+        setModerationPopup({ visible: true, type, message });
+    };
+
+    const dismissModerationPopup = () => {
+        setModerationPopup({ visible: false, type: null, message: "" });
+    };
+
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
             setImages(prev => [...prev, ...filesArray]);
-
             const newPreviewUrls = filesArray.map(file => URL.createObjectURL(file));
             setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
         }
@@ -92,6 +111,15 @@ export function CreatePostModal({ isOpen, onClose, onSuccess, editPost }: Create
             return;
         }
 
+        // Client-side bad word check before submitting
+        if (hasBadWord) {
+            showModerationPopup(
+                "badword",
+                `Your post contains inappropriate language${badWordFound ? ` ("${badWordFound}")` : ""}. Please remove it before posting.`
+            );
+            return;
+        }
+
         try {
             setLoading(true);
             let imageUrls: string[] = [];
@@ -118,6 +146,16 @@ export function CreatePostModal({ isOpen, onClose, onSuccess, editPost }: Create
                 setPreviewUrls([]);
                 setProductTag("");
                 onClose();
+            } else if (res.status === 422) {
+                // Content moderation block — show popup
+                const isImageBlock =
+                    data.error?.toLowerCase().includes("image") ||
+                    data.error?.toLowerCase().includes("explicit") ||
+                    data.error?.toLowerCase().includes("nude");
+                showModerationPopup(
+                    isImageBlock ? "image" : "badword",
+                    data.error || "This content violates our community guidelines."
+                );
             } else {
                 toast.error(data.error || "Failed to create post");
             }
@@ -137,6 +175,58 @@ export function CreatePostModal({ isOpen, onClose, onSuccess, editPost }: Create
                     <DialogTitle className="text-center text-xl font-bold">{editPost ? "Edit Post" : "Create Post"}</DialogTitle>
                 </DialogHeader>
 
+                {/* ── Moderation Popup Overlay ─────────────────────────────── */}
+                {moderationPopup.visible && (
+                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-[2rem] p-6">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
+                            {/* Icon */}
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+                                moderationPopup.type === "image"
+                                    ? "bg-red-100 dark:bg-red-950/50"
+                                    : "bg-orange-100 dark:bg-orange-950/50"
+                            }`}>
+                                <ShieldAlert className={`h-8 w-8 ${
+                                    moderationPopup.type === "image"
+                                        ? "text-red-500"
+                                        : "text-orange-500"
+                                }`} />
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-lg font-black text-foreground mb-1">
+                                {moderationPopup.type === "image"
+                                    ? "Inappropriate Image Detected"
+                                    : "Inappropriate Language Detected"}
+                            </h3>
+
+                            {/* Subtitle */}
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                                Community Guidelines Violation
+                            </p>
+
+                            {/* Message */}
+                            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                                {moderationPopup.message}
+                            </p>
+
+                            {/* Info box */}
+                            <div className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-5 text-left">
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    🚫 Nude, sexually explicit, violent, or otherwise harmful content is <strong>strictly prohibited</strong> on TryMe. Repeated violations may result in account suspension.
+                                </p>
+                            </div>
+
+                            {/* Button */}
+                            <Button
+                                className="w-full rounded-xl font-bold"
+                                onClick={dismissModerationPopup}
+                            >
+                                Got it, I'll fix it
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
                 {!isAuthenticated ? (
                     <div className="p-8 text-center space-y-4">
                         <p className="text-muted-foreground">You must be logged in to create a post.</p>
@@ -147,9 +237,17 @@ export function CreatePostModal({ isOpen, onClose, onSuccess, editPost }: Create
                         <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
                             <Textarea
                                 placeholder="What's on your mind?"
-                                className="resize-none border-none focus-visible:ring-0 text-lg min-h-[120px] p-0"
+                                className={`resize-none border-none focus-visible:ring-0 text-lg min-h-[120px] p-0 ${
+                                    hasBadWord ? "text-red-500" : ""
+                                }`}
                                 value={content}
-                                onChange={(e) => setContent(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setContent(val);
+                                    const found = detectBadWord(val);
+                                    setHasBadWord(!!found);
+                                    setBadWordFound(found);
+                                }}
                             />
 
                             {previewUrls.length > 0 && (
@@ -201,7 +299,7 @@ export function CreatePostModal({ isOpen, onClose, onSuccess, editPost }: Create
                         <DialogFooter className="p-4 border-t">
                             <Button
                                 onClick={handleSubmit}
-                                disabled={loading || (!content.trim() && previewUrls.length === 0)}
+                                disabled={loading || (!content.trim() && previewUrls.length === 0) || hasBadWord}
                                 className="w-full rounded-xl font-bold"
                             >
                                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
