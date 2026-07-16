@@ -122,14 +122,16 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         // Phone Auth
         initRecaptcha();
         const appVerifier = (window as any).recaptchaVerifier;
-        // Format phone number to E.164 if missing +
-        let formattedPhone = data.identifier.replace(/[\s\-]/g, "");
+        // Format phone number to E.164
+        // Since LK +94 is shown as static prefix in UI, user enters local number only
+        let formattedPhone = data.identifier.trim().replace(/[\s\-\(\)]/g, "");
         if (!formattedPhone.startsWith("+")) {
-          // If starts with 0, replace with +94 (Sri Lanka default)
           if (formattedPhone.startsWith("0")) {
+            // e.g. 0771234567 → +94771234567
             formattedPhone = "+94" + formattedPhone.substring(1);
           } else {
-            formattedPhone = "+" + formattedPhone;
+            // e.g. 771234567 → +94771234567 (user typed local number without leading 0)
+            formattedPhone = "+94" + formattedPhone;
           }
         }
 
@@ -140,11 +142,14 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           console.error("Firebase phone auth error:", err);
           
           if (err.code === 'auth/operation-not-allowed') {
-             toast.error("Firebase SMS not enabled for this region. Please configure it in Firebase Console.");
+             toast.error("Firebase SMS not enabled. Please configure it in Firebase Console.");
           } else if (err.code === 'auth/invalid-phone-number') {
              toast.error("Invalid phone number format.");
+          } else if (err.code === 'auth/too-many-requests') {
+             toast.error("SMS quota exceeded. Please try again later or upgrade Firebase billing.");
           } else {
-             toast.error("Failed to send SMS. Please check your phone number.");
+             // Show exact error for easier debugging
+             toast.error(`Firebase Error: ${err.message || err.code || "Failed to send SMS"}`);
           }
           
           // Reset the recaptcha widget so the user can try again safely
@@ -354,7 +359,6 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             )}
           </div>
 
-          <div id="recaptcha-container"></div>
 
           <Button 
             type="submit" 
