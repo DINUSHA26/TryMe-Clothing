@@ -140,33 +140,33 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           setConfirmationResult(result);
         } catch (err: any) {
           console.error("Firebase phone auth error:", err);
-          
+
           if (err.code === 'auth/operation-not-allowed') {
-             toast.error("Firebase SMS not enabled. Please configure it in Firebase Console.");
+            toast.error("Firebase SMS not enabled. Please configure it in Firebase Console.");
           } else if (err.code === 'auth/invalid-phone-number') {
-             toast.error("Invalid phone number format.");
+            toast.error("Invalid phone number format.");
           } else if (err.code === 'auth/too-many-requests') {
-             toast.error("SMS quota exceeded. Please try again later or upgrade Firebase billing.");
+            toast.error("SMS quota exceeded. Please try again later or upgrade Firebase billing.");
           } else {
-             // Show exact error for easier debugging
-             toast.error(`Firebase Error: ${err.message || err.code || "Failed to send SMS"}`);
+            // Show exact error for easier debugging
+            toast.error(`Firebase Error: ${err.message || err.code || "Failed to send SMS"}`);
           }
-          
+
           // Reset the recaptcha widget so the user can try again safely
           if ((window as any).recaptchaVerifier) {
-             try {
-               (window as any).recaptchaVerifier.render().then((widgetId: any) => {
-                 (window as any).grecaptcha?.reset(widgetId);
-               }).catch(() => {
-                 // If render fails, clear and let it be recreated next time
-                 (window as any).recaptchaVerifier.clear();
-                 (window as any).recaptchaVerifier = undefined;
-               });
-             } catch (e) {
-               (window as any).recaptchaVerifier = undefined;
-             }
+            try {
+              (window as any).recaptchaVerifier.render().then((widgetId: any) => {
+                (window as any).grecaptcha?.reset(widgetId);
+              }).catch(() => {
+                // If render fails, clear and let it be recreated next time
+                (window as any).recaptchaVerifier.clear();
+                (window as any).recaptchaVerifier = undefined;
+              });
+            } catch (e) {
+              (window as any).recaptchaVerifier = undefined;
+            }
           }
-          
+
           setIsLoading(false);
           return;
         }
@@ -209,7 +209,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           setIsLoading(false);
           return;
         }
-        
+
         try {
           const fbUserCredential = await confirmationResult.confirm(data.code);
           const idToken = await fbUserCredential.user.getIdToken();
@@ -277,13 +277,13 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   const handleChangeIdentifier = () => {
     setStep("identifier");
     otpForm.reset();
-    
+
     // Clear recaptcha so it can be cleanly re-initialized if they switch back
     if ((window as any).recaptchaVerifier) {
       try {
         (window as any).recaptchaVerifier.clear();
         (window as any).recaptchaVerifier = undefined;
-      } catch (e) {}
+      } catch (e) { }
     }
   };
 
@@ -299,11 +299,10 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             <button
               type="button"
               onClick={() => { setInputMode("email"); identifierForm.reset(); }}
-              className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${
-                inputMode === "email"
+              className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${inputMode === "email"
                   ? "text-gray-900"
                   : "text-gray-400 hover:text-gray-600"
-              }`}
+                }`}
             >
               Email
               {inputMode === "email" && (
@@ -314,11 +313,10 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             <button
               type="button"
               onClick={() => { setInputMode("phone"); identifierForm.reset(); }}
-              className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${
-                inputMode === "phone"
+              className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${inputMode === "phone"
                   ? "text-gray-900"
                   : "text-gray-400 hover:text-gray-600"
-              }`}
+                }`}
             >
               Phone Number
               {inputMode === "phone" && (
@@ -360,9 +358,9 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           </div>
 
 
-          <Button 
-            type="submit" 
-            className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" 
+          <Button
+            type="submit"
+            className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -384,56 +382,56 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         <form onSubmit={otpForm.handleSubmit(onVerifyOTP)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="code">Verification Code</Label>
-        <Input
-          id="code"
-          type="text"
-          placeholder="000000"
-          maxLength={6}
-          {...otpForm.register("code")}
-          disabled={isLoading}
-          className="text-center text-2xl font-mono tracking-widest bg-white dark:bg-white text-black dark:text-black placeholder:text-gray-400 dark:placeholder:text-gray-400 border border-gray-300 dark:border-gray-300 focus-visible:ring-[#FF6600]"
-        />
-        {otpForm.formState.errors.code && (
-          <p className="text-sm text-red-500">
-            {otpForm.formState.errors.code.message}
-          </p>
-        )}
-        <p className="text-sm text-gray-500">
-          Enter the 6-digit code sent to{" "}
-          <span className="font-medium">{identifier}</span>
-        </p>
-      </div>
+            <Input
+              id="code"
+              type="text"
+              placeholder="000000"
+              maxLength={6}
+              {...otpForm.register("code")}
+              disabled={isLoading}
+              className="text-center text-2xl font-mono tracking-widest bg-white dark:bg-white text-black dark:text-black placeholder:text-gray-400 dark:placeholder:text-gray-400 border border-gray-300 dark:border-gray-300 focus-visible:ring-[#FF6600]"
+            />
+            {otpForm.formState.errors.code && (
+              <p className="text-sm text-red-500">
+                {otpForm.formState.errors.code.message}
+              </p>
+            )}
+            <p className="text-sm text-gray-500">
+              Enter the 6-digit code sent to{" "}
+              <span className="font-medium">{identifier}</span>
+            </p>
+          </div>
 
-      <Button type="submit" className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" disabled={isLoading}>
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Verifying...
-          </>
-        ) : (
-          "Verify & Sign In"
-        )}
-      </Button>
+          <Button type="submit" className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              "Verify & Sign In"
+            )}
+          </Button>
 
-      <div className="flex items-center justify-between text-sm">
-        <button
-          type="button"
-          onClick={handleChangeIdentifier}
-          className="text-blue-600 hover:text-blue-700 hover:underline"
-          disabled={isLoading}
-        >
-          Change email or phone
-        </button>
+          <div className="flex items-center justify-between text-sm">
+            <button
+              type="button"
+              onClick={handleChangeIdentifier}
+              className="text-blue-600 hover:text-blue-700 hover:underline"
+              disabled={isLoading}
+            >
+              Change email or phone
+            </button>
 
-        <button
-          type="button"
-          onClick={handleResendOTP}
-          disabled={isLoading || resendTimer > 0}
-          className="text-blue-600 hover:text-blue-700 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
-        >
-          {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
-        </button>
-        </div>
+            <button
+              type="button"
+              onClick={handleResendOTP}
+              disabled={isLoading || resendTimer > 0}
+              className="text-blue-600 hover:text-blue-700 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
+            </button>
+          </div>
         </form>
       )}
       {/* Invisible Recaptcha container must always be present to avoid remount issues */}
