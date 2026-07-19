@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,12 +11,12 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/authStore";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
-import { Loader2, Mail, Phone, Smartphone } from "lucide-react";
+import { Loader2, Smartphone } from "lucide-react";
 
 import { auth } from "@/lib/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 
-// Regex for basic phone validation (e.g., +94771234567 or 0771234567)
+// Regex for basic phone validation
 const phoneRegex = /^\+?[0-9\s\-]{9,15}$/;
 
 const identifierSchema = z.object({
@@ -46,6 +46,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   const { setAuth } = useAuthStore();
   const { mergeGuestCart, items: cartItems } = useCartStore();
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
   const [step, setStep] = useState<"identifier" | "otp">("identifier");
   const [identifier, setIdentifier] = useState("");
   const [identifierType, setIdentifierType] = useState<"email" | "phone">("email");
@@ -53,8 +54,9 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  // FIX 1: reCAPTCHA solve status track කරන state eka
-  const [recaptchaSolved, setRecaptchaSolved] = useState(false);
+
+  // Invisible reCAPTCHA verifier ref — component unmount unama clear karanawa
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   const identifierForm = useForm<IdentifierFormData>({
     resolver: zodResolver(identifierSchema),
@@ -64,17 +66,10 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     resolver: zodResolver(otpSchema),
   });
 
-  // Cleanup recaptcha on unmount
+  // Component unmount unama reCAPTCHA clean up karanawa
   useEffect(() => {
     return () => {
-      if ((window as any).recaptchaVerifier) {
-        try {
-          (window as any).recaptchaVerifier.clear();
-          (window as any).recaptchaVerifier = undefined;
-        } catch (e) {
-          console.error("Error clearing recaptcha", e);
-        }
-      }
+      clearRecaptcha();
     };
   }, []);
 
@@ -86,33 +81,72 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     }
   }, [resendTimer]);
 
-  const initRecaptcha = () => {
-    // FIX 2: Already initialized nam again create karanna epa
-    if ((window as any).recaptchaVerifier) return;
-
-    (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-      size: "normal",
-      callback: () => {
-        // FIX 3: User tick karapu pas thama 'solved' kiyala mark karanawa
-        setRecaptchaSolved(true);
-      },
-      "expired-callback": () => {
-        // Expire unama reset karanawa
-        setRecaptchaSolved(false);
-        toast.error("reCAPTCHA expired. Please tick the checkbox again.");
-        if ((window as any).recaptchaVerifier) {
-          (window as any).recaptchaVerifier.clear();
-          (window as any).recaptchaVerifier = undefined;
-        }
+  // ================================================================
+  // reCAPTCHA helpers — INVISIBLE size use karanawa (production best practice)
+  // Meka Firebase recommended approach ekay. User checkbox tick karanna
+  // onane naha. Firebase automatically verify karanawa.
+  // ================================================================
+  const clearRecaptcha = () => {
+    try {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
       }
-    });
-
-    // reCAPTCHA widget eka render karanawa
-    (window as any).recaptchaVerifier.render().catch((err: any) => {
-      console.error("reCAPTCHA render error:", err);
-    });
+    } catch (e) {
+      recaptchaVerifierRef.current = null;
+    }
+    // Legacy window cleanup
+    if ((window as any).recaptchaVerifier) {
+      try { (window as any).recaptchaVerifier.clear(); } catch (e) {}
+      (window as any).recaptchaVerifier = undefined;
+    }
   };
 
+  const getRecaptchaVerifier = (): RecaptchaVerifier => {
+    // Already thiyenawa nam eka return karanawa
+    if (recaptchaVerifierRef.current) {
+      return recaptchaVerifierRef.current;
+    }
+
+    // INVISIBLE reCAPTCHA — user interaction onane naha
+    // "recaptcha-container" button eka use karanawa (invisible mode waladee button element ekak onai)
+    const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+      size: "invisible",
+      callback: () => {
+        // Automatically called when reCAPTCHA passes
+      },
+      "expired-callback": () => {
+        // Expire unama clear karanawa — next attempt eke fresh one create wenawa
+        clearRecaptcha();
+      },
+    });
+
+    recaptchaVerifierRef.current = verifier;
+    return verifier;
+  };
+
+  // ================================================================
+  // Phone number format helper — E.164 format ekata convert karanawa
+  // +94+94... double prefix bug fix included
+  // ================================================================
+  const formatPhoneNumber = (raw: string): string => {
+    const cleaned = raw.trim().replace(/[\s\-\(\)]/g, "");
+
+    if (cleaned.startsWith("+94")) {
+      // Already E.164 format — leave as is (prevents +94+94... bug)
+      return cleaned;
+    } else if (cleaned.startsWith("0")) {
+      // e.g. 0779044825 → +94779044825
+      return "+94" + cleaned.substring(1);
+    } else {
+      // e.g. 779044825 → +94779044825
+      return "+94" + cleaned;
+    }
+  };
+
+  // ================================================================
+  // Send OTP
+  // ================================================================
   const onSendOTP = async (data: IdentifierFormData) => {
     setIsLoading(true);
 
@@ -121,11 +155,10 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
 
     try {
       if (type === "email") {
+        // Email OTP — server API eke yawanawa
         const response = await fetch("/api/auth/otp/send", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: data.identifier }),
         });
 
@@ -137,32 +170,21 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           return;
         }
       } else {
-        // Phone Auth
+        // Phone OTP via Firebase
+        const formattedPhone = formatPhoneNumber(data.identifier);
 
-        // FIX 4: reCAPTCHA solve karanna kiyala user-ta remind karanawa
-        if (!recaptchaSolved) {
-          toast.error("Please complete the reCAPTCHA verification first (tick the checkbox).");
+        // Previous verifier clear karanawa — fresh one create karanawa
+        // Me step eka important: stale token use unama auth/invalid-app-credential enna puluwan
+        clearRecaptcha();
+
+        let appVerifier: RecaptchaVerifier;
+        try {
+          appVerifier = getRecaptchaVerifier();
+        } catch (initErr: any) {
+          console.error("reCAPTCHA init error:", initErr);
+          toast.error("reCAPTCHA initialization failed. Please refresh the page and try again.");
           setIsLoading(false);
           return;
-        }
-
-        initRecaptcha();
-        const appVerifier = (window as any).recaptchaVerifier;
-
-        // FIX 5: Phone number double prefix bug fix
-        // User type karanne: "729044825" or "0729044825" or "+94729044825"
-        // Mokada wunamath correct E.164 format ekata (e.g. +94729044825) convert karanawa
-        let formattedPhone = data.identifier.trim().replace(/[\s\-\(\)]/g, "");
-
-        if (formattedPhone.startsWith("+94")) {
-          // Already correct format — touch karanawa epa (+94+94... bug fix)
-          // e.g. +94729044825 → +94729044825 (same)
-        } else if (formattedPhone.startsWith("0")) {
-          // e.g. 0729044825 → +94729044825
-          formattedPhone = "+94" + formattedPhone.substring(1);
-        } else {
-          // e.g. 729044825 → +94729044825
-          formattedPhone = "+94" + formattedPhone;
         }
 
         try {
@@ -171,30 +193,21 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         } catch (err: any) {
           console.error("Firebase phone auth error:", err);
 
-          if (err.code === 'auth/operation-not-allowed') {
-            toast.error("Firebase SMS not enabled. Please configure it in Firebase Console.");
-          } else if (err.code === 'auth/invalid-phone-number') {
-            toast.error("Invalid phone number format.");
-          } else if (err.code === 'auth/too-many-requests') {
-            toast.error("SMS quota exceeded. Please try again later or upgrade Firebase billing.");
-          } else {
-            // Show exact error for easier debugging
-            toast.error(`Firebase Error: ${err.message || err.code || "Failed to send SMS"}`);
-          }
+          // reCAPTCHA error unama clear karanawa — next try eke fresh one use wenawa
+          clearRecaptcha();
 
-          // Reset the recaptcha widget so the user can try again safely
-          if ((window as any).recaptchaVerifier) {
-            try {
-              (window as any).recaptchaVerifier.render().then((widgetId: any) => {
-                (window as any).grecaptcha?.reset(widgetId);
-              }).catch(() => {
-                // If render fails, clear and let it be recreated next time
-                (window as any).recaptchaVerifier.clear();
-                (window as any).recaptchaVerifier = undefined;
-              });
-            } catch (e) {
-              (window as any).recaptchaVerifier = undefined;
-            }
+          if (err.code === "auth/operation-not-allowed") {
+            toast.error("Phone authentication is not enabled in Firebase Console. Please contact support.");
+          } else if (err.code === "auth/invalid-phone-number") {
+            toast.error("Invalid phone number. Please check and try again.");
+          } else if (err.code === "auth/too-many-requests") {
+            toast.error("Too many attempts. Please wait a few minutes and try again.");
+          } else if (err.code === "auth/invalid-app-credential") {
+            toast.error("Security verification failed. Please refresh the page and try again.");
+          } else if (err.code === "auth/captcha-check-failed") {
+            toast.error("reCAPTCHA check failed. Please refresh the page and try again.");
+          } else {
+            toast.error(`Failed to send SMS: ${err.message || err.code || "Unknown error"}`);
           }
 
           setIsLoading(false);
@@ -204,16 +217,19 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
 
       setIdentifier(data.identifier);
       setStep("otp");
-      setResendTimer(60); // 60 seconds cooldown
+      setResendTimer(60);
       toast.success(`OTP sent to your ${type}!`);
     } catch (error) {
       console.error("Send OTP error:", error);
-      toast.error("An error occurred while sending OTP");
+      toast.error("An error occurred while sending OTP. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ================================================================
+  // Verify OTP
+  // ================================================================
   const onVerifyOTP = async (data: OTPFormData) => {
     setIsLoading(true);
 
@@ -223,17 +239,12 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
       if (identifierType === "email") {
         const response = await fetch("/api/auth/otp/verify", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: identifier,
-            code: data.code,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: identifier, code: data.code }),
         });
         result = await response.json();
       } else {
-        // Verify via Firebase
+        // Firebase phone verification
         if (!confirmationResult) {
           toast.error("Session expired. Please request a new OTP.");
           setIsLoading(false);
@@ -246,14 +257,18 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
 
           const response = await fetch("/api/auth/otp/verify-phone", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ idToken }),
           });
           result = await response.json();
         } catch (err: any) {
-          toast.error("Invalid verification code");
+          if (err.code === "auth/invalid-verification-code") {
+            toast.error("Invalid verification code. Please check and try again.");
+          } else if (err.code === "auth/code-expired") {
+            toast.error("OTP has expired. Please request a new one.");
+          } else {
+            toast.error("Invalid verification code. Please try again.");
+          }
           setIsLoading(false);
           return;
         }
@@ -264,16 +279,12 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         return;
       }
 
-      // Store auth data
-      setAuth(
-        result.data.user,
-        result.data.accessToken,
-        result.data.refreshToken
-      );
+      // Auth data store karanawa
+      setAuth(result.data.user, result.data.accessToken, result.data.refreshToken);
 
       toast.success("Login successful!");
 
-      // Merge guest cart if there are items
+      // Guest cart merge karanawa
       if (itemCount > 0) {
         try {
           await mergeGuestCart();
@@ -285,7 +296,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         }
       }
 
-      // Redirect - Use window.location to force full reload and apply cookies correctly
+      // Redirect
       if (redirectUrl && redirectUrl.startsWith("/") && !redirectUrl.startsWith("//")) {
         window.location.href = redirectUrl;
       } else {
@@ -307,23 +318,13 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   const handleChangeIdentifier = () => {
     setStep("identifier");
     otpForm.reset();
-    // FIX 6: Change karanna giya wisthara: recaptcha clear karanawa, solved state reset karanawa
-    setRecaptchaSolved(false);
-    if ((window as any).recaptchaVerifier) {
-      try {
-        (window as any).recaptchaVerifier.clear();
-        (window as any).recaptchaVerifier = undefined;
-      } catch (e) { }
-    }
+    clearRecaptcha();
   };
 
   return (
     <>
       {step === "identifier" ? (
-        <form
-          onSubmit={identifierForm.handleSubmit(onSendOTP)}
-          className="space-y-6"
-        >
+        <form onSubmit={identifierForm.handleSubmit(onSendOTP)} className="space-y-6">
           {/* Tabs */}
           <div className="flex w-full mb-6 border-b border-gray-200">
             <button
@@ -331,17 +332,11 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
               onClick={() => {
                 setInputMode("email");
                 identifierForm.reset();
-                // FIX 7: Tab change unama recaptcha reset karanawa
-                setRecaptchaSolved(false);
-                if ((window as any).recaptchaVerifier) {
-                  try { (window as any).recaptchaVerifier.clear(); } catch (e) {}
-                  (window as any).recaptchaVerifier = undefined;
-                }
+                clearRecaptcha();
               }}
-              className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${inputMode === "email"
-                  ? "text-gray-900"
-                  : "text-gray-400 hover:text-gray-600"
-                }`}
+              className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${
+                inputMode === "email" ? "text-gray-900" : "text-gray-400 hover:text-gray-600"
+              }`}
             >
               Email
               {inputMode === "email" && (
@@ -354,19 +349,11 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
               onClick={() => {
                 setInputMode("phone");
                 identifierForm.reset();
-                // FIX 8: Phone tab click unama recaptcha initialize karanawa
-                setRecaptchaSolved(false);
-                if ((window as any).recaptchaVerifier) {
-                  try { (window as any).recaptchaVerifier.clear(); } catch (e) {}
-                  (window as any).recaptchaVerifier = undefined;
-                }
-                // Small delay ekkata passe reCAPTCHA init karanawa (DOM ready wenna)
-                setTimeout(() => initRecaptcha(), 100);
+                clearRecaptcha();
               }}
-              className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${inputMode === "phone"
-                  ? "text-gray-900"
-                  : "text-gray-400 hover:text-gray-600"
-                }`}
+              className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${
+                inputMode === "phone" ? "text-gray-900" : "text-gray-400 hover:text-gray-600"
+              }`}
             >
               Phone Number
               {inputMode === "phone" && (
@@ -407,12 +394,13 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             )}
           </div>
 
+          {/* Invisible reCAPTCHA container — button eka use karanawa (invisible mode requirement) */}
+          <div id="recaptcha-container" />
 
-          {/* FIX 9: Phone mode eka nisa reCAPTCHA solve kara nathi unama button disable karanawa */}
           <Button
             type="submit"
-            className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isLoading || (inputMode === "phone" && !recaptchaSolved)}
+            className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200"
+            disabled={isLoading}
           >
             {isLoading ? (
               <>
@@ -422,7 +410,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             ) : inputMode === "phone" ? (
               <>
                 <Smartphone className="mr-2 h-4 w-4" />
-                {recaptchaSolved ? "Send code via SMS" : "Complete reCAPTCHA to continue"}
+                Send code via SMS
               </>
             ) : (
               "Send code via Email"
@@ -453,7 +441,11 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             </p>
           </div>
 
-          <Button type="submit" className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -485,8 +477,6 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           </div>
         </form>
       )}
-      {/* Invisible Recaptcha container must always be present to avoid remount issues */}
-      <div id="recaptcha-container"></div>
     </>
   );
 }
