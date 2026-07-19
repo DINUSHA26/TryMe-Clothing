@@ -53,6 +53,8 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  // FIX 1: reCAPTCHA solve status track කරන state eka
+  const [recaptchaSolved, setRecaptchaSolved] = useState(false);
 
   const identifierForm = useForm<IdentifierFormData>({
     resolver: zodResolver(identifierSchema),
@@ -85,21 +87,30 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   }, [resendTimer]);
 
   const initRecaptcha = () => {
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-        size: "normal",
-        callback: () => {
-          // reCAPTCHA solved
-        },
-        "expired-callback": () => {
-           toast.error("reCAPTCHA expired. Please verify again.");
-           if ((window as any).recaptchaVerifier) {
-              (window as any).recaptchaVerifier.clear();
-              (window as any).recaptchaVerifier = undefined;
-           }
+    // FIX 2: Already initialized nam again create karanna epa
+    if ((window as any).recaptchaVerifier) return;
+
+    (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+      size: "normal",
+      callback: () => {
+        // FIX 3: User tick karapu pas thama 'solved' kiyala mark karanawa
+        setRecaptchaSolved(true);
+      },
+      "expired-callback": () => {
+        // Expire unama reset karanawa
+        setRecaptchaSolved(false);
+        toast.error("reCAPTCHA expired. Please tick the checkbox again.");
+        if ((window as any).recaptchaVerifier) {
+          (window as any).recaptchaVerifier.clear();
+          (window as any).recaptchaVerifier = undefined;
         }
-      });
-    }
+      }
+    });
+
+    // reCAPTCHA widget eka render karanawa
+    (window as any).recaptchaVerifier.render().catch((err: any) => {
+      console.error("reCAPTCHA render error:", err);
+    });
   };
 
   const onSendOTP = async (data: IdentifierFormData) => {
@@ -127,19 +138,31 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         }
       } else {
         // Phone Auth
+
+        // FIX 4: reCAPTCHA solve karanna kiyala user-ta remind karanawa
+        if (!recaptchaSolved) {
+          toast.error("Please complete the reCAPTCHA verification first (tick the checkbox).");
+          setIsLoading(false);
+          return;
+        }
+
         initRecaptcha();
         const appVerifier = (window as any).recaptchaVerifier;
-        // Format phone number to E.164
-        // Since LK +94 is shown as static prefix in UI, user enters local number only
+
+        // FIX 5: Phone number double prefix bug fix
+        // User type karanne: "729044825" or "0729044825" or "+94729044825"
+        // Mokada wunamath correct E.164 format ekata (e.g. +94729044825) convert karanawa
         let formattedPhone = data.identifier.trim().replace(/[\s\-\(\)]/g, "");
-        if (!formattedPhone.startsWith("+")) {
-          if (formattedPhone.startsWith("0")) {
-            // e.g. 0771234567 → +94771234567
-            formattedPhone = "+94" + formattedPhone.substring(1);
-          } else {
-            // e.g. 771234567 → +94771234567 (user typed local number without leading 0)
-            formattedPhone = "+94" + formattedPhone;
-          }
+
+        if (formattedPhone.startsWith("+94")) {
+          // Already correct format — touch karanawa epa (+94+94... bug fix)
+          // e.g. +94729044825 → +94729044825 (same)
+        } else if (formattedPhone.startsWith("0")) {
+          // e.g. 0729044825 → +94729044825
+          formattedPhone = "+94" + formattedPhone.substring(1);
+        } else {
+          // e.g. 729044825 → +94729044825
+          formattedPhone = "+94" + formattedPhone;
         }
 
         try {
@@ -284,8 +307,8 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   const handleChangeIdentifier = () => {
     setStep("identifier");
     otpForm.reset();
-
-    // Clear recaptcha so it can be cleanly re-initialized if they switch back
+    // FIX 6: Change karanna giya wisthara: recaptcha clear karanawa, solved state reset karanawa
+    setRecaptchaSolved(false);
     if ((window as any).recaptchaVerifier) {
       try {
         (window as any).recaptchaVerifier.clear();
@@ -305,7 +328,16 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           <div className="flex w-full mb-6 border-b border-gray-200">
             <button
               type="button"
-              onClick={() => { setInputMode("email"); identifierForm.reset(); }}
+              onClick={() => {
+                setInputMode("email");
+                identifierForm.reset();
+                // FIX 7: Tab change unama recaptcha reset karanawa
+                setRecaptchaSolved(false);
+                if ((window as any).recaptchaVerifier) {
+                  try { (window as any).recaptchaVerifier.clear(); } catch (e) {}
+                  (window as any).recaptchaVerifier = undefined;
+                }
+              }}
               className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${inputMode === "email"
                   ? "text-gray-900"
                   : "text-gray-400 hover:text-gray-600"
@@ -319,7 +351,18 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             <div className="w-px h-5 bg-gray-200 self-center" />
             <button
               type="button"
-              onClick={() => { setInputMode("phone"); identifierForm.reset(); }}
+              onClick={() => {
+                setInputMode("phone");
+                identifierForm.reset();
+                // FIX 8: Phone tab click unama recaptcha initialize karanawa
+                setRecaptchaSolved(false);
+                if ((window as any).recaptchaVerifier) {
+                  try { (window as any).recaptchaVerifier.clear(); } catch (e) {}
+                  (window as any).recaptchaVerifier = undefined;
+                }
+                // Small delay ekkata passe reCAPTCHA init karanawa (DOM ready wenna)
+                setTimeout(() => initRecaptcha(), 100);
+              }}
               className={`flex-1 pb-3 text-center text-sm font-medium transition-colors relative ${inputMode === "phone"
                   ? "text-gray-900"
                   : "text-gray-400 hover:text-gray-600"
@@ -365,10 +408,11 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           </div>
 
 
+          {/* FIX 9: Phone mode eka nisa reCAPTCHA solve kara nathi unama button disable karanawa */}
           <Button
             type="submit"
-            className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200"
-            disabled={isLoading}
+            className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading || (inputMode === "phone" && !recaptchaSolved)}
           >
             {isLoading ? (
               <>
@@ -378,7 +422,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             ) : inputMode === "phone" ? (
               <>
                 <Smartphone className="mr-2 h-4 w-4" />
-                Send code via SMS
+                {recaptchaSolved ? "Send code via SMS" : "Complete reCAPTCHA to continue"}
               </>
             ) : (
               "Send code via Email"
