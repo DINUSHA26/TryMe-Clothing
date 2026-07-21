@@ -99,7 +99,8 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     if (typeof document !== "undefined") {
       const wrapper = document.getElementById("recaptcha-wrapper");
       if (wrapper) {
-        wrapper.innerHTML = '<div id="recaptcha-container"></div>';
+        const uniqueId = `recaptcha-container-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        wrapper.innerHTML = `<div id="${uniqueId}"></div>`;
       }
       try {
         if ((window as any).grecaptcha) {
@@ -115,14 +116,16 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     }
 
     if (typeof document !== "undefined") {
-      let container = document.getElementById("recaptcha-container");
-      if (!container) {
-        const wrapper = document.getElementById("recaptcha-wrapper");
-        if (wrapper) {
-          wrapper.innerHTML = '<div id="recaptcha-container"></div>';
-          container = document.getElementById("recaptcha-container");
-        }
+      const wrapper = document.getElementById("recaptcha-wrapper");
+      let container: HTMLElement | null = null;
+      if (wrapper && wrapper.firstElementChild) {
+        container = wrapper.firstElementChild as HTMLElement;
+      } else if (wrapper) {
+        const uniqueId = `recaptcha-container-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        wrapper.innerHTML = `<div id="${uniqueId}"></div>`;
+        container = wrapper.firstElementChild as HTMLElement;
       }
+
       if (container) {
         const verifier = new RecaptchaVerifier(auth, container, {
           size: "invisible",
@@ -136,16 +139,16 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
       }
     }
 
-    const fallbackVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+    const fallbackId = `recaptcha-container-${Date.now()}`;
+    const verifier = new RecaptchaVerifier(auth, fallbackId, {
       size: "invisible",
       callback: () => {},
       "expired-callback": () => {
         clearRecaptcha();
       },
     });
-
-    recaptchaVerifierRef.current = fallbackVerifier;
-    return fallbackVerifier;
+    recaptchaVerifierRef.current = verifier;
+    return verifier;
   };
 
   // ================================================================
