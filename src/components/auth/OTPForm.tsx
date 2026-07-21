@@ -55,6 +55,8 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   const [resendTimer, setResendTimer] = useState(0);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
+  const [useNormalRecaptcha, setUseNormalRecaptcha] = useState(false);
+
   // Invisible reCAPTCHA verifier ref — component unmount unama clear karanawa
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
@@ -82,13 +84,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   }, [resendTimer]);
 
   // ================================================================
-  // reCAPTCHA helpers — INVISIBLE size use karanawa (production best practice)
-  // Meka Firebase recommended approach ekay. User checkbox tick karanna
-  // onane naha. Firebase automatically verify karanawa.
-  // ================================================================
-  // ================================================================
-  // reCAPTCHA helpers — Single persistent instance on window
-  // Prevent "reCAPTCHA has already been rendered in this element"
+  // reCAPTCHA helpers
   // ================================================================
   const clearRecaptcha = () => {
     if ((window as any).recaptchaVerifier) {
@@ -100,6 +96,13 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
       (window as any).recaptchaVerifier = undefined;
     }
     recaptchaVerifierRef.current = null;
+
+    if (typeof document !== "undefined") {
+      const container = document.getElementById("recaptcha-container");
+      if (container) {
+        container.innerHTML = "";
+      }
+    }
   };
 
   const resetRecaptchaWidget = async () => {
@@ -115,15 +118,21 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     }
   };
 
-  const getRecaptchaVerifier = (): RecaptchaVerifier => {
-    if ((window as any).recaptchaVerifier) {
+  const getRecaptchaVerifier = (forceNormal: boolean = false): RecaptchaVerifier => {
+    if ((window as any).recaptchaVerifier && !forceNormal) {
       return (window as any).recaptchaVerifier;
     }
 
+    if (forceNormal) {
+      clearRecaptcha();
+    }
+
+    const sizeMode = (forceNormal || useNormalRecaptcha) ? "normal" : "invisible";
+
     const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-      size: "invisible",
+      size: sizeMode,
       callback: () => {
-        // reCAPTCHA solved automatically
+        // reCAPTCHA solved
       },
       "expired-callback": () => {
         resetRecaptchaWidget();
@@ -191,7 +200,22 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         } catch (err: any) {
           console.error("Firebase phone auth error:", err);
 
-          // Reset the recaptcha widget for subsequent attempts without re-creating verifier
+          const isRecaptchaErrorCode =
+            err.code === "auth/captcha-check-failed" ||
+            err.code === "auth/invalid-app-credential" ||
+            err.code === "auth/internal-error" ||
+            (err.message && (err.message.includes("-39") || err.message.includes("error-code:-39")));
+
+          if (isRecaptchaErrorCode && !useNormalRecaptcha) {
+            console.warn("Switching to visible reCAPTCHA due to error -39 / security check block...");
+            setUseNormalRecaptcha(true);
+            clearRecaptcha();
+            toast.info("Please complete the reCAPTCHA verification below and click Send again.");
+            setIsLoading(false);
+            return;
+          }
+
+          // Reset the recaptcha widget for subsequent attempts
           await resetRecaptchaWidget();
 
           if (err.code === "auth/operation-not-allowed") {
@@ -392,8 +416,8 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             )}
           </div>
 
-          {/* Invisible reCAPTCHA wrapper — prevents "reCAPTCHA has already been rendered" DOM conflict */}
-          <div id="recaptcha-wrapper">
+          {/* reCAPTCHA wrapper — centered for visible fallback mode */}
+          <div id="recaptcha-wrapper" className="flex justify-center my-2">
             <div id="recaptcha-container" />
           </div>
 
