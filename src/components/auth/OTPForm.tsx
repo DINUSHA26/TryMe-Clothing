@@ -86,67 +86,51 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   // Meka Firebase recommended approach ekay. User checkbox tick karanna
   // onane naha. Firebase automatically verify karanawa.
   // ================================================================
+  // ================================================================
+  // reCAPTCHA helpers — Single persistent instance on window
+  // Prevent "reCAPTCHA has already been rendered in this element"
+  // ================================================================
   const clearRecaptcha = () => {
-    try {
-      if (recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current.clear();
+    if ((window as any).recaptchaVerifier) {
+      try {
+        (window as any).recaptchaVerifier.clear();
+      } catch (e) {
+        // Ignore clear errors
       }
-    } catch (e) {
-      // Ignore clear errors
+      (window as any).recaptchaVerifier = undefined;
     }
     recaptchaVerifierRef.current = null;
+  };
 
-    if (typeof document !== "undefined") {
-      const wrapper = document.getElementById("recaptcha-wrapper");
-      if (wrapper) {
-        const uniqueId = `recaptcha-container-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-        wrapper.innerHTML = `<div id="${uniqueId}"></div>`;
-      }
-      try {
-        if ((window as any).grecaptcha) {
-          (window as any).grecaptcha.reset();
+  const resetRecaptchaWidget = async () => {
+    try {
+      if ((window as any).recaptchaVerifier) {
+        const widgetId = await (window as any).recaptchaVerifier.render();
+        if (typeof (window as any).grecaptcha !== "undefined" && widgetId !== undefined) {
+          (window as any).grecaptcha.reset(widgetId);
         }
-      } catch (e) {}
+      }
+    } catch (e) {
+      console.warn("reCAPTCHA widget reset warning:", e);
     }
   };
 
   const getRecaptchaVerifier = (): RecaptchaVerifier => {
-    if (recaptchaVerifierRef.current) {
-      return recaptchaVerifierRef.current;
+    if ((window as any).recaptchaVerifier) {
+      return (window as any).recaptchaVerifier;
     }
 
-    if (typeof document !== "undefined") {
-      const wrapper = document.getElementById("recaptcha-wrapper");
-      let container: HTMLElement | null = null;
-      if (wrapper && wrapper.firstElementChild) {
-        container = wrapper.firstElementChild as HTMLElement;
-      } else if (wrapper) {
-        const uniqueId = `recaptcha-container-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-        wrapper.innerHTML = `<div id="${uniqueId}"></div>`;
-        container = wrapper.firstElementChild as HTMLElement;
-      }
-
-      if (container) {
-        const verifier = new RecaptchaVerifier(auth, container, {
-          size: "invisible",
-          callback: () => {},
-          "expired-callback": () => {
-            clearRecaptcha();
-          },
-        });
-        recaptchaVerifierRef.current = verifier;
-        return verifier;
-      }
-    }
-
-    const fallbackId = `recaptcha-container-${Date.now()}`;
-    const verifier = new RecaptchaVerifier(auth, fallbackId, {
+    const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
       size: "invisible",
-      callback: () => {},
+      callback: () => {
+        // reCAPTCHA solved automatically
+      },
       "expired-callback": () => {
-        clearRecaptcha();
+        resetRecaptchaWidget();
       },
     });
+
+    (window as any).recaptchaVerifier = verifier;
     recaptchaVerifierRef.current = verifier;
     return verifier;
   };
@@ -199,7 +183,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         // Phone OTP via Firebase
         const formattedPhone = formatPhoneNumber(data.identifier);
 
-        let appVerifier = getRecaptchaVerifier();
+        const appVerifier = getRecaptchaVerifier();
 
         try {
           const result = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
@@ -207,49 +191,8 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         } catch (err: any) {
           console.error("Firebase phone auth error:", err);
 
-          // Clear and recreate fresh verifier on any recaptcha/credential error
-          clearRecaptcha();
-
-          // Auto-retry once with fresh DOM element node verifier
-          try {
-            console.warn("Attempting auto-retry with fresh reCAPTCHA instance...");
-            const freshVerifier = getRecaptchaVerifier();
-            const retryResult = await signInWithPhoneNumber(auth, formattedPhone, freshVerifier);
-            setConfirmationResult(retryResult);
-            setIdentifier(data.identifier);
-            setStep("otp");
-            setResendTimer(60);
-            toast.success(`OTP sent to your ${type}!`);
-            setIsLoading(false);
-            return;
-          } catch (retryErr: any) {
-            console.error("Retry Firebase phone auth failed:", retryErr);
-            err = retryErr;
-          }
-
-          clearRecaptcha();
-
-          if (err.code === "auth/operation-not-allowed") {
-            toast.error("Phone authentication is not enabled in Firebase Console. Please contact support.");
-          } else if (err.code === "auth/invalid-phone-number") {
-            toast.error("Invalid phone number. Please check and try again.");
-          } else if (err.code === "auth/too-many-requests") {
-            toast.error("Too many attempts. Please wait a few minutes and try again.");
-          } else if (err.code === "auth/invalid-app-credential") {
-            toast.error("Security verification failed. Please refresh the page and try again.");
-          } else if (err.code === "auth/captcha-check-failed") {
-            toast.error("reCAPTCHA check failed. Please refresh the page and try again.");
-          } else {
-            toast.error(`Failed to send SMS: ${err.message || err.code || "Unknown error"}`);
-          }
-
-          setIsLoading(false);
-          return;
-        }
-      }
-
-          // reCAPTCHA error unama clear karanawa — next try eke fresh one use wenawa
-          clearRecaptcha();
+          // Reset the recaptcha widget for subsequent attempts without re-creating verifier
+          await resetRecaptchaWidget();
 
           if (err.code === "auth/operation-not-allowed") {
             toast.error("Phone authentication is not enabled in Firebase Console. Please contact support.");
