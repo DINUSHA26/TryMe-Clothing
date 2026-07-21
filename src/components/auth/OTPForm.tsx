@@ -95,6 +95,13 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     } catch (e) {
       recaptchaVerifierRef.current = null;
     }
+    // Clear DOM container so Firebase doesn't throw "already rendered in this element"
+    if (typeof document !== "undefined") {
+      const container = document.getElementById("recaptcha-container");
+      if (container) {
+        container.innerHTML = "";
+      }
+    }
     // Legacy window cleanup
     if ((window as any).recaptchaVerifier) {
       try { (window as any).recaptchaVerifier.clear(); } catch (e) {}
@@ -106,6 +113,14 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     // Already thiyenawa nam eka return karanawa
     if (recaptchaVerifierRef.current) {
       return recaptchaVerifierRef.current;
+    }
+
+    // Ensure container is clean before creating new verifier
+    if (typeof document !== "undefined") {
+      const container = document.getElementById("recaptcha-container");
+      if (container) {
+        container.innerHTML = "";
+      }
     }
 
     // INVISIBLE reCAPTCHA — user interaction onane naha
@@ -173,18 +188,20 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         // Phone OTP via Firebase
         const formattedPhone = formatPhoneNumber(data.identifier);
 
-        // Previous verifier clear karanawa — fresh one create karanawa
-        // Me step eka important: stale token use unama auth/invalid-app-credential enna puluwan
-        clearRecaptcha();
-
         let appVerifier: RecaptchaVerifier;
         try {
           appVerifier = getRecaptchaVerifier();
         } catch (initErr: any) {
           console.error("reCAPTCHA init error:", initErr);
-          toast.error("reCAPTCHA initialization failed. Please refresh the page and try again.");
-          setIsLoading(false);
-          return;
+          // Retry by clearing container and creating fresh verifier
+          clearRecaptcha();
+          try {
+            appVerifier = getRecaptchaVerifier();
+          } catch (secondErr: any) {
+            toast.error("reCAPTCHA initialization failed. Please refresh the page and try again.");
+            setIsLoading(false);
+            return;
+          }
         }
 
         try {
