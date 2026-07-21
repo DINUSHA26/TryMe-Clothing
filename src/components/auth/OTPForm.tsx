@@ -90,54 +90,62 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     try {
       if (recaptchaVerifierRef.current) {
         recaptchaVerifierRef.current.clear();
-        recaptchaVerifierRef.current = null;
       }
     } catch (e) {
-      recaptchaVerifierRef.current = null;
+      // Ignore clear errors
     }
-    // Clear DOM container so Firebase doesn't throw "already rendered in this element"
+    recaptchaVerifierRef.current = null;
+
     if (typeof document !== "undefined") {
-      const container = document.getElementById("recaptcha-container");
-      if (container) {
-        container.innerHTML = "";
+      const wrapper = document.getElementById("recaptcha-wrapper");
+      if (wrapper) {
+        wrapper.innerHTML = '<div id="recaptcha-container"></div>';
       }
-    }
-    // Legacy window cleanup
-    if ((window as any).recaptchaVerifier) {
-      try { (window as any).recaptchaVerifier.clear(); } catch (e) {}
-      (window as any).recaptchaVerifier = undefined;
+      try {
+        if ((window as any).grecaptcha) {
+          (window as any).grecaptcha.reset();
+        }
+      } catch (e) {}
     }
   };
 
   const getRecaptchaVerifier = (): RecaptchaVerifier => {
-    // Already thiyenawa nam eka return karanawa
     if (recaptchaVerifierRef.current) {
       return recaptchaVerifierRef.current;
     }
 
-    // Ensure container is clean before creating new verifier
     if (typeof document !== "undefined") {
-      const container = document.getElementById("recaptcha-container");
+      let container = document.getElementById("recaptcha-container");
+      if (!container) {
+        const wrapper = document.getElementById("recaptcha-wrapper");
+        if (wrapper) {
+          wrapper.innerHTML = '<div id="recaptcha-container"></div>';
+          container = document.getElementById("recaptcha-container");
+        }
+      }
       if (container) {
-        container.innerHTML = "";
+        const verifier = new RecaptchaVerifier(auth, container, {
+          size: "invisible",
+          callback: () => {},
+          "expired-callback": () => {
+            clearRecaptcha();
+          },
+        });
+        recaptchaVerifierRef.current = verifier;
+        return verifier;
       }
     }
 
-    // INVISIBLE reCAPTCHA — user interaction onane naha
-    // "recaptcha-container" button eka use karanawa (invisible mode waladee button element ekak onai)
-    const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+    const fallbackVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
       size: "invisible",
-      callback: () => {
-        // Automatically called when reCAPTCHA passes
-      },
+      callback: () => {},
       "expired-callback": () => {
-        // Expire unama clear karanawa — next attempt eke fresh one create wenawa
         clearRecaptcha();
       },
     });
 
-    recaptchaVerifierRef.current = verifier;
-    return verifier;
+    recaptchaVerifierRef.current = fallbackVerifier;
+    return fallbackVerifier;
   };
 
   // ================================================================
@@ -188,21 +196,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         // Phone OTP via Firebase
         const formattedPhone = formatPhoneNumber(data.identifier);
 
-        let appVerifier: RecaptchaVerifier;
-        try {
-          appVerifier = getRecaptchaVerifier();
-        } catch (initErr: any) {
-          console.error("reCAPTCHA init error:", initErr);
-          // Retry by clearing container and creating fresh verifier
-          clearRecaptcha();
-          try {
-            appVerifier = getRecaptchaVerifier();
-          } catch (secondErr: any) {
-            toast.error("reCAPTCHA initialization failed. Please refresh the page and try again.");
-            setIsLoading(false);
-            return;
-          }
-        }
+        let appVerifier = getRecaptchaVerifier();
 
         try {
           const result = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
@@ -210,31 +204,46 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         } catch (err: any) {
           console.error("Firebase phone auth error:", err);
 
-          // Auto-retry with fresh reCAPTCHA verifier if error -39, captcha failure or stale app credential occurs
-          const isRecaptchaOrTokenError = 
-            err.code === "auth/captcha-check-failed" ||
-            err.code === "auth/invalid-app-credential" ||
-            err.code === "auth/internal-error" ||
-            (err.message && (err.message.includes("-39") || err.message.includes("error-code:-39")));
+          // Clear and recreate fresh verifier on any recaptcha/credential error
+          clearRecaptcha();
 
-          if (isRecaptchaOrTokenError) {
-            console.warn("Retrying Firebase phone auth with fresh reCAPTCHA verifier due to token/gateway error...");
-            clearRecaptcha();
-            try {
-              const freshVerifier = getRecaptchaVerifier();
-              const retryResult = await signInWithPhoneNumber(auth, formattedPhone, freshVerifier);
-              setConfirmationResult(retryResult);
-              setIdentifier(data.identifier);
-              setStep("otp");
-              setResendTimer(60);
-              toast.success(`OTP sent to your ${type}!`);
-              setIsLoading(false);
-              return;
-            } catch (retryErr: any) {
-              console.error("Retry Firebase phone auth failed:", retryErr);
-              err = retryErr;
-            }
+          // Auto-retry once with fresh DOM element node verifier
+          try {
+            console.warn("Attempting auto-retry with fresh reCAPTCHA instance...");
+            const freshVerifier = getRecaptchaVerifier();
+            const retryResult = await signInWithPhoneNumber(auth, formattedPhone, freshVerifier);
+            setConfirmationResult(retryResult);
+            setIdentifier(data.identifier);
+            setStep("otp");
+            setResendTimer(60);
+            toast.success(`OTP sent to your ${type}!`);
+            setIsLoading(false);
+            return;
+          } catch (retryErr: any) {
+            console.error("Retry Firebase phone auth failed:", retryErr);
+            err = retryErr;
           }
+
+          clearRecaptcha();
+
+          if (err.code === "auth/operation-not-allowed") {
+            toast.error("Phone authentication is not enabled in Firebase Console. Please contact support.");
+          } else if (err.code === "auth/invalid-phone-number") {
+            toast.error("Invalid phone number. Please check and try again.");
+          } else if (err.code === "auth/too-many-requests") {
+            toast.error("Too many attempts. Please wait a few minutes and try again.");
+          } else if (err.code === "auth/invalid-app-credential") {
+            toast.error("Security verification failed. Please refresh the page and try again.");
+          } else if (err.code === "auth/captcha-check-failed") {
+            toast.error("reCAPTCHA check failed. Please refresh the page and try again.");
+          } else {
+            toast.error(`Failed to send SMS: ${err.message || err.code || "Unknown error"}`);
+          }
+
+          setIsLoading(false);
+          return;
+        }
+      }
 
           // reCAPTCHA error unama clear karanawa — next try eke fresh one use wenawa
           clearRecaptcha();
@@ -437,8 +446,10 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             )}
           </div>
 
-          {/* Invisible reCAPTCHA container — button eka use karanawa (invisible mode requirement) */}
-          <div id="recaptcha-container" />
+          {/* Invisible reCAPTCHA wrapper — prevents "reCAPTCHA has already been rendered" DOM conflict */}
+          <div id="recaptcha-wrapper">
+            <div id="recaptcha-container" />
+          </div>
 
           <Button
             type="submit"
