@@ -193,6 +193,32 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         } catch (err: any) {
           console.error("Firebase phone auth error:", err);
 
+          // Auto-retry with fresh reCAPTCHA verifier if error -39, captcha failure or stale app credential occurs
+          const isRecaptchaOrTokenError = 
+            err.code === "auth/captcha-check-failed" ||
+            err.code === "auth/invalid-app-credential" ||
+            err.code === "auth/internal-error" ||
+            (err.message && (err.message.includes("-39") || err.message.includes("error-code:-39")));
+
+          if (isRecaptchaOrTokenError) {
+            console.warn("Retrying Firebase phone auth with fresh reCAPTCHA verifier due to token/gateway error...");
+            clearRecaptcha();
+            try {
+              const freshVerifier = getRecaptchaVerifier();
+              const retryResult = await signInWithPhoneNumber(auth, formattedPhone, freshVerifier);
+              setConfirmationResult(retryResult);
+              setIdentifier(data.identifier);
+              setStep("otp");
+              setResendTimer(60);
+              toast.success(`OTP sent to your ${type}!`);
+              setIsLoading(false);
+              return;
+            } catch (retryErr: any) {
+              console.error("Retry Firebase phone auth failed:", retryErr);
+              err = retryErr;
+            }
+          }
+
           // reCAPTCHA error unama clear karanawa — next try eke fresh one use wenawa
           clearRecaptcha();
 
