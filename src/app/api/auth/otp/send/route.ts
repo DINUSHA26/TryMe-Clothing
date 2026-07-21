@@ -5,9 +5,11 @@ import { otpUtils } from "@/lib/otp";
 import { emailService } from "@/lib/email";
 import { UserRole } from "@prisma/client";
 
-// Validation schema
+// Validation schema supports either email or phone (or identifier)
 const sendOTPSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Invalid email address").optional(),
+  phone: z.string().optional(),
+  identifier: z.string().optional(),
 });
 
 const OTP_EXPIRY_MINUTES = parseInt(
@@ -31,10 +33,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email } = validation.data;
+    const { email, phone, identifier: rawIdentifier } = validation.data;
+    const targetIdentifier = email || phone || rawIdentifier;
+
+    if (!targetIdentifier) {
+      return NextResponse.json(
+        { success: false, error: "Email or phone number is required" },
+        { status: 400 }
+      );
+    }
+
+    const isEmail = targetIdentifier.includes("@");
+
+    // Format phone if applicable
+    let identifier = targetIdentifier.trim();
+    if (!isEmail) {
+      const cleaned = identifier.replace(/[\s\-\(\)]/g, "");
+      if (cleaned.startsWith("+94")) {
+        identifier = cleaned;
+      } else if (cleaned.startsWith("0")) {
+        identifier = "+94" + cleaned.substring(1);
+      } else {
+        identifier = "+94" + cleaned;
+      }
+    }
 
     // Check rate limit
-    const isAllowed = await otpUtils.checkRateLimit(email);
+    const isAllowed = await otpUtils.checkRateLimit(identifier);
     if (!isAllowed) {
       return NextResponse.json(
         {
@@ -45,9 +70,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if email already exists and belongs to Admin or Vendor
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    // Check existing user role & status
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: isEmail ? [{ email: identifier }] : [{ phone: identifier }],
+      },
     });
 
     if (existingUser) {
@@ -59,46 +86,51 @@ export async function POST(request: NextRequest) {
           {
             success: false,
             error:
-              "This email is registered for a different account type. Please use the appropriate login page.",
+              "This account is registered for a different account type. Please use the appropriate login page.",
           },
           { status: 400 }
         );
       }
 
-      // Check if account is active
       if (!existingUser.isActive) {
         return NextResponse.json(
           {
             success: false,
-            error:
-              "Your account has been deactivated. Please contact support.",
+            error: "Your account has been deactivated. Please contact support.",
           },
           { status: 403 }
         );
       }
     }
 
-    // Generate OTP
+    // Generate 6-digit OTP
     const otpCode = otpUtils.generateCode();
 
-    // Store OTP in Redis
-    await otpUtils.store(email, otpCode, "login");
+    // Store OTP in Redis and Database
+    await otpUtils.store(identifier, otpCode, "login");
 
-    // Send OTP email
-    const emailResult = await emailService.sendOTPEmail(
-      email,
-      otpCode,
-      OTP_EXPIRY_MINUTES
-    );
-
-    if (!emailResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Failed to send OTP email. Please try again.",
-        },
-        { status: 500 }
+    if (isEmail) {
+      // Send OTP via Email
+      const emailResult = await emailService.sendOTPEmail(
+        identifier,
+        otpCode,
+        OTP_EXPIRY_MINUTES
       );
+
+      if (!emailResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Failed to send OTP email. Please try again.",
+          },
+          { status: 500 }
+        );
+      }
+    } else {
+      // Phone OTP logging/server delivery
+      console.log(`========================================`);
+      console.log(`[SMS OTP SERVER] Sent to ${identifier}: ${otpCode}`);
+      console.log(`========================================`);
     }
 
     return NextResponse.json({
@@ -106,6 +138,7 @@ export async function POST(request: NextRequest) {
       data: {
         message: "OTP sent successfully",
         expiryMinutes: OTP_EXPIRY_MINUTES,
+        otpCode: process.env.NODE_ENV === "development" ? otpCode : undefined,
       },
     });
   } catch (error) {

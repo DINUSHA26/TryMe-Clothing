@@ -54,10 +54,8 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [useServerOtp, setUseServerOtp] = useState(false);
 
-  const [useNormalRecaptcha, setUseNormalRecaptcha] = useState(false);
-
-  // Invisible reCAPTCHA verifier ref — component unmount unama clear karanawa
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   const identifierForm = useForm<IdentifierFormData>({
@@ -68,14 +66,12 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     resolver: zodResolver(otpSchema),
   });
 
-  // Component unmount unama reCAPTCHA clean up karanawa
   useEffect(() => {
     return () => {
       clearRecaptcha();
     };
   }, []);
 
-  // Countdown timer for resend
   useEffect(() => {
     if (resendTimer > 0) {
       const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
@@ -83,59 +79,26 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     }
   }, [resendTimer]);
 
-  // ================================================================
-  // reCAPTCHA helpers
-  // ================================================================
   const clearRecaptcha = () => {
     if ((window as any).recaptchaVerifier) {
       try {
         (window as any).recaptchaVerifier.clear();
-      } catch (e) {
-        // Ignore clear errors
-      }
+      } catch (e) {}
       (window as any).recaptchaVerifier = undefined;
     }
     recaptchaVerifierRef.current = null;
-
-    if (typeof document !== "undefined") {
-      const container = document.getElementById("recaptcha-container");
-      if (container) {
-        container.innerHTML = "";
-      }
-    }
   };
 
-  const resetRecaptchaWidget = async () => {
-    try {
-      if ((window as any).recaptchaVerifier) {
-        const widgetId = await (window as any).recaptchaVerifier.render();
-        if (typeof (window as any).grecaptcha !== "undefined" && widgetId !== undefined) {
-          (window as any).grecaptcha.reset(widgetId);
-        }
-      }
-    } catch (e) {
-      console.warn("reCAPTCHA widget reset warning:", e);
-    }
-  };
-
-  const getRecaptchaVerifier = (forceNormal: boolean = false): RecaptchaVerifier => {
-    if ((window as any).recaptchaVerifier && !forceNormal) {
+  const getRecaptchaVerifier = (): RecaptchaVerifier => {
+    if ((window as any).recaptchaVerifier) {
       return (window as any).recaptchaVerifier;
     }
 
-    if (forceNormal) {
-      clearRecaptcha();
-    }
-
-    const sizeMode = (forceNormal || useNormalRecaptcha) ? "normal" : "invisible";
-
     const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-      size: sizeMode,
-      callback: () => {
-        // reCAPTCHA solved
-      },
+      size: "invisible",
+      callback: () => {},
       "expired-callback": () => {
-        resetRecaptchaWidget();
+        clearRecaptcha();
       },
     });
 
@@ -144,27 +107,20 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
     return verifier;
   };
 
-  // ================================================================
-  // Phone number format helper — E.164 format ekata convert karanawa
-  // +94+94... double prefix bug fix included
-  // ================================================================
   const formatPhoneNumber = (raw: string): string => {
     const cleaned = raw.trim().replace(/[\s\-\(\)]/g, "");
 
     if (cleaned.startsWith("+94")) {
-      // Already E.164 format — leave as is (prevents +94+94... bug)
       return cleaned;
     } else if (cleaned.startsWith("0")) {
-      // e.g. 0779044825 → +94779044825
       return "+94" + cleaned.substring(1);
     } else {
-      // e.g. 779044825 → +94779044825
       return "+94" + cleaned;
     }
   };
 
   // ================================================================
-  // Send OTP
+  // Send OTP (Firebase with Automatic Server API Fallback)
   // ================================================================
   const onSendOTP = async (data: IdentifierFormData) => {
     setIsLoading(true);
@@ -174,7 +130,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
 
     try {
       if (type === "email") {
-        // Email OTP — server API eke yawanawa
+        setUseServerOtp(true);
         const response = await fetch("/api/auth/otp/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -189,51 +145,39 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           return;
         }
       } else {
-        // Phone OTP via Firebase
+        // Phone OTP
         const formattedPhone = formatPhoneNumber(data.identifier);
 
-        const appVerifier = getRecaptchaVerifier();
+        let firebaseSuccess = false;
 
+        // Try Firebase Phone Auth first
         try {
+          const appVerifier = getRecaptchaVerifier();
           const result = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
           setConfirmationResult(result);
-        } catch (err: any) {
-          console.error("Firebase phone auth error:", err);
+          setUseServerOtp(false);
+          firebaseSuccess = true;
+        } catch (fbErr: any) {
+          console.warn("Firebase Phone Auth error, executing automatic Server OTP fallback:", fbErr);
+          clearRecaptcha();
+        }
 
-          const isRecaptchaErrorCode =
-            err.code === "auth/captcha-check-failed" ||
-            err.code === "auth/invalid-app-credential" ||
-            err.code === "auth/internal-error" ||
-            (err.message && (err.message.includes("-39") || err.message.includes("error-code:-39")));
+        // If Firebase fails (e.g. error -39 or reCAPTCHA block), fallback to Server OTP API
+        if (!firebaseSuccess) {
+          setUseServerOtp(true);
+          const response = await fetch("/api/auth/otp/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier: formattedPhone }),
+          });
 
-          if (isRecaptchaErrorCode && !useNormalRecaptcha) {
-            console.warn("Switching to visible reCAPTCHA due to error -39 / security check block...");
-            setUseNormalRecaptcha(true);
-            clearRecaptcha();
-            toast.info("Please complete the reCAPTCHA verification below and click Send again.");
+          const result = await response.json();
+
+          if (!result.success) {
+            toast.error(result.error || "Failed to send OTP to your phone number");
             setIsLoading(false);
             return;
           }
-
-          // Reset the recaptcha widget for subsequent attempts
-          await resetRecaptchaWidget();
-
-          if (err.code === "auth/operation-not-allowed") {
-            toast.error("Phone authentication is not enabled in Firebase Console. Please contact support.");
-          } else if (err.code === "auth/invalid-phone-number") {
-            toast.error("Invalid phone number. Please check and try again.");
-          } else if (err.code === "auth/too-many-requests") {
-            toast.error("Too many attempts. Please wait a few minutes and try again.");
-          } else if (err.code === "auth/invalid-app-credential") {
-            toast.error("Security verification failed. Please refresh the page and try again.");
-          } else if (err.code === "auth/captcha-check-failed") {
-            toast.error("reCAPTCHA check failed. Please refresh the page and try again.");
-          } else {
-            toast.error(`Failed to send SMS: ${err.message || err.code || "Unknown error"}`);
-          }
-
-          setIsLoading(false);
-          return;
         }
       }
 
@@ -257,12 +201,17 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
 
     try {
       let result;
+      const formattedPhone = formatPhoneNumber(identifier);
 
-      if (identifierType === "email") {
+      if (identifierType === "email" || useServerOtp) {
+        // Verify via Server API (Redis + DB)
         const response = await fetch("/api/auth/otp/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: identifier, code: data.code }),
+          body: JSON.stringify({
+            identifier: identifierType === "phone" ? formattedPhone : identifier,
+            code: data.code,
+          }),
         });
         result = await response.json();
       } else {
@@ -301,12 +250,12 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
         return;
       }
 
-      // Auth data store karanawa
+      // Store auth data
       setAuth(result.data.user, result.data.accessToken, result.data.refreshToken);
 
       toast.success("Login successful!");
 
-      // Guest cart merge karanawa
+      // Merge Guest cart
       if (itemCount > 0) {
         try {
           await mergeGuestCart();
@@ -416,10 +365,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             )}
           </div>
 
-          {/* reCAPTCHA wrapper — centered for visible fallback mode */}
-          <div id="recaptcha-wrapper" className="flex justify-center my-2">
-            <div id="recaptcha-container" />
-          </div>
+          <div id="recaptcha-container" />
 
           <Button
             type="submit"

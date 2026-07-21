@@ -5,9 +5,11 @@ import { otpUtils } from "@/lib/otp";
 import { tokenUtils } from "@/lib/auth";
 import { UserRole } from "@prisma/client";
 
-// Validation schema
+// Validation schema supports email, phone or identifier
 const verifyOTPSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  identifier: z.string().optional(),
   code: z.string().length(6, "OTP must be 6 digits"),
 });
 
@@ -27,10 +29,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, code } = validation.data;
+    const { email, phone, identifier: rawIdentifier, code } = validation.data;
+    const targetIdentifier = email || phone || rawIdentifier;
 
-    // Verify OTP
-    const verificationResult = await otpUtils.verify(email, code, "login");
+    if (!targetIdentifier) {
+      return NextResponse.json(
+        { success: false, error: "Email or phone number is required" },
+        { status: 400 }
+      );
+    }
+
+    const isEmail = targetIdentifier.includes("@");
+
+    // Format phone if applicable
+    let identifier = targetIdentifier.trim();
+    if (!isEmail) {
+      const cleaned = identifier.replace(/[\s\-\(\)]/g, "");
+      if (cleaned.startsWith("+94")) {
+        identifier = cleaned;
+      } else if (cleaned.startsWith("0")) {
+        identifier = "+94" + cleaned.substring(1);
+      } else {
+        identifier = "+94" + cleaned;
+      }
+    }
+
+    // Verify OTP code in Redis & Database
+    const verificationResult = await otpUtils.verify(identifier, code, "login");
 
     if (!verificationResult.success) {
       return NextResponse.json(
@@ -42,9 +67,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find or create customer user
-    let user = await prisma.user.findUnique({
-      where: { email },
+    // Find user by email or phone
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: isEmail ? [{ email: identifier }] : [{ phone: identifier }],
+      },
       include: {
         customer: true,
         vendor: {
@@ -57,13 +84,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // If user doesn't exist, create new customer
+    // If user doesn't exist, create new customer user
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email,
+          email: isEmail ? identifier : null,
+          phone: !isEmail ? identifier : null,
           role: UserRole.CUSTOMER,
-          emailVerified: true,
+          emailVerified: isEmail,
+          phoneVerified: !isEmail,
           isActive: true,
           customer: {
             create: {},
@@ -81,7 +110,7 @@ export async function POST(request: NextRequest) {
         },
       });
     } else {
-      // Ensure user has customer profile
+      // Ensure customer profile exists
       if (!user.customer) {
         await prisma.customer.create({
           data: {
@@ -90,23 +119,27 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Mark email as verified
-      if (!user.emailVerified) {
+      // Mark verified
+      if (isEmail && !user.emailVerified) {
         await prisma.user.update({
           where: { id: user.id },
           data: { emailVerified: true },
         });
+      } else if (!isEmail && !user.phoneVerified) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { phoneVerified: true },
+        });
       }
     }
 
-    // Generate tokens
+    // Generate token pair
     const tokens = tokenUtils.generateTokenPair({
       userId: user.id,
-      email: user.email!,
+      email: user.email || user.phone || identifier,
       role: user.role,
     });
 
-    // Create response with user data and tokens
     const response = NextResponse.json({
       success: true,
       data: {
@@ -126,22 +159,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Set cookies for middleware authentication
-    // accessToken - httpOnly for security, 3 days expiry
     response.cookies.set("accessToken", tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 3 * 24 * 60 * 60, // 3 days
+      maxAge: 3 * 24 * 60 * 60,
       path: "/",
     });
 
-    // refreshToken - httpOnly for security, 3 days expiry
     response.cookies.set("refreshToken", tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 3 * 24 * 60 * 60, // 3 days
+      maxAge: 3 * 24 * 60 * 60,
       path: "/",
     });
 
