@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { otpUtils } from "@/lib/otp";
 import { emailService } from "@/lib/email";
+import { smsService } from "@/lib/sms";
 import { UserRole } from "@prisma/client";
 
 // Validation schema supports either email or phone (or identifier)
@@ -127,10 +128,8 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      // Phone OTP logging/server delivery
-      console.log(`========================================`);
-      console.log(`[SMS OTP SERVER] Sent to ${identifier}: ${otpCode}`);
-      console.log(`========================================`);
+      // Send OTP via SMS Gateway (Notify.lk / Twilio / Dev Server)
+      await smsService.sendOTP({ to: identifier, otpCode });
     }
 
     return NextResponse.json({
