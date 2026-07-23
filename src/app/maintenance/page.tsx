@@ -84,10 +84,13 @@ export default function MaintenancePage() {
             <span>support@tryme.lk</span>
           </a>
           <span className="hidden sm:inline text-slate-700">•</span>
-          <div className="flex items-center gap-2">
+          <a
+            href="tel:+94729044825"
+            className="flex items-center gap-2 hover:text-[#FF6600] transition-colors"
+          >
             <Phone className="w-4 h-4 text-[#FF6600]" />
-            <span>+94 77 000 0000</span>
-          </div>
+            <span>+94 72 904 4825</span>
+          </a>
         </div>
       </main>
 
