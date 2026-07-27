@@ -136,13 +136,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for maintenance page request
-  if (pathname === "/maintenance") {
-    return NextResponse.next();
+  // Maintenance mode (disabled by default)
+  if (process.env.MAINTENANCE_MODE === "true") {
+    if (pathname === "/maintenance") {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/maintenance", request.url));
   }
-
-  // Redirect ALL pages & APIs to maintenance page
-  return NextResponse.redirect(new URL("/maintenance", request.url));
 
   // Check if route is public
   const isPublicRoute = publicRoutes.some(
