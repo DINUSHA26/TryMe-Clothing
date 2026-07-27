@@ -10,28 +10,35 @@ interface SendSMSParams {
 
 export const smsService = {
   async sendOTP({ to, otpCode }: SendSMSParams): Promise<{ success: boolean; error?: string }> {
-    const formattedPhone = to.startsWith("+") ? to.substring(1) : to; // e.g. 94779728453
+    let formattedPhone = to.trim().replace(/[\s\-\(\)\+]/g, "");
+    if (formattedPhone.startsWith("0")) {
+      formattedPhone = "94" + formattedPhone.substring(1);
+    }
+
     const message = `Your TryMe verification code is: ${otpCode}. Valid for 5 minutes. Do not share this code.`;
 
     console.log(`====================================================`);
-    console.log(`[SMS SERVICE] Sending OTP to ${to} -> Code: ${otpCode}`);
+    console.log(`[SMS SERVICE] Sending OTP via Notify.lk to ${formattedPhone} -> Code: ${otpCode}`);
     console.log(`====================================================`);
 
     // 1. Notify.lk Integration (Sri Lanka's #1 Gateway)
     const notifyUserId = process.env.NOTIFYLK_USER_ID;
     const notifyApiKey = process.env.NOTIFYLK_API_KEY;
-    const notifySenderId = process.env.NOTIFYLK_SENDER_ID || "NotifyDEMO";
+    const notifySenderId = process.env.NOTIFYLK_SENDER_ID || "TryMe.lk";
 
     if (notifyUserId && notifyApiKey) {
       try {
-        const url = `https://app.notify.lk/api/v1/send?user_id=${notifyUserId}&api_key=${notifyApiKey}&sender_id=${notifySenderId}&to=${formattedPhone}&message=${encodeURIComponent(message)}`;
+        const url = `https://app.notify.lk/api/v1/send?user_id=${notifyUserId}&api_key=${notifyApiKey}&sender_id=${encodeURIComponent(notifySenderId)}&to=${formattedPhone}&message=${encodeURIComponent(message)}`;
         const res = await fetch(url, { method: "POST" });
         const data = await res.json();
 
-        if (data.status === "success") {
+        console.log("[NOTIFY.LK RESPONSE]", data);
+
+        if (data.status === "success" || data.code === 1000 || data.status_code === 200) {
           return { success: true };
         } else {
           console.error("Notify.lk SMS error:", data);
+          return { success: false, error: data.message || "Failed to deliver SMS via Notify.lk" };
         }
       } catch (err: any) {
         console.error("Notify.lk SMS exception:", err);

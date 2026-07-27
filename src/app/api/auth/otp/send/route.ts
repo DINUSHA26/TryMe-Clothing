@@ -128,8 +128,17 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      // Send OTP via SMS Gateway (Notify.lk / Twilio / Dev Server)
-      await smsService.sendOTP({ to: identifier, otpCode });
+      // Send OTP via SMS Gateway (Notify.lk / Twilio)
+      const smsResult = await smsService.sendOTP({ to: identifier, otpCode });
+      if (!smsResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: smsResult.error || "Failed to send SMS to your phone number. Please try again.",
+          },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({

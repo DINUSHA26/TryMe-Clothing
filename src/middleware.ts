@@ -127,13 +127,21 @@ const publicRoutes = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files
+  // Skip middleware for static files and images
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
-    pathname.match(/\.(jpg|jpeg|png|gif|svg|ico|css|js|woff|woff2|ttf|eot)$/i)
+    pathname.match(/\.(jpg|jpeg|png|gif|svg|ico|css|js|woff|woff2|ttf|eot|webp)$/i)
   ) {
     return NextResponse.next();
+  }
+
+  // Maintenance mode (disabled by default)
+  if (process.env.MAINTENANCE_MODE === "true") {
+    if (pathname === "/maintenance") {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/maintenance", request.url));
   }
 
   // Check if route is public

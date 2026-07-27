@@ -145,39 +145,22 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
           return;
         }
       } else {
-        // Phone OTP
+        // Phone OTP via Server API (Notify.lk Gateway with TryMe.lk Sender ID)
         const formattedPhone = formatPhoneNumber(data.identifier);
+        setUseServerOtp(true);
 
-        let firebaseSuccess = false;
+        const response = await fetch("/api/auth/otp/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier: formattedPhone }),
+        });
 
-        // Try Firebase Phone Auth first
-        try {
-          const appVerifier = getRecaptchaVerifier();
-          const result = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-          setConfirmationResult(result);
-          setUseServerOtp(false);
-          firebaseSuccess = true;
-        } catch (fbErr: any) {
-          console.warn("Firebase Phone Auth error, executing automatic Server OTP fallback:", fbErr);
-          clearRecaptcha();
-        }
+        const result = await response.json();
 
-        // If Firebase fails (e.g. error -39 or reCAPTCHA block), fallback to Server OTP API
-        if (!firebaseSuccess) {
-          setUseServerOtp(true);
-          const response = await fetch("/api/auth/otp/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ identifier: formattedPhone }),
-          });
-
-          const result = await response.json();
-
-          if (!result.success) {
-            toast.error(result.error || "Failed to send OTP to your phone number");
-            setIsLoading(false);
-            return;
-          }
+        if (!result.success) {
+          toast.error(result.error || "Failed to send OTP to your phone number");
+          setIsLoading(false);
+          return;
         }
       }
 
