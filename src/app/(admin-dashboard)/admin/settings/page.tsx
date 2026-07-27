@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { User, Lock, Mail } from "lucide-react";
+import { User, Lock, Mail, Building } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -81,6 +81,66 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankForm, setBankForm] = useState({
+    bankName: "Seylan Bank",
+    accountName: "Fashion Dora",
+    accountNumber: "1230-13526365-001",
+    branch: "Main Branch",
+  });
+
+  useEffect(() => {
+    async function loadBankDetails() {
+      try {
+        const res = await fetch("/api/bank-details");
+        const json = await res.json();
+        if (json.success && json.data) {
+          setBankForm({
+            bankName: json.data.bankName || "",
+            accountName: json.data.accountName || "",
+            accountNumber: json.data.accountNumber || "",
+            branch: json.data.branch || "",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load bank details:", err);
+      }
+    }
+    loadBankDetails();
+  }, []);
+
+  const handleBankDetailsSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBankLoading(true);
+
+    try {
+      const res = await fetch("/api/admin/bank-details", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bankForm),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to update bank details");
+      }
+
+      toast({
+        title: "Bank Details Updated",
+        description: "Official TryMe bank account details updated successfully.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Update Failed",
+        description: err.message || "Could not update bank details",
+        variant: "destructive",
+      });
+    } finally {
+      setBankLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -90,6 +150,73 @@ export default function AdminSettingsPage() {
           Manage your account settings and preferences
         </p>
       </div>
+
+      {/* Official Bank Account Settings (Super Admin) */}
+      <Card className="border-primary/20 bg-gradient-to-br from-white to-orange-50/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-primary">
+            <Building className="h-5 w-5" />
+            Official Bank Account Details (Customer Checkout)
+          </CardTitle>
+          <CardDescription>
+            Only Super Admins can update the official bank account shown to customers during Bank Transfer checkout.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleBankDetailsSave} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="bankName">Bank Name</Label>
+                <Input
+                  id="bankName"
+                  value={bankForm.bankName}
+                  onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })}
+                  placeholder="e.g. Commercial Bank"
+                  required
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="accountName">Account Holder Name</Label>
+                <Input
+                  id="accountName"
+                  value={bankForm.accountName}
+                  onChange={(e) => setBankForm({ ...bankForm, accountName: e.target.value })}
+                  placeholder="e.g. TryMe (Pvt) Ltd"
+                  required
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="accountNumber">Account Number</Label>
+                <Input
+                  id="accountNumber"
+                  value={bankForm.accountNumber}
+                  onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value })}
+                  placeholder="e.g. 1234567890"
+                  required
+                  className="mt-1.5 font-mono"
+                />
+              </div>
+              <div>
+                <Label htmlFor="branch">Branch</Label>
+                <Input
+                  id="branch"
+                  value={bankForm.branch}
+                  onChange={(e) => setBankForm({ ...bankForm, branch: e.target.value })}
+                  placeholder="e.g. Colombo Main Branch"
+                  required
+                  className="mt-1.5"
+                />
+              </div>
+            </div>
+
+            <Button type="submit" disabled={bankLoading} className="bg-[#FF6600] hover:bg-[#e65c00]">
+              {bankLoading ? "Saving Changes..." : "Save Official Bank Details"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Profile Information */}
       <Card>
