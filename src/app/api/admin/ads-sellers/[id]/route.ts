@@ -71,7 +71,7 @@ export async function GET(
 
 /**
  * PATCH /api/admin/ads-sellers/[id]
- * Verify, reject, suspend or activate an ads seller
+ * Update details or status of an ads seller
  */
 export async function PATCH(
   request: NextRequest,
@@ -81,13 +81,6 @@ export async function PATCH(
     const admin = requireAdmin(request);
     const { id } = params;
     const body = await request.json();
-
-    if (!body.status) {
-      return NextResponse.json(
-        { success: false, error: "Status field is required" },
-        { status: 400 }
-      );
-    }
 
     const seller = await prisma.adsSeller.findUnique({
       where: { id },
@@ -104,15 +97,30 @@ export async function PATCH(
     }
 
     const previousStatus = seller.status;
-    const newStatus = body.status as VendorStatus;
+    const newStatus = body.status ? (body.status as VendorStatus) : previousStatus;
 
-    // Update ads seller status
+    // Prepare update data for AdsSeller
+    const updateData: any = {};
+    if (body.status !== undefined) updateData.status = newStatus;
+    if (body.businessName !== undefined) updateData.businessName = body.businessName;
+    if (body.phone !== undefined) updateData.phone = body.phone;
+    if (body.primaryCategory !== undefined) updateData.primaryCategory = body.primaryCategory;
+    if (body.aboutContent !== undefined) updateData.aboutContent = body.aboutContent;
+
+    // Update ads seller
     const updatedSeller = await prisma.adsSeller.update({
       where: { id },
-      data: {
-        status: newStatus,
-      },
+      data: updateData,
+      include: { user: true },
     });
+
+    // Update user email if provided and changed
+    if (body.email && body.email !== seller.user.email) {
+      await prisma.user.update({
+        where: { id: seller.userId },
+        data: { email: body.email },
+      });
+    }
 
     // Send verification email on approval
     if (newStatus === VendorStatus.ACTIVE && previousStatus === VendorStatus.PENDING) {
@@ -132,11 +140,11 @@ export async function PATCH(
       data: updatedSeller,
     });
   } catch (error) {
-    console.error("Error updating ads seller status:", error);
+    console.error("Error updating ads seller:", error);
     const authError = handleAuthError(error);
     if (authError) return authError;
     return NextResponse.json(
-      { success: false, error: "An error occurred while updating seller status" },
+      { success: false, error: "An error occurred while updating seller" },
       { status: 500 }
     );
   }
