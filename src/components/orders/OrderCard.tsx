@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { Button } from "@/components/ui/button";
 import { OrderStatus } from "@prisma/client";
-import { ChevronRight, Package } from "lucide-react";
+import { ChevronRight, Package, CreditCard } from "lucide-react";
 
 interface OrderCardProps {
   order: {
@@ -26,11 +26,11 @@ interface OrderCardProps {
 
 export function OrderCard({ order }: OrderCardProps) {
   return (
-    <Link
-      href={`/orders/${order.id}`}
-      className="block border rounded-lg p-4 hover:shadow-md transition-shadow bg-card"
-    >
-      <div className="flex items-start gap-4">
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-card relative">
+      <Link
+        href={`/orders/${order.id}`}
+        className="flex items-start gap-4"
+      >
         {/* Product Images Preview */}
         <div className="flex-shrink-0">
           {order.itemImages.length > 0 ? (
@@ -83,21 +83,33 @@ export function OrderCard({ order }: OrderCardProps) {
             </span>
           </div>
 
-          {/* Total Amount */}
-          <p className="font-semibold text-lg">
-            Rs.{" "}
-            {order.totalAmount.toLocaleString("en-LK", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </p>
+          {/* Total Amount & Action */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-semibold text-lg">
+              Rs.{" "}
+              {order.totalAmount.toLocaleString("en-LK", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </p>
+
+            {order.status === "PENDING_PAYMENT" && (
+              <Link
+                href={`/payment/${order.id}`}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-white bg-[#FF6600] hover:bg-[#e65c00] px-4 py-2 rounded-lg transition-colors z-10"
+              >
+                <CreditCard className="w-4 h-4" />
+                Complete Payment
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Arrow Icon */}
         <div className="flex-shrink-0 self-center">
           <ChevronRight className="w-5 h-5 text-muted-foreground" />
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }

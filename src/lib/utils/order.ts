@@ -289,6 +289,7 @@ export function calculateOrderActions(order: {
   createdAt: Date;
   deliveryConfirmedAt?: Date | null;
 }): {
+  canPay: boolean;
   canCancel: boolean;
   canConfirmDelivery: boolean;
   canRequestReturn: boolean;
@@ -304,6 +305,7 @@ export function calculateOrderActions(order: {
     : null;
 
   return {
+    canPay: order.status === "PENDING_PAYMENT",
     canCancel:
       ["PENDING_PAYMENT", "PAYMENT_CONFIRMED"].includes(order.status) &&
       hoursSinceOrder <= 24,

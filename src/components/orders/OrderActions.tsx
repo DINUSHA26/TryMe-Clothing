@@ -12,12 +12,14 @@ import { ConfirmDeliveryDialog } from "./ConfirmDeliveryDialog";
 import { RequestReturnDialog } from "./RequestReturnDialog";
 import { DisputeForm } from "@/components/disputes/DisputeForm";
 import { CompleteOrderDialog } from "./CompleteOrderDialog";
-import { XCircle, CheckCircle, PackageX, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { XCircle, CheckCircle, PackageX, AlertTriangle, CreditCard } from "lucide-react";
 
 interface OrderActionsProps {
   orderId: string;
   orderNumber: string;
   actions: {
+    canPay?: boolean;
     canCancel: boolean;
     canConfirmDelivery: boolean;
     canRequestReturn: boolean;
@@ -43,6 +45,7 @@ export function OrderActions({
 
   // If no actions available, don't render anything
   if (
+    !actions.canPay &&
     !actions.canCancel &&
     !actions.canConfirmDelivery &&
     !actions.canComplete
@@ -52,6 +55,16 @@ export function OrderActions({
 
   return (
     <div className="flex flex-wrap gap-2">
+      {/* Complete Payment / Pay Now */}
+      {actions.canPay && (
+        <Link href={`/payment/${orderId}`}>
+          <Button className="bg-[#FF6600] hover:bg-[#e65c00] text-white">
+            <CreditCard className="w-4 h-4 mr-2" />
+            Complete Payment
+          </Button>
+        </Link>
+      )}
+
       {/* Cancel Order */}
       {actions.canCancel && (
         <>
