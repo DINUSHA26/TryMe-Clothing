@@ -102,7 +102,11 @@ export function LoginForm({ redirectUrl, userType }: LoginFormProps) {
       // Check if user must change password
       if (result.data.user.mustChangePassword) {
         toast.info("Please change your password to continue");
-        window.location.href = `/${userRole.toLowerCase()}/change-password`;
+        const changePasswordPath =
+          userRole === "ADS_SELLER"
+            ? "/ads-seller/change-password"
+            : `/${userRole.toLowerCase()}/change-password`;
+        window.location.href = changePasswordPath;
         return;
       }
 

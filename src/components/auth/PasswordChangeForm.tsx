@@ -97,15 +97,17 @@ export function PasswordChangeForm({
       toast.success("Password changed successfully!");
 
       // Redirect
-      if (redirectUrl) {
-        router.push(redirectUrl);
-      } else if (user?.role === "ADMIN") {
-        router.push("/admin");
-      } else if (user?.role === "VENDOR") {
-        router.push("/vendor");
-      } else {
-        router.push("/");
-      }
+      const targetPath = redirectUrl
+        ? redirectUrl
+        : user?.role === "ADMIN"
+        ? "/admin"
+        : user?.role === "VENDOR"
+        ? "/vendor"
+        : user?.role === "ADS_SELLER"
+        ? "/ads-seller"
+        : "/";
+
+      window.location.href = targetPath;
     } catch (error) {
       console.error("Change password error:", error);
       toast.error("An error occurred while changing password");
