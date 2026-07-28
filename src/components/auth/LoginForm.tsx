@@ -84,34 +84,41 @@ export function LoginForm({ redirectUrl, userType }: LoginFormProps) {
         result.data.refreshToken
       );
 
-      // Determine the app path based on role
-      const rolePrefix = userRole.toLowerCase();
+      // Determine default portal based on role
+      let defaultPortal = "/";
+      if (userRole === "ADMIN") {
+        defaultPortal = "/admin";
+      } else if (userRole === "VENDOR") {
+        defaultPortal = "/vendor";
+      } else if (userRole === "ADS_SELLER") {
+        defaultPortal = "/ads-seller";
+      }
+
+      const targetUrl =
+        redirectUrl && redirectUrl.startsWith("/") && !redirectUrl.startsWith("//")
+          ? redirectUrl
+          : defaultPortal;
 
       // Check if user must change password
       if (result.data.user.mustChangePassword) {
         toast.info("Please change your password to continue");
-        router.push(`/${rolePrefix}/change-password`);
+        window.location.href = `/${userRole.toLowerCase()}/change-password`;
         return;
       }
 
       // Success
       toast.success("Login successful!");
 
-      // Redirect
+      // Redirect via window.location.href for complete cookie & middleware evaluation
       if (userRole === "ADS_SELLER") {
         const adsSeller = result.data.user.adsSeller;
         if (adsSeller?.status === "PENDING") {
-          router.push("/ads-seller/pending");
-        } else {
-          router.push(redirectUrl || "/ads-seller");
-        }
-      } else {
-        if (redirectUrl && redirectUrl.startsWith("/") && !redirectUrl.startsWith("//")) {
-          router.push(redirectUrl);
-        } else {
-          router.push("/");
+          window.location.href = "/ads-seller/pending";
+          return;
         }
       }
+
+      window.location.href = targetUrl;
     } catch (error) {
       console.error("Login error:", error);
       toast.error("An error occurred during login");
