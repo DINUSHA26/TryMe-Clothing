@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Store, Package, CheckCircle2, ArrowRight } from "lucide-react";
+import { Search, Store, Package, ArrowRight } from "lucide-react";
 import Image from "next/image";
 
 interface Vendor {
@@ -55,7 +55,7 @@ export default function VendorsPage() {
     <div className="container mx-auto px-4 py-12 max-w-7xl">
       {/* Header */}
       <div className="mb-10 text-center sm:text-left">
-        <h1 className="text-4xl font-black tracking-tight mb-3">BROWSE VENDORS</h1>
+        <h1 className="text-4xl font-black tracking-tight mb-3">BROWSE STORES</h1>
         <p className="text-muted-foreground font-medium text-lg italic">
           Explore the curated collection of top-tier sellers and unique brands.
         </p>
@@ -151,10 +151,6 @@ export default function VendorsPage() {
                       <h3 className="font-black text-xl leading-tight group-hover:text-primary transition-colors truncate uppercase tracking-tight">
                         {vendor.businessName}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-primary">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Verified Seller</span>
-                      </div>
                     </div>
                   </div>
 

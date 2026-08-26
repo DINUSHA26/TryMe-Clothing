@@ -106,7 +106,7 @@ export function StorefrontFooter() {
                   href="/vendors"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Browse Vendors
+                  Browse Stores
                 </Link>
               </li>
               <li>
@@ -123,14 +123,6 @@ export function StorefrontFooter() {
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   New Arrivals
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/vendor/register"
-                  className="text-orange-600 font-semibold hover:text-orange-700 transition-colors"
-                >
-                  Become a Vendor
                 </Link>
               </li>
             </ul>

@@ -64,15 +64,6 @@ function CustomerLoginContent() {
                 </Link>
               </p>
               <p className="text-sm text-gray-600">
-                Want to sell with us?{" "}
-                <Link
-                  href="/vendor/register"
-                  className="text-orange-600 hover:text-orange-700 font-medium hover:underline"
-                >
-                  Become a Vendor
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
                 Want to post classified ads?{" "}
                 <Link
                   href="/ads-seller/register"
