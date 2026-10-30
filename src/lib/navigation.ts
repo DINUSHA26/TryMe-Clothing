@@ -247,7 +247,7 @@ export const storefrontNavItems: NavItem[] = [
     icon: MessageSquare,
   },
   {
-    label: "Stores",
+    label: "Vendors",
     href: "/vendors",
     icon: Store,
   },
