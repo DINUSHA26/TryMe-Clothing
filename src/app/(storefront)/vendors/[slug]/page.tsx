@@ -12,7 +12,7 @@ import { SearchBar } from "@/components/common/SearchBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { ChevronRight, Store, Package, CheckCircle2, Star } from "lucide-react";
+import { ChevronRight, Store, Package, CheckCircle2, Star, Globe, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -29,6 +29,8 @@ interface Vendor {
   totalSells?: number;
   rating?: number;
   isFollowing?: boolean;
+  websiteConfig?: any;
+  customDomain?: string | null;
 }
 
 interface Product {
@@ -360,6 +362,19 @@ function VendorStorePageContent() {
                       >
                         Shop all items ({vendor.productCount})
                       </button>
+
+                      {vendor.customDomain && (
+                        <a
+                          href={`https://${vendor.customDomain}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-10 px-6 rounded-full font-bold uppercase tracking-wider text-xs transition-all flex items-center gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                        >
+                          <Globe className="w-4 h-4" />
+                          <span>Visit Official Store ({vendor.customDomain})</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
                     </div>
                   </div>
 

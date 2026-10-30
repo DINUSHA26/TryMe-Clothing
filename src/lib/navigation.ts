@@ -21,6 +21,8 @@ import {
   CreditCard,
   LayoutGrid,
   Mail,
+  Sparkles,
+  Globe,
 } from "lucide-react";
 
 export interface NavItem {
@@ -137,6 +139,11 @@ export const adminNavItems: NavItem[] = [
     href: "/admin/ads-plan-payments",
     icon: CreditCard,
   },
+  {
+    label: "Web Subscriptions",
+    href: "/admin/website-subscriptions",
+    icon: Globe,
+  },
 ];
 
 export const vendorNavItems: NavItem[] = [
@@ -176,6 +183,11 @@ export const vendorNavItems: NavItem[] = [
     icon: Star,
   },
   {
+    label: "Website Builder",
+    href: "/vendor/website-builder",
+    icon: Sparkles,
+  },
+  {
     label: "Settings",
     href: "/vendor/settings",
     icon: Settings,
@@ -212,6 +224,11 @@ export const adsSellerNavItems: NavItem[] = [
     label: "My Storefront",
     href: "/ads-seller/storefront",
     icon: Store,
+  },
+  {
+    label: "Website Builder",
+    href: "/ads-seller/website-builder",
+    icon: Sparkles,
   },
   {
     label: "Settings",
