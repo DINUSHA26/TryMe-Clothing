@@ -56,6 +56,7 @@ async function generateRefreshToken(payload: { userId: string; email: string; ro
 const protectedRoutes: Record<string, Role[]> = {
   // ── Page routes ──────────────────────────────────────────────────────────
   "/admin": ["ADMIN"],
+  "/vendor/website-builder": ["VENDOR", "ADS_SELLER", "ADMIN"],
   "/vendor": ["VENDOR"],
   "/orders": ["CUSTOMER", "ADMIN", "VENDOR", "ADS_SELLER"],
   "/checkout": ["CUSTOMER", "VENDOR", "ADMIN", "ADS_SELLER"],
@@ -80,13 +81,15 @@ const protectedRoutes: Record<string, Role[]> = {
   "/api/notifications": ["CUSTOMER", "ADMIN", "VENDOR", "ADS_SELLER"],
   "/api/profile": ["CUSTOMER", "VENDOR", "ADMIN", "ADS_SELLER"],
   // ── Role-restricted API routes ────────────────────────────────────────────
+  "/api/vendor/website": ["VENDOR", "ADS_SELLER", "ADMIN"],
+  "/api/admin/website-subscriptions": ["ADMIN"],
+  "/api/admin/ads-sellers": ["ADMIN"],
+  "/api/admin/ads-plans": ["ADMIN"],
+  "/api/admin/marketplace": ["ADMIN"],
   "/api/admin": ["ADMIN"],
   "/api/vendor": ["VENDOR"],
   "/ads-seller": ["ADS_SELLER"],
   "/api/ads/seller": ["ADS_SELLER"],
-  "/api/admin/ads-sellers": ["ADMIN"],
-  "/api/admin/ads-plans": ["ADMIN"],
-  "/api/admin/marketplace": ["ADMIN"],
 };
 
 // Public routes that don't require authentication
@@ -122,6 +125,10 @@ const publicRoutes = [
   "/ads-seller/register",
   "/api/ads/public",
   "/api/ads/auth",
+  "/site",
+  "/site-preview",
+  "/api/site",
+  "/api/vendor/website/subscribe/payhere-webhook",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -134,6 +141,27 @@ export async function middleware(request: NextRequest) {
     pathname.match(/\.(jpg|jpeg|png|gif|svg|ico|css|js|woff|woff2|ttf|eot|webp)$/i)
   ) {
     return NextResponse.next();
+  }
+
+  // ── Custom Domain Multi-Tenant Rewrite (Vercel for Platforms) ──
+  const host = request.headers.get("host")?.toLowerCase() || "";
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "tryme.lk";
+
+  const isTryMeHost =
+    host === rootDomain ||
+    host.endsWith(`.${rootDomain}`) ||
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    host.includes("vercel.app");
+
+  if (!isTryMeHost) {
+    // Custom domain request! e.g., fashiondora.lk or www.fashiondora.lk
+    const cleanHost = host.replace(/^www\./, "");
+    if (!pathname.startsWith("/site") && !pathname.startsWith("/api")) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/site/${cleanHost}${pathname === "/" ? "" : pathname}`;
+      return NextResponse.rewrite(url);
+    }
   }
 
   // Maintenance mode (disabled by default)

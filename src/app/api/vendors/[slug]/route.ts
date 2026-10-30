@@ -21,6 +21,16 @@ export async function GET(
             isActive: true,
           },
         },
+        websiteConfig: {
+          where: { isPublished: true },
+          include: {
+            pages: {
+              where: { isPublished: true },
+              orderBy: { sortOrder: "asc" },
+            },
+          },
+        },
+        customDomain: true,
         _count: {
           select: {
             products: {
@@ -117,6 +127,8 @@ export async function GET(
           totalSells,
           rating,
           isFollowing,
+          websiteConfig: (vendor as any).websiteConfig || null,
+          customDomain: (vendor as any).customDomain?.domain || null,
         },
       },
     });
