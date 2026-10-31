@@ -137,7 +137,31 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
     const entity = vendor || adsSeller;
     const config = entity?.websiteConfig;
     const activeSub = entity?.websiteSubscriptions?.[0] || null;
-    const products = (vendor ? vendor.products : adsSeller?.ads) || [];
+
+    const rawItems = (vendor ? vendor.products : adsSeller?.ads) || [];
+    const products = rawItems.map((item: any) => {
+      const isVendorProduct = !!vendor;
+      const title = isVendorProduct ? item.name : item.title;
+      const images: string[] = isVendorProduct
+        ? (item.images || []).map((img: any) => img.url).filter(Boolean)
+        : (item.images || []).filter(Boolean);
+      const primaryImage = images[0] || null;
+      const priceNum = item.price ? Number(item.price) : null;
+
+      return {
+        id: item.id,
+        title,
+        name: title,
+        slug: isVendorProduct ? item.slug : item.id,
+        price: priceNum,
+        compareAtPrice: item.compareAtPrice ? Number(item.compareAtPrice) : null,
+        description: item.description || "",
+        image: primaryImage,
+        images,
+        type: isVendorProduct ? ("PRODUCT" as const) : ("AD" as const),
+        url: isVendorProduct ? `/products/${item.slug}` : `/ads/${item.id}`,
+      };
+    });
 
     return {
       type: vendor ? "VENDOR" : "ADS_SELLER",

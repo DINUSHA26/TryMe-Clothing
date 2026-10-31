@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { getStandaloneSiteData } from "@/lib/site-resolver";
+import CatalogView from "./CatalogView";
+import ContactSectionClient from "./ContactSectionClient";
+import FooterSectionClient from "./FooterSectionClient";
 import {
   Phone,
   Mail,
@@ -12,7 +15,11 @@ import {
   ShoppingBag,
   Sparkles,
   CheckCircle2,
+  Building2,
 } from "lucide-react";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface SitePageProps {
   params: Promise<{ domainOrSlug: string }>;
@@ -31,6 +38,9 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
   }
 
   const { vendor, config, products } = siteData;
+  const isSeller = Boolean((siteData as any).seller);
+  const entityType: "VENDOR" | "ADS_SELLER" = isSeller ? "ADS_SELLER" : "VENDOR";
+
   const pages: any[] = config?.pages || [];
   const primaryColor = config?.primaryColor || "#E91E63";
   const hero = config?.heroSection || {};
@@ -43,6 +53,57 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
 
   const whatsappPhone = (contact.whatsapp || contact.phone || vendor?.phone || "").replace(/[^0-9]/g, "");
   const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}` : "#";
+
+  // Dynamic Navigation from config.navItemsJson with smart defaults
+  const defaultNavItems = [
+    { id: "home", label: "Home", type: "scroll", target: "home", visible: true },
+    { id: "services", label: "Services", type: "scroll", target: "services", visible: services.enabled !== false },
+    {
+      id: "products",
+      label: entityType === "ADS_SELLER" ? "My Ads" : "Products",
+      type: "scroll",
+      target: "products",
+      visible: config?.productsSection?.enabled !== false,
+    },
+    { id: "about", label: "About", type: "scroll", target: "about", visible: about.enabled !== false },
+    {
+      id: "gallery",
+      label: "Gallery",
+      type: "scroll",
+      target: "gallery",
+      visible: Boolean(gallery.enabled) && Boolean(gallery.images && gallery.images.length > 0),
+    },
+    {
+      id: "reviews",
+      label: "Reviews",
+      type: "scroll",
+      target: "reviews",
+      visible: Boolean(reviews.enabled) && Boolean(reviews.items && reviews.items.length > 0),
+    },
+    { id: "contact", label: "Contact", type: "scroll", target: "contact", visible: true },
+  ];
+
+  const navItems: any[] =
+    config?.navItemsJson && Array.isArray(config.navItemsJson) && config.navItemsJson.length > 0
+      ? config.navItemsJson
+      : defaultNavItems;
+
+  const visibleNavItems = navItems.filter((item: any) => {
+    if (item.visible === false || item.visible === "false") return false;
+    if (item.id === "gallery" && (!gallery.enabled || !gallery.images || gallery.images.length === 0)) {
+      return false;
+    }
+    if (item.id === "reviews" && (!reviews.enabled || !reviews.items || reviews.items.length === 0)) {
+      return false;
+    }
+    return true;
+  });
+
+  const productNavItem = navItems.find((ni: any) => ni.target === "products");
+  const catalogTitle =
+    productNavItem?.label ||
+    config?.productsSection?.title ||
+    (entityType === "ADS_SELLER" ? "My Ads & Listings" : "Store Products");
 
   const requestedPage = activePageSlug ? pages.find((p) => p.slug === activePageSlug) : null;
 
@@ -74,61 +135,71 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-            <Link
-              href={`/site/${domainOrSlug}`}
-              className="hover:text-black transition-colors font-bold"
-              style={{ color: !activePageSlug ? primaryColor : undefined }}
-            >
-              Home
-            </Link>
-            {!activePageSlug && services.enabled && (
-              <a href="#services" className="hover:text-black transition-colors">
-                Services
-              </a>
-            )}
-            {!activePageSlug && (
-              <a href="#products" className="hover:text-black transition-colors">
-                Products
-              </a>
-            )}
-            {!activePageSlug && about.enabled && (
-              <a href="#about" className="hover:text-black transition-colors">
-                About
-              </a>
-            )}
-            {!activePageSlug && gallery.enabled && (
-              <a href="#gallery" className="hover:text-black transition-colors">
-                Gallery
-              </a>
-            )}
-            {!activePageSlug && reviews.enabled && (
-              <a href="#reviews" className="hover:text-black transition-colors">
-                Reviews
-              </a>
-            )}
-            <a href="#contact" className="hover:text-black transition-colors">
-              Contact
-            </a>
+          <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600">
+            {visibleNavItems.map((item: any) => {
+              const isPageMode = item.type === "page";
+              const isCurrent =
+                (isPageMode && activePageSlug === item.target) ||
+                (!isPageMode && !activePageSlug && item.target === "home");
 
-            {/* Custom Multi-Pages */}
-            {pages.length > 0 && (
-              <div className="flex items-center gap-4 border-l pl-4">
-                {pages.map((p) => {
-                  const isCurrent = activePageSlug === p.slug;
-                  return (
-                    <Link
-                      key={p.slug}
-                      href={`/site/${domainOrSlug}?page=${p.slug}`}
-                      className={`text-xs uppercase tracking-wider font-extrabold px-3 py-1.5 rounded-lg transition-all ${
-                        isCurrent ? "text-white shadow-sm" : "hover:text-black text-slate-600"
-                      }`}
-                      style={{ backgroundColor: isCurrent ? primaryColor : undefined }}
-                    >
-                      {p.title}
-                    </Link>
-                  );
-                })}
+              const href = isPageMode
+                ? item.target === "home"
+                  ? `/site/${domainOrSlug}`
+                  : `/site/${domainOrSlug}?page=${item.target}`
+                : activePageSlug
+                ? `/site/${domainOrSlug}#${item.target}`
+                : `#${item.target}`;
+
+              return (
+                <Link
+                  key={item.id || item.target}
+                  href={href}
+                  className={`transition-colors font-bold text-xs uppercase tracking-wider ${
+                    isCurrent ? "font-extrabold" : "hover:text-black text-slate-600"
+                  }`}
+                  style={{ color: isCurrent ? primaryColor : undefined }}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+
+            {/* Custom Multi-Pages not already linked & not marked hidden */}
+            {pages.filter((p: any) => {
+              const excluded = navItems.some(
+                (ni: any) =>
+                  (ni.target === p.slug || ni.id === `custom-page-${p.id}`) &&
+                  (ni.visible === false || ni.visible === "false")
+              );
+              if (excluded) return false;
+              return !visibleNavItems.some((ni: any) => ni.target === p.slug);
+            }).length > 0 && (
+              <div className="flex items-center gap-3 border-l pl-4">
+                {pages
+                  .filter((p: any) => {
+                    const excluded = navItems.some(
+                      (ni: any) =>
+                        (ni.target === p.slug || ni.id === `custom-page-${p.id}`) &&
+                        (ni.visible === false || ni.visible === "false")
+                    );
+                    if (excluded) return false;
+                    return !visibleNavItems.some((ni: any) => ni.target === p.slug);
+                  })
+                  .map((p) => {
+                    const isCurrent = activePageSlug === p.slug;
+                    return (
+                      <Link
+                        key={p.slug}
+                        href={`/site/${domainOrSlug}?page=${p.slug}`}
+                        className={`text-xs uppercase tracking-wider font-extrabold px-3 py-1.5 rounded-lg transition-all ${
+                          isCurrent ? "text-white shadow-sm" : "hover:text-black text-slate-600"
+                        }`}
+                        style={{ backgroundColor: isCurrent ? primaryColor : undefined }}
+                      >
+                        {p.title}
+                      </Link>
+                    );
+                  })}
               </div>
             )}
           </nav>
@@ -141,14 +212,114 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
             style={{ backgroundColor: primaryColor }}
           >
             <MessageCircle className="w-4 h-4" />
-            <span>Book via WhatsApp</span>
+            <span>{config?.headerSection?.buttonText || "Book via WhatsApp"}</span>
           </a>
         </div>
       </header>
 
-      {/* ── CONDITIONAL RENDERING: CUSTOM PAGE VS ONE-PAGE HOME ── */}
+      {/* ── CONDITIONAL RENDERING: DEDICATED CATALOG / SERVICES / CUSTOM PAGE VS ONE-PAGE HOME ── */}
       {activePageSlug ? (
-        requestedPage ? (
+        activePageSlug === "products" ? (
+          <div>
+            {/* Breadcrumbs */}
+            <div className="bg-slate-50 border-b py-3">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-xs text-slate-500 font-semibold">
+                <Link href={`/site/${domainOrSlug}`} className="hover:text-slate-900 transition-colors">
+                  Home
+                </Link>
+                <span>/</span>
+                <span className="text-slate-900 font-bold">{catalogTitle}</span>
+              </div>
+            </div>
+
+            <CatalogView
+              products={products}
+              primaryColor={primaryColor}
+              whatsappUrl={whatsappUrl}
+              title={catalogTitle}
+              subtitle={config?.productsSection?.subtitle}
+              badge={config?.productsSection?.badge}
+              entityType={entityType}
+            />
+          </div>
+        ) : activePageSlug === "services" ? (
+          <div>
+            {/* Breadcrumbs */}
+            <div className="bg-slate-50 border-b py-3">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-xs text-slate-500 font-semibold">
+                <Link href={`/site/${domainOrSlug}`} className="hover:text-slate-900 transition-colors">
+                  Home
+                </Link>
+                <span>/</span>
+                <span className="text-slate-900 font-bold">{services.title || "Our Services"}</span>
+              </div>
+            </div>
+
+            <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+              <div className="text-center max-w-2xl mx-auto space-y-2">
+                <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
+                  SERVICES & PACKAGES
+                </span>
+                <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+                  {services.title || "Our Services & Packages"}
+                </h1>
+                {services.subtitle && <p className="text-slate-500 text-sm">{services.subtitle}</p>}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {(services.items && services.items.length > 0
+                  ? services.items
+                  : products && products.length > 0
+                  ? products.map((p: any) => ({
+                      name: p.title || p.name,
+                      price: p.price != null ? `Rs. ${Number(p.price).toLocaleString()}` : "Contact for price",
+                      imageUrl: p.image || p.images?.[0],
+                      description: p.description,
+                    }))
+                  : []
+                ).map((s: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-3xl border shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="aspect-[16/10] bg-slate-100 relative">
+                        {s.imageUrl ? (
+                          <Image src={s.imageUrl} alt={s.name} fill className="object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400">
+                            <ShoppingBag className="w-10 h-10 opacity-40" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-6">
+                        <h3 className="text-lg font-black text-slate-900">{s.name}</h3>
+                        {s.description && <p className="text-xs text-slate-500 mt-2 line-clamp-3">{s.description}</p>}
+                        <p className="text-base font-black mt-3" style={{ color: primaryColor }}>
+                          {s.price}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="p-6 pt-0">
+                      <a
+                        href={`${whatsappUrl}?text=${encodeURIComponent(
+                          `Hi, I'm interested in booking service: ${s.name}`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-white font-bold text-xs shadow-md hover:opacity-90 transition-opacity"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        <span>Book via WhatsApp</span>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        ) : requestedPage ? (
           <div>
             {/* Breadcrumbs */}
             <div className="bg-slate-50 border-b py-3">
@@ -348,19 +519,38 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
       )}
 
       {/* ── Services Section ── */}
-      {services.enabled && (
+      {services.enabled !== false && (
         <section id="services" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
           <div className="mb-12">
             <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-              OUR SERVICES
+              OUR SERVICES & OFFERINGS
             </span>
             <h2 className="text-3xl font-black tracking-tight text-slate-900 mt-1">
               {services.title || "Featured Services"}
             </h2>
+            {services.subtitle && (
+              <p className="text-sm text-slate-500 mt-2">{services.subtitle}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(services.items || []).map((s: any, idx: number) => (
+            {((services.items && services.items.length > 0)
+              ? services.items
+              : (products && products.length > 0
+                  ? products.slice(0, 4).map((p: any) => ({
+                      name: p.title || p.name,
+                      price: p.price != null ? `Rs. ${Number(p.price).toLocaleString()}` : "Contact for price",
+                      imageUrl: p.image || p.images?.[0],
+                      description: p.description,
+                    }))
+                  : [
+                      { name: "Consultation & Styling", price: "Complimentary" },
+                      { name: "Premium Care Package", price: "Rs. 3,500" },
+                      { name: "Express Service", price: "Rs. 2,000" },
+                      { name: "Special Collection", price: "Rs. 4,500" },
+                    ]
+                )
+            ).map((s: any, idx: number) => (
               <div
                 key={idx}
                 className="bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
@@ -369,22 +559,31 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
                   {s.imageUrl ? (
                     <Image src={s.imageUrl} alt={s.name} fill className="object-cover group-hover:scale-105 transition-transform" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      Service
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 p-4 text-center">
+                      <ShoppingBag className="w-8 h-8 mb-1 opacity-50" />
+                      <span className="text-[10px] uppercase font-bold tracking-wider">Service Feature</span>
                     </div>
                   )}
                 </div>
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-extrabold text-base text-slate-900">{s.name}</h3>
-                    <p className="text-sm font-bold text-slate-600 mt-1">{s.price}</p>
+                    <h3 className="font-extrabold text-base text-slate-900 line-clamp-1">{s.name}</h3>
+                    {s.description && (
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{s.description}</p>
+                    )}
+                    <p className="text-sm font-black mt-2" style={{ color: primaryColor }}>
+                      {s.price}
+                    </p>
                   </div>
                   <a
-                    href={whatsappUrl}
-                    className="mt-4 inline-flex items-center justify-center w-full py-2.5 rounded-xl text-white text-xs font-black shadow-sm hover:opacity-90 transition-opacity"
+                    href={`${whatsappUrl}?text=${encodeURIComponent(`Hi, I'm interested in booking your service: ${s.name}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-white text-xs font-black shadow-sm hover:opacity-90 transition-opacity"
                     style={{ backgroundColor: primaryColor }}
                   >
-                    Book Now
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>Book Service</span>
                   </a>
                 </div>
               </div>
@@ -393,72 +592,153 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
         </section>
       )}
 
-      {/* ── Products Showcase Section ── */}
-      <section id="products" className="py-20 bg-slate-50/50 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-              PRODUCTS
-            </span>
-            <h2 className="text-3xl font-black tracking-tight text-slate-900 mt-1">Browse Our Collection</h2>
-          </div>
+      {/* ── Products Showcase Section (⚡ Live Synced with TryMe) ── */}
+      {config?.productsSection?.enabled !== false && (
+        <section id="products" className="py-20 bg-slate-50/50 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <span className="text-xs font-black uppercase tracking-widest inline-flex items-center gap-1.5" style={{ color: primaryColor }}>
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{config?.productsSection?.badge || "STORE INVENTORY"}</span>
+              </span>
+              <h2 className="text-3xl font-black tracking-tight text-slate-900 mt-1">
+                {config?.productsSection?.title || "Direct From Our Store"}
+              </h2>
+              <p className="text-sm text-slate-500 mt-2">
+                {config?.productsSection?.subtitle || "Browse verified catalog items and order directly via WhatsApp or visit our physical store."}
+              </p>
+            </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {(products || []).map((p: any) => {
-              const img = p.images?.[0]?.url || p.images?.[0];
-              const price = p.price ? `Rs. ${Number(p.price).toLocaleString()}` : "Contact for price";
+            {products && products.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                {products.map((p: any, idx: number) => {
+                  const title = p.title || p.name || `Product #${idx + 1}`;
+                  const price = p.price != null && p.price !== ""
+                    ? `Rs. ${Number(p.price).toLocaleString()}`
+                    : (p.type === "AD" ? "Contact for price" : "Rs. 0");
+                  const img = p.image || p.images?.[0];
 
-              return (
-                <div key={p.id} className="bg-white rounded-2xl border p-3 hover:shadow-xl transition-all duration-300 group flex flex-col">
-                  <div className="aspect-square rounded-xl bg-slate-100 relative overflow-hidden mb-3">
-                    {img ? (
-                      <Image src={img} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <ShoppingBag className="w-10 h-10" />
-                      </div>
-                    )}
-                  </div>
-                  <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{p.name}</h4>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm font-black text-slate-900">{price}</span>
-                    <a
-                      href={`${whatsappUrl}?text=${encodeURIComponent(`Hi! I want to purchase: ${p.name}`)}`}
-                      className="px-3 py-1.5 rounded-lg text-white font-bold text-[11px] shadow-sm hover:opacity-90"
-                      style={{ backgroundColor: primaryColor }}
+                  return (
+                    <div
+                      key={p.id || idx}
+                      className="bg-white rounded-2xl border p-3.5 hover:shadow-xl transition-all duration-300 group flex flex-col justify-between"
                     >
-                      Buy Now
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
+                      <div>
+                        <div className="aspect-square rounded-xl bg-slate-100 relative overflow-hidden mb-3">
+                          {img ? (
+                            <Image src={img} alt={title} fill className="object-cover group-hover:scale-105 transition-transform" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                              <ShoppingBag className="w-10 h-10" />
+                            </div>
+                          )}
+                          {p.type && (
+                            <span className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[9px] uppercase font-black text-white px-2 py-0.5 rounded-full">
+                              {p.type === "AD" ? "Ad" : "Product"}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-sm text-slate-900 line-clamp-2">{title}</h4>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                        <span className="text-sm font-black text-slate-900">{price}</span>
+                        <a
+                          href={`${whatsappUrl}?text=${encodeURIComponent(`Hi, I would like to order/inquire about: ${title} (${price})`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-lg text-white font-bold text-[11px] shadow-sm hover:opacity-90 inline-flex items-center gap-1"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          <MessageCircle className="w-3 h-3" />
+                          <span>Order</span>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white border rounded-2xl p-10 text-center max-w-md mx-auto space-y-3">
+                <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
+                <h4 className="font-bold text-base text-slate-800">No Items Listed Yet</h4>
+                <p className="text-xs text-slate-500">
+                  Products and ads you add in your TryMe dashboard will automatically sync and appear right here.
+                </p>
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── About Section ── */}
-      {about.enabled && (
+      {about.enabled !== false && (
         <section id="about" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-                ABOUT US
+              <span className="text-xs font-black uppercase tracking-widest inline-block" style={{ color: primaryColor }}>
+                {about.badge || "ABOUT US"}
               </span>
-              <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                {about.title || "Our Story"}
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+                {about.title || `About ${vendor.businessName}`}
               </h2>
-              <p className="text-base text-slate-600 leading-relaxed">
+              <p className="text-base text-slate-600 leading-relaxed whitespace-pre-line">
                 {about.content || "Dedicated to providing the best products and experiences."}
               </p>
+
+              {/* Highlights & Trust Badges */}
+              {(about.highlights || [
+                "100% Genuine Products",
+                "Fast Islandwide Delivery",
+                "Friendly WhatsApp Support",
+              ]).length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  {(about.highlights || [
+                    "100% Genuine Products",
+                    "Fast Islandwide Delivery",
+                    "Friendly WhatsApp Support",
+                  ]).map((h: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-white shrink-0"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </div>
+                      <span>{h}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-2">
+                <a
+                  href={`${whatsappUrl}?text=${encodeURIComponent(
+                    `Hi, I'm reaching out after reading about ${vendor.businessName} on your website!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-bold text-xs shadow-md hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{about.buttonText || "Inquire via WhatsApp"}</span>
+                </a>
+              </div>
             </div>
 
             <div className="aspect-[4/3] rounded-3xl bg-slate-100 overflow-hidden relative border shadow-lg">
               {about.images?.[0] ? (
                 <Image src={about.images[0]} alt="About" fill className="object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-xs uppercase tracking-widest">
-                  About Us
+                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 p-8 text-center space-y-2">
+                  <Building2 className="w-12 h-12 opacity-30 text-slate-500" />
+                  <span className="font-bold text-xs uppercase tracking-widest text-slate-600">
+                    {vendor.businessName}
+                  </span>
+                  <p className="text-[11px] text-slate-400 max-w-xs">
+                    About Us photo can be uploaded from the Website Builder Sections tab
+                  </p>
                 </div>
               )}
             </div>
@@ -468,45 +748,25 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
     </>
   )}
 
-      {/* ── Footer / Contact ── */}
-      <footer id="contact" className="bg-slate-950 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-4">
-            <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-              GET IN TOUCH
-            </span>
-            <h3 className="text-3xl font-black tracking-tight">Visit Us or Connect</h3>
-            <div className="space-y-2 text-sm text-slate-400 pt-2">
-              {contact.address && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
-                  <span>{contact.address}</span>
-                </div>
-              )}
-              {(contact.phone || vendor.phone) && (
-                <div className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-slate-500 shrink-0" />
-                  <span>{contact.phone || vendor.phone}</span>
-                </div>
-              )}
-            </div>
-          </div>
+      {/* ── Contact Us Section ── */}
+      <ContactSectionClient
+        contact={contact}
+        vendor={vendor}
+        primaryColor={primaryColor}
+        whatsappUrl={whatsappUrl}
+      />
 
-          <div className="flex flex-col items-start md:items-end justify-center space-y-4">
-            <a
-              href={whatsappUrl}
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-white font-black text-sm shadow-xl hover:opacity-95 transition-opacity"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span>Book via WhatsApp</span>
-            </a>
-            <p className="text-xs text-slate-500">
-              {footer.copyrightText || `© ${new Date().getFullYear()} ${vendor.businessName}. All rights reserved.`}
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* ── Rich Multi-Column Footer ── */}
+      <FooterSectionClient
+        footer={footer}
+        contact={contact}
+        vendor={vendor}
+        primaryColor={primaryColor}
+        pages={pages}
+        visibleNavItems={visibleNavItems}
+        domainOrSlug={domainOrSlug}
+        entityType={entityType}
+      />
     </div>
   );
 }
