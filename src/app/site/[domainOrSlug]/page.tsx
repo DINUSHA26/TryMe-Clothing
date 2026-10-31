@@ -120,10 +120,18 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
     { id: "contact", label: "Contact", type: "scroll", target: "contact", visible: true },
   ];
 
-  const navItems: any[] =
+  const rawNavItems: any[] =
     config?.navItemsJson && Array.isArray(config.navItemsJson) && config.navItemsJson.length > 0
       ? config.navItemsJson
       : defaultNavItems;
+
+  const navItems = [...rawNavItems];
+  defaultNavItems.forEach((def) => {
+    const exists = navItems.some((s: any) => s.id === def.id || (s.target === def.target && s.type === def.type));
+    if (!exists) {
+      navItems.push(def);
+    }
+  });
 
   const visibleNavItems = navItems.filter((item: any) => {
     if (item.visible === false || item.visible === "false") return false;

@@ -176,10 +176,18 @@ export default function SitePreviewPage() {
     { id: "contact", label: "Contact", type: "scroll", target: "contact", visible: true },
   ];
 
-  const configuredNavItems: any[] =
+  const rawNavItems: any[] =
     config?.navItemsJson && Array.isArray(config.navItemsJson) && config.navItemsJson.length > 0
       ? config.navItemsJson
       : defaultNavItems;
+
+  const configuredNavItems = [...rawNavItems];
+  defaultNavItems.forEach((def) => {
+    const exists = configuredNavItems.some((s: any) => s.id === def.id || (s.target === def.target && s.type === def.type));
+    if (!exists) {
+      configuredNavItems.push(def);
+    }
+  });
 
   const visibleNavItems = configuredNavItems.filter((item: any) => {
     if (item.visible === false || item.visible === "false") return false;

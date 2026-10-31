@@ -157,24 +157,21 @@ export default function WebsiteBuilderPage() {
 
   // Navigation Items Management
   const getEffectiveNavItems = () => {
-    if (Array.isArray(config.navItemsJson) && config.navItemsJson.length > 0) {
-      return config.navItemsJson;
-    }
-    return [
+    const defaults = [
       { id: "home", label: "Home", type: "scroll", target: "home", visible: true },
-      {
-        id: "services",
-        label: "Services",
-        type: "scroll",
-        target: "services",
-        visible: config.servicesSection?.enabled !== false,
-      },
       {
         id: "products",
         label: entityType === "ADS_SELLER" ? "My Ads" : "Products",
         type: "scroll",
         target: "products",
         visible: config.productsSection?.enabled !== false,
+      },
+      {
+        id: "services",
+        label: "Services",
+        type: "scroll",
+        target: "services",
+        visible: config.servicesSection?.enabled !== false,
       },
       { id: "about", label: "About", type: "scroll", target: "about", visible: config.aboutSection?.enabled !== false },
       {
@@ -193,6 +190,20 @@ export default function WebsiteBuilderPage() {
       },
       { id: "contact", label: "Contact", type: "scroll", target: "contact", visible: true },
     ];
+
+    if (!Array.isArray(config.navItemsJson) || config.navItemsJson.length === 0) {
+      return defaults;
+    }
+
+    const saved = [...config.navItemsJson];
+    defaults.forEach((def) => {
+      const exists = saved.some((s: any) => s.id === def.id || (s.target === def.target && s.type === def.type));
+      if (!exists) {
+        saved.push(def);
+      }
+    });
+
+    return saved;
   };
 
   const handleUpdateNavItem = (id: string, updates: Partial<any>) => {
@@ -206,37 +217,9 @@ export default function WebsiteBuilderPage() {
       updatedList = [...current, { id, ...updates }];
     }
     setConfig((prev: any) => {
+      // NOTE: Updating navbar item visibility ONLY controls whether the item appears
+      // in the top navigation bar. It does NOT disable the section on the page!
       const nextConfig = { ...prev, navItemsJson: updatedList };
-      if (id === "gallery" && typeof updates.visible === "boolean") {
-        nextConfig.gallerySection = {
-          ...(prev.gallerySection || {}),
-          enabled: updates.visible,
-        };
-      }
-      if (id === "reviews" && typeof updates.visible === "boolean") {
-        nextConfig.reviewsSection = {
-          ...(prev.reviewsSection || {}),
-          enabled: updates.visible,
-        };
-      }
-      if (id === "about" && typeof updates.visible === "boolean") {
-        nextConfig.aboutSection = {
-          ...(prev.aboutSection || {}),
-          enabled: updates.visible,
-        };
-      }
-      if (id === "services" && typeof updates.visible === "boolean") {
-        nextConfig.servicesSection = {
-          ...(prev.servicesSection || {}),
-          enabled: updates.visible,
-        };
-      }
-      if (id === "products" && typeof updates.visible === "boolean") {
-        nextConfig.productsSection = {
-          ...(prev.productsSection || {}),
-          enabled: updates.visible,
-        };
-      }
       autoSaveConfig(nextConfig);
       return nextConfig;
     });
@@ -1382,6 +1365,17 @@ export default function WebsiteBuilderPage() {
                         </label>
                       </div>
                     </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show &apos;Home&apos; in Top Navbar</span>
+                        <span className="text-[10px] text-slate-500 block">Navbar එකේ නම පෙන්වීම / සැඟවීම (Hero section එක පිටුවේ පවතී)</span>
+                      </div>
+                      <Switch
+                        checked={getEffectiveNavItems().find((it: any) => it.id === "home")?.visible !== false}
+                        onCheckedChange={(c) => handleUpdateNavItem("home", { visible: c })}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -1391,7 +1385,7 @@ export default function WebsiteBuilderPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-emerald-600" />
-                    <h3 className="font-bold text-sm">Products & Ads (Live Synced)</h3>
+                    <h3 className="font-bold text-sm">Products &amp; Ads (Live Synced)</h3>
                   </div>
                   <Switch
                     checked={config.productsSection?.enabled !== false}
@@ -1448,6 +1442,17 @@ export default function WebsiteBuilderPage() {
                           }))
                         }
                         className="rounded-xl mt-1 text-xs"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
+                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Products section එක පිටුවේ පවතී)</span>
+                      </div>
+                      <Switch
+                        checked={getEffectiveNavItems().find((it: any) => it.id === "products")?.visible !== false}
+                        onCheckedChange={(c) => handleUpdateNavItem("products", { visible: c })}
                       />
                     </div>
                   </div>
@@ -1563,6 +1568,17 @@ export default function WebsiteBuilderPage() {
                           />
                         </div>
                       ))}
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
+                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Services section එක පිටුවේ පවතී)</span>
+                      </div>
+                      <Switch
+                        checked={getEffectiveNavItems().find((it: any) => it.id === "services")?.visible !== false}
+                        onCheckedChange={(c) => handleUpdateNavItem("services", { visible: c })}
+                      />
                     </div>
                   </div>
                 )}
@@ -1792,6 +1808,17 @@ export default function WebsiteBuilderPage() {
                         className="rounded-xl mt-1 text-xs font-semibold"
                       />
                     </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
+                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (About section එක පිටුවේ පවතී)</span>
+                      </div>
+                      <Switch
+                        checked={getEffectiveNavItems().find((it: any) => it.id === "about")?.visible !== false}
+                        onCheckedChange={(c) => handleUpdateNavItem("about", { visible: c })}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -1873,6 +1900,17 @@ export default function WebsiteBuilderPage() {
                           No gallery photos uploaded yet. Click &quot;Add Photo&quot; above.
                         </div>
                       )}
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
+                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Gallery section එක පිටුවේ පවතී)</span>
+                      </div>
+                      <Switch
+                        checked={getEffectiveNavItems().find((it: any) => it.id === "gallery")?.visible !== false}
+                        onCheckedChange={(c) => handleUpdateNavItem("gallery", { visible: c })}
+                      />
                     </div>
                   </div>
                 )}
@@ -1987,6 +2025,17 @@ export default function WebsiteBuilderPage() {
                           />
                         </div>
                       ))}
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
+                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Reviews section එක පිටුවේ පවතී)</span>
+                      </div>
+                      <Switch
+                        checked={getEffectiveNavItems().find((it: any) => it.id === "reviews")?.visible !== false}
+                        onCheckedChange={(c) => handleUpdateNavItem("reviews", { visible: c })}
+                      />
                     </div>
                   </div>
                 )}
@@ -2196,6 +2245,17 @@ export default function WebsiteBuilderPage() {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
+                      <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Contact section එක පිටුවේ පවතී)</span>
+                    </div>
+                    <Switch
+                      checked={getEffectiveNavItems().find((it: any) => it.id === "contact")?.visible !== false}
+                      onCheckedChange={(c) => handleUpdateNavItem("contact", { visible: c })}
+                    />
                   </div>
                 </div>
               </div>
@@ -2644,7 +2704,12 @@ export default function WebsiteBuilderPage() {
 
               {/* OTHER STANDARD SECTIONS */}
               <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <h4 className="font-bold text-sm">Other Standard Sections</h4>
+                <div>
+                  <h4 className="font-bold text-sm">Other Standard Sections</h4>
+                  <p className="text-[11px] text-slate-400">
+                    Switch off to hide button from Navbar. The section will still stay active on your website.
+                  </p>
+                </div>
                 <div className="space-y-3">
                   {[
                     { id: "home", defaultLabel: "Home" },
@@ -2718,7 +2783,7 @@ export default function WebsiteBuilderPage() {
                       const navItem = getEffectiveNavItems().find(
                         (it: any) => it.id === pageItemId || it.target === p.slug
                       );
-                      const isVisible = navItem ? navItem.visible !== false : false;
+                      const isVisible = navItem ? navItem.visible !== false : true;
 
                       return (
                         <div key={p.id} className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-2">
@@ -2815,12 +2880,25 @@ export default function WebsiteBuilderPage() {
                   <div className="space-y-4 border p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50">
                     <div className="flex items-center justify-between">
                       <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500">Page Identity</h4>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs text-slate-500 font-semibold">Published</Label>
-                        <Switch
-                          checked={editingPage.isPublished !== false}
-                          onCheckedChange={(val) => handleUpdateEditingPage({ isPublished: val })}
-                        />
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <Label className="text-xs text-slate-500 font-semibold">In Navbar</Label>
+                          <Switch
+                            checked={
+                              getEffectiveNavItems().find(
+                                (it: any) => it.id === `custom-page-${editingPage.id}` || it.target === editingPage.slug
+                              )?.visible !== false
+                            }
+                            onCheckedChange={(val) => handleToggleCustomPageInNav(editingPage, val)}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Label className="text-xs text-slate-500 font-semibold">Published</Label>
+                          <Switch
+                            checked={editingPage.isPublished !== false}
+                            onCheckedChange={(val) => handleUpdateEditingPage({ isPublished: val })}
+                          />
+                        </div>
                       </div>
                     </div>
 
