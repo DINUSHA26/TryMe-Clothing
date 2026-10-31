@@ -38,8 +38,8 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
   }
 
   const { vendor, config, products } = siteData;
-  const isSeller = Boolean((siteData as any).seller);
-  const entityType: "VENDOR" | "ADS_SELLER" = isSeller ? "ADS_SELLER" : "VENDOR";
+  const entityType: "VENDOR" | "ADS_SELLER" =
+    siteData.type === "ADS_SELLER" || Boolean((siteData as any).seller) ? "ADS_SELLER" : "VENDOR";
 
   const pages: any[] = config?.pages || [];
   const primaryColor = config?.primaryColor || "#E91E63";
