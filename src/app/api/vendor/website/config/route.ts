@@ -124,18 +124,71 @@ export async function GET(request: NextRequest) {
       where: whereClause,
     });
 
+    // Fetch and sync products (for Vendor) or ads (for AdsSeller)
+    let rawItems: any[] = [];
+    if (target.type === "VENDOR") {
+      rawItems = await prisma.product.findMany({
+        where: {
+          vendorId: target.entity.id,
+          isActive: true,
+          isDraft: false,
+          isDisabledByAdmin: false,
+        },
+        include: { images: true },
+        orderBy: { createdAt: "desc" },
+        take: 36,
+      });
+    } else {
+      rawItems = await (prisma as any).classifiedAd.findMany({
+        where: {
+          sellerId: target.entity.id,
+          status: "ACTIVE",
+        },
+        orderBy: { createdAt: "desc" },
+        take: 36,
+      });
+    }
+
+    const products = rawItems.map((item: any) => {
+      const isVendorProduct = target.type === "VENDOR";
+      const title = isVendorProduct ? item.name : item.title;
+      const images: string[] = isVendorProduct
+        ? (item.images || []).map((img: any) => img.url).filter(Boolean)
+        : (item.images || []).filter(Boolean);
+      const primaryImage = images[0] || null;
+      const priceNum = item.price ? Number(item.price) : null;
+
+      return {
+        id: item.id,
+        title,
+        name: title,
+        slug: isVendorProduct ? item.slug : item.id,
+        price: priceNum,
+        compareAtPrice: item.compareAtPrice ? Number(item.compareAtPrice) : null,
+        description: item.description || "",
+        image: primaryImage,
+        images,
+        type: isVendorProduct ? ("PRODUCT" as const) : ("AD" as const),
+        url: isVendorProduct ? `/products/${item.slug}` : `/ads/${item.id}`,
+      };
+    });
+
     return NextResponse.json({
       success: true,
       data: {
         config,
         activeSubscription: activeSub,
         customDomain,
+        entityType: target.type,
         entityInfo: {
           id: target.entity.id,
           businessName: target.entity.businessName,
           slug: target.entity.slug,
           logo: (target.entity as any).logo || (target.entity as any).contactInfo?.logo || null,
+          banner: (target.entity as any).banner || (target.entity as any).contactInfo?.banner || null,
+          phone: (target.entity as any).businessPhone || (target.entity as any).phone || "",
         },
+        products,
       },
     });
   } catch (error: any) {

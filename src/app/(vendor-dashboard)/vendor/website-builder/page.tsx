@@ -30,6 +30,7 @@ import {
   Loader2,
   ArrowLeft,
   HelpCircle,
+  ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,6 +112,8 @@ export default function WebsiteBuilderPage() {
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
   const [customDomain, setCustomDomain] = useState<any>(null);
   const [pages, setPages] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [entityType, setEntityType] = useState<"VENDOR" | "ADS_SELLER">("VENDOR");
 
   // Dialogs
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
@@ -143,6 +146,8 @@ export default function WebsiteBuilderPage() {
             config,
             entityInfo,
             pages,
+            products,
+            entityType,
           },
         },
         "*"
@@ -233,6 +238,12 @@ export default function WebsiteBuilderPage() {
         if (json.data.entityInfo) {
           setEntityInfo(json.data.entityInfo);
         }
+        if (json.data.products) {
+          setProducts(json.data.products);
+        }
+        if (json.data.entityType) {
+          setEntityType(json.data.entityType);
+        }
         if (json.data.activeSubscription) {
           setActiveSubscription(json.data.activeSubscription);
         }
@@ -292,7 +303,9 @@ export default function WebsiteBuilderPage() {
       const data = await res.json();
       if (data.success) {
         const url = data.data.url;
-        if (targetField === "heroImage") {
+        if (targetField === "logo") {
+          setEntityInfo((prev: any) => ({ ...prev, logo: url }));
+        } else if (targetField === "heroImage") {
           setConfig((prev: any) => ({
             ...prev,
             heroSection: { ...prev.heroSection, bgImage: url },
@@ -301,6 +314,14 @@ export default function WebsiteBuilderPage() {
           setConfig((prev: any) => ({
             ...prev,
             aboutSection: { ...prev.aboutSection, images: [url] },
+          }));
+        } else if (targetField === "gallery") {
+          setConfig((prev: any) => ({
+            ...prev,
+            gallerySection: {
+              ...(prev.gallerySection || {}),
+              images: [...(prev.gallerySection?.images || []), url],
+            },
           }));
         }
         toast.success("Image uploaded successfully!", { id: "upload-img" });
@@ -356,6 +377,29 @@ export default function WebsiteBuilderPage() {
       }
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setIsVerifyingDomain(false);
+    }
+  };
+
+  const handleDisconnectDomain = async () => {
+    if (!customDomain) return;
+    if (!confirm(`Are you sure you want to disconnect ${customDomain.domain}? Visitors will no longer reach this store via this domain.`)) {
+      return;
+    }
+    setIsVerifyingDomain(true);
+    try {
+      const res = await fetch("/api/vendor/website/domain", { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setCustomDomain(null);
+        setNewDomainInput("");
+        toast.success("Domain disconnected! You can now connect this domain to another website or connect a new one here.");
+      } else {
+        toast.error(data.error || "Failed to disconnect domain");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to disconnect domain");
     } finally {
       setIsVerifyingDomain(false);
     }
@@ -868,6 +912,53 @@ export default function WebsiteBuilderPage() {
                 </div>
 
                 <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Store Tagline / Slogan</Label>
+                  <Input
+                    value={entityInfo?.tagline || ""}
+                    onChange={(e) => setEntityInfo({ ...entityInfo, tagline: e.target.value })}
+                    placeholder="e.g. Official Flagship Store"
+                    className="mt-1 font-semibold rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Store Logo</Label>
+                  <div className="flex items-center gap-4 mt-2">
+                    {entityInfo?.logo ? (
+                      <div className="relative w-14 h-14 rounded-2xl overflow-hidden border shadow-sm">
+                        <Image src={entityInfo.logo} alt="Logo" fill className="object-cover" />
+                      </div>
+                    ) : (
+                      <div
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl text-white shadow-sm"
+                        style={{ backgroundColor: config.primaryColor }}
+                      >
+                        {entityInfo?.businessName?.charAt(0) || "S"}
+                      </div>
+                    )}
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50 shadow-sm">
+                      <CloudUpload className="w-3.5 h-3.5" />
+                      <span>Upload Logo</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} />
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Header Button CTA Text</Label>
+                  <Input
+                    value={config.headerSection?.buttonText || "Book via WhatsApp"}
+                    onChange={(e) =>
+                      setConfig((prev: any) => ({
+                        ...prev,
+                        headerSection: { ...(prev.headerSection || {}), buttonText: e.target.value },
+                      }))
+                    }
+                    className="mt-1 font-semibold rounded-xl"
+                  />
+                </div>
+
+                <div>
                   <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Primary Brand Color</Label>
                   <div className="flex items-center gap-3 mt-1.5">
                     <input
@@ -959,7 +1050,7 @@ export default function WebsiteBuilderPage() {
                             <Image src={config.heroSection.bgImage} alt="Hero" fill className="object-cover" />
                           </div>
                         )}
-                        <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50">
+                        <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50 shadow-sm">
                           <CloudUpload className="w-3.5 h-3.5" />
                           <span>Upload Image</span>
                           <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "heroImage")} />
@@ -970,10 +1061,81 @@ export default function WebsiteBuilderPage() {
                 )}
               </div>
 
+              {/* PRODUCTS & MY ADS SHOWCASE (⚡ LIVE SYNCED WITH TRYME) */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-600" />
+                    <h3 className="font-bold text-sm">Products & Ads (Live Synced)</h3>
+                  </div>
+                  <Switch
+                    checked={config.productsSection?.enabled !== false}
+                    onCheckedChange={(c) =>
+                      setConfig((prev: any) => ({
+                        ...prev,
+                        productsSection: { ...(prev.productsSection || {}), enabled: c },
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      {entityType === "ADS_SELLER" ? "My Ads Synced:" : "TryMe Products Synced:"} {products.length} Active Items
+                    </span>
+                  </div>
+                  <a
+                    href={entityType === "ADS_SELLER" ? "/ads-seller/my-ads" : "/vendor/products"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 underline hover:opacity-80"
+                  >
+                    <span>Manage in TryMe</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                {config.productsSection?.enabled !== false && (
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Section Heading</Label>
+                      <Input
+                        value={config.productsSection?.title || (entityType === "ADS_SELLER" ? "Active Ads & Services" : "Direct From Our Store")}
+                        onChange={(e) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            productsSection: { ...(prev.productsSection || {}), title: e.target.value },
+                          }))
+                        }
+                        className="rounded-xl mt-1 text-sm font-medium"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Section Subtitle</Label>
+                      <Input
+                        value={config.productsSection?.subtitle || "Browse verified catalog items and order directly via WhatsApp or visit our physical store."}
+                        onChange={(e) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            productsSection: { ...(prev.productsSection || {}), subtitle: e.target.value },
+                          }))
+                        }
+                        className="rounded-xl mt-1 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* SERVICES SECTION */}
               <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm">Services Section</h3>
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-primary" />
+                    <h3 className="font-bold text-sm">Services & Offerings</h3>
+                  </div>
                   <Switch
                     checked={config.servicesSection?.enabled !== false}
                     onCheckedChange={(c) =>
@@ -990,7 +1152,7 @@ export default function WebsiteBuilderPage() {
                     <div>
                       <Label className="text-xs text-slate-500 font-semibold">Section Title</Label>
                       <Input
-                        value={config.servicesSection?.title || ""}
+                        value={config.servicesSection?.title || "Featured Services"}
                         onChange={(e) =>
                           setConfig((prev: any) => ({
                             ...prev,
@@ -1000,11 +1162,136 @@ export default function WebsiteBuilderPage() {
                         className="rounded-xl mt-1 text-sm font-medium"
                       />
                     </div>
+
+                    <div className="pt-2 border-t space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-slate-700">Custom Service Cards</Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const currentItems = config.servicesSection?.items || [];
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              servicesSection: {
+                                ...(prev.servicesSection || {}),
+                                items: [...currentItems, { name: "New Service", price: "Rs. 2,500", description: "", imageUrl: "" }],
+                              },
+                            }));
+                          }}
+                          className="h-7 text-[11px] font-bold rounded-lg px-2"
+                        >
+                          + Add Service
+                        </Button>
+                      </div>
+
+                      {(config.servicesSection?.items || []).map((srv: any, idx: number) => (
+                        <div key={idx} className="p-3 bg-white dark:bg-slate-800 rounded-xl border space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold">Service #{idx + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const filtered = (config.servicesSection?.items || []).filter((_: any, i: number) => i !== idx);
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  servicesSection: { ...(prev.servicesSection || {}), items: filtered },
+                                }));
+                              }}
+                              className="text-red-500 hover:text-red-700 text-xs font-bold"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input
+                              placeholder="Service Name"
+                              value={srv.name || ""}
+                              onChange={(e) => {
+                                const items = [...(config.servicesSection?.items || [])];
+                                items[idx] = { ...items[idx], name: e.target.value };
+                                setConfig((prev: any) => ({ ...prev, servicesSection: { ...prev.servicesSection, items } }));
+                              }}
+                              className="text-xs h-8"
+                            />
+                            <Input
+                              placeholder="Price (e.g. Rs. 2,500)"
+                              value={srv.price || ""}
+                              onChange={(e) => {
+                                const items = [...(config.servicesSection?.items || [])];
+                                items[idx] = { ...items[idx], price: e.target.value };
+                                setConfig((prev: any) => ({ ...prev, servicesSection: { ...prev.servicesSection, items } }));
+                              }}
+                              className="text-xs h-8"
+                            />
+                          </div>
+                          <Input
+                            placeholder="Short description"
+                            value={srv.description || ""}
+                            onChange={(e) => {
+                              const items = [...(config.servicesSection?.items || [])];
+                              items[idx] = { ...items[idx], description: e.target.value };
+                              setConfig((prev: any) => ({ ...prev, servicesSection: { ...prev.servicesSection, items } }));
+                            }}
+                            className="text-xs h-8"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* CONTACT DETAILS */}
+              {/* ABOUT SECTION */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm">About Section</h3>
+                  <Switch
+                    checked={config.aboutSection?.enabled !== false}
+                    onCheckedChange={(c) =>
+                      setConfig((prev: any) => ({
+                        ...prev,
+                        aboutSection: { ...(prev.aboutSection || {}), enabled: c },
+                      }))
+                    }
+                  />
+                </div>
+
+                {config.aboutSection?.enabled !== false && (
+                  <div className="space-y-3 pt-2">
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Title</Label>
+                      <Input
+                        value={config.aboutSection?.title || ""}
+                        onChange={(e) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            aboutSection: { ...(prev.aboutSection || {}), title: e.target.value },
+                          }))
+                        }
+                        className="rounded-xl mt-1 text-sm font-medium"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Our Story / Description</Label>
+                      <Textarea
+                        rows={3}
+                        value={config.aboutSection?.content || ""}
+                        onChange={(e) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            aboutSection: { ...(prev.aboutSection || {}), content: e.target.value },
+                          }))
+                        }
+                        className="rounded-xl mt-1 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* CONTACT & WHATSAPP */}
               <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
                 <h3 className="font-bold text-sm">Contact & WhatsApp Booking</h3>
                 <div className="space-y-3">
@@ -1033,6 +1320,60 @@ export default function WebsiteBuilderPage() {
                         }))
                       }
                       className="rounded-xl mt-1 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* FOOTER & SOCIAL LINKS */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                <h3 className="font-bold text-sm">Footer & Social Links</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs text-slate-500 font-semibold">Copyright Notice</Label>
+                    <Input
+                      value={config.footerSection?.copyrightText || ""}
+                      onChange={(e) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          footerSection: { ...(prev.footerSection || {}), copyrightText: e.target.value },
+                        }))
+                      }
+                      className="rounded-xl mt-1 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-slate-500 font-semibold">Facebook Page URL</Label>
+                    <Input
+                      value={config.footerSection?.socialLinks?.facebook || ""}
+                      onChange={(e) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          footerSection: {
+                            ...(prev.footerSection || {}),
+                            socialLinks: { ...(prev.footerSection?.socialLinks || {}), facebook: e.target.value },
+                          },
+                        }))
+                      }
+                      placeholder="https://facebook.com/yourpage"
+                      className="rounded-xl mt-1 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-slate-500 font-semibold">Instagram Profile URL</Label>
+                    <Input
+                      value={config.footerSection?.socialLinks?.instagram || ""}
+                      onChange={(e) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          footerSection: {
+                            ...(prev.footerSection || {}),
+                            socialLinks: { ...(prev.footerSection?.socialLinks || {}), instagram: e.target.value },
+                          },
+                        }))
+                      }
+                      placeholder="https://instagram.com/yourprofile"
+                      className="rounded-xl mt-1 text-xs"
                     />
                   </div>
                 </div>
@@ -1596,15 +1937,27 @@ export default function WebsiteBuilderPage() {
                       </div>
                     </div>
 
-                    <Button
-                      onClick={handleVerifyDomain}
-                      disabled={isVerifyingDomain}
-                      variant="outline"
-                      className="w-full rounded-xl text-xs font-bold"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isVerifyingDomain ? "animate-spin" : ""}`} />
-                      Check DNS & SSL Status
-                    </Button>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        onClick={handleVerifyDomain}
+                        disabled={isVerifyingDomain}
+                        variant="outline"
+                        className="flex-1 rounded-xl text-xs font-bold"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isVerifyingDomain ? "animate-spin" : ""}`} />
+                        Check DNS & SSL Status
+                      </Button>
+                      <Button
+                        onClick={handleDisconnectDomain}
+                        disabled={isVerifyingDomain}
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl text-xs font-bold gap-1 px-3"
+                        title="Disconnect domain from this store"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Disconnect</span>
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>

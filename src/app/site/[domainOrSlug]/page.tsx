@@ -348,19 +348,38 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
       )}
 
       {/* ── Services Section ── */}
-      {services.enabled && (
+      {services.enabled !== false && (
         <section id="services" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
           <div className="mb-12">
             <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-              OUR SERVICES
+              OUR SERVICES & OFFERINGS
             </span>
             <h2 className="text-3xl font-black tracking-tight text-slate-900 mt-1">
               {services.title || "Featured Services"}
             </h2>
+            {services.subtitle && (
+              <p className="text-sm text-slate-500 mt-2">{services.subtitle}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(services.items || []).map((s: any, idx: number) => (
+            {((services.items && services.items.length > 0)
+              ? services.items
+              : (products && products.length > 0
+                  ? products.slice(0, 4).map((p: any) => ({
+                      name: p.title || p.name,
+                      price: p.price != null ? `Rs. ${Number(p.price).toLocaleString()}` : "Contact for price",
+                      imageUrl: p.image || p.images?.[0],
+                      description: p.description,
+                    }))
+                  : [
+                      { name: "Consultation & Styling", price: "Complimentary" },
+                      { name: "Premium Care Package", price: "Rs. 3,500" },
+                      { name: "Express Service", price: "Rs. 2,000" },
+                      { name: "Special Collection", price: "Rs. 4,500" },
+                    ]
+                )
+            ).map((s: any, idx: number) => (
               <div
                 key={idx}
                 className="bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
@@ -369,22 +388,31 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
                   {s.imageUrl ? (
                     <Image src={s.imageUrl} alt={s.name} fill className="object-cover group-hover:scale-105 transition-transform" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      Service
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 p-4 text-center">
+                      <ShoppingBag className="w-8 h-8 mb-1 opacity-50" />
+                      <span className="text-[10px] uppercase font-bold tracking-wider">Service Feature</span>
                     </div>
                   )}
                 </div>
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-extrabold text-base text-slate-900">{s.name}</h3>
-                    <p className="text-sm font-bold text-slate-600 mt-1">{s.price}</p>
+                    <h3 className="font-extrabold text-base text-slate-900 line-clamp-1">{s.name}</h3>
+                    {s.description && (
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{s.description}</p>
+                    )}
+                    <p className="text-sm font-black mt-2" style={{ color: primaryColor }}>
+                      {s.price}
+                    </p>
                   </div>
                   <a
-                    href={whatsappUrl}
-                    className="mt-4 inline-flex items-center justify-center w-full py-2.5 rounded-xl text-white text-xs font-black shadow-sm hover:opacity-90 transition-opacity"
+                    href={`${whatsappUrl}?text=${encodeURIComponent(`Hi, I'm interested in booking your service: ${s.name}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-white text-xs font-black shadow-sm hover:opacity-90 transition-opacity"
                     style={{ backgroundColor: primaryColor }}
                   >
-                    Book Now
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>Book Service</span>
                   </a>
                 </div>
               </div>
@@ -393,49 +421,84 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
         </section>
       )}
 
-      {/* ── Products Showcase Section ── */}
-      <section id="products" className="py-20 bg-slate-50/50 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-              PRODUCTS
-            </span>
-            <h2 className="text-3xl font-black tracking-tight text-slate-900 mt-1">Browse Our Collection</h2>
-          </div>
+      {/* ── Products Showcase Section (⚡ Live Synced with TryMe) ── */}
+      {config?.productsSection?.enabled !== false && (
+        <section id="products" className="py-20 bg-slate-50/50 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <span className="text-xs font-black uppercase tracking-widest inline-flex items-center gap-1.5" style={{ color: primaryColor }}>
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{config?.productsSection?.badge || "STORE INVENTORY"}</span>
+              </span>
+              <h2 className="text-3xl font-black tracking-tight text-slate-900 mt-1">
+                {config?.productsSection?.title || "Direct From Our Store"}
+              </h2>
+              <p className="text-sm text-slate-500 mt-2">
+                {config?.productsSection?.subtitle || "Browse verified catalog items and order directly via WhatsApp or visit our physical store."}
+              </p>
+            </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {(products || []).map((p: any) => {
-              const img = p.images?.[0]?.url || p.images?.[0];
-              const price = p.price ? `Rs. ${Number(p.price).toLocaleString()}` : "Contact for price";
+            {products && products.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                {products.map((p: any, idx: number) => {
+                  const title = p.title || p.name || `Product #${idx + 1}`;
+                  const price = p.price != null && p.price !== ""
+                    ? `Rs. ${Number(p.price).toLocaleString()}`
+                    : (p.type === "AD" ? "Contact for price" : "Rs. 0");
+                  const img = p.image || p.images?.[0];
 
-              return (
-                <div key={p.id} className="bg-white rounded-2xl border p-3 hover:shadow-xl transition-all duration-300 group flex flex-col">
-                  <div className="aspect-square rounded-xl bg-slate-100 relative overflow-hidden mb-3">
-                    {img ? (
-                      <Image src={img} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <ShoppingBag className="w-10 h-10" />
-                      </div>
-                    )}
-                  </div>
-                  <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{p.name}</h4>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm font-black text-slate-900">{price}</span>
-                    <a
-                      href={`${whatsappUrl}?text=${encodeURIComponent(`Hi! I want to purchase: ${p.name}`)}`}
-                      className="px-3 py-1.5 rounded-lg text-white font-bold text-[11px] shadow-sm hover:opacity-90"
-                      style={{ backgroundColor: primaryColor }}
+                  return (
+                    <div
+                      key={p.id || idx}
+                      className="bg-white rounded-2xl border p-3.5 hover:shadow-xl transition-all duration-300 group flex flex-col justify-between"
                     >
-                      Buy Now
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
+                      <div>
+                        <div className="aspect-square rounded-xl bg-slate-100 relative overflow-hidden mb-3">
+                          {img ? (
+                            <Image src={img} alt={title} fill className="object-cover group-hover:scale-105 transition-transform" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                              <ShoppingBag className="w-10 h-10" />
+                            </div>
+                          )}
+                          {p.type && (
+                            <span className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[9px] uppercase font-black text-white px-2 py-0.5 rounded-full">
+                              {p.type === "AD" ? "Ad" : "Product"}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-sm text-slate-900 line-clamp-2">{title}</h4>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                        <span className="text-sm font-black text-slate-900">{price}</span>
+                        <a
+                          href={`${whatsappUrl}?text=${encodeURIComponent(`Hi, I would like to order/inquire about: ${title} (${price})`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-lg text-white font-bold text-[11px] shadow-sm hover:opacity-90 inline-flex items-center gap-1"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          <MessageCircle className="w-3 h-3" />
+                          <span>Order</span>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white border rounded-2xl p-10 text-center max-w-md mx-auto space-y-3">
+                <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
+                <h4 className="font-bold text-base text-slate-800">No Items Listed Yet</h4>
+                <p className="text-xs text-slate-500">
+                  Products and ads you add in your TryMe dashboard will automatically sync and appear right here.
+                </p>
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── About Section ── */}
       {about.enabled && (
@@ -495,14 +558,43 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
           <div className="flex flex-col items-start md:items-end justify-center space-y-4">
             <a
               href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-white font-black text-sm shadow-xl hover:opacity-95 transition-opacity"
               style={{ backgroundColor: primaryColor }}
             >
               <MessageCircle className="w-5 h-5" />
-              <span>Book via WhatsApp</span>
+              <span>{config?.headerSection?.buttonText || "Book via WhatsApp"}</span>
             </a>
+
+            {/* Social Links */}
+            {(footer?.socialLinks?.facebook || footer?.socialLinks?.instagram) && (
+              <div className="flex items-center gap-3 pt-1">
+                {footer.socialLinks?.facebook && (
+                  <a
+                    href={footer.socialLinks.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white transition-colors"
+                  >
+                    Facebook
+                  </a>
+                )}
+                {footer.socialLinks?.instagram && (
+                  <a
+                    href={footer.socialLinks.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white transition-colors"
+                  >
+                    Instagram
+                  </a>
+                )}
+              </div>
+            )}
+
             <p className="text-xs text-slate-500">
-              {footer.copyrightText || `© ${new Date().getFullYear()} ${vendor.businessName}. All rights reserved.`}
+              {footer?.copyrightText || `© ${new Date().getFullYear()} ${vendor?.businessName || "Store"}. All rights reserved.`}
             </p>
           </div>
         </div>
