@@ -144,18 +144,25 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Custom Domain Multi-Tenant Rewrite (Vercel for Platforms) ──
-  const host = request.headers.get("host")?.toLowerCase() || "";
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "tryme.lk";
+  const rawHost = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
+  const host = rawHost.toLowerCase().replace(/:\d+$/, "");
+  const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "tryme.lk").toLowerCase().replace(/^www\./, "");
 
+  // Main TryMe platform hosts:
+  // - tryme.lk, www.tryme.lk, *.tryme.lk
+  // - try-me-clothing.vercel.app (and git preview branches of try-me-clothing)
+  // - localhost, 127.0.0.1
   const isTryMeHost =
     host === rootDomain ||
+    host === `www.${rootDomain}` ||
     host.endsWith(`.${rootDomain}`) ||
+    host === "try-me-clothing.vercel.app" ||
+    (host.startsWith("try-me-clothing") && host.endsWith(".vercel.app")) ||
     host.includes("localhost") ||
-    host.includes("127.0.0.1") ||
-    host.includes("vercel.app");
+    host === "127.0.0.1";
 
   if (!isTryMeHost) {
-    // Custom domain request! e.g., fashiondora.lk or www.fashiondora.lk
+    // Custom domain request! e.g., fashiondora.lk, apple26.vercel.app, coolword.vercel.app
     const cleanHost = host.replace(/^www\./, "");
     if (!pathname.startsWith("/site") && !pathname.startsWith("/api")) {
       const url = request.nextUrl.clone();
