@@ -38,9 +38,23 @@ export async function generateMetadata({ params }: SitePageProps) {
     `Welcome to ${storeName}`;
   const ogImage = siteData.config?.ogImage || siteData.vendor?.banner || siteData.vendor?.logo;
 
+  const faviconUrl =
+    (siteData.config?.heroSection as any)?.faviconUrl ||
+    siteData.vendor?.logo ||
+    "/icon.png";
+
   return {
     title,
     description,
+    icons: {
+      icon: [
+        { url: faviconUrl },
+        { url: faviconUrl, sizes: "32x32" },
+        { url: faviconUrl, sizes: "16x16" },
+      ],
+      shortcut: [faviconUrl],
+      apple: [{ url: faviconUrl }],
+    },
     openGraph: {
       title,
       description,
@@ -130,11 +144,19 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
 
   const requestedPage = activePageSlug ? pages.find((p) => p.slug === activePageSlug) : null;
 
+  const faviconUrl =
+    (config?.heroSection as any)?.faviconUrl ||
+    vendor?.logo ||
+    "/icon.png";
+
   return (
     <div
       className="min-h-screen bg-white text-slate-900 selection:bg-rose-100 selection:text-rose-900"
       style={{ fontFamily: config?.fontFamily || "Inter, sans-serif" }}
     >
+      <link rel="icon" href={faviconUrl} />
+      <link rel="shortcut icon" href={faviconUrl} />
+      <link rel="apple-touch-icon" href={faviconUrl} />
       {/* ── Standalone Vendor Header ── */}
       <header className="bg-white/95 backdrop-blur-md border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">

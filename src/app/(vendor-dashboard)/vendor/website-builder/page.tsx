@@ -523,6 +523,15 @@ export default function WebsiteBuilderPage() {
         const url = data.data.url;
         if (targetField === "logo") {
           setEntityInfo((prev: any) => ({ ...prev, logo: url }));
+        } else if (targetField === "favicon") {
+          setConfig((prev: any) => {
+            const updated = {
+              ...prev,
+              heroSection: { ...(prev.heroSection || {}), faviconUrl: url },
+            };
+            autoSaveConfig(updated);
+            return updated;
+          });
         } else if (targetField === "heroImage") {
           setConfig((prev: any) => ({
             ...prev,
@@ -1179,6 +1188,84 @@ export default function WebsiteBuilderPage() {
                       <span>Upload Logo</span>
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} />
                     </label>
+                  </div>
+                </div>
+
+                {/* Website Favicon (Browser Tab Icon) */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Website Favicon (Browser Tab Icon)
+                      </Label>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Browser tab bar eke penwana icon eka (Default: Store Logo)
+                      </p>
+                    </div>
+                    {config.heroSection?.faviconUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const updated = {
+                            ...config,
+                            heroSection: {
+                              ...(config.heroSection || {}),
+                              faviconUrl: null,
+                            },
+                          };
+                          setConfig(updated);
+                          autoSaveConfig(updated);
+                          toast.success("Favicon reset to Store Logo");
+                        }}
+                        className="text-xs h-7 text-slate-500 hover:text-red-500 gap-1 px-2"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="relative w-12 h-12 rounded-xl overflow-hidden border bg-slate-50 dark:bg-slate-800 flex items-center justify-center shadow-sm">
+                      {config.heroSection?.faviconUrl ? (
+                        <Image
+                          src={config.heroSection.faviconUrl}
+                          alt="Custom Favicon"
+                          fill
+                          className="object-contain p-1"
+                        />
+                      ) : entityInfo?.logo ? (
+                        <Image
+                          src={entityInfo.logo}
+                          alt="Store Logo as Favicon"
+                          fill
+                          className="object-contain p-1"
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center font-black text-xs text-white"
+                          style={{ backgroundColor: config.primaryColor }}
+                        >
+                          {entityInfo?.businessName?.charAt(0) || "S"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50 shadow-sm w-fit">
+                        <CloudUpload className="w-3.5 h-3.5 text-primary" />
+                        <span>{config.heroSection?.faviconUrl ? "Change Favicon" : "Upload Custom Favicon"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload(e, "favicon")}
+                        />
+                      </label>
+                      <span className="text-[10px] text-slate-400">
+                        {config.heroSection?.faviconUrl ? "Custom Favicon active" : "Using Store Logo as default"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
