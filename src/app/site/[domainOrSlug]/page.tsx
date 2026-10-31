@@ -26,6 +26,29 @@ interface SitePageProps {
   searchParams?: Promise<{ page?: string }>;
 }
 
+export async function generateMetadata({ params }: SitePageProps) {
+  const { domainOrSlug } = await params;
+  const siteData = await getStandaloneSiteData(domainOrSlug);
+  if (!siteData) return { title: "Store Not Found" };
+  const storeName = siteData.vendor?.businessName || "Store";
+  const title = siteData.config?.metaTitle || `${storeName} | Official Store`;
+  const description =
+    siteData.config?.metaDescription ||
+    siteData.config?.heroSection?.subtitle ||
+    `Welcome to ${storeName}`;
+  const ogImage = siteData.config?.ogImage || siteData.vendor?.banner || siteData.vendor?.logo;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: ogImage ? [ogImage] : [],
+    },
+  };
+}
+
 export default async function StandaloneSitePage({ params, searchParams }: SitePageProps) {
   const { domainOrSlug } = await params;
   const searchParamsObj = searchParams ? await searchParams : {};
