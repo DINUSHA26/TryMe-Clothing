@@ -31,6 +31,17 @@ import {
   ArrowLeft,
   HelpCircle,
   ShoppingBag,
+  Menu,
+  Sliders,
+  Camera,
+  Star,
+  Clock,
+  MapPin,
+  Mail,
+  Phone,
+  MessageCircle,
+  Send,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,14 +62,14 @@ export default function WebsiteBuilderPage() {
 
   // Config & State
   const [config, setConfig] = useState<any>({
-    primaryColor: "#E91E63",
+    primaryColor: "#5c2336",
     secondaryColor: "#111827",
     fontFamily: "Inter",
     headerStyle: "sticky",
     heroSection: {
       enabled: true,
-      title: "Beautiful Nails Happier You",
-      subtitle: "Premium care, relaxing spa experience, and expert styling crafted especially for you.",
+      title: "",
+      subtitle: "",
       buttonText: "Book via WhatsApp",
       buttonLink: "#contact",
       bgImage: "",
@@ -66,35 +77,27 @@ export default function WebsiteBuilderPage() {
     },
     aboutSection: {
       enabled: true,
-      title: "More Than Just a Store",
-      content: "We provide exceptional products and services with a focus on unmatched quality and care.",
+      title: "About Us",
+      content: "",
       images: [],
     },
     servicesSection: {
       enabled: true,
-      title: "Nail Care Services",
-      items: [
-        { name: "Manicure", price: "Rs. 2,500" },
-        { name: "Pedicure", price: "Rs. 3,000" },
-        { name: "Gel Nails", price: "Rs. 4,500" },
-        { name: "Nail Art", price: "Rs. 5,000" },
-      ],
+      title: "Featured Services & Products",
+      items: [],
     },
-    gallerySection: { enabled: true, title: "A Glimpse of Our Work", images: [] },
+    gallerySection: { enabled: false, title: "A Glimpse of Our Work", images: [] },
     reviewsSection: {
-      enabled: true,
+      enabled: false,
       title: "What Our Customers Say",
-      items: [
-        { name: "Chathuri Fernando", comment: "Amazing service and friendly staff! Loved the designs." },
-        { name: "Nimali Perera", comment: "Clean, professional, and beautiful results!" },
-      ],
+      items: [],
     },
     contactSection: {
       enabled: true,
-      phone: "077 123 4567",
-      whatsapp: "077 123 4567",
-      email: "hello@lushnails.lk",
-      address: "123, Galle Road, Colombo 03",
+      phone: "",
+      whatsapp: "",
+      email: "",
+      address: "",
     },
     footerSection: {
       enabled: true,
@@ -104,8 +107,8 @@ export default function WebsiteBuilderPage() {
   });
 
   const [entityInfo, setEntityInfo] = useState<any>({
-    businessName: "Lush Nails Spa",
-    slug: "lush-nails",
+    businessName: "",
+    slug: "",
     logo: null,
   });
 
@@ -135,8 +138,182 @@ export default function WebsiteBuilderPage() {
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  const autoSaveTimeoutRef = useRef<any>(null);
+  const autoSaveConfig = (cfgToSave: any) => {
+    if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await fetch("/api/vendor/website/config", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(cfgToSave),
+        });
+      } catch (e) {
+        console.error("Auto-save error:", e);
+      }
+    }, 400);
+  };
+
+  // Navigation Items Management
+  const getEffectiveNavItems = () => {
+    if (Array.isArray(config.navItemsJson) && config.navItemsJson.length > 0) {
+      return config.navItemsJson;
+    }
+    return [
+      { id: "home", label: "Home", type: "scroll", target: "home", visible: true },
+      {
+        id: "services",
+        label: "Services",
+        type: "scroll",
+        target: "services",
+        visible: config.servicesSection?.enabled !== false,
+      },
+      {
+        id: "products",
+        label: entityType === "ADS_SELLER" ? "My Ads" : "Products",
+        type: "scroll",
+        target: "products",
+        visible: config.productsSection?.enabled !== false,
+      },
+      { id: "about", label: "About", type: "scroll", target: "about", visible: config.aboutSection?.enabled !== false },
+      {
+        id: "gallery",
+        label: "Gallery",
+        type: "scroll",
+        target: "gallery",
+        visible: Boolean(config.gallerySection?.enabled) && Boolean(config.gallerySection?.images && config.gallerySection.images.length > 0),
+      },
+      {
+        id: "reviews",
+        label: "Reviews",
+        type: "scroll",
+        target: "reviews",
+        visible: Boolean(config.reviewsSection?.enabled) && Boolean(config.reviewsSection?.items && config.reviewsSection.items.length > 0),
+      },
+      { id: "contact", label: "Contact", type: "scroll", target: "contact", visible: true },
+    ];
+  };
+
+  const handleUpdateNavItem = (id: string, updates: Partial<any>) => {
+    const current = getEffectiveNavItems();
+    const idx = current.findIndex((it: any) => it.id === id);
+    let updatedList: any[];
+    if (idx >= 0) {
+      updatedList = [...current];
+      updatedList[idx] = { ...updatedList[idx], ...updates };
+    } else {
+      updatedList = [...current, { id, ...updates }];
+    }
+    setConfig((prev: any) => {
+      const nextConfig = { ...prev, navItemsJson: updatedList };
+      if (id === "gallery" && typeof updates.visible === "boolean") {
+        nextConfig.gallerySection = {
+          ...(prev.gallerySection || {}),
+          enabled: updates.visible,
+        };
+      }
+      if (id === "reviews" && typeof updates.visible === "boolean") {
+        nextConfig.reviewsSection = {
+          ...(prev.reviewsSection || {}),
+          enabled: updates.visible,
+        };
+      }
+      if (id === "about" && typeof updates.visible === "boolean") {
+        nextConfig.aboutSection = {
+          ...(prev.aboutSection || {}),
+          enabled: updates.visible,
+        };
+      }
+      if (id === "services" && typeof updates.visible === "boolean") {
+        nextConfig.servicesSection = {
+          ...(prev.servicesSection || {}),
+          enabled: updates.visible,
+        };
+      }
+      if (id === "products" && typeof updates.visible === "boolean") {
+        nextConfig.productsSection = {
+          ...(prev.productsSection || {}),
+          enabled: updates.visible,
+        };
+      }
+      autoSaveConfig(nextConfig);
+      return nextConfig;
+    });
+  };
+
+  const handleToggleCustomPageInNav = (page: any, visible: boolean) => {
+    const current = getEffectiveNavItems();
+    const pageItemId = `custom-page-${page.id}`;
+    const idx = current.findIndex((it: any) => it.id === pageItemId || it.target === page.slug);
+    let updatedList: any[];
+    if (idx >= 0) {
+      updatedList = [...current];
+      updatedList[idx] = { ...updatedList[idx], visible };
+    } else {
+      updatedList = [
+        ...current,
+        {
+          id: pageItemId,
+          label: page.title,
+          type: "page",
+          target: page.slug,
+          visible,
+          isCustom: true,
+        },
+      ];
+    }
+    setConfig((prev: any) => {
+      const nextConfig = { ...prev, navItemsJson: updatedList };
+      autoSaveConfig(nextConfig);
+      return nextConfig;
+    });
+  };
+
+  const handleUpdateContactSection = (updates: Partial<any>) => {
+    setConfig((prev: any) => {
+      const nextConfig = {
+        ...prev,
+        contactSection: { ...(prev.contactSection || {}), ...updates },
+      };
+      autoSaveConfig(nextConfig);
+      return nextConfig;
+    });
+  };
+
+  const handleUpdateFooterSection = (updates: Partial<any>) => {
+    setConfig((prev: any) => {
+      const nextConfig = {
+        ...prev,
+        footerSection: { ...(prev.footerSection || {}), ...updates },
+      };
+      autoSaveConfig(nextConfig);
+      return nextConfig;
+    });
+  };
+
+  const handleResetNavItems = () => {
+    const defaultList = [
+      { id: "home", label: "Home", type: "scroll", target: "home", visible: true },
+      { id: "services", label: "Services", type: "scroll", target: "services", visible: true },
+      {
+        id: "products",
+        label: entityType === "ADS_SELLER" ? "My Ads" : "Products",
+        type: "scroll",
+        target: "products",
+        visible: true,
+      },
+      { id: "about", label: "About", type: "scroll", target: "about", visible: true },
+      { id: "gallery", label: "Gallery", type: "scroll", target: "gallery", visible: true },
+      { id: "reviews", label: "Reviews", type: "scroll", target: "reviews", visible: true },
+      { id: "contact", label: "Contact", type: "scroll", target: "contact", visible: true },
+    ];
+    setConfig((prev: any) => ({ ...prev, navItemsJson: defaultList }));
+    toast.success("Navbar reset to default items");
+  };
+
   // Send live update to iframe whenever config changes or preview asks for it
   const sendPreviewUpdate = () => {
+    if (loading) return;
     if (iframeRef.current && iframeRef.current.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
         {
@@ -156,11 +333,15 @@ export default function WebsiteBuilderPage() {
   };
 
   useEffect(() => {
-    sendPreviewUpdate();
+    if (!loading) {
+      sendPreviewUpdate();
+    }
 
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === "PREVIEW_READY") {
-        sendPreviewUpdate();
+        if (!loading) {
+          sendPreviewUpdate();
+        }
       } else if (e.data?.type === "PAGE_SELECTED_IN_PREVIEW" && e.data?.pageSlug) {
         if (e.data.pageSlug === "home") {
           setEditingPage(null);
@@ -176,7 +357,7 @@ export default function WebsiteBuilderPage() {
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [config, entityInfo, pages, editingPage]);
+  }, [config, entityInfo, pages, editingPage, loading]);
 
   // Initial Data Fetch & Payment Verification
   useEffect(() => {
@@ -222,21 +403,57 @@ export default function WebsiteBuilderPage() {
       const res = await fetch("/api/vendor/website/config");
       const json = await res.json();
       if (json.success) {
+        const storeInfo = json.data.entityInfo || {};
+        const storeName = storeInfo.businessName || "My Store";
+
+        if (json.data.entityInfo) {
+          setEntityInfo(json.data.entityInfo);
+        }
         if (json.data.config) {
-          setConfig((prev: any) => ({
-            ...prev,
-            ...json.data.config,
-            heroSection: { ...prev.heroSection, ...(json.data.config.heroSection || {}) },
-            aboutSection: { ...prev.aboutSection, ...(json.data.config.aboutSection || {}) },
-            servicesSection: { ...prev.servicesSection, ...(json.data.config.servicesSection || {}) },
-            contactSection: { ...prev.contactSection, ...(json.data.config.contactSection || {}) },
-          }));
+          const cfg = json.data.config;
+          setConfig({
+            ...cfg,
+            primaryColor: cfg.primaryColor || "#5c2336",
+            heroSection: {
+              enabled: true,
+              title: cfg.heroSection?.title || storeName,
+              subtitle: cfg.heroSection?.subtitle || "Discover high quality curated products with premium customer care.",
+              buttonText: cfg.heroSection?.buttonText || "Book via WhatsApp",
+              buttonLink: cfg.heroSection?.buttonLink || "#contact",
+              bgImage: cfg.heroSection?.bgImage || storeInfo.banner || "",
+              badgeText: cfg.heroSection?.badgeText || "PREMIUM SELECTION",
+              ...(cfg.heroSection || {}),
+            },
+            aboutSection: {
+              enabled: cfg.aboutSection?.enabled !== false,
+              title: cfg.aboutSection?.title || `About ${storeName}`,
+              content: cfg.aboutSection?.content || "We provide professional services and high quality products in a clean, welcoming environment.",
+              images: cfg.aboutSection?.images || [],
+              ...(cfg.aboutSection || {}),
+            },
+            servicesSection: cfg.servicesSection || {
+              enabled: true,
+              title: "Featured Services & Products",
+              items: [],
+            },
+            gallerySection: cfg.gallerySection || { enabled: false, title: "A Glimpse of Our Work", images: [] },
+            reviewsSection: cfg.reviewsSection || { enabled: false, title: "What Our Customers Say", items: [] },
+            contactSection: {
+              enabled: true,
+              phone: storeInfo.businessPhone || storeInfo.phone || "",
+              whatsapp: storeInfo.businessPhone || storeInfo.phone || "",
+              email: storeInfo.businessEmail || "",
+              address: storeInfo.businessAddress || "",
+              ...(cfg.contactSection || {}),
+            },
+            footerSection: cfg.footerSection || {
+              enabled: true,
+              copyrightText: `© ${new Date().getFullYear()} ${storeName}. All rights reserved.`,
+            },
+          });
           if (json.data.config.pages) {
             setPages(json.data.config.pages);
           }
-        }
-        if (json.data.entityInfo) {
-          setEntityInfo(json.data.entityInfo);
         }
         if (json.data.products) {
           setProducts(json.data.products);
@@ -765,6 +982,25 @@ export default function WebsiteBuilderPage() {
   const currentTier: WebsiteTier = activeSubscription?.tier || "ONE_PAGE";
   const tierMeta = TIER_LIMITS[currentTier];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center gap-4 p-6">
+        <div className="relative">
+          <div className="w-14 h-14 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <Sparkles className="w-6 h-6 text-primary absolute inset-0 m-auto animate-pulse" />
+        </div>
+        <div className="text-center space-y-1.5">
+          <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100 tracking-tight">
+            Loading Website Builder...
+          </h3>
+          <p className="text-xs text-slate-500 font-medium max-w-sm">
+            Syncing your store design, custom pages, and live configurations
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
       {/* ── Builder Top Toolbar ── */}
@@ -892,9 +1128,10 @@ export default function WebsiteBuilderPage() {
         {/* ── Left Editor Sidebar ── */}
         <div className="w-full lg:w-[480px] border-r bg-white dark:bg-slate-900 overflow-y-auto p-6 space-y-6">
           <Tabs value={builderTab} onValueChange={setBuilderTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+            <TabsList className="grid grid-cols-5 w-full bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
               <TabsTrigger value="branding" className="text-xs font-bold rounded-lg">Branding</TabsTrigger>
               <TabsTrigger value="sections" className="text-xs font-bold rounded-lg">Sections</TabsTrigger>
+              <TabsTrigger value="menu" className="text-xs font-bold rounded-lg">Navbar</TabsTrigger>
               <TabsTrigger value="pages" className="text-xs font-bold rounded-lg">Pages</TabsTrigger>
               <TabsTrigger value="domain" className="text-xs font-bold rounded-lg">Domain</TabsTrigger>
             </TabsList>
@@ -1246,7 +1483,10 @@ export default function WebsiteBuilderPage() {
               {/* ABOUT SECTION */}
               <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm">About Section</h3>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    <h3 className="font-bold text-sm">About Section</h3>
+                  </div>
                   <Switch
                     checked={config.aboutSection?.enabled !== false}
                     onCheckedChange={(c) =>
@@ -1259,9 +1499,26 @@ export default function WebsiteBuilderPage() {
                 </div>
 
                 {config.aboutSection?.enabled !== false && (
-                  <div className="space-y-3 pt-2">
+                  <div className="space-y-4 pt-2">
+                    {/* Badge */}
                     <div>
-                      <Label className="text-xs text-slate-500 font-semibold">Title</Label>
+                      <Label className="text-xs text-slate-500 font-semibold">Badge Pill Subtitle</Label>
+                      <Input
+                        value={config.aboutSection?.badge || "ABOUT US"}
+                        onChange={(e) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            aboutSection: { ...(prev.aboutSection || {}), badge: e.target.value },
+                          }))
+                        }
+                        placeholder="e.g. ABOUT US, WHO WE ARE, OUR STORY"
+                        className="rounded-xl mt-1 text-xs font-bold uppercase"
+                      />
+                    </div>
+
+                    {/* Title */}
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Heading Title</Label>
                       <Input
                         value={config.aboutSection?.title || ""}
                         onChange={(e) =>
@@ -1270,13 +1527,16 @@ export default function WebsiteBuilderPage() {
                             aboutSection: { ...(prev.aboutSection || {}), title: e.target.value },
                           }))
                         }
-                        className="rounded-xl mt-1 text-sm font-medium"
+                        placeholder="e.g. More Than Just a Store"
+                        className="rounded-xl mt-1 text-sm font-bold"
                       />
                     </div>
+
+                    {/* Story / Description */}
                     <div>
                       <Label className="text-xs text-slate-500 font-semibold">Our Story / Description</Label>
                       <Textarea
-                        rows={3}
+                        rows={4}
                         value={config.aboutSection?.content || ""}
                         onChange={(e) =>
                           setConfig((prev: any) => ({
@@ -1284,51 +1544,609 @@ export default function WebsiteBuilderPage() {
                             aboutSection: { ...(prev.aboutSection || {}), content: e.target.value },
                           }))
                         }
-                        className="rounded-xl mt-1 text-xs"
+                        placeholder="Tell your brand story, what makes your products/services special, and why customers trust you..."
+                        className="rounded-xl mt-1 text-xs leading-relaxed"
+                      />
+                    </div>
+
+                    {/* About Us Photo Upload */}
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">About Us Photo</Label>
+                      <div className="mt-2 space-y-2">
+                        {config.aboutSection?.images?.[0] ? (
+                          <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border shadow-sm group">
+                            <Image
+                              src={config.aboutSection.images[0]}
+                              alt="About Us"
+                              fill
+                              className="object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <label className="cursor-pointer px-3 py-1.5 rounded-xl bg-white text-slate-900 text-xs font-bold hover:bg-slate-100 shadow flex items-center gap-1.5">
+                                <CloudUpload className="w-3.5 h-3.5" />
+                                <span>Change Photo</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => handleImageUpload(e, "aboutImage")}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    aboutSection: { ...(prev.aboutSection || {}), images: [] },
+                                  }))
+                                }
+                                className="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 shadow flex items-center gap-1.5"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Remove</span>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label className="cursor-pointer border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors">
+                            <div className="p-3 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
+                              <CloudUpload className="w-6 h-6 text-primary" />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                Click to Upload About Photo
+                              </p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">
+                                Upload a photo of your shop, team, or workshop (PNG, JPG)
+                              </p>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleImageUpload(e, "aboutImage")}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Key Highlights / Features */}
+                    <div className="pt-2 border-t space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Highlights &amp; Trust Badges
+                        </Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const currentH = config.aboutSection?.highlights || [
+                              "100% Genuine Products",
+                              "Fast Islandwide Delivery",
+                              "Friendly WhatsApp Support",
+                            ];
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              aboutSection: {
+                                ...(prev.aboutSection || {}),
+                                highlights: [...currentH, "New Highlight Point"],
+                              },
+                            }));
+                          }}
+                          className="h-7 text-[11px] font-bold rounded-lg px-2"
+                        >
+                          <Plus className="w-3 h-3 mr-1" /> Add Point
+                        </Button>
+                      </div>
+
+                      <div className="space-y-2">
+                        {(config.aboutSection?.highlights || [
+                          "100% Genuine Products",
+                          "Fast Islandwide Delivery",
+                          "Friendly WhatsApp Support",
+                        ]).map((h: string, idx: number) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <Input
+                              value={h}
+                              onChange={(e) => {
+                                const currentH = [
+                                  ...(config.aboutSection?.highlights || [
+                                    "100% Genuine Products",
+                                    "Fast Islandwide Delivery",
+                                    "Friendly WhatsApp Support",
+                                  ]),
+                                ];
+                                currentH[idx] = e.target.value;
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  aboutSection: { ...(prev.aboutSection || {}), highlights: currentH },
+                                }));
+                              }}
+                              placeholder="e.g. 100% Guaranteed Quality"
+                              className="h-8 text-xs font-semibold rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentH = (config.aboutSection?.highlights || [
+                                  "100% Genuine Products",
+                                  "Fast Islandwide Delivery",
+                                  "Friendly WhatsApp Support",
+                                ]).filter((_: any, i: number) => i !== idx);
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  aboutSection: { ...(prev.aboutSection || {}), highlights: currentH },
+                                }));
+                              }}
+                              className="text-slate-400 hover:text-rose-600 p-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Button Text */}
+                    <div className="pt-2 border-t">
+                      <Label className="text-xs text-slate-500 font-semibold">WhatsApp Button Text</Label>
+                      <Input
+                        value={config.aboutSection?.buttonText || "Inquire via WhatsApp"}
+                        onChange={(e) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            aboutSection: { ...(prev.aboutSection || {}), buttonText: e.target.value },
+                          }))
+                        }
+                        placeholder="e.g. Chat on WhatsApp / Learn More"
+                        className="rounded-xl mt-1 text-xs font-semibold"
                       />
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* CONTACT & WHATSAPP */}
+              {/* GALLERY SECTION */}
               <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <h3 className="font-bold text-sm">Contact & WhatsApp Booking</h3>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-xs text-slate-500 font-semibold">WhatsApp Number</Label>
-                    <Input
-                      value={config.contactSection?.whatsapp || ""}
-                      onChange={(e) =>
-                        setConfig((prev: any) => ({
-                          ...prev,
-                          contactSection: { ...prev.contactSection, whatsapp: e.target.value },
-                        }))
-                      }
-                      placeholder="e.g. 0771234567"
-                      className="rounded-xl mt-1 text-sm"
-                    />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-primary" />
+                    <h3 className="font-bold text-sm">Gallery Showcase</h3>
                   </div>
-                  <div>
-                    <Label className="text-xs text-slate-500 font-semibold">Physical Shop Address</Label>
-                    <Input
-                      value={config.contactSection?.address || ""}
-                      onChange={(e) =>
-                        setConfig((prev: any) => ({
-                          ...prev,
-                          contactSection: { ...prev.contactSection, address: e.target.value },
-                        }))
-                      }
-                      className="rounded-xl mt-1 text-sm"
-                    />
+                  <Switch
+                    checked={Boolean(config.gallerySection?.enabled)}
+                    onCheckedChange={(c) =>
+                      setConfig((prev: any) => ({
+                        ...prev,
+                        gallerySection: { ...(prev.gallerySection || {}), enabled: c },
+                      }))
+                    }
+                  />
+                </div>
+
+                {Boolean(config.gallerySection?.enabled) && (
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Gallery Title</Label>
+                      <Input
+                        value={config.gallerySection?.title || "A Glimpse of Our Work"}
+                        onChange={(e) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            gallerySection: { ...(prev.gallerySection || {}), title: e.target.value },
+                          }))
+                        }
+                        className="rounded-xl mt-1 text-sm font-semibold"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-xs font-bold text-slate-700">Gallery Photos</Label>
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50 shadow-sm">
+                          <Plus className="w-3 h-3" />
+                          <span>Add Photo</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleImageUpload(e, "gallery")}
+                          />
+                        </label>
+                      </div>
+
+                      {(config.gallerySection?.images || []).length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {(config.gallerySection?.images || []).map((imgUrl: string, idx: number) => (
+                            <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border group">
+                              <Image src={imgUrl} alt={`Gallery ${idx + 1}`} fill className="object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const filtered = (config.gallerySection?.images || []).filter(
+                                    (_: any, i: number) => i !== idx
+                                  );
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    gallerySection: { ...(prev.gallerySection || {}), images: filtered },
+                                  }));
+                                }}
+                                className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-4 border-2 border-dashed rounded-xl text-center text-xs text-slate-400">
+                          No gallery photos uploaded yet. Click &quot;Add Photo&quot; above.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* REVIEWS & TESTIMONIALS */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <h3 className="font-bold text-sm">Customer Reviews / Testimonials</h3>
+                  </div>
+                  <Switch
+                    checked={Boolean(config.reviewsSection?.enabled)}
+                    onCheckedChange={(c) =>
+                      setConfig((prev: any) => ({
+                        ...prev,
+                        reviewsSection: { ...(prev.reviewsSection || {}), enabled: c },
+                      }))
+                    }
+                  />
+                </div>
+
+                {Boolean(config.reviewsSection?.enabled) && (
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Section Title</Label>
+                      <Input
+                        value={config.reviewsSection?.title || "What Our Customers Say"}
+                        onChange={(e) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            reviewsSection: { ...(prev.reviewsSection || {}), title: e.target.value },
+                          }))
+                        }
+                        className="rounded-xl mt-1 text-sm font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-slate-700">Testimonials List</Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const currentItems = config.reviewsSection?.items || [];
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              reviewsSection: {
+                                ...(prev.reviewsSection || {}),
+                                items: [
+                                  ...currentItems,
+                                  { name: "Customer Name", comment: "Great product and super fast delivery!" },
+                                ],
+                              },
+                            }));
+                          }}
+                          className="h-7 text-[11px] font-bold rounded-lg px-2"
+                        >
+                          <Plus className="w-3 h-3 mr-1" /> Add Review
+                        </Button>
+                      </div>
+
+                      {(config.reviewsSection?.items || []).map((rev: any, idx: number) => (
+                        <div key={idx} className="p-3 bg-white dark:bg-slate-800 rounded-xl border space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-400">Review #{idx + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const filtered = (config.reviewsSection?.items || []).filter(
+                                  (_: any, i: number) => i !== idx
+                                );
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  reviewsSection: { ...(prev.reviewsSection || {}), items: filtered },
+                                }));
+                              }}
+                              className="text-rose-500 hover:text-rose-700 text-xs font-bold"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <Input
+                            placeholder="Customer Name"
+                            value={rev.name || ""}
+                            onChange={(e) => {
+                              const items = [...(config.reviewsSection?.items || [])];
+                              items[idx] = { ...items[idx], name: e.target.value };
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                reviewsSection: { ...prev.reviewsSection, items },
+                              }));
+                            }}
+                            className="h-8 text-xs font-bold"
+                          />
+                          <Textarea
+                            rows={2}
+                            placeholder="Review Comment..."
+                            value={rev.comment || ""}
+                            onChange={(e) => {
+                              const items = [...(config.reviewsSection?.items || [])];
+                              items[idx] = { ...items[idx], comment: e.target.value };
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                reviewsSection: { ...prev.reviewsSection, items },
+                              }));
+                            }}
+                            className="text-xs"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* CONTACT US & LOCATION SECTION */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-primary" />
+                    <h3 className="font-bold text-sm">Contact Us &amp; Location</h3>
+                  </div>
+                  <Switch
+                    checked={config.contactSection?.enabled !== false}
+                    onCheckedChange={(c) => handleUpdateContactSection({ enabled: c })}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Section Heading</Label>
+                      <Input
+                        value={config.contactSection?.title || "Visit Us or Connect"}
+                        onChange={(e) => handleUpdateContactSection({ title: e.target.value })}
+                        placeholder="e.g. Get in Touch"
+                        className="rounded-xl mt-1 text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Section Subtitle</Label>
+                      <Input
+                        value={config.contactSection?.subtitle || "We would love to hear from you."}
+                        onChange={(e) => handleUpdateContactSection({ subtitle: e.target.value })}
+                        placeholder="Subtitle text"
+                        className="rounded-xl mt-1 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Direct Contact Info */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">WhatsApp Number</Label>
+                      <Input
+                        value={config.contactSection?.whatsapp || ""}
+                        onChange={(e) => handleUpdateContactSection({ whatsapp: e.target.value })}
+                        placeholder="e.g. 0765731249"
+                        className="rounded-xl mt-1 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Direct Phone Call</Label>
+                      <Input
+                        value={config.contactSection?.phone || ""}
+                        onChange={(e) => handleUpdateContactSection({ phone: e.target.value })}
+                        placeholder="e.g. 0112345678"
+                        className="rounded-xl mt-1 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Email Address</Label>
+                      <Input
+                        value={config.contactSection?.email || ""}
+                        onChange={(e) => handleUpdateContactSection({ email: e.target.value })}
+                        placeholder="hello@yourstore.lk"
+                        className="rounded-xl mt-1 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-500 font-semibold">Physical Shop Address</Label>
+                      <Input
+                        value={config.contactSection?.address || ""}
+                        onChange={(e) => handleUpdateContactSection({ address: e.target.value })}
+                        placeholder="e.g. 644/B Kajuhena Road, Heiyanthuduwa"
+                        className="rounded-xl mt-1 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* OPENING HOURS OPTION */}
+                  <div className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                          Show Opening / Working Hours
+                        </span>
+                      </div>
+                      <Switch
+                        checked={config.contactSection?.showOpeningHours !== false}
+                        onCheckedChange={(c) => handleUpdateContactSection({ showOpeningHours: c })}
+                      />
+                    </div>
+                    {config.contactSection?.showOpeningHours !== false && (
+                      <div>
+                        <Label className="text-[11px] text-slate-400">Hours Schedule (e.g. Days &amp; Times)</Label>
+                        <Textarea
+                          rows={2}
+                          value={
+                            config.contactSection?.openingHours ??
+                            "Monday – Saturday: 9:00 AM – 8:00 PM\nSunday: 10:00 AM – 5:00 PM"
+                          }
+                          onChange={(e) => handleUpdateContactSection({ openingHours: e.target.value })}
+                          placeholder="e.g. Mon - Sat: 9:00 AM - 8:00 PM&#10;Sunday: 10:00 AM - 5:00 PM"
+                          className="rounded-lg mt-1 text-xs resize-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* GOOGLE MAPS / LOCATION OPTION */}
+                  <div className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                          Show Google Maps Location
+                        </span>
+                      </div>
+                      <Switch
+                        checked={Boolean(config.contactSection?.showMap)}
+                        onCheckedChange={(c) => handleUpdateContactSection({ showMap: c })}
+                      />
+                    </div>
+                    {config.contactSection?.showMap && (
+                      <div className="space-y-2 pt-1">
+                        <p className="text-[11px] text-slate-400">
+                          Interactive map will automatically display your shop address. You can also provide a custom Google Map embed URL.
+                        </p>
+                        <div>
+                          <Label className="text-[11px] text-slate-400">Custom Google Maps Embed URL (Optional)</Label>
+                          <Input
+                            value={config.contactSection?.mapEmbedUrl || ""}
+                            onChange={(e) => handleUpdateContactSection({ mapEmbedUrl: e.target.value })}
+                            placeholder="https://www.google.com/maps/embed?pb=..."
+                            className="rounded-lg mt-1 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[11px] text-slate-400">Directions Link (Optional)</Label>
+                          <Input
+                            value={config.contactSection?.mapDirectionsUrl || ""}
+                            onChange={(e) => handleUpdateContactSection({ mapDirectionsUrl: e.target.value })}
+                            placeholder="https://maps.app.goo.gl/..."
+                            className="rounded-lg mt-1 text-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CONTACT / INQUIRY FORM OPTION */}
+                  <div className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Send className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                          Enable Contact / Inquiry Form
+                        </span>
+                      </div>
+                      <Switch
+                        checked={config.contactSection?.showContactForm !== false}
+                        onCheckedChange={(c) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            contactSection: { ...(prev.contactSection || {}), showContactForm: c },
+                          }))
+                        }
+                      />
+                    </div>
+                    {config.contactSection?.showContactForm !== false && (
+                      <div className="space-y-2 pt-1">
+                        <p className="text-[11px] text-slate-400">
+                          Visitors can submit their Name, Phone, and Message directly or send via WhatsApp with 1-click.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-[11px] text-slate-400">Form Title</Label>
+                            <Input
+                              value={config.contactSection?.formTitle || "Send Us a Message"}
+                              onChange={(e) =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  contactSection: { ...(prev.contactSection || {}), formTitle: e.target.value },
+                                }))
+                              }
+                              className="rounded-lg mt-1 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[11px] text-slate-400">Form Subtitle</Label>
+                            <Input
+                              value={config.contactSection?.formSubtitle || "We will get back to you promptly."}
+                              onChange={(e) =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  contactSection: { ...(prev.contactSection || {}), formSubtitle: e.target.value },
+                                }))
+                              }
+                              className="rounded-lg mt-1 text-xs"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* FOOTER & SOCIAL LINKS */}
+              {/* RICH CUSTOMIZABLE FOOTER */}
               <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <h3 className="font-bold text-sm">Footer & Social Links</h3>
-                <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    <h3 className="font-bold text-sm">Footer &amp; Navigation Columns</h3>
+                  </div>
+                  <Switch
+                    checked={config.footerSection?.enabled !== false}
+                    onCheckedChange={(c) =>
+                      setConfig((prev: any) => ({
+                        ...prev,
+                        footerSection: { ...(prev.footerSection || {}), enabled: c },
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs text-slate-500 font-semibold">Store Bio / Description (Footer Column 1)</Label>
+                    <Textarea
+                      rows={2}
+                      value={config.footerSection?.storeBio || ""}
+                      onChange={(e) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          footerSection: { ...(prev.footerSection || {}), storeBio: e.target.value },
+                        }))
+                      }
+                      placeholder="e.g. Your trusted destination for curated high quality clothing and accessories in Sri Lanka."
+                      className="rounded-xl mt-1 text-xs resize-none"
+                    />
+                  </div>
+
                   <div>
                     <Label className="text-xs text-slate-500 font-semibold">Copyright Notice</Label>
                     <Input
@@ -1339,48 +2157,545 @@ export default function WebsiteBuilderPage() {
                           footerSection: { ...(prev.footerSection || {}), copyrightText: e.target.value },
                         }))
                       }
-                      className="rounded-xl mt-1 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-slate-500 font-semibold">Facebook Page URL</Label>
-                    <Input
-                      value={config.footerSection?.socialLinks?.facebook || ""}
-                      onChange={(e) =>
-                        setConfig((prev: any) => ({
-                          ...prev,
-                          footerSection: {
-                            ...(prev.footerSection || {}),
-                            socialLinks: { ...(prev.footerSection?.socialLinks || {}), facebook: e.target.value },
-                          },
-                        }))
-                      }
-                      placeholder="https://facebook.com/yourpage"
+                      placeholder={`© ${new Date().getFullYear()} ${entityInfo?.businessName || "Store"}. All rights reserved.`}
                       className="rounded-xl mt-1 text-xs"
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs text-slate-500 font-semibold">Instagram Profile URL</Label>
-                    <Input
-                      value={config.footerSection?.socialLinks?.instagram || ""}
-                      onChange={(e) =>
-                        setConfig((prev: any) => ({
-                          ...prev,
-                          footerSection: {
-                            ...(prev.footerSection || {}),
-                            socialLinks: { ...(prev.footerSection?.socialLinks || {}), instagram: e.target.value },
-                          },
-                        }))
-                      }
-                      placeholder="https://instagram.com/yourprofile"
-                      className="rounded-xl mt-1 text-xs"
-                    />
+
+                  {/* Social Links Group */}
+                  <div className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Share2 className="w-3.5 h-3.5 text-primary" />
+                      <Label className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                        Social Media Profiles
+                      </Label>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[11px] text-slate-400">Facebook URL</Label>
+                        <Input
+                          value={config.footerSection?.socialLinks?.facebook || ""}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              footerSection: {
+                                ...(prev.footerSection || {}),
+                                socialLinks: { ...(prev.footerSection?.socialLinks || {}), facebook: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="https://facebook.com/..."
+                          className="rounded-lg mt-1 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-slate-400">Instagram URL</Label>
+                        <Input
+                          value={config.footerSection?.socialLinks?.instagram || ""}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              footerSection: {
+                                ...(prev.footerSection || {}),
+                                socialLinks: { ...(prev.footerSection?.socialLinks || {}), instagram: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="https://instagram.com/..."
+                          className="rounded-lg mt-1 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-slate-400">TikTok URL</Label>
+                        <Input
+                          value={config.footerSection?.socialLinks?.tiktok || ""}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              footerSection: {
+                                ...(prev.footerSection || {}),
+                                socialLinks: { ...(prev.footerSection?.socialLinks || {}), tiktok: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="https://tiktok.com/@..."
+                          className="rounded-lg mt-1 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-slate-400">YouTube URL</Label>
+                        <Input
+                          value={config.footerSection?.socialLinks?.youtube || ""}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              footerSection: {
+                                ...(prev.footerSection || {}),
+                                socialLinks: { ...(prev.footerSection?.socialLinks || {}), youtube: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="https://youtube.com/@..."
+                          className="rounded-lg mt-1 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-slate-400">Twitter / X URL</Label>
+                        <Input
+                          value={config.footerSection?.socialLinks?.twitter || ""}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              footerSection: {
+                                ...(prev.footerSection || {}),
+                                socialLinks: { ...(prev.footerSection?.socialLinks || {}), twitter: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="https://x.com/..."
+                          className="rounded-lg mt-1 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-slate-400">LinkedIn URL</Label>
+                        <Input
+                          value={config.footerSection?.socialLinks?.linkedin || ""}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              footerSection: {
+                                ...(prev.footerSection || {}),
+                                socialLinks: { ...(prev.footerSection?.socialLinks || {}), linkedin: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="https://linkedin.com/in/..."
+                          className="rounded-lg mt-1 text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Content Columns Toggles */}
+                  <div className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-3">
+                    <Label className="text-xs font-bold text-slate-800 dark:text-slate-100 block">
+                      Footer Navigation &amp; Content Columns
+                    </Label>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <div>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                          Website Section Links (Quick Links)
+                        </span>
+                        <span className="text-[10px] text-slate-400">Home, Products, About, Gallery, Contact</span>
+                      </div>
+                      <Switch
+                        checked={config.footerSection?.showQuickLinks !== false}
+                        onCheckedChange={(c) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            footerSection: { ...(prev.footerSection || {}), showQuickLinks: c },
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 border-t">
+                      <div>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                          Custom Pages &amp; Policies Links
+                        </span>
+                        <span className="text-[10px] text-slate-400">Show created pages (Privacy, Terms, FAQ, etc.)</span>
+                      </div>
+                      <Switch
+                        checked={config.footerSection?.showPagesLinks !== false}
+                        onCheckedChange={(c) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            footerSection: { ...(prev.footerSection || {}), showPagesLinks: c },
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 border-t">
+                      <div>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                          Show Contact &amp; Hours in Footer
+                        </span>
+                        <span className="text-[10px] text-slate-400">Displays address, phone, and opening hours</span>
+                      </div>
+                      <Switch
+                        checked={config.footerSection?.showContactInfo !== false}
+                        onCheckedChange={(c) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            footerSection: { ...(prev.footerSection || {}), showContactInfo: c },
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 border-t">
+                      <div>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                          Newsletter Subscription Box
+                        </span>
+                        <span className="text-[10px] text-slate-400">Allow visitors to subscribe for offers &amp; updates</span>
+                      </div>
+                      <Switch
+                        checked={Boolean(config.footerSection?.showNewsletter)}
+                        onCheckedChange={(c) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            footerSection: { ...(prev.footerSection || {}), showNewsletter: c },
+                          }))
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </TabsContent>
 
-            {/* TAB 3: CUSTOM PAGES (DESIGNER & MANAGER) */}
+            {/* TAB: NAVBAR & MENU CUSTOMIZER */}
+            <TabsContent value="menu" className="space-y-6 pt-4">
+              {/* Plan Mode Banner */}
+              <div
+                className={`p-4 rounded-2xl border ${
+                  currentTier === "ONE_PAGE"
+                    ? "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900"
+                    : "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900"
+                } space-y-2`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Menu className="w-4 h-4 text-primary" />
+                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">
+                      Navbar &amp; Menu Customizer
+                    </h3>
+                  </div>
+                  <Badge
+                    className={
+                      currentTier === "ONE_PAGE"
+                        ? "bg-amber-500 text-white font-bold text-[10px]"
+                        : "bg-emerald-600 text-white font-bold text-[10px]"
+                    }
+                  >
+                    {currentTier === "ONE_PAGE" ? "1-Page Scroll Mode" : "Multi-Page Mode Unlocked"}
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {currentTier === "ONE_PAGE" ? (
+                    <>
+                      In your <strong>1-Page Plan</strong>, navbar buttons smoothly scroll visitors down to that section on your homepage. You can customize button labels and show/hide items. To unlock dedicated standalone pages, upgrade to the <strong>6-Page or 12-Page Plan</strong>.
+                    </>
+                  ) : (
+                    <>
+                      In your <strong>{tierMeta.name}</strong>, you have full flexibility: choose per button whether it smooth-scrolls on the homepage or opens in its own dedicated page view!
+                    </>
+                  )}
+                </p>
+              </div>
+
+              {/* CATALOG / MY ADS HIGHLIGHT CARD */}
+              <div className="p-4 rounded-2xl border-2 border-primary/20 bg-primary/5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-primary text-white shadow-sm">
+                      <ShoppingBag className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-sm text-slate-900 dark:text-slate-100">
+                        {entityType === "ADS_SELLER" ? "My Ads / Classifieds Page" : "Store Products Catalog"}
+                      </h4>
+                      <span className="text-[11px] text-slate-500 block">
+                        Live synced from your TryMe dashboard ({products.length} items)
+                      </span>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={getEffectiveNavItems().find((it: any) => it.id === "products")?.visible !== false}
+                    onCheckedChange={(c) => handleUpdateNavItem("products", { visible: c })}
+                  />
+                </div>
+
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Navbar Display Name
+                    </Label>
+                    <Input
+                      value={
+                        getEffectiveNavItems().find((it: any) => it.id === "products")?.label ||
+                        (entityType === "ADS_SELLER" ? "My Ads" : "Products")
+                      }
+                      onChange={(e) => handleUpdateNavItem("products", { label: e.target.value })}
+                      placeholder={
+                        entityType === "ADS_SELLER"
+                          ? "e.g. My Ads, Available Cars, Mobile Deals"
+                          : "e.g. Products, Apple iPhones, Collection, Store"
+                      }
+                      className="mt-1 rounded-xl font-bold text-xs"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Customize this button name to fit your brand (e.g. &quot;Apple iPhones&quot;, &quot;Vehicles&quot;).
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Navigation Action
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2 mt-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateNavItem("products", { type: "scroll" })}
+                        className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all ${
+                          getEffectiveNavItems().find((it: any) => it.id === "products")?.type !== "page"
+                            ? "border-primary bg-primary/10 text-primary shadow-sm"
+                            : "bg-white dark:bg-slate-900 text-slate-600 hover:border-slate-300"
+                        }`}
+                      >
+                        <span className="block font-black">Scroll to Section</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Smooth scroll on Home</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (currentTier === "ONE_PAGE") {
+                            setSelectedTierForUpgrade("SIX_PAGES");
+                            setUpgradeModalOpen(true);
+                          } else {
+                            handleUpdateNavItem("products", { type: "page" });
+                          }
+                        }}
+                        className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all ${
+                          getEffectiveNavItems().find((it: any) => it.id === "products")?.type === "page"
+                            ? "border-primary bg-primary/10 text-primary shadow-sm"
+                            : "bg-white dark:bg-slate-900 text-slate-600 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="block font-black">Dedicated Catalog Page</span>
+                          {currentTier === "ONE_PAGE" && <Lock className="w-3.5 h-3.5 text-amber-500" />}
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-normal">
+                          {currentTier === "ONE_PAGE" ? "Requires 6-Page plan" : "Opens full catalog with search"}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SERVICES SECTION CARD */}
+              <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-slate-500" />
+                    <h4 className="font-bold text-sm">Services Menu Item</h4>
+                  </div>
+                  <Switch
+                    checked={getEffectiveNavItems().find((it: any) => it.id === "services")?.visible !== false}
+                    onCheckedChange={(c) => handleUpdateNavItem("services", { visible: c })}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Display Label</Label>
+                    <Input
+                      value={getEffectiveNavItems().find((it: any) => it.id === "services")?.label || "Services"}
+                      onChange={(e) => handleUpdateNavItem("services", { label: e.target.value })}
+                      placeholder="e.g. Services, Salon Packages, Repair Services"
+                      className="mt-1 rounded-xl text-xs font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Click Action</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateNavItem("services", { type: "scroll" })}
+                        className={`p-2 rounded-xl border text-xs font-bold text-left transition-all ${
+                          getEffectiveNavItems().find((it: any) => it.id === "services")?.type !== "page"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "bg-white dark:bg-slate-900 text-slate-600"
+                        }`}
+                      >
+                        Scroll to #services
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (currentTier === "ONE_PAGE") {
+                            setSelectedTierForUpgrade("SIX_PAGES");
+                            setUpgradeModalOpen(true);
+                          } else {
+                            handleUpdateNavItem("services", { type: "page" });
+                          }
+                        }}
+                        className={`p-2 rounded-xl border text-xs font-bold text-left transition-all ${
+                          getEffectiveNavItems().find((it: any) => it.id === "services")?.type === "page"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "bg-white dark:bg-slate-900 text-slate-600"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>Dedicated Page</span>
+                          {currentTier === "ONE_PAGE" && <Lock className="w-3 h-3 text-amber-500" />}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* OTHER STANDARD SECTIONS */}
+              <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                <h4 className="font-bold text-sm">Other Standard Sections</h4>
+                <div className="space-y-3">
+                  {[
+                    { id: "home", defaultLabel: "Home" },
+                    { id: "about", defaultLabel: "About" },
+                    { id: "gallery", defaultLabel: "Gallery" },
+                    { id: "reviews", defaultLabel: "Reviews" },
+                    { id: "contact", defaultLabel: "Contact" },
+                  ].map((sec) => {
+                    const item = getEffectiveNavItems().find((it: any) => it.id === sec.id) || {
+                      id: sec.id,
+                      label: sec.defaultLabel,
+                      visible: true,
+                    };
+                    return (
+                      <div
+                        key={sec.id}
+                        className="p-3 border rounded-xl bg-white dark:bg-slate-950 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex-1">
+                          <Input
+                            value={item.label || sec.defaultLabel}
+                            onChange={(e) => handleUpdateNavItem(sec.id, { label: e.target.value })}
+                            placeholder={sec.defaultLabel}
+                            className="h-8 text-xs font-bold rounded-lg"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase font-bold text-slate-400">
+                            {item.visible !== false ? "Visible" : "Hidden"}
+                          </span>
+                          <Switch
+                            checked={item.visible !== false}
+                            onCheckedChange={(c) => handleUpdateNavItem(sec.id, { visible: c })}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* CUSTOM MULTI-PAGES IN NAVBAR */}
+              <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-sm">Custom Pages in Navbar</h4>
+                    <p className="text-[11px] text-slate-400">
+                      Toggle whether your created pages appear in the top header
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (pages.length >= tierMeta.maxPages) {
+                        setUpgradeModalOpen(true);
+                      } else {
+                        setNewPageModalOpen(true);
+                      }
+                    }}
+                    className="h-7 text-xs font-bold rounded-lg"
+                  >
+                    <Plus className="w-3 h-3 mr-1" /> New Page
+                  </Button>
+                </div>
+
+                {pages.length > 0 ? (
+                  <div className="space-y-3">
+                    {pages.map((p) => {
+                      const pageItemId = `custom-page-${p.id}`;
+                      const navItem = getEffectiveNavItems().find(
+                        (it: any) => it.id === pageItemId || it.target === p.slug
+                      );
+                      const isVisible = navItem ? navItem.visible !== false : false;
+
+                      return (
+                        <div key={p.id} className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-3.5 h-3.5 text-primary" />
+                              <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{p.title}</span>
+                              <Badge variant="outline" className="text-[10px] font-mono">
+                                /{p.slug}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">
+                                {isVisible ? "In Menu" : "Excluded"}
+                              </span>
+                              <Switch
+                                checked={isVisible}
+                                onCheckedChange={(c) => handleToggleCustomPageInNav(p, c)}
+                              />
+                            </div>
+                          </div>
+
+                          {isVisible && (
+                            <div className="pt-1">
+                              <Label className="text-[11px] text-slate-500 font-semibold">Navbar Display Label</Label>
+                              <Input
+                                value={navItem?.label || p.title}
+                                onChange={(e) =>
+                                  handleUpdateNavItem(navItem?.id || pageItemId, {
+                                    label: e.target.value,
+                                    target: p.slug,
+                                    type: "page",
+                                    visible: true,
+                                  })
+                                }
+                                className="mt-1 h-8 text-xs font-bold rounded-lg"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-4 border rounded-xl bg-white dark:bg-slate-950 text-center text-xs text-slate-400">
+                    No custom pages created yet. Go to the <strong>Pages</strong> tab to create custom pages like Policy, About Us, or Support!
+                  </div>
+                )}
+              </div>
+
+              {/* Reset to Default Button */}
+              <div className="pt-2 flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetNavItems}
+                  className="text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 gap-1.5"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset to Default Navbar</span>
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* TAB 4: CUSTOM PAGES (DESIGNER & MANAGER) */}
             <TabsContent value="pages" className="space-y-6 pt-4">
               {editingPage ? (
                 <div className="space-y-6 pt-2">

@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { getStandaloneSiteData } from "@/lib/site-resolver";
+import CatalogView from "./CatalogView";
+import ContactSectionClient from "./ContactSectionClient";
+import FooterSectionClient from "./FooterSectionClient";
 import {
   Phone,
   Mail,
@@ -12,7 +15,11 @@ import {
   ShoppingBag,
   Sparkles,
   CheckCircle2,
+  Building2,
 } from "lucide-react";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface SitePageProps {
   params: Promise<{ domainOrSlug: string }>;
@@ -31,6 +38,9 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
   }
 
   const { vendor, config, products } = siteData;
+  const isSeller = Boolean((siteData as any).seller);
+  const entityType: "VENDOR" | "ADS_SELLER" = isSeller ? "ADS_SELLER" : "VENDOR";
+
   const pages: any[] = config?.pages || [];
   const primaryColor = config?.primaryColor || "#E91E63";
   const hero = config?.heroSection || {};
@@ -43,6 +53,57 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
 
   const whatsappPhone = (contact.whatsapp || contact.phone || vendor?.phone || "").replace(/[^0-9]/g, "");
   const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}` : "#";
+
+  // Dynamic Navigation from config.navItemsJson with smart defaults
+  const defaultNavItems = [
+    { id: "home", label: "Home", type: "scroll", target: "home", visible: true },
+    { id: "services", label: "Services", type: "scroll", target: "services", visible: services.enabled !== false },
+    {
+      id: "products",
+      label: entityType === "ADS_SELLER" ? "My Ads" : "Products",
+      type: "scroll",
+      target: "products",
+      visible: config?.productsSection?.enabled !== false,
+    },
+    { id: "about", label: "About", type: "scroll", target: "about", visible: about.enabled !== false },
+    {
+      id: "gallery",
+      label: "Gallery",
+      type: "scroll",
+      target: "gallery",
+      visible: Boolean(gallery.enabled) && Boolean(gallery.images && gallery.images.length > 0),
+    },
+    {
+      id: "reviews",
+      label: "Reviews",
+      type: "scroll",
+      target: "reviews",
+      visible: Boolean(reviews.enabled) && Boolean(reviews.items && reviews.items.length > 0),
+    },
+    { id: "contact", label: "Contact", type: "scroll", target: "contact", visible: true },
+  ];
+
+  const navItems: any[] =
+    config?.navItemsJson && Array.isArray(config.navItemsJson) && config.navItemsJson.length > 0
+      ? config.navItemsJson
+      : defaultNavItems;
+
+  const visibleNavItems = navItems.filter((item: any) => {
+    if (item.visible === false || item.visible === "false") return false;
+    if (item.id === "gallery" && (!gallery.enabled || !gallery.images || gallery.images.length === 0)) {
+      return false;
+    }
+    if (item.id === "reviews" && (!reviews.enabled || !reviews.items || reviews.items.length === 0)) {
+      return false;
+    }
+    return true;
+  });
+
+  const productNavItem = navItems.find((ni: any) => ni.target === "products");
+  const catalogTitle =
+    productNavItem?.label ||
+    config?.productsSection?.title ||
+    (entityType === "ADS_SELLER" ? "My Ads & Listings" : "Store Products");
 
   const requestedPage = activePageSlug ? pages.find((p) => p.slug === activePageSlug) : null;
 
@@ -74,61 +135,71 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-            <Link
-              href={`/site/${domainOrSlug}`}
-              className="hover:text-black transition-colors font-bold"
-              style={{ color: !activePageSlug ? primaryColor : undefined }}
-            >
-              Home
-            </Link>
-            {!activePageSlug && services.enabled && (
-              <a href="#services" className="hover:text-black transition-colors">
-                Services
-              </a>
-            )}
-            {!activePageSlug && (
-              <a href="#products" className="hover:text-black transition-colors">
-                Products
-              </a>
-            )}
-            {!activePageSlug && about.enabled && (
-              <a href="#about" className="hover:text-black transition-colors">
-                About
-              </a>
-            )}
-            {!activePageSlug && gallery.enabled && (
-              <a href="#gallery" className="hover:text-black transition-colors">
-                Gallery
-              </a>
-            )}
-            {!activePageSlug && reviews.enabled && (
-              <a href="#reviews" className="hover:text-black transition-colors">
-                Reviews
-              </a>
-            )}
-            <a href="#contact" className="hover:text-black transition-colors">
-              Contact
-            </a>
+          <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600">
+            {visibleNavItems.map((item: any) => {
+              const isPageMode = item.type === "page";
+              const isCurrent =
+                (isPageMode && activePageSlug === item.target) ||
+                (!isPageMode && !activePageSlug && item.target === "home");
 
-            {/* Custom Multi-Pages */}
-            {pages.length > 0 && (
-              <div className="flex items-center gap-4 border-l pl-4">
-                {pages.map((p) => {
-                  const isCurrent = activePageSlug === p.slug;
-                  return (
-                    <Link
-                      key={p.slug}
-                      href={`/site/${domainOrSlug}?page=${p.slug}`}
-                      className={`text-xs uppercase tracking-wider font-extrabold px-3 py-1.5 rounded-lg transition-all ${
-                        isCurrent ? "text-white shadow-sm" : "hover:text-black text-slate-600"
-                      }`}
-                      style={{ backgroundColor: isCurrent ? primaryColor : undefined }}
-                    >
-                      {p.title}
-                    </Link>
-                  );
-                })}
+              const href = isPageMode
+                ? item.target === "home"
+                  ? `/site/${domainOrSlug}`
+                  : `/site/${domainOrSlug}?page=${item.target}`
+                : activePageSlug
+                ? `/site/${domainOrSlug}#${item.target}`
+                : `#${item.target}`;
+
+              return (
+                <Link
+                  key={item.id || item.target}
+                  href={href}
+                  className={`transition-colors font-bold text-xs uppercase tracking-wider ${
+                    isCurrent ? "font-extrabold" : "hover:text-black text-slate-600"
+                  }`}
+                  style={{ color: isCurrent ? primaryColor : undefined }}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+
+            {/* Custom Multi-Pages not already linked & not marked hidden */}
+            {pages.filter((p: any) => {
+              const excluded = navItems.some(
+                (ni: any) =>
+                  (ni.target === p.slug || ni.id === `custom-page-${p.id}`) &&
+                  (ni.visible === false || ni.visible === "false")
+              );
+              if (excluded) return false;
+              return !visibleNavItems.some((ni: any) => ni.target === p.slug);
+            }).length > 0 && (
+              <div className="flex items-center gap-3 border-l pl-4">
+                {pages
+                  .filter((p: any) => {
+                    const excluded = navItems.some(
+                      (ni: any) =>
+                        (ni.target === p.slug || ni.id === `custom-page-${p.id}`) &&
+                        (ni.visible === false || ni.visible === "false")
+                    );
+                    if (excluded) return false;
+                    return !visibleNavItems.some((ni: any) => ni.target === p.slug);
+                  })
+                  .map((p) => {
+                    const isCurrent = activePageSlug === p.slug;
+                    return (
+                      <Link
+                        key={p.slug}
+                        href={`/site/${domainOrSlug}?page=${p.slug}`}
+                        className={`text-xs uppercase tracking-wider font-extrabold px-3 py-1.5 rounded-lg transition-all ${
+                          isCurrent ? "text-white shadow-sm" : "hover:text-black text-slate-600"
+                        }`}
+                        style={{ backgroundColor: isCurrent ? primaryColor : undefined }}
+                      >
+                        {p.title}
+                      </Link>
+                    );
+                  })}
               </div>
             )}
           </nav>
@@ -141,14 +212,114 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
             style={{ backgroundColor: primaryColor }}
           >
             <MessageCircle className="w-4 h-4" />
-            <span>Book via WhatsApp</span>
+            <span>{config?.headerSection?.buttonText || "Book via WhatsApp"}</span>
           </a>
         </div>
       </header>
 
-      {/* ── CONDITIONAL RENDERING: CUSTOM PAGE VS ONE-PAGE HOME ── */}
+      {/* ── CONDITIONAL RENDERING: DEDICATED CATALOG / SERVICES / CUSTOM PAGE VS ONE-PAGE HOME ── */}
       {activePageSlug ? (
-        requestedPage ? (
+        activePageSlug === "products" ? (
+          <div>
+            {/* Breadcrumbs */}
+            <div className="bg-slate-50 border-b py-3">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-xs text-slate-500 font-semibold">
+                <Link href={`/site/${domainOrSlug}`} className="hover:text-slate-900 transition-colors">
+                  Home
+                </Link>
+                <span>/</span>
+                <span className="text-slate-900 font-bold">{catalogTitle}</span>
+              </div>
+            </div>
+
+            <CatalogView
+              products={products}
+              primaryColor={primaryColor}
+              whatsappUrl={whatsappUrl}
+              title={catalogTitle}
+              subtitle={config?.productsSection?.subtitle}
+              badge={config?.productsSection?.badge}
+              entityType={entityType}
+            />
+          </div>
+        ) : activePageSlug === "services" ? (
+          <div>
+            {/* Breadcrumbs */}
+            <div className="bg-slate-50 border-b py-3">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-xs text-slate-500 font-semibold">
+                <Link href={`/site/${domainOrSlug}`} className="hover:text-slate-900 transition-colors">
+                  Home
+                </Link>
+                <span>/</span>
+                <span className="text-slate-900 font-bold">{services.title || "Our Services"}</span>
+              </div>
+            </div>
+
+            <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+              <div className="text-center max-w-2xl mx-auto space-y-2">
+                <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
+                  SERVICES & PACKAGES
+                </span>
+                <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+                  {services.title || "Our Services & Packages"}
+                </h1>
+                {services.subtitle && <p className="text-slate-500 text-sm">{services.subtitle}</p>}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {(services.items && services.items.length > 0
+                  ? services.items
+                  : products && products.length > 0
+                  ? products.map((p: any) => ({
+                      name: p.title || p.name,
+                      price: p.price != null ? `Rs. ${Number(p.price).toLocaleString()}` : "Contact for price",
+                      imageUrl: p.image || p.images?.[0],
+                      description: p.description,
+                    }))
+                  : []
+                ).map((s: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-3xl border shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="aspect-[16/10] bg-slate-100 relative">
+                        {s.imageUrl ? (
+                          <Image src={s.imageUrl} alt={s.name} fill className="object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400">
+                            <ShoppingBag className="w-10 h-10 opacity-40" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-6">
+                        <h3 className="text-lg font-black text-slate-900">{s.name}</h3>
+                        {s.description && <p className="text-xs text-slate-500 mt-2 line-clamp-3">{s.description}</p>}
+                        <p className="text-base font-black mt-3" style={{ color: primaryColor }}>
+                          {s.price}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="p-6 pt-0">
+                      <a
+                        href={`${whatsappUrl}?text=${encodeURIComponent(
+                          `Hi, I'm interested in booking service: ${s.name}`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-white font-bold text-xs shadow-md hover:opacity-90 transition-opacity"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        <span>Book via WhatsApp</span>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        ) : requestedPage ? (
           <div>
             {/* Breadcrumbs */}
             <div className="bg-slate-50 border-b py-3">
@@ -501,27 +672,73 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
       )}
 
       {/* ── About Section ── */}
-      {about.enabled && (
+      {about.enabled !== false && (
         <section id="about" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-                ABOUT US
+              <span className="text-xs font-black uppercase tracking-widest inline-block" style={{ color: primaryColor }}>
+                {about.badge || "ABOUT US"}
               </span>
-              <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                {about.title || "Our Story"}
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+                {about.title || `About ${vendor.businessName}`}
               </h2>
-              <p className="text-base text-slate-600 leading-relaxed">
+              <p className="text-base text-slate-600 leading-relaxed whitespace-pre-line">
                 {about.content || "Dedicated to providing the best products and experiences."}
               </p>
+
+              {/* Highlights & Trust Badges */}
+              {(about.highlights || [
+                "100% Genuine Products",
+                "Fast Islandwide Delivery",
+                "Friendly WhatsApp Support",
+              ]).length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  {(about.highlights || [
+                    "100% Genuine Products",
+                    "Fast Islandwide Delivery",
+                    "Friendly WhatsApp Support",
+                  ]).map((h: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-white shrink-0"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </div>
+                      <span>{h}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-2">
+                <a
+                  href={`${whatsappUrl}?text=${encodeURIComponent(
+                    `Hi, I'm reaching out after reading about ${vendor.businessName} on your website!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-bold text-xs shadow-md hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{about.buttonText || "Inquire via WhatsApp"}</span>
+                </a>
+              </div>
             </div>
 
             <div className="aspect-[4/3] rounded-3xl bg-slate-100 overflow-hidden relative border shadow-lg">
               {about.images?.[0] ? (
                 <Image src={about.images[0]} alt="About" fill className="object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-xs uppercase tracking-widest">
-                  About Us
+                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 p-8 text-center space-y-2">
+                  <Building2 className="w-12 h-12 opacity-30 text-slate-500" />
+                  <span className="font-bold text-xs uppercase tracking-widest text-slate-600">
+                    {vendor.businessName}
+                  </span>
+                  <p className="text-[11px] text-slate-400 max-w-xs">
+                    About Us photo can be uploaded from the Website Builder Sections tab
+                  </p>
                 </div>
               )}
             </div>
@@ -531,74 +748,25 @@ export default async function StandaloneSitePage({ params, searchParams }: SiteP
     </>
   )}
 
-      {/* ── Footer / Contact ── */}
-      <footer id="contact" className="bg-slate-950 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-4">
-            <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-              GET IN TOUCH
-            </span>
-            <h3 className="text-3xl font-black tracking-tight">Visit Us or Connect</h3>
-            <div className="space-y-2 text-sm text-slate-400 pt-2">
-              {contact.address && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
-                  <span>{contact.address}</span>
-                </div>
-              )}
-              {(contact.phone || vendor.phone) && (
-                <div className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-slate-500 shrink-0" />
-                  <span>{contact.phone || vendor.phone}</span>
-                </div>
-              )}
-            </div>
-          </div>
+      {/* ── Contact Us Section ── */}
+      <ContactSectionClient
+        contact={contact}
+        vendor={vendor}
+        primaryColor={primaryColor}
+        whatsappUrl={whatsappUrl}
+      />
 
-          <div className="flex flex-col items-start md:items-end justify-center space-y-4">
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-white font-black text-sm shadow-xl hover:opacity-95 transition-opacity"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span>{config?.headerSection?.buttonText || "Book via WhatsApp"}</span>
-            </a>
-
-            {/* Social Links */}
-            {(footer?.socialLinks?.facebook || footer?.socialLinks?.instagram) && (
-              <div className="flex items-center gap-3 pt-1">
-                {footer.socialLinks?.facebook && (
-                  <a
-                    href={footer.socialLinks.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white transition-colors"
-                  >
-                    Facebook
-                  </a>
-                )}
-                {footer.socialLinks?.instagram && (
-                  <a
-                    href={footer.socialLinks.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white transition-colors"
-                  >
-                    Instagram
-                  </a>
-                )}
-              </div>
-            )}
-
-            <p className="text-xs text-slate-500">
-              {footer?.copyrightText || `© ${new Date().getFullYear()} ${vendor?.businessName || "Store"}. All rights reserved.`}
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* ── Rich Multi-Column Footer ── */}
+      <FooterSectionClient
+        footer={footer}
+        contact={contact}
+        vendor={vendor}
+        primaryColor={primaryColor}
+        pages={pages}
+        visibleNavItems={visibleNavItems}
+        domainOrSlug={domainOrSlug}
+        entityType={entityType}
+      />
     </div>
   );
 }

@@ -78,17 +78,39 @@ export interface ContactSectionConfig {
   whatsapp?: string;
   email?: string;
   address?: string;
+  // Opening Hours
+  showOpeningHours?: boolean;
+  openingHours?: string;
+  // Location Map
+  showMap?: boolean;
   mapEmbedUrl?: string;
+  mapDirectionsUrl?: string;
+  // Contact & Inquiry Form
+  showContactForm?: boolean;
+  formTitle?: string;
+  formSubtitle?: string;
 }
 
 export interface FooterSectionConfig {
   enabled: boolean;
   copyrightText?: string;
-  facebookUrl?: string;
-  instagramUrl?: string;
-  tiktokUrl?: string;
-  youtubeUrl?: string;
-  whatsappUrl?: string;
+  storeBio?: string;
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    tiktok?: string;
+    youtube?: string;
+    whatsapp?: string;
+    twitter?: string;
+    linkedin?: string;
+  };
+  showQuickLinks?: boolean;
+  showPagesLinks?: boolean;
+  showContactInfo?: boolean;
+  showNewsletter?: boolean;
+  newsletterTitle?: string;
+  newsletterSubtitle?: string;
+  customLinks?: Array<{ label: string; url: string }>;
 }
 
 export interface VendorWebsiteConfigData {
