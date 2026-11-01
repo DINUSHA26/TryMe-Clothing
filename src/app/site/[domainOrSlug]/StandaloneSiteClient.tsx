@@ -60,6 +60,7 @@ interface StandaloneSiteClientProps {
   initialPageSlug?: string | null;
   initialItemSlug?: string | null;
   isPreview?: boolean;
+  previewDevice?: "desktop" | "tablet" | "mobile";
   onPreviewPageSelect?: (slug: string) => void;
 }
 
@@ -69,6 +70,7 @@ export default function StandaloneSiteClient({
   initialPageSlug = null,
   initialItemSlug = null,
   isPreview = false,
+  previewDevice = "desktop",
   onPreviewPageSelect,
 }: StandaloneSiteClientProps) {
   const router = useRouter();
@@ -464,6 +466,17 @@ export default function StandaloneSiteClient({
     if (item.id === "gallery" && (!gallery.enabled || !gallery.images || gallery.images.length === 0)) {
       return false;
     }
+    const isStandardTarget = ["home", "products", "services", "about", "gallery", "reviews", "contact"].includes(
+      item.target
+    );
+    if (item.isCustom || (item.type === "page" && !isStandardTarget)) {
+      const matchedPage = pages.find(
+        (p: any) => p.slug === item.target || `custom-page-${p.id}` === item.id
+      );
+      if (!matchedPage) return false;
+      if (!isPreview && matchedPage.isPublished === false) return false;
+      if (matchedPage.sectionsJson?.showInNavbar === false) return false;
+    }
     return true;
   });
 
@@ -842,20 +855,20 @@ export default function StandaloneSiteClient({
           onClick={() => handleItemCardClick(p, isAd ? "AD" : "PRODUCT")}
           className="cursor-pointer"
         >
-          <div className="aspect-square rounded-xl bg-slate-100 relative overflow-hidden mb-3">
+          <div className="aspect-square rounded-xl bg-slate-50 border border-slate-100 relative overflow-hidden mb-3 flex items-center justify-center">
             {img ? (
               <Image
                 src={img}
                 alt={title}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                className="object-contain object-center p-2 group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-slate-300">
                 <ShoppingBag className="w-10 h-10" />
               </div>
             )}
-            <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+            <div className="absolute top-2 left-2 flex flex-wrap gap-1 z-10">
               <span className="bg-black/70 backdrop-blur-md text-[9px] uppercase font-black text-white px-2.5 py-0.5 rounded-full">
                 {isAd ? "Verified Ad" : p.stock === 0 ? "Out of Stock" : "In Stock"}
               </span>
@@ -964,29 +977,29 @@ export default function StandaloneSiteClient({
     return (
       <div
         key={s.id || idx}
-        className="bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+        className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
       >
         <div
           onClick={() => handleItemCardClick(s, "SERVICE")}
           className="cursor-pointer"
         >
-          <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+          <div className="aspect-square rounded-xl bg-slate-50 border border-slate-100 relative overflow-hidden mb-3 flex items-center justify-center">
             {s.imageUrl ? (
               <Image
                 src={s.imageUrl}
                 alt={s.name}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                className="object-contain object-center p-2 group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 p-4 text-center">
+              <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-400 p-4 text-center">
                 <Sparkles className="w-8 h-8 mb-1 opacity-50" />
                 <span className="text-[10px] uppercase font-bold tracking-wider">Service Package</span>
               </div>
             )}
           </div>
-          <div className="p-5 pb-3">
-            <h3 className="font-extrabold text-base text-slate-900 group-hover:underline line-clamp-1">
+          <div>
+            <h3 className="font-extrabold text-sm sm:text-base text-slate-900 group-hover:underline line-clamp-2">
               {s.name}
             </h3>
             {s.description && (
@@ -998,7 +1011,7 @@ export default function StandaloneSiteClient({
           </div>
         </div>
 
-        <div className="p-5 pt-2">
+        <div className="mt-3 pt-3 border-t">
           {isMultiPage ? (
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -1014,8 +1027,8 @@ export default function StandaloneSiteClient({
                 className="py-2.5 px-3 rounded-xl text-white text-xs font-black shadow-sm hover:opacity-90 inline-flex items-center justify-center gap-1"
                 style={{ backgroundColor: primaryColor }}
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>Book / Order</span>
+                <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Book / Order</span>
               </button>
             </div>
           ) : (
@@ -1025,8 +1038,8 @@ export default function StandaloneSiteClient({
                 onClick={() => handleInquiryViaWhatsApp(s)}
                 className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1"
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>WhatsApp</span>
+                <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">WhatsApp</span>
               </button>
               <button
                 type="button"
@@ -1034,8 +1047,8 @@ export default function StandaloneSiteClient({
                 className="py-2.5 px-3 rounded-xl text-white text-xs font-bold inline-flex items-center justify-center gap-1 hover:opacity-90"
                 style={{ backgroundColor: primaryColor }}
               >
-                <Mail className="w-3.5 h-3.5" />
-                <span>Inquire</span>
+                <Mail className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Inquire</span>
               </button>
             </div>
           )}
@@ -1097,8 +1110,16 @@ export default function StandaloneSiteClient({
             </div>
           </button>
 
-          {/* Center: Desktop Navigation Links (lg and up) */}
-          <nav className="hidden lg:flex items-center gap-5 xl:gap-6 text-sm font-semibold text-slate-600">
+          {/* Center: Desktop / Tablet Navigation Links */}
+          <nav
+            className={`${
+              isPreview
+                ? previewDevice === "mobile"
+                  ? "hidden"
+                  : "flex"
+                : "hidden md:flex"
+            } flex-wrap items-center justify-center gap-3.5 lg:gap-5 xl:gap-6 text-sm font-semibold text-slate-600`}
+          >
             {visibleNavItems.map((item: any) => {
               const isCurrent =
                 activePage === item.target ||
@@ -1119,16 +1140,20 @@ export default function StandaloneSiteClient({
               );
             })}
 
-            {/* Custom Multi-Pages */}
+            {/* Custom Multi-Pages enabled for Navbar */}
             {pages
               .filter((p: any) => {
+                if (!isPreview && p.isPublished === false) return false;
+                if (p.sectionsJson?.showInNavbar === false) return false;
                 const excluded = navItems.some(
                   (ni: any) =>
                     (ni.target === p.slug || ni.id === `custom-page-${p.id}`) &&
                     (ni.visible === false || ni.visible === "false")
                 );
                 if (excluded) return false;
-                return !visibleNavItems.some((ni: any) => ni.target === p.slug);
+                return !visibleNavItems.some(
+                  (ni: any) => ni.target === p.slug || ni.id === `custom-page-${p.id}`
+                );
               })
               .map((p: any) => {
                 const isCurrent = activePage === p.slug;
@@ -1137,10 +1162,10 @@ export default function StandaloneSiteClient({
                     key={p.slug}
                     type="button"
                     onClick={() => navigateTo(p.slug)}
-                    className={`text-xs uppercase tracking-wider font-extrabold px-3 py-1.5 rounded-lg transition-all whitespace-nowrap ${
-                      isCurrent ? "text-white shadow-sm" : "hover:text-black text-slate-600"
+                    className={`transition-colors font-bold text-xs uppercase tracking-wider cursor-pointer whitespace-nowrap ${
+                      isCurrent ? "font-extrabold" : "hover:text-black text-slate-600"
                     }`}
-                    style={{ backgroundColor: isCurrent ? primaryColor : undefined }}
+                    style={{ color: isCurrent ? primaryColor : undefined }}
                   >
                     {p.title}
                   </button>
@@ -1148,7 +1173,7 @@ export default function StandaloneSiteClient({
               })}
           </nav>
 
-          {/* Right: Cart + CTA + Far-Right Hamburger Menu Button on Mobile/Tablet */}
+          {/* Right: Cart + CTA + Far-Right Hamburger Menu Button on Mobile */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {isMultiPage && (
               <button
@@ -1176,18 +1201,26 @@ export default function StandaloneSiteClient({
                   ? handleInquiryViaWhatsApp()
                   : openInquiryModal({ name: vendor?.businessName || "General Inquiry" }, "PRODUCT")
               }
-              className="hidden sm:inline-flex items-center gap-2 px-4 lg:px-5 py-2 sm:py-2.5 rounded-full text-white font-bold text-xs shadow-md hover:opacity-90 transition-opacity whitespace-nowrap"
+              className={`${
+                isPreview && previewDevice === "mobile" ? "hidden" : "hidden sm:inline-flex"
+              } items-center gap-2 px-4 lg:px-5 py-2 sm:py-2.5 rounded-full text-white font-bold text-xs shadow-md hover:opacity-90 transition-opacity whitespace-nowrap`}
               style={{ backgroundColor: primaryColor }}
             >
               <MessageCircle className="w-4 h-4 shrink-0" />
               <span>{config?.headerSection?.buttonText || "WhatsApp / Inquire"}</span>
             </button>
 
-            {/* Hamburger Menu Button at the Far Right Corner (Mobile & Tablet < lg) */}
+            {/* Hamburger Menu Button at the Far Right Corner (Mobile View) */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
-              className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-900 transition-colors shrink-0"
+              className={`${
+                isPreview
+                  ? previewDevice === "mobile"
+                    ? "inline-flex"
+                    : "hidden"
+                  : "md:hidden inline-flex"
+              } items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-900 transition-colors shrink-0`}
               aria-label="Toggle Menu"
             >
               {mobileMenuOpen ? (
@@ -1199,9 +1232,13 @@ export default function StandaloneSiteClient({
           </div>
         </div>
 
-        {/* ── Mobile & Tablet Slide-Down Navigation Menu (< lg) ── */}
+        {/* ── Mobile Slide-Down Navigation Menu ── */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-slate-200 bg-white shadow-2xl px-4 pt-3 pb-5 space-y-3 animate-in fade-in slide-in-from-top-2">
+          <div
+            className={`${
+              isPreview ? (previewDevice === "mobile" ? "block" : "hidden") : "md:hidden"
+            } border-t border-slate-200 bg-white shadow-2xl px-4 pt-3 pb-5 space-y-3 animate-in fade-in slide-in-from-top-2`}
+          >
             <div className="flex flex-col space-y-1">
               {visibleNavItems.map((item: any) => {
                 const isCurrent =
@@ -1231,13 +1268,17 @@ export default function StandaloneSiteClient({
               {/* Custom Multi-Pages in Mobile Menu */}
               {pages
                 .filter((p: any) => {
+                  if (!isPreview && p.isPublished === false) return false;
+                  if (p.sectionsJson?.showInNavbar === false) return false;
                   const excluded = navItems.some(
                     (ni: any) =>
                       (ni.target === p.slug || ni.id === `custom-page-${p.id}`) &&
                       (ni.visible === false || ni.visible === "false")
                   );
                   if (excluded) return false;
-                  return !visibleNavItems.some((ni: any) => ni.target === p.slug);
+                  return !visibleNavItems.some(
+                    (ni: any) => ni.target === p.slug || ni.id === `custom-page-${p.id}`
+                  );
                 })
                 .map((p: any) => {
                   const isCurrent = activePage === p.slug;
@@ -1333,7 +1374,7 @@ export default function StandaloneSiteClient({
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 {/* Left: Image Gallery */}
                 <div className="lg:col-span-6 space-y-4">
-                  <div className="aspect-square rounded-3xl bg-slate-100 border overflow-hidden relative shadow-sm">
+                  <div className="aspect-square rounded-3xl bg-slate-50 border overflow-hidden relative shadow-sm flex items-center justify-center">
                     {selectedDetailImage ||
                     activeProduct.image ||
                     activeProduct.images?.[0] ? (
@@ -1347,7 +1388,7 @@ export default function StandaloneSiteClient({
                         }
                         alt={activeProduct.name || "Product"}
                         fill
-                        className="object-cover"
+                        className="object-contain object-center p-4"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300">
@@ -1368,12 +1409,12 @@ export default function StandaloneSiteClient({
                             key={i}
                             type="button"
                             onClick={() => setSelectedDetailImage(url)}
-                            className={`relative w-20 h-20 rounded-2xl overflow-hidden border-2 shrink-0 transition-all ${
+                            className={`relative w-20 h-20 rounded-2xl overflow-hidden border-2 bg-slate-50 shrink-0 transition-all ${
                               isSelected ? "scale-105 shadow-md" : "opacity-70 hover:opacity-100"
                             }`}
                             style={{ borderColor: isSelected ? primaryColor : "transparent" }}
                           >
-                            <Image src={url} alt="Thumbnail" fill className="object-cover" />
+                            <Image src={url} alt="Thumbnail" fill className="object-contain object-center p-1" />
                           </button>
                         );
                       })}
@@ -1860,13 +1901,13 @@ export default function StandaloneSiteClient({
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 space-y-14">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                 <div className="lg:col-span-6">
-                  <div className="aspect-[4/3] rounded-3xl bg-slate-100 border overflow-hidden relative shadow-lg">
+                  <div className="aspect-square sm:aspect-[4/3] rounded-3xl bg-slate-50 border overflow-hidden relative shadow-lg flex items-center justify-center">
                     {activeService.imageUrl ? (
                       <Image
                         src={activeService.imageUrl}
                         alt={activeService.name}
                         fill
-                        className="object-cover"
+                        className="object-contain object-center p-4"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300">
@@ -1993,9 +2034,9 @@ export default function StandaloneSiteClient({
                     className="p-4 sm:p-5 rounded-2xl border bg-white shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-20 h-20 rounded-xl bg-slate-100 relative overflow-hidden border shrink-0">
+                      <div className="w-20 h-20 rounded-xl bg-slate-50 relative overflow-hidden border shrink-0 flex items-center justify-center">
                         {item.image ? (
-                          <Image src={item.image} alt={item.name} fill className="object-cover" />
+                          <Image src={item.image} alt={item.name} fill className="object-contain object-center p-1" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-slate-300">
                             <ShoppingBag className="w-6 h-6" />
@@ -2888,10 +2929,89 @@ export default function StandaloneSiteClient({
             </div>
           </section>
 
-          <section className="py-14 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <section className="py-12 sm:py-16 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+            {requestedCustomPage.sectionsJson?.banner?.bgImage && (
+              <div className="relative aspect-[16/9] rounded-3xl overflow-hidden border bg-slate-50 shadow-md flex items-center justify-center">
+                <Image
+                  src={requestedCustomPage.sectionsJson.banner.bgImage}
+                  alt={requestedCustomPage.title}
+                  fill
+                  className="object-contain object-center p-2"
+                />
+              </div>
+            )}
+
             {requestedCustomPage.contentHtml && (
-              <div className="bg-white p-8 sm:p-10 rounded-3xl border shadow-sm text-slate-700 text-base leading-relaxed whitespace-pre-line">
+              <div className="bg-white p-6 sm:p-10 rounded-3xl border shadow-sm text-slate-700 text-sm sm:text-base leading-relaxed whitespace-pre-line">
                 {requestedCustomPage.contentHtml}
+              </div>
+            )}
+
+            {Array.isArray(requestedCustomPage.sectionsJson?.featureCards) &&
+              requestedCustomPage.sectionsJson.featureCards.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {requestedCustomPage.sectionsJson.featureCards.map((card: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="p-6 rounded-2xl border bg-white shadow-xs space-y-2"
+                    >
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-xs"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <h3 className="font-extrabold text-base text-slate-900">{card.title}</h3>
+                      {card.description && (
+                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                          {card.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            {Array.isArray(requestedCustomPage.sectionsJson?.faq) &&
+              requestedCustomPage.sectionsJson.faq.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                    Frequently Asked Questions
+                  </h3>
+                  <div className="space-y-3">
+                    {requestedCustomPage.sectionsJson.faq.map((faqItem: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="p-5 rounded-2xl border bg-white shadow-xs space-y-1.5"
+                      >
+                        <h4 className="font-extrabold text-sm sm:text-base text-slate-900">
+                          {faqItem.question}
+                        </h4>
+                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                          {faqItem.answer}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            {requestedCustomPage.sectionsJson?.cta?.title && (
+              <div className="p-6 sm:p-8 rounded-3xl border bg-slate-50 text-center space-y-4">
+                <h3 className="text-lg sm:text-xl font-black text-slate-900">
+                  {requestedCustomPage.sectionsJson.cta.title}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => handleInquiryViaWhatsApp()}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-white font-bold text-xs sm:text-sm shadow-md hover:opacity-95 transition-opacity"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>
+                    {requestedCustomPage.sectionsJson.cta.buttonText || "Chat on WhatsApp"}
+                  </span>
+                </button>
               </div>
             )}
           </section>
@@ -3205,6 +3325,13 @@ export default function StandaloneSiteClient({
         visibleNavItems={visibleNavItems}
         domainOrSlug={domainOrSlug}
         entityType={entityType}
+        onNavigate={(target, type) => {
+          if (type === "page") {
+            navigateTo(target);
+          } else {
+            handleNavItemClick({ target, type: type || "scroll" });
+          }
+        }}
       />
 
       {/* ── INQUIRY / ORDER MODAL (Used for 1-Page Website & Quick Inquiries) ── */}

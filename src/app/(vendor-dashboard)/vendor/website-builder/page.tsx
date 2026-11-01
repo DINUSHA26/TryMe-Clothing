@@ -137,6 +137,8 @@ export default function WebsiteBuilderPage() {
   const [newPageModalOpen, setNewPageModalOpen] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState("");
   const [newPageSlug, setNewPageSlug] = useState("");
+  const [newPageInNavbar, setNewPageInNavbar] = useState(true);
+  const [newPageInFooter, setNewPageInFooter] = useState(true);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -213,6 +215,28 @@ export default function WebsiteBuilderPage() {
     return saved;
   };
 
+  const isCustomPageInNavbar = (page: any) => {
+    if (!page) return false;
+    const pageItemId = `custom-page-${page.id}`;
+    const navItem = getEffectiveNavItems().find(
+      (it: any) => it.id === pageItemId || (it.type === "page" && it.target === page.slug)
+    );
+    if (navItem && navItem.visible !== undefined) {
+      return navItem.visible !== false && navItem.visible !== "false";
+    }
+    return page.sectionsJson?.showInNavbar !== false;
+  };
+
+  const isCustomPageInFooter = (page: any) => {
+    if (!page) return false;
+    if (page.sectionsJson?.showInFooter === false) return false;
+    const hiddenList: string[] = Array.isArray(config.footerSection?.hiddenPageSlugs)
+      ? config.footerSection.hiddenPageSlugs
+      : [];
+    if (hiddenList.includes(page.slug) || hiddenList.includes(page.id)) return false;
+    return true;
+  };
+
   const handleUpdateNavItem = (id: string, updates: Partial<any>) => {
     const current = getEffectiveNavItems();
     const idx = current.findIndex((it: any) => it.id === id);
@@ -239,7 +263,7 @@ export default function WebsiteBuilderPage() {
     let updatedList: any[];
     if (idx >= 0) {
       updatedList = [...current];
-      updatedList[idx] = { ...updatedList[idx], visible };
+      updatedList[idx] = { ...updatedList[idx], visible, target: page.slug, type: "page", isCustom: true };
     } else {
       updatedList = [
         ...current,
@@ -253,11 +277,72 @@ export default function WebsiteBuilderPage() {
         },
       ];
     }
+
+    const updatedSections = { ...(page.sectionsJson || {}), showInNavbar: visible };
+    setPages((prev) =>
+      prev.map((p) => (p.id === page.id ? { ...p, sectionsJson: updatedSections } : p))
+    );
+    if (editingPage?.id === page.id) {
+      setEditingPage((prev: any) => (prev ? { ...prev, sectionsJson: updatedSections } : prev));
+    }
+
     setConfig((prev: any) => {
       const nextConfig = { ...prev, navItemsJson: updatedList };
       autoSaveConfig(nextConfig);
       return nextConfig;
     });
+
+    // Also persist on the page record itself
+    fetch(`/api/vendor/website/pages/${page.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: page.title,
+        slug: page.slug,
+        sectionsJson: updatedSections,
+      }),
+    }).catch(() => {});
+  };
+
+  const handleToggleCustomPageInFooter = (page: any, visible: boolean) => {
+    const currentHidden: string[] = Array.isArray(config.footerSection?.hiddenPageSlugs)
+      ? config.footerSection.hiddenPageSlugs
+      : [];
+    const nextHidden = visible
+      ? currentHidden.filter((item) => item !== page.slug && item !== page.id)
+      : Array.from(new Set([...currentHidden, page.slug, page.id]));
+
+    const updatedSections = { ...(page.sectionsJson || {}), showInFooter: visible };
+    setPages((prev) =>
+      prev.map((p) => (p.id === page.id ? { ...p, sectionsJson: updatedSections } : p))
+    );
+    if (editingPage?.id === page.id) {
+      setEditingPage((prev: any) => (prev ? { ...prev, sectionsJson: updatedSections } : prev));
+    }
+
+    setConfig((prev: any) => {
+      const nextConfig = {
+        ...prev,
+        footerSection: {
+          ...(prev.footerSection || {}),
+          showPagesLinks: visible ? true : prev.footerSection?.showPagesLinks !== false,
+          hiddenPageSlugs: nextHidden,
+        },
+      };
+      autoSaveConfig(nextConfig);
+      return nextConfig;
+    });
+
+    // Also persist on the page record itself
+    fetch(`/api/vendor/website/pages/${page.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: page.title,
+        slug: page.slug,
+        sectionsJson: updatedSections,
+      }),
+    }).catch(() => {});
   };
 
   const handleUpdateContactSection = (updates: Partial<any>) => {
@@ -310,6 +395,7 @@ export default function WebsiteBuilderPage() {
         {
           type: "PREVIEW_UPDATE",
           activePageSlug: editingPage?.slug || "home",
+          deviceView,
           payload: {
             config,
             entityInfo,
@@ -349,7 +435,7 @@ export default function WebsiteBuilderPage() {
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [config, entityInfo, pages, editingPage, loading]);
+  }, [config, entityInfo, pages, editingPage, loading, deviceView]);
 
   // Initial Data Fetch & Payment Verification
   useEffect(() => {
@@ -764,19 +850,40 @@ export default function WebsiteBuilderPage() {
     }
 
     try {
+      const initialSectionsJson = {
+        showInNavbar: newPageInNavbar,
+        showInFooter: newPageInFooter,
+        banner: { title: newPageTitle.trim(), subtitle: "", badge: "", bgImage: "" },
+        featureCards: [],
+        faq: [],
+        cta: { title: `Have questions about ${newPageTitle.trim()}?`, buttonText: "Chat on WhatsApp" },
+      };
+
       const res = await fetch("/api/vendor/website/pages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newPageTitle, slug: newPageSlug }),
+        body: JSON.stringify({
+          title: newPageTitle.trim(),
+          slug: newPageSlug.trim(),
+          sectionsJson: initialSectionsJson,
+        }),
       });
       const data = await res.json();
       if (data.success) {
-        setPages((prev) => [...prev, data.data]);
+        const createdPage = {
+          ...data.data,
+          sectionsJson: data.data.sectionsJson || initialSectionsJson,
+        };
+        setPages((prev) => [...prev, createdPage]);
+        handleToggleCustomPageInNav(createdPage, newPageInNavbar);
+        handleToggleCustomPageInFooter(createdPage, newPageInFooter);
         setNewPageModalOpen(false);
         setNewPageTitle("");
         setNewPageSlug("");
+        setNewPageInNavbar(true);
+        setNewPageInFooter(true);
         toast.success("Page created! You can now design its content.");
-        handleSelectPageForDesign(data.data);
+        handleSelectPageForDesign(createdPage);
       } else {
         toast.error(data.error || "Failed to create page");
         if (data.requiredTier) {
@@ -793,11 +900,14 @@ export default function WebsiteBuilderPage() {
   const handleSelectPageForDesign = (page: any) => {
     const fullPage = {
       ...page,
-      sectionsJson: page.sectionsJson || {
+      sectionsJson: {
+        showInNavbar: page.sectionsJson?.showInNavbar !== false,
+        showInFooter: page.sectionsJson?.showInFooter !== false,
         banner: { title: page.title, subtitle: "", badge: "", bgImage: "" },
         featureCards: [],
         faq: [],
         cta: { title: `Have questions about ${page.title}?`, buttonText: "Chat on WhatsApp" },
+        ...(page.sectionsJson || {}),
       },
     };
     setEditingPage(fullPage);
@@ -830,6 +940,29 @@ export default function WebsiteBuilderPage() {
     setEditingPage((prev: any) => {
       const updated = typeof updater === "function" ? updater(prev) : { ...prev, ...updater };
       setPages((currentPages) => currentPages.map((p) => (p.id === updated.id ? updated : p)));
+
+      // If title or slug changed, also keep the custom page entry in navItemsJson synced
+      if (updated.title !== prev?.title || updated.slug !== prev?.slug) {
+        setConfig((prevCfg: any) => {
+          const list = Array.isArray(prevCfg.navItemsJson) ? [...prevCfg.navItemsJson] : [];
+          const pageItemId = `custom-page-${updated.id}`;
+          const idx = list.findIndex(
+            (it: any) => it.id === pageItemId || (it.type === "page" && it.target === prev?.slug)
+          );
+          if (idx >= 0) {
+            list[idx] = {
+              ...list[idx],
+              label: list[idx].label === prev?.title ? updated.title : list[idx].label || updated.title,
+              target: updated.slug,
+            };
+            const nextCfg = { ...prevCfg, navItemsJson: list };
+            autoSaveConfig(nextCfg);
+            return nextCfg;
+          }
+          return prevCfg;
+        });
+      }
+
       if (iframeRef.current && iframeRef.current.contentWindow) {
         iframeRef.current.contentWindow.postMessage(
           {
@@ -866,6 +999,7 @@ export default function WebsiteBuilderPage() {
         toast.success("Page design saved successfully!");
         setPages((prev) => prev.map((p) => (p.id === data.data.id ? data.data : p)));
         setEditingPage(data.data);
+        autoSaveConfig(config);
         sendPreviewUpdate();
       } else {
         toast.error(data.error || "Failed to save page design");
@@ -2622,22 +2756,55 @@ export default function WebsiteBuilderPage() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between pt-1 border-t">
-                      <div>
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
-                          Custom Pages &amp; Policies Links
-                        </span>
-                        <span className="text-[10px] text-slate-400">Show created pages (Privacy, Terms, FAQ, etc.)</span>
+                    <div className="pt-1 border-t space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                            Custom Pages &amp; Policies Links
+                          </span>
+                          <span className="text-[10px] text-slate-400">Show created pages in Footer (About Us, Privacy, Support, etc.)</span>
+                        </div>
+                        <Switch
+                          checked={config.footerSection?.showPagesLinks !== false}
+                          onCheckedChange={(c) => {
+                            const updated = {
+                              ...config,
+                              footerSection: { ...(config.footerSection || {}), showPagesLinks: c },
+                            };
+                            setConfig(updated);
+                            autoSaveConfig(updated);
+                          }}
+                        />
                       </div>
-                      <Switch
-                        checked={config.footerSection?.showPagesLinks !== false}
-                        onCheckedChange={(c) =>
-                          setConfig((prev: any) => ({
-                            ...prev,
-                            footerSection: { ...(prev.footerSection || {}), showPagesLinks: c },
-                          }))
-                        }
-                      />
+
+                      {config.footerSection?.showPagesLinks !== false && pages.length > 0 && (
+                        <div className="pl-2 pt-1.5 space-y-1.5 border-l-2 border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                            Choose Which Pages Appear in Footer:
+                          </span>
+                          {pages.map((p) => {
+                            const inFooter = isCustomPageInFooter(p);
+                            return (
+                              <div
+                                key={p.id}
+                                className="flex items-center justify-between py-1 px-2 rounded-lg bg-slate-50 dark:bg-slate-900"
+                              >
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <FileText className="w-3 h-3 text-primary shrink-0" />
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                                    {p.title}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-mono">/{p.slug}</span>
+                                </div>
+                                <Switch
+                                  checked={inFooter}
+                                  onCheckedChange={(val) => handleToggleCustomPageInFooter(p, val)}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between pt-1 border-t">
@@ -2925,13 +3092,13 @@ export default function WebsiteBuilderPage() {
                 </div>
               </div>
 
-              {/* CUSTOM MULTI-PAGES IN NAVBAR */}
+              {/* CUSTOM MULTI-PAGES IN NAVBAR & FOOTER */}
               <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-bold text-sm">Custom Pages in Navbar</h4>
+                    <h4 className="font-bold text-sm">Custom Pages in Navbar &amp; Footer</h4>
                     <p className="text-[11px] text-slate-400">
-                      Toggle whether your created pages appear in the top header
+                      Choose whether each created page appears in the Top Navbar and/or Website Footer
                     </p>
                   </div>
                   <Button
@@ -2957,11 +3124,12 @@ export default function WebsiteBuilderPage() {
                       const navItem = getEffectiveNavItems().find(
                         (it: any) => it.id === pageItemId || it.target === p.slug
                       );
-                      const isVisible = navItem ? navItem.visible !== false : true;
+                      const isVisible = isCustomPageInNavbar(p);
+                      const inFooter = isCustomPageInFooter(p);
 
                       return (
-                        <div key={p.id} className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-2">
-                          <div className="flex items-center justify-between">
+                        <div key={p.id} className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-2.5">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
                             <div className="flex items-center gap-2">
                               <FileText className="w-3.5 h-3.5 text-primary" />
                               <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{p.title}</span>
@@ -2969,14 +3137,25 @@ export default function WebsiteBuilderPage() {
                                 /{p.slug}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-slate-400 font-bold uppercase">
-                                {isVisible ? "In Menu" : "Excluded"}
-                              </span>
-                              <Switch
-                                checked={isVisible}
-                                onCheckedChange={(c) => handleToggleCustomPageInNav(p, c)}
-                              />
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase">
+                                  Navbar
+                                </span>
+                                <Switch
+                                  checked={isVisible}
+                                  onCheckedChange={(c) => handleToggleCustomPageInNav(p, c)}
+                                />
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase">
+                                  Footer
+                                </span>
+                                <Switch
+                                  checked={inFooter}
+                                  onCheckedChange={(c) => handleToggleCustomPageInFooter(p, c)}
+                                />
+                              </div>
                             </div>
                           </div>
 
@@ -2991,6 +3170,7 @@ export default function WebsiteBuilderPage() {
                                     target: p.slug,
                                     type: "page",
                                     visible: true,
+                                    isCustom: true,
                                   })
                                 }
                                 className="mt-1 h-8 text-xs font-bold rounded-lg"
@@ -3052,22 +3232,25 @@ export default function WebsiteBuilderPage() {
 
                   {/* Page Title & Slug */}
                   <div className="space-y-4 border p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500">Page Identity</h4>
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-wrap items-center gap-3">
                         <div className="flex items-center gap-1.5">
-                          <Label className="text-xs text-slate-500 font-semibold">In Navbar</Label>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">In Navbar</Label>
                           <Switch
-                            checked={
-                              getEffectiveNavItems().find(
-                                (it: any) => it.id === `custom-page-${editingPage.id}` || it.target === editingPage.slug
-                              )?.visible !== false
-                            }
+                            checked={isCustomPageInNavbar(editingPage)}
                             onCheckedChange={(val) => handleToggleCustomPageInNav(editingPage, val)}
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <Label className="text-xs text-slate-500 font-semibold">Published</Label>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">In Footer</Label>
+                          <Switch
+                            checked={isCustomPageInFooter(editingPage)}
+                            onCheckedChange={(val) => handleToggleCustomPageInFooter(editingPage, val)}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Published</Label>
                           <Switch
                             checked={editingPage.isPublished !== false}
                             onCheckedChange={(val) => handleUpdateEditingPage({ isPublished: val })}
@@ -3426,46 +3609,77 @@ export default function WebsiteBuilderPage() {
                       </Badge>
                     </div>
 
-                    {pages.map((p) => (
-                      <div
-                        key={p.id}
-                        className="p-3.5 border rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-between shadow-sm hover:border-slate-300 transition-all"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0"
-                            style={{ backgroundColor: config.primaryColor }}
-                          >
-                            <FileText className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <span className="font-bold text-sm block text-slate-900 dark:text-white">{p.title}</span>
-                            <span className="text-xs text-slate-400 font-mono">/{p.slug}</span>
-                          </div>
-                        </div>
+                    {pages.map((p) => {
+                      const inNav = isCustomPageInNavbar(p);
+                      const inFoot = isCustomPageInFooter(p);
+                      return (
+                        <div
+                          key={p.id}
+                          className="p-3.5 border rounded-2xl bg-white dark:bg-slate-900 space-y-3 shadow-sm hover:border-slate-300 transition-all"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div
+                                className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0"
+                                style={{ backgroundColor: config.primaryColor }}
+                              >
+                                <FileText className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <span className="font-bold text-sm block text-slate-900 dark:text-white truncate">
+                                  {p.title}
+                                </span>
+                                <span className="text-xs text-slate-400 font-mono">/{p.slug}</span>
+                              </div>
+                            </div>
 
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleSelectPageForDesign(p)}
-                            className="h-8 px-3 rounded-xl text-xs font-black uppercase tracking-wider gap-1.5 shadow-sm text-white"
-                            style={{ backgroundColor: config.primaryColor }}
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>Design Page</span>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeletePage(p.id)}
-                            className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 rounded-xl"
-                            title="Delete Page"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <Button
+                                size="sm"
+                                onClick={() => handleSelectPageForDesign(p)}
+                                className="h-8 px-3 rounded-xl text-xs font-black uppercase tracking-wider gap-1.5 shadow-sm text-white"
+                                style={{ backgroundColor: config.primaryColor }}
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>Design Page</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeletePage(p.id)}
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 rounded-xl"
+                                title="Delete Page"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Quick Navbar & Footer Visibility Toggles */}
+                          <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 text-xs">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={inNav}
+                                onCheckedChange={(val) => handleToggleCustomPageInNav(p, val)}
+                              />
+                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                                Show in Navbar
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={inFoot}
+                                onCheckedChange={(val) => handleToggleCustomPageInFooter(p, val)}
+                              />
+                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                                Show in Footer
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Locked Tier Indicator for Pages > Limit */}
                     {currentTier === "ONE_PAGE" && (
@@ -4151,7 +4365,7 @@ export default function WebsiteBuilderPage() {
                   setNewPageTitle(e.target.value);
                   setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
                 }}
-                placeholder="e.g. Return Policy"
+                placeholder="e.g. About Us, Contact Us, Return Policy"
                 className="mt-1 rounded-xl"
               />
             </div>
@@ -4164,6 +4378,33 @@ export default function WebsiteBuilderPage() {
                 className="mt-1 rounded-xl font-mono text-sm"
               />
             </div>
+
+            <div className="p-3.5 rounded-2xl border bg-slate-50 dark:bg-slate-900 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block">
+                    Add to Top Navbar
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Show this page link in the top header &amp; mobile menu
+                  </span>
+                </div>
+                <Switch checked={newPageInNavbar} onCheckedChange={setNewPageInNavbar} />
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block">
+                    Add to Website Footer
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Show this page link in the bottom footer column
+                  </span>
+                </div>
+                <Switch checked={newPageInFooter} onCheckedChange={setNewPageInFooter} />
+              </div>
+            </div>
+
             <Button onClick={handleCreatePage} className="w-full rounded-xl font-bold mt-2">
               Create Page
             </Button>

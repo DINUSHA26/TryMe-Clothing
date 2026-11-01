@@ -6,6 +6,7 @@ import StandaloneSiteClient from "../site/[domainOrSlug]/StandaloneSiteClient";
 function SitePreviewContent() {
   const [hasReceivedData, setHasReceivedData] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("home");
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [rawPayload, setRawPayload] = useState<any>({
     config: {
       primaryColor: "#5c2336",
@@ -71,6 +72,9 @@ function SitePreviewContent() {
       if (event.data?.type === "PREVIEW_UPDATE" && event.data?.payload) {
         setRawPayload(event.data.payload);
         setHasReceivedData(true);
+        if (event.data.deviceView) {
+          setPreviewDevice(event.data.deviceView);
+        }
         if (event.data.activePageSlug) {
           setActiveTab(event.data.activePageSlug);
         }
@@ -122,7 +126,8 @@ function SitePreviewContent() {
       ? "ONE_PAGE"
       : configuredMode === "MULTI_PAGE"
       ? "SIX_PAGES"
-      : rawPayload.activeSubscription?.tier ||
+      : rawPayload.activeTier ||
+        rawPayload.activeSubscription?.tier ||
         (rawPayload.pages && rawPayload.pages.length > 0 ? "SIX_PAGES" : "ONE_PAGE");
 
   const mappedSiteData = {
@@ -153,6 +158,7 @@ function SitePreviewContent() {
       siteData={mappedSiteData}
       initialPageSlug={activeTab}
       isPreview={true}
+      previewDevice={previewDevice}
       onPreviewPageSelect={(slug) => {
         setActiveTab(slug);
         try {

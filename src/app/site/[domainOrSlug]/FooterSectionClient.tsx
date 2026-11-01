@@ -23,6 +23,7 @@ interface FooterSectionClientProps {
   visibleNavItems: any[];
   domainOrSlug: string;
   entityType?: string;
+  onNavigate?: (target: string, type?: string) => void;
 }
 
 export default function FooterSectionClient({
@@ -34,6 +35,7 @@ export default function FooterSectionClient({
   visibleNavItems,
   domainOrSlug,
   entityType,
+  onNavigate,
 }: FooterSectionClientProps) {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -52,6 +54,24 @@ export default function FooterSectionClient({
   const showPagesLinks = footer?.showPagesLinks !== false;
   const showContactInfo = footer?.showContactInfo !== false;
   const showNewsletter = Boolean(footer?.showNewsletter);
+
+  const hiddenPageSlugs: string[] = Array.isArray(footer?.hiddenPageSlugs)
+    ? footer.hiddenPageSlugs
+    : [];
+
+  const footerPages = (pages || []).filter((p: any) => {
+    if (p.isPublished === false) return false;
+    if (p.sectionsJson?.showInFooter === false) return false;
+    if (hiddenPageSlugs.includes(p.slug) || hiddenPageSlugs.includes(p.id)) return false;
+    return true;
+  });
+
+  const exploreItems = (visibleNavItems || []).filter((item: any) => {
+    if (item.isCustom) return false;
+    const isCustomPageTarget = (pages || []).some((p: any) => p.slug === item.target);
+    if (isCustomPageTarget) return false;
+    return true;
+  });
 
   const social = footer?.socialLinks || {};
 
@@ -192,7 +212,7 @@ export default function FooterSectionClient({
                 Explore
               </h4>
               <ul className="space-y-2 text-xs font-semibold text-slate-400">
-                {visibleNavItems.map((item: any) => {
+                {exploreItems.map((item: any) => {
                   const isCustomDomain = domainOrSlug.includes(".");
                   const basePath = isCustomDomain ? "/" : `/site/${domainOrSlug}`;
                   const href =
@@ -205,6 +225,12 @@ export default function FooterSectionClient({
                     <li key={item.id || item.target}>
                       <Link
                         href={href}
+                        onClick={(e) => {
+                          if (onNavigate) {
+                            e.preventDefault();
+                            onNavigate(item.target, item.type);
+                          }
+                        }}
                         className="hover:text-white transition-colors hover:underline block"
                       >
                         {item.label}
@@ -223,14 +249,20 @@ export default function FooterSectionClient({
                 Customer Care &amp; Pages
               </h4>
               <ul className="space-y-2 text-xs font-semibold text-slate-400">
-                {pages && pages.length > 0 ? (
-                  pages.map((p) => {
+                {footerPages.length > 0 ? (
+                  footerPages.map((p: any) => {
                     const isCustomDomain = domainOrSlug.includes(".");
                     const basePath = isCustomDomain ? "/" : `/site/${domainOrSlug}`;
                     return (
                       <li key={p.slug}>
                         <Link
                           href={`${basePath}?page=${p.slug}`}
+                          onClick={(e) => {
+                            if (onNavigate) {
+                              e.preventDefault();
+                              onNavigate(p.slug, "page");
+                            }
+                          }}
                           className="hover:text-white transition-colors hover:underline block"
                         >
                           {p.title}
@@ -238,11 +270,21 @@ export default function FooterSectionClient({
                       </li>
                     );
                   })
+                ) : pages && pages.length > 0 ? (
+                  <li className="text-[11px] text-slate-500">
+                    No pages enabled for footer
+                  </li>
                 ) : (
                   <>
                     <li>
                       <Link
                         href={`${domainOrSlug.includes(".") ? "/" : `/site/${domainOrSlug}`}#about`}
+                        onClick={(e) => {
+                          if (onNavigate) {
+                            e.preventDefault();
+                            onNavigate("about", "scroll");
+                          }
+                        }}
                         className="hover:text-white transition-colors"
                       >
                         About Our Store
@@ -251,6 +293,12 @@ export default function FooterSectionClient({
                     <li>
                       <Link
                         href={`${domainOrSlug.includes(".") ? "/" : `/site/${domainOrSlug}`}#contact`}
+                        onClick={(e) => {
+                          if (onNavigate) {
+                            e.preventDefault();
+                            onNavigate("contact", "scroll");
+                          }
+                        }}
                         className="hover:text-white transition-colors"
                       >
                         Store Location &amp; Contact

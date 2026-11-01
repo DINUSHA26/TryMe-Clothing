@@ -103,13 +103,13 @@ export default function CatalogView({
                   className="bg-white rounded-2xl border p-4 hover:shadow-xl transition-all duration-300 group flex flex-col justify-between"
                 >
                   <div>
-                    <div className="aspect-square rounded-xl bg-slate-100 relative overflow-hidden mb-3">
+                    <div className="aspect-square rounded-xl bg-slate-50 border border-slate-100 relative overflow-hidden mb-3 flex items-center justify-center">
                       {img ? (
                         <Image
                           src={img}
                           alt={itemTitle}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform"
+                          className="object-contain object-center p-2 group-hover:scale-105 transition-transform"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-300">
