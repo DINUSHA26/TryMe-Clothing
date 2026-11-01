@@ -114,6 +114,7 @@ export default function WebsiteBuilderPage() {
   });
 
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
+  const [subscriptionLifecycle, setSubscriptionLifecycle] = useState<any>(null);
   const [customDomain, setCustomDomain] = useState<any>(null);
   const [pages, setPages] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -141,6 +142,12 @@ export default function WebsiteBuilderPage() {
 
   const autoSaveTimeoutRef = useRef<any>(null);
   const autoSaveConfig = (cfgToSave: any) => {
+    if (
+      subscriptionLifecycle?.state === "EXPIRED_GRACE_PERIOD" ||
+      subscriptionLifecycle?.state === "EXPIRED_DISCONNECTED"
+    ) {
+      return;
+    }
     if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
     autoSaveTimeoutRef.current = setTimeout(async () => {
       try {
@@ -309,6 +316,7 @@ export default function WebsiteBuilderPage() {
             pages,
             products,
             entityType,
+            activeTier: activeSubscription?.tier || "ONE_PAGE",
           },
         },
         "*"
@@ -445,12 +453,20 @@ export default function WebsiteBuilderPage() {
         if (json.data.entityType) {
           setEntityType(json.data.entityType);
         }
-        if (json.data.activeSubscription) {
-          setActiveSubscription(json.data.activeSubscription);
+        setActiveSubscription(json.data.activeSubscription || null);
+        if (json.data.subscriptionLifecycle) {
+          setSubscriptionLifecycle(json.data.subscriptionLifecycle);
+          if (json.data.subscriptionLifecycle.autoDisconnectedDomain) {
+            toast.error(
+              `Your plan expired over 14 days ago. Live domain (${json.data.subscriptionLifecycle.autoDisconnectedDomain}) was automatically disconnected.`
+            );
+          }
         }
         if (json.data.customDomain) {
           setCustomDomain(json.data.customDomain);
           setNewDomainInput(json.data.customDomain.domain);
+        } else {
+          setCustomDomain(null);
         }
       }
     } catch (err) {
@@ -462,6 +478,23 @@ export default function WebsiteBuilderPage() {
   };
 
   const handleSave = async (publish = false) => {
+    if (
+      subscriptionLifecycle?.state === "EXPIRED_GRACE_PERIOD" ||
+      subscriptionLifecycle?.state === "EXPIRED_DISCONNECTED"
+    ) {
+      toast.error(
+        "Your 1-month website plan has expired! You cannot update or publish your website until you renew or upgrade your plan."
+      );
+      setUpgradeModalOpen(true);
+      return;
+    }
+
+    if (publish && !activeSubscription) {
+      toast.error("Please activate a 1-month website plan to publish your live website.");
+      setUpgradeModalOpen(true);
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {
@@ -477,9 +510,15 @@ export default function WebsiteBuilderPage() {
       const data = await res.json();
       if (data.success) {
         setConfig(data.data);
+        if (data.subscriptionLifecycle) {
+          setSubscriptionLifecycle(data.subscriptionLifecycle);
+        }
         toast.success(publish ? "Website published successfully!" : "Draft changes saved!");
       } else {
         toast.error(data.error || "Failed to save changes");
+        if (data.code === "SUBSCRIPTION_EXPIRED" || data.code === "SUBSCRIPTION_REQUIRED") {
+          setUpgradeModalOpen(true);
+        }
       }
     } catch (err: any) {
       toast.error(err.message || "Error saving website");
@@ -873,7 +912,7 @@ export default function WebsiteBuilderPage() {
     if (!file || !editingPage) return;
     toast.loading("Uploading banner image...", { id: "upload-page-banner" });
     try {
-      const compressed = await compressImage(file, { maxWidth: 1600, quality: 0.8 });
+      const compressed = await compressImage(file);
       const formData = new FormData();
       formData.append("file", compressed);
       formData.append("folder", "website-builder/banners");
@@ -972,8 +1011,28 @@ export default function WebsiteBuilderPage() {
     });
   };
 
-  const currentTier: WebsiteTier = activeSubscription?.tier || "ONE_PAGE";
+  const currentTier: WebsiteTier =
+    activeSubscription?.tier ||
+    subscriptionLifecycle?.subscription?.tier ||
+    "ONE_PAGE";
   const tierMeta = TIER_LIMITS[currentTier];
+  const isSubscriptionExpired =
+    subscriptionLifecycle?.state === "EXPIRED_GRACE_PERIOD" ||
+    subscriptionLifecycle?.state === "EXPIRED_DISCONNECTED";
+  const formattedExpiryDate = subscriptionLifecycle?.expiresAt
+    ? new Date(subscriptionLifecycle.expiresAt).toLocaleDateString("en-LK", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+  const formattedGraceEndDate = subscriptionLifecycle?.graceEndsAt
+    ? new Date(subscriptionLifecycle.graceEndsAt).toLocaleDateString("en-LK", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
 
   if (loading) {
     return (
@@ -1004,13 +1063,49 @@ export default function WebsiteBuilderPage() {
             <h1 className="font-black text-lg tracking-tight">WEBSITE BUILDER</h1>
           </div>
 
-          {/* Active Plan Badge */}
-          <div className="flex items-center gap-2 pl-4 border-l">
+          {/* Active Plan & Expiry Date Badge */}
+          <div className="flex items-center gap-2 pl-4 border-l flex-wrap">
             {activeSubscription ? (
-              <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold px-3 py-1 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>{tierMeta.name} (Active)</span>
-              </Badge>
+              <>
+                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold px-3 py-1 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{tierMeta.name} (Active)</span>
+                </Badge>
+                {formattedExpiryDate && (
+                  <Badge
+                    variant="outline"
+                    className={`font-bold px-2.5 py-1 flex items-center gap-1.5 text-xs ${
+                      (subscriptionLifecycle?.daysRemaining ?? 30) <= 5
+                        ? "border-amber-400 bg-amber-50 text-amber-700"
+                        : "border-slate-200 bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                    }`}
+                  >
+                    <Clock className="w-3 h-3" />
+                    <span>
+                      Expires: {formattedExpiryDate}
+                      {typeof subscriptionLifecycle?.daysRemaining === "number"
+                        ? ` (${subscriptionLifecycle.daysRemaining}d left)`
+                        : ""}
+                    </span>
+                  </Badge>
+                )}
+              </>
+            ) : isSubscriptionExpired ? (
+              <>
+                <Badge className="bg-rose-500/10 text-rose-600 border-rose-500/30 font-bold px-3 py-1 flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>{tierMeta.name} (Expired on {formattedExpiryDate})</span>
+                </Badge>
+                {subscriptionLifecycle?.state === "EXPIRED_GRACE_PERIOD" ? (
+                  <Badge className="bg-amber-500 text-white font-bold px-2.5 py-1 text-xs">
+                    Grace Period: {subscriptionLifecycle.graceDaysRemaining}d left before domain disconnect
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive" className="font-bold px-2.5 py-1 text-xs">
+                    Live Domain Disconnected (14d Passed)
+                  </Badge>
+                )}
+              </>
             ) : (
               <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 font-bold px-3 py-1 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5" />
@@ -1021,10 +1116,19 @@ export default function WebsiteBuilderPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setUpgradeModalOpen(true)}
+              onClick={() => {
+                if (activeSubscription?.tier === "ONE_PAGE") {
+                  setSelectedTierForUpgrade("SIX_PAGES");
+                } else if (activeSubscription?.tier === "SIX_PAGES") {
+                  setSelectedTierForUpgrade("TWELVE_PAGES");
+                } else if (subscriptionLifecycle?.subscription?.tier) {
+                  setSelectedTierForUpgrade(subscriptionLifecycle.subscription.tier);
+                }
+                setUpgradeModalOpen(true);
+              }}
               className="text-xs font-black uppercase tracking-wider rounded-lg border-primary text-primary hover:bg-primary hover:text-white"
             >
-              Upgrade Plan
+              {isSubscriptionExpired ? "Renew / Upgrade Plan" : "Upgrade Plan"}
             </Button>
           </div>
         </div>
@@ -1096,10 +1200,19 @@ export default function WebsiteBuilderPage() {
             variant="outline"
             size="sm"
             onClick={() => handleSave(false)}
-            disabled={saving}
+            disabled={saving || isSubscriptionExpired}
             className="font-bold text-xs rounded-xl"
+            title={
+              isSubscriptionExpired
+                ? "Plan expired — renew or upgrade to update website"
+                : "Save Draft"
+            }
           >
-            <Save className="w-3.5 h-3.5 mr-1.5" />
+            {isSubscriptionExpired ? (
+              <Lock className="w-3.5 h-3.5 mr-1.5 text-rose-500" />
+            ) : (
+              <Save className="w-3.5 h-3.5 mr-1.5" />
+            )}
             Save Draft
           </Button>
 
@@ -1108,25 +1221,86 @@ export default function WebsiteBuilderPage() {
             onClick={() => handleSave(true)}
             disabled={saving}
             className="font-black text-xs uppercase tracking-wider rounded-xl shadow-md"
-            style={{ backgroundColor: config.primaryColor }}
+            style={{ backgroundColor: isSubscriptionExpired ? "#e11d48" : config.primaryColor }}
           >
-            <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-            Publish
+            {isSubscriptionExpired ? (
+              <>
+                <Lock className="w-3.5 h-3.5 mr-1.5" />
+                Locked (Renew to Publish)
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                Publish
+              </>
+            )}
           </Button>
         </div>
       </header>
+
+      {/* ── Subscription Expired / 14-Day Grace Period Alert Banner ── */}
+      {isSubscriptionExpired && (
+        <div
+          className={`px-6 py-3 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+            subscriptionLifecycle?.state === "EXPIRED_DISCONNECTED"
+              ? "bg-rose-600 text-white border-rose-700"
+              : "bg-amber-500/15 text-amber-950 dark:text-amber-200 border-amber-500/30"
+          }`}
+        >
+          <div className="flex items-start sm:items-center gap-3 text-xs">
+            <AlertCircle
+              className={`w-5 h-5 shrink-0 ${
+                subscriptionLifecycle?.state === "EXPIRED_DISCONNECTED"
+                  ? "text-white"
+                  : "text-rose-600"
+              }`}
+            />
+            <div>
+              {subscriptionLifecycle?.state === "EXPIRED_GRACE_PERIOD" ? (
+                <p className="font-semibold">
+                  <strong>Your 1-Month Plan ({tierMeta.name}) expired on {formattedExpiryDate}.</strong>{" "}
+                  Website updates &amp; publishing are locked. You have{" "}
+                  <strong className="underline">
+                    {subscriptionLifecycle.graceDaysRemaining} day(s) remaining
+                  </strong>{" "}
+                  (until {formattedGraceEndDate}) to renew or upgrade — otherwise your live custom domain will be automatically disconnected and live site access will be disabled!
+                </p>
+              ) : (
+                <p className="font-semibold">
+                  <strong>
+                    Subscription Expired Over 14 Days Ago ({formattedExpiryDate}) — Live Domain Disconnected &amp; Site Offline!
+                  </strong>{" "}
+                  Because the plan was not renewed or upgraded within 14 days of expiry, your live domain was automatically disconnected and public access to your website has been suspended. Renew or upgrade your plan now to restore your website.
+                </p>
+              )}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setUpgradeModalOpen(true)}
+            className={
+              subscriptionLifecycle?.state === "EXPIRED_DISCONNECTED"
+                ? "bg-white text-rose-700 hover:bg-rose-50 font-black text-xs shrink-0 rounded-xl"
+                : "bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shrink-0 rounded-xl"
+            }
+          >
+            Renew / Upgrade Plan Now
+          </Button>
+        </div>
+      )}
 
       {/* ── Main Split View ── */}
       <div className="flex-1 flex overflow-hidden">
         {/* ── Left Editor Sidebar ── */}
         <div className="w-full lg:w-[480px] border-r bg-white dark:bg-slate-900 overflow-y-auto p-6 space-y-6">
           <Tabs value={builderTab} onValueChange={setBuilderTab} className="w-full">
-            <TabsList className="grid grid-cols-5 w-full bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-              <TabsTrigger value="branding" className="text-xs font-bold rounded-lg">Branding</TabsTrigger>
-              <TabsTrigger value="sections" className="text-xs font-bold rounded-lg">Sections</TabsTrigger>
-              <TabsTrigger value="menu" className="text-xs font-bold rounded-lg">Navbar</TabsTrigger>
-              <TabsTrigger value="pages" className="text-xs font-bold rounded-lg">Pages</TabsTrigger>
-              <TabsTrigger value="domain" className="text-xs font-bold rounded-lg">Domain</TabsTrigger>
+            <TabsList className="grid grid-cols-6 w-full bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+              <TabsTrigger value="branding" className="text-[11px] font-bold rounded-lg px-1.5">Branding</TabsTrigger>
+              <TabsTrigger value="sections" className="text-[11px] font-bold rounded-lg px-1.5">Sections</TabsTrigger>
+              <TabsTrigger value="menu" className="text-[11px] font-bold rounded-lg px-1.5">Navbar</TabsTrigger>
+              <TabsTrigger value="pages" className="text-[11px] font-bold rounded-lg px-1.5">Pages</TabsTrigger>
+              <TabsTrigger value="checkout" className="text-[11px] font-bold rounded-lg px-1.5">Shop/Pay</TabsTrigger>
+              <TabsTrigger value="domain" className="text-[11px] font-bold rounded-lg px-1.5">Domain</TabsTrigger>
             </TabsList>
 
             {/* TAB 1: BRANDING & THEME */}
@@ -3342,7 +3516,268 @@ export default function WebsiteBuilderPage() {
               )}
             </TabsContent>
 
-            {/* TAB 4: CUSTOM DOMAIN & VERCEL DNS */}
+            {/* TAB 5: STORE, CART, CHECKOUT & INQUIRY SETTINGS */}
+            <TabsContent value="checkout" className="space-y-6 pt-4">
+              {(() => {
+                const ecom = config.footerSection?.ecommerceConfig || {};
+                const updateEcom = (updates: Record<string, any>) => {
+                  handleUpdateFooterSection({
+                    ecommerceConfig: {
+                      ...ecom,
+                      ...updates,
+                    },
+                  });
+                };
+
+                return (
+                  <div className="space-y-5">
+                    {/* Plan Mode Overview */}
+                    <div
+                      className={`p-4 rounded-2xl border ${
+                        currentTier === "ONE_PAGE"
+                          ? "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200"
+                          : "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200"
+                      } space-y-2`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShoppingBag className="w-4 h-4 text-primary" />
+                          <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">
+                            Ordering, Cart &amp; Payment Settings
+                          </h3>
+                        </div>
+                        <Badge
+                          className={
+                            currentTier === "ONE_PAGE"
+                              ? "bg-amber-500 text-white text-[10px]"
+                              : "bg-emerald-600 text-white text-[10px]"
+                          }
+                        >
+                          {currentTier === "ONE_PAGE" ? "1-Page Inquiry Mode" : "6/12-Page E-Commerce"}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {currentTier === "ONE_PAGE" ? (
+                          <>
+                            On your <strong>1-Page Website</strong>, customers can order or inquire about products &amp; services directly via <strong>WhatsApp, Email, or the Inquiry Form</strong>. Upgrade to the <strong>6-Page or 12-Page Plan</strong> to unlock Dedicated Product Pages, Shopping Cart, Buy Now &amp; Checkout!
+                          </>
+                        ) : (
+                          <>
+                            On your <strong>{tierMeta.name}</strong>, clicking any product, service, or ad opens its <strong>Dedicated Detail Page</strong> with <strong>Add to Cart &amp; Buy Now</strong>, Shopping Cart, and Checkout with <strong>Cash on Delivery (COD)</strong> and <strong>Bank Deposit</strong>!
+                          </>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Ordering Mode Selector */}
+                    <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+                      <Label className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                        Website Ordering Mode
+                      </Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => updateEcom({ mode: "auto" })}
+                          className={`p-3 rounded-xl border text-left transition-all ${
+                            !ecom.mode || ecom.mode === "auto"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "bg-white dark:bg-slate-900 text-slate-600"
+                          }`}
+                        >
+                          <span className="font-bold text-xs block">
+                            Automatic (Recommended)
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            1-Page Plan uses WhatsApp/Email/Inquiry; 6 &amp; 12-Page Plans use Full Cart, Buy Now &amp; Checkout.
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => updateEcom({ mode: "inquiry_only" })}
+                          className={`p-3 rounded-xl border text-left transition-all ${
+                            ecom.mode === "inquiry_only"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "bg-white dark:bg-slate-900 text-slate-600"
+                          }`}
+                        >
+                          <span className="font-bold text-xs block">
+                            Inquiry Mode Only (WhatsApp / Email / Direct Form)
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            Disable shopping cart and receive all product/service orders via WhatsApp, Email, and Inquiry Form.
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (currentTier === "ONE_PAGE") {
+                              setSelectedTierForUpgrade("SIX_PAGES");
+                              setUpgradeModalOpen(true);
+                            } else {
+                              updateEcom({ mode: "ecommerce" });
+                            }
+                          }}
+                          className={`p-3 rounded-xl border text-left transition-all ${
+                            ecom.mode === "ecommerce"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "bg-white dark:bg-slate-900 text-slate-600"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-xs block">
+                              Full E-Commerce Mode (Add to Cart + Buy Now + Checkout)
+                            </span>
+                            {currentTier === "ONE_PAGE" && (
+                              <Lock className="w-3.5 h-3.5 text-amber-500" />
+                            )}
+                          </div>
+                          <span className="text-[11px] text-slate-500">
+                            Dedicated product/service/ad detail pages, cart drawer, and COD / Bank Deposit checkout.
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Payment Methods: COD & Bank Deposit */}
+                    <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                      <div>
+                        <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500">
+                          Checkout Payment Methods
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Choose how customers can pay when ordering on your 6/12-page website.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-slate-950">
+                        <div>
+                          <p className="font-bold text-xs">Cash on Delivery (COD)</p>
+                          <p className="text-[11px] text-slate-400">
+                            Customer pays cash when the order is delivered
+                          </p>
+                        </div>
+                        <Switch
+                          checked={ecom.enableCod !== false}
+                          onCheckedChange={(val) => updateEcom({ enableCod: val })}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-slate-950">
+                        <div>
+                          <p className="font-bold text-xs">Bank Deposit / Online Transfer</p>
+                          <p className="text-[11px] text-slate-400">
+                            Customer transfers to your bank account &amp; uploads the slip
+                          </p>
+                        </div>
+                        <Switch
+                          checked={ecom.enableBankDeposit !== false}
+                          onCheckedChange={(val) => updateEcom({ enableBankDeposit: val })}
+                        />
+                      </div>
+
+                      {/* Bank Account Details */}
+                      {ecom.enableBankDeposit !== false && (
+                        <div className="p-3.5 rounded-xl border bg-white dark:bg-slate-950 space-y-3">
+                          <p className="font-bold text-xs text-primary flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5" />
+                            Your Bank Account Details (Shown at Checkout)
+                          </p>
+
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <div>
+                              <Label className="text-[11px] font-bold">Bank Name</Label>
+                              <Input
+                                value={ecom.bankName || ""}
+                                onChange={(e) => updateEcom({ bankName: e.target.value })}
+                                placeholder="e.g. Commercial Bank"
+                                className="mt-1 h-8 text-xs rounded-lg"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[11px] font-bold">Branch</Label>
+                              <Input
+                                value={ecom.branch || ""}
+                                onChange={(e) => updateEcom({ branch: e.target.value })}
+                                placeholder="e.g. Colombo 03"
+                                className="mt-1 h-8 text-xs rounded-lg"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <div>
+                              <Label className="text-[11px] font-bold">Account Holder Name</Label>
+                              <Input
+                                value={ecom.accountName || ""}
+                                onChange={(e) => updateEcom({ accountName: e.target.value })}
+                                placeholder={entityInfo?.businessName || "Account Name"}
+                                className="mt-1 h-8 text-xs rounded-lg"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[11px] font-bold">Account Number</Label>
+                              <Input
+                                value={ecom.accountNumber || ""}
+                                onChange={(e) => updateEcom({ accountNumber: e.target.value })}
+                                placeholder="e.g. 8001234567"
+                                className="mt-1 h-8 text-xs rounded-lg font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Shipping & Delivery Settings */}
+                    <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+                      <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500">
+                        Delivery &amp; Shipping Settings
+                      </h4>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-[11px] font-bold">Standard Delivery Fee (Rs.)</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={ecom.shippingFee ?? 350}
+                            onChange={(e) => updateEcom({ shippingFee: Number(e.target.value) })}
+                            className="mt-1 h-8 text-xs rounded-lg"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[11px] font-bold">Free Delivery Above (Rs.)</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={ecom.freeShippingThreshold ?? 0}
+                            onChange={(e) =>
+                              updateEcom({ freeShippingThreshold: Number(e.target.value) })
+                            }
+                            placeholder="0 = disabled"
+                            className="mt-1 h-8 text-xs rounded-lg"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-[11px] font-bold">Estimated Delivery Text</Label>
+                        <Input
+                          value={ecom.deliveryDays || "2 - 4 Business Days Islandwide"}
+                          onChange={(e) => updateEcom({ deliveryDays: e.target.value })}
+                          placeholder="e.g. 2 - 4 Business Days Islandwide"
+                          className="mt-1 h-8 text-xs rounded-lg"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </TabsContent>
+
+            {/* TAB 6: CUSTOM DOMAIN & VERCEL DNS */}
             <TabsContent value="domain" className="space-y-6 pt-4">
               <div className="space-y-4">
                 <div>
@@ -3474,42 +3909,131 @@ export default function WebsiteBuilderPage() {
           <DialogHeader>
             <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-primary" />
-              Upgrade Your Website Plan
+              {isSubscriptionExpired ? "Renew or Upgrade Your Website Plan" : "Upgrade Your Website Plan"}
             </DialogTitle>
             <DialogDescription>
-              Select a plan to unlock advanced multi-page builder, custom domain mapping, and white-label storefronts.
+              Each subscription is valid for 1 Month (30 Days). Select a plan below to activate, renew, or upgrade your standalone website.
             </DialogDescription>
           </DialogHeader>
 
+          {/* Current Active / Expired Plan Status Card inside Modal */}
+          {(activeSubscription || subscriptionLifecycle?.subscription) && (
+            <div
+              className={`mt-2 p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                activeSubscription
+                  ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
+                  : "bg-rose-50/70 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800"
+              }`}
+            >
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500">
+                    Current Plan:
+                  </span>
+                  <Badge
+                    className={
+                      activeSubscription
+                        ? "bg-emerald-600 text-white font-bold text-xs"
+                        : "bg-rose-600 text-white font-bold text-xs"
+                    }
+                  >
+                    {tierMeta.name} ({activeSubscription ? "ACTIVE" : "EXPIRED"})
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                  {activeSubscription ? (
+                    <>
+                      Valid for <strong>1 Month</strong> • Expires on{" "}
+                      <strong className="text-emerald-700 dark:text-emerald-400">
+                        {formattedExpiryDate}
+                      </strong>{" "}
+                      ({subscriptionLifecycle?.daysRemaining ?? 30} days remaining)
+                    </>
+                  ) : subscriptionLifecycle?.state === "EXPIRED_GRACE_PERIOD" ? (
+                    <>
+                      Expired on <strong>{formattedExpiryDate}</strong> • Website updates &amp; publishing are locked.{" "}
+                      <strong className="text-rose-600">
+                        {subscriptionLifecycle.graceDaysRemaining} days left
+                      </strong>{" "}
+                      before live domain auto-disconnects ({formattedGraceEndDate}).
+                    </>
+                  ) : (
+                    <>
+                      Expired on <strong>{formattedExpiryDate}</strong> (14-day grace period ended) • Live domain disconnected &amp; live site offline.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Tier Cards Selector */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3">
             {(["ONE_PAGE", "SIX_PAGES", "TWELVE_PAGES"] as WebsiteTier[]).map((tierKey) => {
               const t = TIER_LIMITS[tierKey];
               const isSelected = selectedTierForUpgrade === tierKey;
+              const isCurrentActiveTier = Boolean(activeSubscription && activeSubscription.tier === tierKey);
+              const isPreviousExpiredTier = Boolean(
+                !activeSubscription &&
+                  isSubscriptionExpired &&
+                  subscriptionLifecycle?.subscription?.tier === tierKey
+              );
 
               return (
                 <div
                   key={tierKey}
                   onClick={() => setSelectedTierForUpgrade(tierKey)}
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between relative ${
                     isSelected
                       ? "border-primary bg-primary/5 shadow-lg scale-102"
+                      : isCurrentActiveTier
+                      ? "border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/10"
                       : "border-slate-200 dark:border-slate-800 hover:border-slate-300"
                   }`}
                 >
                   <div>
+                    {isCurrentActiveTier && (
+                      <div className="mb-2">
+                        <Badge className="bg-emerald-600 text-white text-[10px] uppercase font-extrabold px-2 py-0.5 flex items-center gap-1 w-fit">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Active Plan
+                        </Badge>
+                        {formattedExpiryDate && (
+                          <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 mt-1">
+                            Expires: {formattedExpiryDate}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {isPreviousExpiredTier && (
+                      <div className="mb-2">
+                        <Badge variant="destructive" className="text-[10px] uppercase font-extrabold px-2 py-0.5 w-fit">
+                          Expired ({formattedExpiryDate})
+                        </Badge>
+                      </div>
+                    )}
+
                     <h4 className="font-extrabold text-sm">{t.name}</h4>
                     <p className="text-xl font-black text-slate-900 dark:text-white mt-1">
                       Rs. {t.price.toLocaleString()}
-                      <span className="text-xs font-normal text-slate-500">/mo</span>
+                      <span className="text-xs font-normal text-slate-500"> / 1 month</span>
                     </p>
                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">{t.description}</p>
                   </div>
-                  {isSelected && (
-                    <Badge className="mt-4 bg-primary text-white text-[10px] uppercase font-bold self-start">
-                      Selected
-                    </Badge>
-                  )}
+                  <div className="mt-4 flex items-center gap-1.5 flex-wrap">
+                    {isSelected ? (
+                      <Badge className="bg-primary text-white text-[10px] uppercase font-bold">
+                        {isCurrentActiveTier || isPreviousExpiredTier
+                          ? "Selected (Renew 1 Month)"
+                          : "Selected"}
+                      </Badge>
+                    ) : isCurrentActiveTier ? (
+                      <Badge variant="outline" className="border-emerald-500 text-emerald-700 text-[10px] uppercase font-bold">
+                        Current Plan
+                      </Badge>
+                    ) : null}
+                  </div>
                 </div>
               );
             })}

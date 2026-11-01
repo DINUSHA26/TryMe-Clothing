@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helpers";
+import { evaluateAndEnforceSubscriptionLifecycle } from "@/lib/website-subscription-guard";
 
 async function getVendorOrSeller(userId: string) {
   const vendor = await prisma.vendor.findUnique({
     where: { userId },
-    select: { id: true, businessName: true, slug: true, logo: true, banner: true, businessPhone: true, businessEmail: true, businessAddress: true },
+    select: {
+      id: true,
+      businessName: true,
+      slug: true,
+      logo: true,
+      banner: true,
+      businessPhone: true,
+      businessEmail: true,
+      businessAddress: true,
+    },
   });
   if (vendor) return { type: "VENDOR" as const, entity: vendor };
 
@@ -35,9 +45,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Vendor or seller account not found" }, { status: 404 });
     }
 
-    const whereClause = target.type === "VENDOR" ? { vendorId: target.entity.id } : { adsSellerId: target.entity.id };
+    const whereClause =
+      target.type === "VENDOR" ? { vendorId: target.entity.id } : { adsSellerId: target.entity.id };
 
-    // Fetch config, pages, custom domain, and active subscription
+    // 1. Evaluate and enforce 1-month subscription + 14-day grace period rules first
+    const lifecycle = await evaluateAndEnforceSubscriptionLifecycle(whereClause);
+
+    // 2. Fetch config and pages
     let config = await (prisma as any).vendorWebsiteConfig.findFirst({
       where: whereClause,
       include: {
@@ -47,7 +61,6 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // If no config exists, initialize default config
     if (!config) {
       const defaultHero = {
         enabled: true,
@@ -62,7 +75,8 @@ export async function GET(request: NextRequest) {
       const defaultAbout = {
         enabled: true,
         title: `About ${target.entity.businessName || "Us"}`,
-        content: "We provide professional services and high quality products in a clean, welcoming environment.",
+        content:
+          "We provide professional services and high quality products in a clean, welcoming environment.",
         images: [],
       };
 
@@ -97,7 +111,10 @@ export async function GET(request: NextRequest) {
           gallerySection: { enabled: false, title: "A Glimpse of Our Work", images: [] },
           reviewsSection: { enabled: false, title: "What Our Customers Say", items: [] },
           contactSection: defaultContact,
-          footerSection: { enabled: true, copyrightText: `© ${new Date().getFullYear()} ${target.entity.businessName}. All rights reserved.` },
+          footerSection: {
+            enabled: true,
+            copyrightText: `© ${new Date().getFullYear()} ${target.entity.businessName}. All rights reserved.`,
+          },
           isPublished: false,
         },
         include: {
@@ -106,25 +123,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Fetch active subscription
-    const activeSub = await (prisma as any).vendorWebsiteSubscription.findFirst({
-      where: {
-        ...whereClause,
-        status: "ACTIVE",
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } },
-        ],
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    // Fetch custom domain
+    // 3. Fetch custom domain (will be null if auto-disconnected after 14 days post-expiry)
     const customDomain = await (prisma as any).vendorCustomDomain.findFirst({
       where: whereClause,
     });
 
-    // Fetch and sync products (for Vendor) or ads (for AdsSeller)
+    // 4. Fetch and sync products (for Vendor) or ads (for AdsSeller)
     let rawItems: any[] = [];
     if (target.type === "VENDOR") {
       rawItems = await prisma.product.findMany({
@@ -177,7 +181,8 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         config,
-        activeSubscription: activeSub,
+        activeSubscription: lifecycle.state === "ACTIVE" ? lifecycle.subscription : null,
+        subscriptionLifecycle: lifecycle,
         customDomain,
         entityType: target.type,
         entityInfo: {
@@ -193,7 +198,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error fetching website config:", error);
-    return NextResponse.json({ success: false, error: error.message || "Failed to fetch website config" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to fetch website config" },
+      { status: 500 }
+    );
   }
 }
 
@@ -214,8 +222,46 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Vendor or seller account not found" }, { status: 404 });
     }
 
-    const whereClause = target.type === "VENDOR" ? { vendorId: target.entity.id } : { adsSellerId: target.entity.id };
+    const whereClause =
+      target.type === "VENDOR" ? { vendorId: target.entity.id } : { adsSellerId: target.entity.id };
     const body = await request.json();
+
+    // Enforce subscription expiry rules before allowing updates or publishing
+    const lifecycle = await evaluateAndEnforceSubscriptionLifecycle(whereClause);
+
+    if (
+      lifecycle.state === "EXPIRED_GRACE_PERIOD" ||
+      lifecycle.state === "EXPIRED_DISCONNECTED"
+    ) {
+      const expStr = lifecycle.expiresAt
+        ? new Date(lifecycle.expiresAt).toLocaleDateString("en-LK", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+        : "recently";
+      return NextResponse.json(
+        {
+          success: false,
+          code: "SUBSCRIPTION_EXPIRED",
+          error: `Your website plan expired on ${expStr}. You cannot update or publish your website until you renew or upgrade your plan.`,
+          subscriptionLifecycle: lifecycle,
+        },
+        { status: 403 }
+      );
+    }
+
+    if (body.isPublished && lifecycle.state !== "ACTIVE") {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "SUBSCRIPTION_REQUIRED",
+          error: "An active 1-month website subscription is required to publish your website.",
+          subscriptionLifecycle: lifecycle,
+        },
+        { status: 403 }
+      );
+    }
 
     const updatedConfig = await (prisma as any).vendorWebsiteConfig.upsert({
       where: whereClause,
@@ -269,9 +315,16 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true, data: updatedConfig });
+    return NextResponse.json({
+      success: true,
+      data: updatedConfig,
+      subscriptionLifecycle: lifecycle,
+    });
   } catch (error: any) {
     console.error("Error updating website config:", error);
-    return NextResponse.json({ success: false, error: error.message || "Failed to save website config" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to save website config" },
+      { status: 500 }
+    );
   }
 }

@@ -5,17 +5,18 @@ export interface VendorOrderFilters {
   page?: string;
   pageSize?: string;
   status?: string;
+  source?: "all" | "tryme" | "website" | "inquiries";
   search?: string;
   dateFrom?: string;
   dateTo?: string;
 }
 
 export async function getVendorOrders(vendorId: string, filters: VendorOrderFilters) {
-  // Parse and validate query parameters
   const queryParams = {
     page: filters.page || "1",
     pageSize: filters.pageSize || "20",
     status: filters.status || undefined,
+    source: filters.source || "tryme",
     search: filters.search || undefined,
     dateFrom: filters.dateFrom || undefined,
     dateTo: filters.dateTo || undefined,
@@ -27,11 +28,18 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     throw new Error(validation.error.issues[0].message);
   }
 
-  const { page, pageSize, status, search, dateFrom, dateTo } = validation.data;
+  const { page, pageSize, status, source = "tryme", search, dateFrom, dateTo } = validation.data;
 
   // Build dynamic WHERE clause for raw SQL
   let whereClause = `WHERE o."id" IN (SELECT DISTINCT "orderId" FROM "OrderItem" WHERE "vendorId" = $1)`;
   const queryParamsRaw: any[] = [vendorId];
+
+  // Channel filter: TryMe Marketplace vs Direct Vendor Website
+  if (source === "website") {
+    whereClause += ` AND o."orderNumber" LIKE 'WEB-%'`;
+  } else if (source === "tryme") {
+    whereClause += ` AND o."orderNumber" NOT LIKE 'WEB-%'`;
+  }
 
   if (status) {
     if (status === "DELIVERED") {
@@ -47,8 +55,11 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
       whereClause += ` AND o."status" = $${queryParamsRaw.length}::"OrderStatus"`;
     }
   } else {
-    // Default view: exclude certain statuses
-    whereClause += ` AND o."status" NOT IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus", 'CANCELLED'::"OrderStatus")`;
+    // For TryMe marketplace orders, exclude unpaid/cancelled by default;
+    // For Website Direct orders, show all orders including PENDING_VERIFICATION (Bank Deposit) & CANCELLED
+    if (source === "tryme") {
+      whereClause += ` AND o."status" NOT IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus", 'CANCELLED'::"OrderStatus")`;
+    }
   }
 
   if (search) {
@@ -66,24 +77,35 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     whereClause += ` AND o."createdAt" <= $${queryParamsRaw.length}`;
   }
 
-  // Get total count for pagination using raw SQL
+  // Get total count for pagination
   const countResult = await prisma.$queryRawUnsafe<any[]>(
     `SELECT count(*)::int as count FROM "Order" o ${whereClause}`,
     ...queryParamsRaw
   );
   const totalCount = countResult[0]?.count || 0;
 
-  // Calculate pagination
   const totalPages = Math.ceil(totalCount / pageSize);
   const skip = (page - 1) * pageSize;
 
-  // Fetch orders with vendor's items only
+  // Fetch orders with vendor's items and payment info
   const fetchParams = [...queryParamsRaw, pageSize, skip];
   const ordersRaw = await prisma.$queryRawUnsafe<any[]>(
     `SELECT o.*, 
      json_build_object(
-       'email', u."email"
+       'email', u."email",
+       'firstName', u."firstName",
+       'lastName', u."lastName"
      ) as "customer_user",
+     (
+       SELECT json_build_object(
+         'paymentMethod', p."paymentMethod",
+         'paymentSlipUrl', p."paymentSlipUrl",
+         'status', p."status"::text
+       )
+       FROM "Payment" p
+       WHERE p."orderId" = o."id"
+       LIMIT 1
+     ) as "payment_info",
      (
        SELECT json_agg(json_build_object(
          'id', i."id",
@@ -110,14 +132,36 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     ...fetchParams
   );
 
-  // Get stats grouped by item status for this vendor using raw SQL
+  // Get channel counts (TryMe vs Website)
+  const channelCountsRaw = await prisma.$queryRawUnsafe<any[]>(
+    `SELECT
+       COUNT(*) FILTER (WHERE o."orderNumber" NOT LIKE 'WEB-%' AND o."status" NOT IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus", 'CANCELLED'::"OrderStatus"))::int AS "trymeCount",
+       COUNT(*) FILTER (WHERE o."orderNumber" LIKE 'WEB-%')::int AS "websiteCount"
+     FROM "Order" o
+     WHERE o."id" IN (SELECT DISTINCT "orderId" FROM "OrderItem" WHERE "vendorId" = $1)`,
+    vendorId
+  );
+
+  // Get stats grouped by item status for the active source
+  const sourceCondition =
+    source === "website"
+      ? `AND o."orderNumber" LIKE 'WEB-%'`
+      : source === "tryme"
+      ? `AND o."orderNumber" NOT LIKE 'WEB-%'`
+      : "";
+
   const statusCountsRaw = await prisma.$queryRawUnsafe<any[]>(
-    'SELECT "status"::text, COUNT(*)::int as "count" FROM "OrderItem" WHERE "vendorId" = $1 GROUP BY "status"',
+    `SELECT i."status"::text as "status", COUNT(*)::int as "count"
+     FROM "OrderItem" i
+     JOIN "Order" o ON i."orderId" = o."id"
+     WHERE i."vendorId" = $1 ${sourceCondition}
+     GROUP BY i."status"`,
     vendorId
   );
 
   const stats = {
     total: totalCount,
+    pendingVerification: 0,
     paymentConfirmed: 0,
     processing: 0,
     shipped: 0,
@@ -126,7 +170,9 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
 
   for (const stat of statusCountsRaw) {
     const count = stat.count;
-    if (stat.status === "PAYMENT_CONFIRMED") {
+    if (stat.status === "PENDING_VERIFICATION") {
+      stats.pendingVerification += count;
+    } else if (stat.status === "PAYMENT_CONFIRMED") {
       stats.paymentConfirmed += count;
     } else if (stat.status === "PROCESSING") {
       stats.processing += count;
@@ -137,22 +183,60 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     }
   }
 
+  // Fetch Website Inquiries from VendorWebsiteConfig
+  const websiteConfig = await (prisma as any).vendorWebsiteConfig.findUnique({
+    where: { vendorId },
+    select: { contactSection: true },
+  });
+  const websiteInquiries: any[] = Array.isArray(websiteConfig?.contactSection?.inquiries)
+    ? websiteConfig.contactSection.inquiries
+    : [];
+
   // Format orders
   const formattedOrders = ordersRaw.map((order) => {
     const items = order.vendor_items || [];
     const vendorTotal = items.reduce((sum: number, item: any) => {
       return sum + Number(item.totalPrice);
     }, 0);
+    const isWebsiteOrder =
+      String(order.orderNumber).startsWith("WEB-") ||
+      order.shippingAddressJson?.orderSource === "VENDOR_WEBSITE";
+
+    const paymentMethod =
+      order.payment_info?.paymentMethod ||
+      order.shippingAddressJson?.paymentMethod ||
+      (isWebsiteOrder ? "COD" : "ONLINE");
+
+    const paymentSlipUrl =
+      order.payment_info?.paymentSlipUrl ||
+      order.shippingAddressJson?.paymentSlipUrl ||
+      null;
+
+    const displayEmail =
+      order.shippingAddressJson?.email ||
+      (order.customer_user?.email?.endsWith("@website.tryme.lk")
+        ? order.shippingAddressJson?.phone || "Guest Customer"
+        : order.customer_user?.email);
 
     return {
       id: order.id,
       orderNumber: order.orderNumber,
+      orderSource: isWebsiteOrder ? "VENDOR_WEBSITE" : "TRYME_MARKETPLACE",
+      paymentMethod,
+      paymentSlipUrl,
       status: order.status,
       totalAmount: Number(order.totalAmount),
       vendorTotal,
       createdAt: new Date(order.createdAt).toISOString(),
       customer: {
-        email: order.customer_user.email,
+        email: displayEmail,
+        fullName:
+          order.shippingAddressJson?.fullName ||
+          [order.customer_user?.firstName, order.customer_user?.lastName]
+            .filter(Boolean)
+            .join(" ") ||
+          "Customer",
+        phone: order.shippingAddressJson?.phone || "",
       },
       vendorItems: items.map((item: any) => ({
         ...item,
@@ -166,6 +250,12 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
 
   return {
     orders: formattedOrders,
+    websiteInquiries,
+    channelCounts: {
+      tryme: channelCountsRaw[0]?.trymeCount || 0,
+      website: channelCountsRaw[0]?.websiteCount || 0,
+      inquiries: websiteInquiries.length,
+    },
     pagination: {
       page,
       pageSize,
@@ -177,9 +267,19 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
 }
 
 export async function getVendorOrderDetail(vendorId: string, orderId: string) {
-  // Fetch order with vendor's items only using raw SQL
   const orderResults = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT o.*, u."email" as "customerEmail"
+    `SELECT o.*, u."email" as "customerEmail",
+     (
+       SELECT json_build_object(
+         'paymentMethod', p."paymentMethod",
+         'paymentSlipUrl', p."paymentSlipUrl",
+         'status', p."status"::text,
+         'notificationData', p."notificationData"
+       )
+       FROM "Payment" p
+       WHERE p."orderId" = o."id"
+       LIMIT 1
+     ) as "paymentInfo"
      FROM "Order" o
      JOIN "Customer" c ON o."customerId" = c."id"
      JOIN "User" u ON c."userId" = u."id"
@@ -193,7 +293,6 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
     throw new Error("Order not found");
   }
 
-  // Fetch this vendor's items for this order using raw SQL
   const vendorItemsRaw = await prisma.$queryRawUnsafe<any[]>(
     `SELECT i.*, cr."id" as "chatRoomId"
      FROM "OrderItem" i
@@ -208,34 +307,36 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
     throw new Error("Order does not contain your items");
   }
 
-  // Fetch all items of the order to calculate pro-rata discount correctly
   const allItems = await prisma.$queryRawUnsafe<any[]>(
     'SELECT "id", "vendorId", "totalPrice", "status"::text FROM "OrderItem" WHERE "orderId" = $1',
     orderId
   );
 
-  // Fetch coupon if applied
   let couponScopeVendorId: string | null = null;
   if (order.couponId) {
     const coupon = await prisma.coupon.findUnique({
       where: { id: order.couponId },
-      select: { vendorId: true }
+      select: { vendorId: true },
     });
     couponScopeVendorId = coupon?.vendorId || null;
   }
 
-  // Calculate pro-rata discount
   const totalDiscount = Number(order.discountAmount);
-  const eligibleItems = couponScopeVendorId 
-    ? allItems.filter(item => item.vendorId === couponScopeVendorId)
+  const eligibleItems = couponScopeVendorId
+    ? allItems.filter((item) => item.vendorId === couponScopeVendorId)
     : allItems;
-  
-  const eligibleSubtotal = eligibleItems.reduce((sum, item) => sum + Number(item.totalPrice), 0);
+
+  const eligibleSubtotal = eligibleItems.reduce(
+    (sum, item) => sum + Number(item.totalPrice),
+    0
+  );
 
   const vendorItems = vendorItemsRaw.map((item) => {
     let itemDiscount = 0;
     if (totalDiscount > 0 && eligibleSubtotal > 0) {
-      const isEligible = couponScopeVendorId ? item.vendorId === couponScopeVendorId : true;
+      const isEligible = couponScopeVendorId
+        ? item.vendorId === couponScopeVendorId
+        : true;
       if (isEligible) {
         itemDiscount = (Number(item.totalPrice) / eligibleSubtotal) * totalDiscount;
         itemDiscount = Math.round(itemDiscount * 100) / 100;
@@ -259,12 +360,44 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
     };
   });
 
+  const isWebsiteOrder =
+    String(order.orderNumber).startsWith("WEB-") ||
+    order.shippingAddressJson?.orderSource === "VENDOR_WEBSITE";
+
+  const paymentMethod =
+    order.paymentInfo?.paymentMethod ||
+    order.shippingAddressJson?.paymentMethod ||
+    (isWebsiteOrder ? "COD" : "ONLINE");
+
+  const paymentSlipUrl =
+    order.paymentInfo?.paymentSlipUrl ||
+    order.shippingAddressJson?.paymentSlipUrl ||
+    null;
+
+  const bankReference =
+    order.paymentInfo?.notificationData?.bankReference ||
+    order.shippingAddressJson?.bankReference ||
+    null;
+
+  const displayEmail =
+    order.shippingAddressJson?.email ||
+    (order.customerEmail?.endsWith("@website.tryme.lk")
+      ? order.shippingAddressJson?.phone || "Guest Customer"
+      : order.customerEmail);
+
   return {
     order: {
       id: order.id,
       orderNumber: order.orderNumber,
+      orderSource: isWebsiteOrder ? "VENDOR_WEBSITE" : "TRYME_MARKETPLACE",
+      paymentMethod,
+      paymentSlipUrl,
+      bankReference,
+      paymentStatus: order.paymentInfo?.status || "PENDING",
+      shippingAmount: Number(order.shippingAmount || 0),
+      totalAmount: Number(order.totalAmount || 0),
       status: order.status,
-      customerEmail: order.customerEmail,
+      customerEmail: displayEmail,
       notes: order.notes,
       createdAt: new Date(order.createdAt).toISOString(),
     },

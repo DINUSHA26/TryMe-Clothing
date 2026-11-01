@@ -23,7 +23,7 @@ export const cancelOrderSchema = z.object({
  * Used when customer requests return within 24h of delivery confirmation
  */
 export const requestReturnSchema = z.object({
-  orderItemId: z.string().optional(), // Use string to support both cuid and other formats
+  orderItemId: z.string().optional(),
   quantity: z.number().int().min(1).optional(),
   reason: z
     .string()
@@ -42,44 +42,40 @@ export const requestReturnSchema = z.object({
  * Update order item status schema (vendor)
  * Validates status transition and tracking information
  */
-export const updateOrderItemStatusSchema = z
-  .object({
-    status: z.enum(["PROCESSING", "SHIPPED"] as const, {
-      message: "Status must be PROCESSING or SHIPPED",
-    }),
-    trackingNumber: z
-      .string()
-      .min(8, "Tracking number must be at least 8 characters")
-      .max(30, "Tracking number must not exceed 30 characters")
-      .trim()
-      .optional()
-      .nullable(),
-    trackingUrl: z
-      .string()
-      .url("Invalid tracking URL")
-      .max(200, "Tracking URL too long")
-      .optional()
-      .nullable(),
-    note: z
-      .string()
-      .max(500, "Note must not exceed 500 characters")
-      .trim()
-      .optional()
-      .nullable(),
-  })
-  .refine(
-    (data) => {
-      // If status is SHIPPED, trackingNumber is required
-      if (data.status === "SHIPPED" && !data.trackingNumber) {
-        return false;
-      }
-      return true;
-    },
+export const updateOrderItemStatusSchema = z.object({
+  status: z.enum(
+    [
+      "PAYMENT_CONFIRMED",
+      "PROCESSING",
+      "SHIPPED",
+      "DELIVERED",
+      "COMPLETED",
+      "CANCELLED",
+    ] as const,
     {
-      message: "Tracking number is required when marking as shipped",
-      path: ["trackingNumber"],
+      message: "Invalid status value",
     }
-  );
+  ),
+  trackingNumber: z
+    .string()
+    .max(50, "Tracking number must not exceed 50 characters")
+    .trim()
+    .optional()
+    .nullable(),
+  trackingUrl: z
+    .string()
+    .url("Invalid tracking URL")
+    .max(200, "Tracking URL too long")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  note: z
+    .string()
+    .max(500, "Note must not exceed 500 characters")
+    .trim()
+    .optional()
+    .nullable(),
+});
 
 /**
  * Override order status schema (admin)
@@ -104,6 +100,7 @@ export const orderFiltersSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   status: z.string().optional(),
+  source: z.enum(["all", "tryme", "website", "inquiries"]).optional(),
   search: z.string().max(100).trim().optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),

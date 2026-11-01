@@ -10,7 +10,6 @@ import {
   MessageCircle,
   ExternalLink,
   CheckCircle2,
-  Calendar,
 } from "lucide-react";
 
 interface ContactSectionClientProps {
@@ -67,11 +66,24 @@ export default function ContactSectionClient({
     }
 
     setIsSubmitting(true);
-    // Simulate sending inquiry to vendor
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitted(true);
-    }, 600);
+    try {
+      const slug = vendor?.slug || "store";
+      await fetch(`/api/site/${slug}/inquiries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: formData.name,
+          customerPhone: formData.phone,
+          customerEmail: formData.email,
+          itemType: "CONTACT_FORM",
+          itemName: "Store Contact & Order Inquiry",
+          message: formData.message,
+          preferredChannel: "DIRECT",
+        }),
+      });
+    } catch {}
+    setIsSubmitting(false);
+    setSubmitted(true);
   };
 
   const handleSendViaWhatsApp = () => {
@@ -80,6 +92,15 @@ export default function ContactSectionClient({
       `Hello ${vendor?.businessName || "Store"},\nMy name is ${formData.name || "Customer"}.\nPhone: ${formData.phone || "Not provided"}\n\nMessage: ${formData.message || "I am interested in your products/services."}`
     );
     window.open(`https://wa.me/${cleanWhatsapp}?text=${text}`, "_blank");
+  };
+
+  const handleSendViaEmail = () => {
+    if (!email) return;
+    const subject = encodeURIComponent(`Inquiry for ${vendor?.businessName || "Store"}`);
+    const body = encodeURIComponent(
+      `Name: ${formData.name || "Customer"}\nPhone: ${formData.phone || ""}\n\nMessage:\n${formData.message || ""}`
+    );
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -249,7 +270,7 @@ export default function ContactSectionClient({
               <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-950 border shadow-lg space-y-6">
                 <div>
                   <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">
-                    {contact?.formTitle || "Send Us a Message"}
+                    {contact?.formTitle || "Send Us a Message or Order Inquiry"}
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
                     {contact?.formSubtitle ||
@@ -264,7 +285,7 @@ export default function ContactSectionClient({
                       Thank You!
                     </h4>
                     <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                      Your message has been sent successfully. We will contact you soon.
+                      Your inquiry has been sent directly to {vendor?.businessName || "our store"}. We will contact you soon.
                     </p>
                     <button
                       type="button"
@@ -335,25 +356,36 @@ export default function ContactSectionClient({
                       />
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex-1 py-3 px-5 rounded-xl text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        className="flex-1 py-3 px-4 rounded-xl text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                         style={{ backgroundColor: primaryColor }}
                       >
                         <Send className="w-3.5 h-3.5" />
-                        <span>{isSubmitting ? "Sending..." : "Submit Inquiry"}</span>
+                        <span>{isSubmitting ? "Sending..." : "Submit Direct Inquiry"}</span>
                       </button>
 
                       {cleanWhatsapp && (
                         <button
                           type="button"
                           onClick={handleSendViaWhatsApp}
-                          className="py-3 px-5 rounded-xl bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+                          className="py-3 px-4 rounded-xl bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1.5"
                         >
                           <MessageCircle className="w-3.5 h-3.5" />
                           <span>WhatsApp</span>
+                        </button>
+                      )}
+
+                      {email && (
+                        <button
+                          type="button"
+                          onClick={handleSendViaEmail}
+                          className="py-3 px-4 rounded-xl border bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5"
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                          <span>Email</span>
                         </button>
                       )}
                     </div>

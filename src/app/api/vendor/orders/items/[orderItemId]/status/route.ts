@@ -1,7 +1,7 @@
 /**
  * Update order item status API (Vendor)
  * PATCH /api/vendor/orders/items/[orderItemId]/status
- * Vendor can update item status to PROCESSING or SHIPPED (with tracking)
+ * Vendor can update item status (full lifecycle for Website Direct Orders, PROCESSING/SHIPPED for TryMe Marketplace Orders)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -13,10 +13,6 @@ import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 import { emailService } from "@/lib/email";
 
-/**
- * Update parent order status based on all items
- * If all items have the same status, update parent order
- */
 async function updateParentOrderStatus(orderId: string, tx: any): Promise<void> {
   const order = await tx.order.findUnique({
     where: { id: orderId },
@@ -30,15 +26,22 @@ async function updateParentOrderStatus(orderId: string, tx: any): Promise<void> 
 
   let newStatus = order.status;
 
-  // If all items have the same status, update parent order
   if (uniqueStatuses.length === 1) {
     const commonStatus = uniqueStatuses[0] as string;
-    if (["PAYMENT_CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED"].includes(commonStatus)) {
+    if (
+      [
+        "PENDING_VERIFICATION",
+        "PAYMENT_CONFIRMED",
+        "PROCESSING",
+        "SHIPPED",
+        "DELIVERED",
+        "COMPLETED",
+        "CANCELLED",
+      ].includes(commonStatus)
+    ) {
       newStatus = commonStatus;
     }
   } else {
-    // Multiple statuses - determine the "least advanced" status
-    // Priority: PAYMENT_CONFIRMED < PROCESSING < SHIPPED < DELIVERED
     if (itemStatuses.some((s: string) => s === "PAYMENT_CONFIRMED")) {
       newStatus = "PAYMENT_CONFIRMED";
     } else if (itemStatuses.some((s: string) => s === "PROCESSING")) {
@@ -47,14 +50,21 @@ async function updateParentOrderStatus(orderId: string, tx: any): Promise<void> 
       newStatus = "SHIPPED";
     } else if (itemStatuses.every((s: string) => s === "DELIVERED")) {
       newStatus = "DELIVERED";
+    } else if (itemStatuses.every((s: string) => s === "COMPLETED")) {
+      newStatus = "COMPLETED";
     }
   }
 
-  // Update order status if it changed
   if (newStatus !== order.status) {
     await tx.order.update({
       where: { id: orderId },
-      data: { status: newStatus },
+      data: {
+        status: newStatus,
+        ...(newStatus === "DELIVERED" || newStatus === "COMPLETED"
+          ? { deliveryConfirmedAt: new Date() }
+          : {}),
+        ...(newStatus === "CANCELLED" ? { cancelledAt: new Date() } : {}),
+      },
     });
 
     await tx.orderStatusHistory.create({
@@ -62,27 +72,20 @@ async function updateParentOrderStatus(orderId: string, tx: any): Promise<void> 
         orderId,
         status: newStatus,
         note: "Order status updated based on item statuses",
-        createdBy: null, // System action
+        createdBy: null,
       },
     });
   }
 }
 
-/**
- * PATCH /api/vendor/orders/items/[orderItemId]/status
- * Update order item status (vendor can only update to PROCESSING or SHIPPED)
- */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ orderItemId: string }> }
 ) {
   try {
-    // Auth check
     const user = requireVendor(request);
-
     const { orderItemId } = await params;
 
-    // Look up vendor record (TokenPayload has no vendorId field)
     const vendorRecord = await prisma.vendor.findUnique({
       where: { userId: user.userId },
     });
@@ -94,12 +97,10 @@ export async function PATCH(
     }
     const vendorId = vendorRecord.id;
 
-    // Validate request body
     const body = await request.json();
     const validation = updateOrderItemStatusSchema.safeParse(body);
 
     if (!validation.success) {
-      console.error("[Vendor Update Status] Validation failed:", validation.error.format());
       return NextResponse.json(
         { success: false, error: validation.error.issues[0].message },
         { status: 400 }
@@ -108,7 +109,6 @@ export async function PATCH(
 
     const { status, trackingNumber, trackingUrl, note } = validation.data;
 
-    // Fetch order item with customer info for notification
     const orderItem = await prisma.orderItem.findUnique({
       where: { id: orderItemId },
       include: {
@@ -131,7 +131,6 @@ export async function PATCH(
       );
     }
 
-    // Verify item belongs to vendor
     if (orderItem.vendorId !== vendorId) {
       return NextResponse.json(
         { success: false, error: "This item does not belong to you" },
@@ -139,110 +138,149 @@ export async function PATCH(
       );
     }
 
-    // Validate status transition
-    const transitionValidation = validateStatusTransition(
-      orderItem.status,
-      status,
-      "VENDOR",
-      orderItem.order.createdAt,
-      null
-    );
+    const isWebsiteOrder =
+      orderItem.order.orderNumber.startsWith("WEB-") ||
+      (orderItem.order.shippingAddressJson as any)?.orderSource === "VENDOR_WEBSITE";
 
-    if (!transitionValidation.isValid) {
-      return NextResponse.json(
-        { success: false, error: transitionValidation.error },
-        { status: 400 }
+    if (!isWebsiteOrder) {
+      // Standard TryMe Marketplace order validation
+      if (status === "SHIPPED" && (!trackingNumber || trackingNumber.length < 3)) {
+        return NextResponse.json(
+          { success: false, error: "Tracking number is required when marking as shipped" },
+          { status: 400 }
+        );
+      }
+
+      const transitionValidation = validateStatusTransition(
+        orderItem.status,
+        status as any,
+        "VENDOR",
+        orderItem.order.createdAt,
+        null
       );
+
+      if (!transitionValidation.isValid) {
+        return NextResponse.json(
+          { success: false, error: transitionValidation.error },
+          { status: 400 }
+        );
+      }
     }
 
-    // Update item status in atomic transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Prepare update data
       const updateData: any = {
         status,
       };
 
       if (status === "SHIPPED") {
-        updateData.trackingNumber = trackingNumber;
-        updateData.trackingUrl = trackingUrl;
+        if (trackingNumber) updateData.trackingNumber = trackingNumber;
+        if (trackingUrl) updateData.trackingUrl = trackingUrl;
         updateData.shippedAt = new Date();
       }
 
-      // 1. Update order item
       const updatedItem = await tx.orderItem.update({
         where: { id: orderItemId },
         data: updateData,
       });
 
-      // 2. Create order status history
-      const historyNote = status === "SHIPPED"
-        ? `Item shipped by vendor${trackingNumber ? ` (Tracking: ${trackingNumber})` : ""}${note ? `\n${note}` : ""}`
-        : `Item marked as ${status} by vendor${note ? `\n${note}` : ""}`;
+      // If website order payment is confirmed or order completed, update Payment record status
+      if (isWebsiteOrder && ["PAYMENT_CONFIRMED", "COMPLETED", "DELIVERED"].includes(status)) {
+        await tx.payment.updateMany({
+          where: { orderId: orderItem.orderId },
+          data: { status: "COMPLETED", paidAt: new Date() },
+        });
+      }
+
+      // If website order is cancelled, restore stock
+      if (isWebsiteOrder && status === "CANCELLED" && orderItem.status !== "CANCELLED") {
+        if (orderItem.variantId) {
+          await tx.productVariant
+            .update({
+              where: { id: orderItem.variantId },
+              data: { stock: { increment: orderItem.quantity } },
+            })
+            .catch(() => {});
+        }
+        await tx.product
+          .update({
+            where: { id: orderItem.productId },
+            data: { stock: { increment: orderItem.quantity } },
+          })
+          .catch(() => {});
+      }
+
+      const historyNote =
+        status === "SHIPPED"
+          ? `Item shipped by vendor${trackingNumber ? ` (Tracking: ${trackingNumber})` : ""}${
+              note ? `\n${note}` : ""
+            }`
+          : `Item marked as ${status} by vendor${note ? `\n${note}` : ""}`;
 
       await tx.orderStatusHistory.create({
         data: {
           orderId: orderItem.orderId,
-          status,
+          status: status as any,
           note: historyNote,
-          createdBy: null, // Vendor action (could store vendorId in metadata)
+          createdBy: null,
         },
       });
 
-      // 3. Update parent order status if needed
       await updateParentOrderStatus(orderItem.orderId, tx);
 
       return updatedItem;
     });
 
-    console.log(`[Vendor] Order item ${orderItemId} status updated to ${status}:`, {
-      orderId: orderItem.orderId,
-      vendorId,
-      trackingNumber,
-    });
-
-    // Send notification to customer
+    // Send notification to customer if applicable
     try {
       const productSnapshot = orderItem.productSnapshot as any;
       const vendorName = productSnapshot?.vendorName || "the vendor";
       const productName = productSnapshot?.name || "your item";
 
-      const notificationType = status === "SHIPPED"
-        ? NotificationType.ORDER_ITEM_SHIPPED
-        : NotificationType.ORDER_ITEM_PROCESSING;
+      const notificationType =
+        status === "SHIPPED"
+          ? NotificationType.ORDER_ITEM_SHIPPED
+          : NotificationType.ORDER_ITEM_PROCESSING;
 
-      const message = status === "SHIPPED"
-        ? `Your order item "${productName}" from ${vendorName} has been shipped${trackingNumber ? ` (Tracking: ${trackingNumber})` : ""}.`
-        : `Your order item "${productName}" from ${vendorName} is being processed.`;
+      const message =
+        status === "SHIPPED"
+          ? `Your order item "${productName}" from ${vendorName} has been shipped${
+              trackingNumber ? ` (Tracking: ${trackingNumber})` : ""
+            }.`
+          : `Your order item "${productName}" from ${vendorName} status was updated to ${status.replace(
+              /_/g,
+              " "
+            )}.`;
 
       await createNotification({
         userId: orderItem.order.customer.user.id,
         type: notificationType,
-        title: status === "SHIPPED" ? "Item Shipped" : "Item Processing",
+        title: status === "SHIPPED" ? "Item Shipped" : "Order Status Updated",
         message,
         link: `/orders/${orderItem.orderId}`,
         metadata: {
           orderId: orderItem.orderId,
           orderNumber: orderItem.order.orderNumber,
           orderItemId,
-          productName: productName,
-          vendorName: vendorName,
+          productName,
+          vendorName,
           trackingNumber: trackingNumber || undefined,
         },
       });
-    } catch (notifError) {
-      console.error("[Vendor Update Status] Failed to send notification:", notifError);
-    }
+    } catch {}
 
-    // Trigger transactional emails asynchronously (non-blocking)
+    // Trigger transactional emails asynchronously
     (async () => {
       try {
         const productSnapshot = orderItem.productSnapshot as any;
         const vendorName = productSnapshot?.vendorName || "the vendor";
         const productName = productSnapshot?.name || "your item";
         const customerEmail = orderItem.order.customer.user.email;
-        const customerName = `${orderItem.order.customer.user.firstName || ""} ${orderItem.order.customer.user.lastName || ""}`.trim() || "Customer";
+        const customerName =
+          `${orderItem.order.customer.user.firstName || ""} ${
+            orderItem.order.customer.user.lastName || ""
+          }`.trim() || "Customer";
 
-        if (customerEmail) {
+        if (customerEmail && !customerEmail.endsWith("@website.tryme.lk")) {
           if (status === "PROCESSING") {
             await emailService.sendOrderItemProcessingEmail(customerEmail, {
               customerName,
@@ -262,9 +300,7 @@ export async function PATCH(
             });
           }
         }
-      } catch (emailError) {
-        console.error("Failed to send transactional email for item status update:", emailError);
-      }
+      } catch {}
     })();
 
     return NextResponse.json({
@@ -281,8 +317,6 @@ export async function PATCH(
     });
   } catch (error) {
     console.error("[Vendor Update Status] Error:", error);
-
-    // Handle auth errors
     const authError = handleAuthError(error);
     if (authError) return authError;
 

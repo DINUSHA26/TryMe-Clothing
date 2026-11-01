@@ -1,10 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, handleAuthError } from "@/lib/auth-helpers";
+import { evaluateAndEnforceSubscriptionLifecycle } from "@/lib/website-subscription-guard";
 
 export async function GET(request: NextRequest) {
   try {
     requireAdmin(request);
+
+    // Proactively evaluate any active subscriptions whose 1-month validity has passed
+    const overdueSubs = await (prisma as any).vendorWebsiteSubscription.findMany({
+      where: {
+        status: { in: ["ACTIVE", "EXPIRED"] },
+        expiresAt: { lt: new Date() },
+      },
+      select: { vendorId: true, adsSellerId: true },
+    });
+
+    for (const s of overdueSubs) {
+      const whereClause = s.vendorId ? { vendorId: s.vendorId } : s.adsSellerId ? { adsSellerId: s.adsSellerId } : null;
+      if (whereClause) {
+        await evaluateAndEnforceSubscriptionLifecycle(whereClause);
+      }
+    }
 
     const subscriptions = await (prisma as any).vendorWebsiteSubscription.findMany({
       orderBy: { createdAt: "desc" },
@@ -107,7 +124,11 @@ export async function PATCH(request: NextRequest) {
         },
       });
 
-      return NextResponse.json({ success: true, message: "Subscription approved and activated for 30 days!", data: updated });
+      return NextResponse.json({
+        success: true,
+        message: "Subscription approved and activated for 1 Month (30 days)!",
+        data: updated,
+      });
     } else if (action === "REJECT") {
       const updated = await (prisma as any).vendorWebsiteSubscription.update({
         where: { id: subscriptionId },
