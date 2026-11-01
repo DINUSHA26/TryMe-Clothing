@@ -36,6 +36,7 @@ import {
   Zap,
   Check,
   Loader2,
+  Menu,
 } from "lucide-react";
 
 interface CartItem {
@@ -113,6 +114,7 @@ export default function StandaloneSiteClient({
 
   const [activePage, setActivePage] = useState<string>(queryPage || "home");
   const [activeItemSlug, setActiveItemSlug] = useState<string | null>(queryItem || null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isPreview) {
@@ -163,6 +165,7 @@ export default function StandaloneSiteClient({
   const navigateTo = (page: string, itemSlug?: string | null) => {
     setActivePage(page);
     setActiveItemSlug(itemSlug || null);
+    setMobileMenuOpen(false);
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -465,6 +468,7 @@ export default function StandaloneSiteClient({
   });
 
   const handleNavItemClick = (item: any) => {
+    setMobileMenuOpen(false);
     if (
       isMultiPage &&
       (item.target === "products" || item.target === "services" || item.target === "reviews" || item.type === "page")
@@ -896,15 +900,15 @@ export default function StandaloneSiteClient({
 
           {isMultiPage ? (
             !isAd && numericPrice != null ? (
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 <button
                   type="button"
                   disabled={p.stock === 0}
                   onClick={() => addToCart(p, 1, null, "PRODUCT")}
                   className="py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold text-[11px] inline-flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
                 >
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  <span>Add to Cart</span>
+                  <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Add to Cart</span>
                 </button>
                 <button
                   type="button"
@@ -913,8 +917,8 @@ export default function StandaloneSiteClient({
                   className="py-2 px-2.5 rounded-xl text-white font-bold text-[11px] shadow-sm hover:opacity-90 inline-flex items-center justify-center gap-1 transition-opacity disabled:opacity-50"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>Buy Now</span>
+                  <Zap className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Buy Now</span>
                 </button>
               </div>
             ) : (
@@ -924,20 +928,20 @@ export default function StandaloneSiteClient({
                 className="w-full py-2 px-3 rounded-xl text-white font-bold text-xs shadow-sm hover:opacity-90 inline-flex items-center justify-center gap-1.5"
                 style={{ backgroundColor: primaryColor }}
               >
-                <ShoppingBag className="w-3.5 h-3.5" />
-                <span>View Details &amp; Order</span>
+                <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">View Details &amp; Order</span>
               </button>
             )
           ) : (
             /* 1-Page Website Mode: Order / Buy via WhatsApp, Email, or Inquiry */
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               <button
                 type="button"
                 onClick={() => handleInquiryViaWhatsApp(p)}
                 className="py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] inline-flex items-center justify-center gap-1 shadow-xs transition-colors"
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>WhatsApp</span>
+                <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">WhatsApp</span>
               </button>
               <button
                 type="button"
@@ -945,8 +949,8 @@ export default function StandaloneSiteClient({
                 className="py-2 px-2.5 rounded-xl text-white font-bold text-[11px] inline-flex items-center justify-center gap-1 shadow-xs hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: primaryColor }}
               >
-                <Mail className="w-3.5 h-3.5" />
-                <span>Inquire</span>
+                <Mail className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Inquire</span>
               </button>
             </div>
           )}
@@ -1062,40 +1066,42 @@ export default function StandaloneSiteClient({
         </div>
       )}
 
-      {/* ── Standalone Vendor Header ── */}
+      {/* ── Standalone Vendor Header (Responsive Desktop, Tablet & Mobile with Right-Corner Hamburger Menu) ── */}
       <header className="bg-white/95 backdrop-blur-md border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Left: Store Logo & Brand Name (Clean single-line alignment on all screens) */}
           <button
             type="button"
             onClick={() => navigateTo("home")}
-            className="flex items-center gap-3 text-left"
+            className="flex items-center gap-2.5 sm:gap-3 text-left min-w-0 flex-1 lg:flex-initial"
           >
             {vendor?.logo ? (
-              <div className="relative w-12 h-12 rounded-xl overflow-hidden border shadow-sm shrink-0">
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden border shadow-sm shrink-0">
                 <Image src={vendor.logo} alt="Logo" fill className="object-cover" />
               </div>
             ) : (
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-sm shrink-0"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-white font-black text-base sm:text-lg shadow-sm shrink-0"
                 style={{ backgroundColor: primaryColor }}
               >
                 {vendor?.businessName?.charAt(0) || "S"}
               </div>
             )}
-            <div>
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight block">
+            <div className="min-w-0">
+              <span className="font-extrabold text-sm sm:text-lg lg:text-xl tracking-tight block truncate leading-tight text-slate-900">
                 {vendor?.businessName || "Store"}
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-slate-400 block truncate mt-0.5">
                 {isMultiPage ? "Official Online Store" : "Direct Inquiry Storefront"}
               </span>
             </div>
           </button>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600">
+          {/* Center: Desktop Navigation Links (lg and up) */}
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-6 text-sm font-semibold text-slate-600">
             {visibleNavItems.map((item: any) => {
               const isCurrent =
-                (activePage === item.target) ||
+                activePage === item.target ||
                 (activePage === "home" && item.target === "home");
 
               return (
@@ -1103,7 +1109,7 @@ export default function StandaloneSiteClient({
                   key={item.id || item.target}
                   type="button"
                   onClick={() => handleNavItemClick(item)}
-                  className={`transition-colors font-bold text-xs uppercase tracking-wider cursor-pointer ${
+                  className={`transition-colors font-bold text-xs uppercase tracking-wider cursor-pointer whitespace-nowrap ${
                     isCurrent ? "font-extrabold" : "hover:text-black text-slate-600"
                   }`}
                   style={{ color: isCurrent ? primaryColor : undefined }}
@@ -1131,7 +1137,7 @@ export default function StandaloneSiteClient({
                     key={p.slug}
                     type="button"
                     onClick={() => navigateTo(p.slug)}
-                    className={`text-xs uppercase tracking-wider font-extrabold px-3 py-1.5 rounded-lg transition-all ${
+                    className={`text-xs uppercase tracking-wider font-extrabold px-3 py-1.5 rounded-lg transition-all whitespace-nowrap ${
                       isCurrent ? "text-white shadow-sm" : "hover:text-black text-slate-600"
                     }`}
                     style={{ backgroundColor: isCurrent ? primaryColor : undefined }}
@@ -1142,17 +1148,19 @@ export default function StandaloneSiteClient({
               })}
           </nav>
 
-          <div className="flex items-center gap-2.5">
+          {/* Right: Cart + CTA + Far-Right Hamburger Menu Button on Mobile/Tablet */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {isMultiPage && (
               <button
                 type="button"
                 onClick={() => navigateTo("cart")}
-                className="relative inline-flex items-center gap-2 px-4 py-2.5 rounded-full border-2 border-slate-200 hover:border-slate-300 bg-white text-slate-900 font-bold text-xs transition-all"
+                className="relative inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-full border border-slate-200 hover:border-slate-300 bg-white text-slate-900 font-bold text-xs transition-all"
+                aria-label="Shopping Cart"
               >
-                <ShoppingCart className="w-4 h-4" style={{ color: primaryColor }} />
-                <span className="hidden sm:inline">Cart</span>
+                <ShoppingCart className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
+                <span className="hidden md:inline">Cart</span>
                 <span
-                  className="px-2 py-0.5 rounded-full text-[10px] font-black text-white"
+                  className="px-1.5 py-0.5 rounded-full text-[10px] font-black text-white leading-none"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {cartCount}
@@ -1160,6 +1168,7 @@ export default function StandaloneSiteClient({
               </button>
             )}
 
+            {/* Desktop & Tablet Primary CTA Button (hidden on small mobile where it lives in the Hamburger menu & Hero) */}
             <button
               type="button"
               onClick={() =>
@@ -1167,14 +1176,127 @@ export default function StandaloneSiteClient({
                   ? handleInquiryViaWhatsApp()
                   : openInquiryModal({ name: vendor?.businessName || "General Inquiry" }, "PRODUCT")
               }
-              className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-white font-bold text-xs shadow-md hover:opacity-90 transition-opacity"
+              className="hidden sm:inline-flex items-center gap-2 px-4 lg:px-5 py-2 sm:py-2.5 rounded-full text-white font-bold text-xs shadow-md hover:opacity-90 transition-opacity whitespace-nowrap"
               style={{ backgroundColor: primaryColor }}
             >
-              <MessageCircle className="w-4 h-4" />
+              <MessageCircle className="w-4 h-4 shrink-0" />
               <span>{config?.headerSection?.buttonText || "WhatsApp / Inquire"}</span>
+            </button>
+
+            {/* Hamburger Menu Button at the Far Right Corner (Mobile & Tablet < lg) */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-900 transition-colors shrink-0"
+              aria-label="Toggle Menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
+
+        {/* ── Mobile & Tablet Slide-Down Navigation Menu (< lg) ── */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-slate-200 bg-white shadow-2xl px-4 pt-3 pb-5 space-y-3 animate-in fade-in slide-in-from-top-2">
+            <div className="flex flex-col space-y-1">
+              {visibleNavItems.map((item: any) => {
+                const isCurrent =
+                  activePage === item.target ||
+                  (activePage === "home" && item.target === "home");
+
+                return (
+                  <button
+                    key={item.id || item.target}
+                    type="button"
+                    onClick={() => handleNavItemClick(item)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left font-bold text-xs uppercase tracking-wider transition-all ${
+                      isCurrent
+                        ? "text-white shadow-xs"
+                        : "text-slate-700 hover:bg-slate-100"
+                    }`}
+                    style={{ backgroundColor: isCurrent ? primaryColor : undefined }}
+                  >
+                    <span>{item.label}</span>
+                    <ChevronRight
+                      className={`w-4 h-4 ${isCurrent ? "text-white" : "text-slate-400"}`}
+                    />
+                  </button>
+                );
+              })}
+
+              {/* Custom Multi-Pages in Mobile Menu */}
+              {pages
+                .filter((p: any) => {
+                  const excluded = navItems.some(
+                    (ni: any) =>
+                      (ni.target === p.slug || ni.id === `custom-page-${p.id}`) &&
+                      (ni.visible === false || ni.visible === "false")
+                  );
+                  if (excluded) return false;
+                  return !visibleNavItems.some((ni: any) => ni.target === p.slug);
+                })
+                .map((p: any) => {
+                  const isCurrent = activePage === p.slug;
+                  return (
+                    <button
+                      key={p.slug}
+                      type="button"
+                      onClick={() => navigateTo(p.slug)}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left font-bold text-xs uppercase tracking-wider transition-all ${
+                        isCurrent
+                          ? "text-white shadow-xs"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                      style={{ backgroundColor: isCurrent ? primaryColor : undefined }}
+                    >
+                      <span>{p.title}</span>
+                      <ChevronRight
+                        className={`w-4 h-4 ${isCurrent ? "text-white" : "text-slate-400"}`}
+                      />
+                    </button>
+                  );
+                })}
+            </div>
+
+            {/* Mobile Menu Bottom Action Buttons */}
+            <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {isMultiPage && (
+                <button
+                  type="button"
+                  onClick={() => navigateTo("cart")}
+                  className="w-full py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-bold text-xs flex items-center justify-center gap-2"
+                >
+                  <ShoppingCart className="w-4 h-4" style={{ color: primaryColor }} />
+                  <span>Shopping Cart ({cartCount})</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (isMultiPage) {
+                    handleInquiryViaWhatsApp();
+                  } else {
+                    openInquiryModal(
+                      { name: vendor?.businessName || "General Inquiry" },
+                      "PRODUCT"
+                    );
+                  }
+                }}
+                className="w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>{config?.headerSection?.buttonText || "WhatsApp / Inquire"}</span>
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* ── PAGE ROUTER: PRODUCT DETAIL / SERVICE DETAIL / AD DETAIL / CART / CHECKOUT / ORDER SUCCESS / CATALOG / SERVICES / REVIEWS / CUSTOM PAGE / HOME ── */}
@@ -1682,9 +1804,9 @@ export default function StandaloneSiteClient({
 
               {/* Related Products */}
               {products.length > 1 && (
-                <div className="border-t pt-12 space-y-6">
-                  <h3 className="text-2xl font-black text-slate-900">More From {vendor?.businessName}</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                <div className="border-t pt-10 sm:pt-12 space-y-6">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">More From {vendor?.businessName}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                     {products
                       .filter((p: any) => p.id !== activeProduct.id)
                       .slice(0, 4)
@@ -2555,9 +2677,9 @@ export default function StandaloneSiteClient({
             </div>
           </section>
 
-          <section className="py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <section className="py-10 sm:py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {filteredProducts.map((p: any, idx: number) => renderProductCard(p, idx))}
               </div>
             ) : (
@@ -2777,47 +2899,47 @@ export default function StandaloneSiteClient({
       ) : (
         /* ── HOME PAGE VIEW (1-Page Inquiry Mode OR 6/12-Page Multi-Page Home) ── */
         <>
-          {/* Hero Section */}
+          {/* Hero Section (Responsive Mobile, Tablet & Desktop Alignment) */}
           {hero.enabled !== false && (
-            <section id="home" className="relative py-16 sm:py-24 overflow-hidden bg-slate-50/60 border-b">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div className="space-y-6">
+            <section id="home" className="relative py-10 sm:py-16 lg:py-24 overflow-hidden bg-slate-50/60 border-b">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
+                <div className="space-y-4 sm:space-y-6 text-left">
                   {hero.badgeText && (
                     <div
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest text-white shadow-sm"
+                      className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-white shadow-sm"
                       style={{ backgroundColor: primaryColor }}
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>{hero.badgeText}</span>
+                      <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                      <span className="truncate">{hero.badgeText}</span>
                     </div>
                   )}
 
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-slate-900">
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.15] text-slate-900 break-words">
                     {hero.title || vendor?.businessName}
                   </h1>
 
-                  <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
+                  <p className="text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed max-w-xl">
                     {hero.subtitle || "Premium quality and personalized customer service."}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-4 pt-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3.5 pt-1">
                     {isMultiPage ? (
                       <>
                         <button
                           type="button"
                           onClick={() => navigateTo("products")}
-                          className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-white font-black text-sm shadow-xl hover:scale-105 transition-all"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-white font-black text-xs sm:text-sm shadow-xl hover:opacity-95 transition-all"
                           style={{ backgroundColor: primaryColor }}
                         >
-                          <ShoppingBag className="w-4 h-4" />
+                          <ShoppingBag className="w-4 h-4 shrink-0" />
                           <span>Shop Online Now</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => handleInquiryViaWhatsApp()}
-                          className="inline-flex items-center gap-2 px-6 py-4 rounded-full bg-white border border-slate-200 text-slate-800 font-bold text-sm shadow-sm hover:bg-slate-100 transition-all"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3.5 sm:py-4 rounded-full bg-white border border-slate-200 text-slate-800 font-bold text-xs sm:text-sm shadow-sm hover:bg-slate-100 transition-all"
                         >
-                          <MessageCircle className="w-4 h-4 text-emerald-600" />
+                          <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
                           <span>{hero.buttonText || "Chat on WhatsApp"}</span>
                         </button>
                       </>
@@ -2826,10 +2948,10 @@ export default function StandaloneSiteClient({
                         <button
                           type="button"
                           onClick={() => handleInquiryViaWhatsApp()}
-                          className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-white font-black text-sm shadow-xl hover:scale-105 transition-all"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-white font-black text-xs sm:text-sm shadow-xl hover:opacity-95 transition-all"
                           style={{ backgroundColor: primaryColor }}
                         >
-                          <MessageCircle className="w-4 h-4" />
+                          <MessageCircle className="w-4 h-4 shrink-0" />
                           <span>{hero.buttonText || "Order via WhatsApp"}</span>
                         </button>
                         <button
@@ -2837,9 +2959,9 @@ export default function StandaloneSiteClient({
                           onClick={() =>
                             openInquiryModal({ name: vendor?.businessName || "Store Inquiry" }, "PRODUCT")
                           }
-                          className="inline-flex items-center gap-2 px-6 py-4 rounded-full bg-white border border-slate-200 text-slate-800 font-bold text-sm shadow-sm hover:bg-slate-100 transition-all"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3.5 sm:py-4 rounded-full bg-white border border-slate-200 text-slate-800 font-bold text-xs sm:text-sm shadow-sm hover:bg-slate-100 transition-all"
                         >
-                          <Mail className="w-4 h-4" />
+                          <Mail className="w-4 h-4 shrink-0" />
                           <span>Email / Direct Inquiry</span>
                         </button>
                       </>
@@ -2867,27 +2989,27 @@ export default function StandaloneSiteClient({
 
           {/* Services Section */}
           {services.enabled !== false && normalizedServices.length > 0 && (
-            <section id="services" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+            <section id="services" className="py-12 sm:py-16 lg:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-3 sm:gap-4">
                 <div>
                   <span
-                    className="text-xs font-black uppercase tracking-widest"
+                    className="text-[11px] sm:text-xs font-black uppercase tracking-widest"
                     style={{ color: primaryColor }}
                   >
                     OUR SERVICES &amp; OFFERINGS
                   </span>
-                  <h2 className="text-3xl font-black tracking-tight text-slate-900 mt-1">
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mt-1">
                     {services.title || "Featured Services"}
                   </h2>
                   {services.subtitle && (
-                    <p className="text-sm text-slate-500 mt-2">{services.subtitle}</p>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1.5">{services.subtitle}</p>
                   )}
                 </div>
                 {isMultiPage && (
                   <button
                     type="button"
                     onClick={() => navigateTo("services")}
-                    className="text-xs font-black uppercase tracking-wider inline-flex items-center gap-1 hover:underline"
+                    className="text-xs font-black uppercase tracking-wider inline-flex items-center gap-1 hover:underline self-start sm:self-auto"
                     style={{ color: primaryColor }}
                   >
                     <span>View All Services</span>
@@ -2896,7 +3018,7 @@ export default function StandaloneSiteClient({
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {normalizedServices.slice(0, 8).map((s: any, idx: number) => renderServiceCard(s, idx))}
               </div>
             </section>
@@ -2904,21 +3026,21 @@ export default function StandaloneSiteClient({
 
           {/* Products / Ads Showcase Section */}
           {config?.productsSection?.enabled !== false && (
-            <section id="products" className="py-20 bg-slate-50/50 border-b">
+            <section id="products" className="py-12 sm:py-16 lg:py-20 bg-slate-50/50 border-b">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-3 sm:gap-4">
                   <div>
                     <span
-                      className="text-xs font-black uppercase tracking-widest inline-flex items-center gap-1.5"
+                      className="text-[11px] sm:text-xs font-black uppercase tracking-widest inline-flex items-center gap-1.5"
                       style={{ color: primaryColor }}
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
                       <span>{config?.productsSection?.badge || "STORE INVENTORY"}</span>
                     </span>
-                    <h2 className="text-3xl font-black tracking-tight text-slate-900 mt-1">
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mt-1">
                       {config?.productsSection?.title || catalogTitle}
                     </h2>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
                       {isMultiPage
                         ? "Click any item to view details, add to cart, or buy now with COD / Bank Deposit."
                         : "Order or inquire directly via WhatsApp, Email, or our instant inquiry form."}
@@ -2928,7 +3050,7 @@ export default function StandaloneSiteClient({
                     <button
                       type="button"
                       onClick={() => navigateTo("products")}
-                      className="px-5 py-2.5 rounded-full text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-sm"
+                      className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-sm self-start sm:self-auto"
                       style={{ backgroundColor: primaryColor }}
                     >
                       <span>View All ({products.length})</span>
@@ -2938,11 +3060,11 @@ export default function StandaloneSiteClient({
                 </div>
 
                 {products && products.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                     {products.slice(0, 12).map((p: any, idx: number) => renderProductCard(p, idx))}
                   </div>
                 ) : (
-                  <div className="bg-white border rounded-2xl p-10 text-center max-w-md mx-auto space-y-3">
+                  <div className="bg-white border rounded-2xl p-8 sm:p-10 text-center max-w-md mx-auto space-y-3">
                     <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
                     <h4 className="font-bold text-base text-slate-800">No Items Listed Yet</h4>
                     <p className="text-xs text-slate-500">
@@ -2956,19 +3078,19 @@ export default function StandaloneSiteClient({
 
           {/* About Section */}
           {about.enabled !== false && (
-            <section id="about" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div className="space-y-6">
+            <section id="about" className="py-12 sm:py-16 lg:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
+                <div className="space-y-4 sm:space-y-6">
                   <span
-                    className="text-xs font-black uppercase tracking-widest inline-block"
+                    className="text-[11px] sm:text-xs font-black uppercase tracking-widest inline-block"
                     style={{ color: primaryColor }}
                   >
                     {about.badge || "ABOUT US"}
                   </span>
-                  <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
                     {about.title || `About ${vendor?.businessName}`}
                   </h2>
-                  <p className="text-base text-slate-600 leading-relaxed whitespace-pre-line">
+                  <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-line">
                     {about.content || "Dedicated to providing the best products and experiences."}
                   </p>
                 </div>
