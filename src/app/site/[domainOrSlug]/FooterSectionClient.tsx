@@ -96,7 +96,11 @@ export default function FooterSectionClient({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Column 1: Store Brand & Socials (Col span 4) */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="flex items-center gap-3">
+            <Link
+              href={domainOrSlug.includes(".") ? "/" : `/site/${domainOrSlug}`}
+              onClick={scrollToTop}
+              className="flex items-center gap-3 w-fit"
+            >
               {vendor?.logo ? (
                 <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-slate-800 shadow-sm shrink-0">
                   <Image src={vendor.logo} alt="Logo" fill className="object-cover" />
@@ -110,7 +114,7 @@ export default function FooterSectionClient({
                 </div>
               )}
               <span className="font-extrabold text-xl tracking-tight text-white">{storeName}</span>
-            </div>
+            </Link>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
               {storeBio}
@@ -189,10 +193,14 @@ export default function FooterSectionClient({
               </h4>
               <ul className="space-y-2 text-xs font-semibold text-slate-400">
                 {visibleNavItems.map((item: any) => {
+                  const isCustomDomain = domainOrSlug.includes(".");
+                  const basePath = isCustomDomain ? "/" : `/site/${domainOrSlug}`;
                   const href =
-                    item.type === "page"
-                      ? `/site/${domainOrSlug}?page=${item.target}`
-                      : `/site/${domainOrSlug}#${item.target}`;
+                    item.target === "home"
+                      ? basePath
+                      : item.type === "page"
+                      ? `${basePath}?page=${item.target}`
+                      : `${basePath}#${item.target}`;
                   return (
                     <li key={item.id || item.target}>
                       <Link
@@ -216,25 +224,35 @@ export default function FooterSectionClient({
               </h4>
               <ul className="space-y-2 text-xs font-semibold text-slate-400">
                 {pages && pages.length > 0 ? (
-                  pages.map((p) => (
-                    <li key={p.slug}>
-                      <Link
-                        href={`/site/${domainOrSlug}?page=${p.slug}`}
-                        className="hover:text-white transition-colors hover:underline block"
-                      >
-                        {p.title}
-                      </Link>
-                    </li>
-                  ))
+                  pages.map((p) => {
+                    const isCustomDomain = domainOrSlug.includes(".");
+                    const basePath = isCustomDomain ? "/" : `/site/${domainOrSlug}`;
+                    return (
+                      <li key={p.slug}>
+                        <Link
+                          href={`${basePath}?page=${p.slug}`}
+                          className="hover:text-white transition-colors hover:underline block"
+                        >
+                          {p.title}
+                        </Link>
+                      </li>
+                    );
+                  })
                 ) : (
                   <>
                     <li>
-                      <Link href={`/site/${domainOrSlug}#about`} className="hover:text-white transition-colors">
+                      <Link
+                        href={`${domainOrSlug.includes(".") ? "/" : `/site/${domainOrSlug}`}#about`}
+                        className="hover:text-white transition-colors"
+                      >
                         About Our Store
                       </Link>
                     </li>
                     <li>
-                      <Link href={`/site/${domainOrSlug}#contact`} className="hover:text-white transition-colors">
+                      <Link
+                        href={`${domainOrSlug.includes(".") ? "/" : `/site/${domainOrSlug}`}#contact`}
+                        className="hover:text-white transition-colors"
+                      >
                         Store Location &amp; Contact
                       </Link>
                     </li>

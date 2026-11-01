@@ -162,8 +162,16 @@ export async function middleware(request: NextRequest) {
     host === "127.0.0.1";
 
   if (!isTryMeHost) {
-    // Custom domain request! e.g., fashiondora.lk, apple26.vercel.app, coolword.vercel.app
+    // Custom domain request! e.g., fashiondora.lk, apple26.vercel.app, coolworld.vercel.app
     const cleanHost = host.replace(/^www\./, "");
+    // If browser URL accidentally contains /site/<domain> on a custom domain, redirect cleanly to "/"
+    // so the browser address bar directly shows ONLY the website domain name!
+    if (pathname.startsWith("/site/")) {
+      const cleanUrl = request.nextUrl.clone();
+      const remainder = pathname.replace(/^\/site\/[^/]+/, "") || "/";
+      cleanUrl.pathname = remainder;
+      return NextResponse.redirect(cleanUrl, 308);
+    }
     if (!pathname.startsWith("/site") && !pathname.startsWith("/api")) {
       const url = request.nextUrl.clone();
       url.pathname = `/site/${cleanHost}${pathname === "/" ? "" : pathname}`;

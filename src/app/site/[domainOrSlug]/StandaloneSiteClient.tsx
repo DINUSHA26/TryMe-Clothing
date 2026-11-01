@@ -129,6 +129,37 @@ export default function StandaloneSiteClient({
     }
   }, [initialPageSlug, isPreview]);
 
+  // Helper: Determine whether the browser is on a standalone Custom Domain vs TryMe /site/[slug] path
+  const getPublicBasePath = () => {
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname.toLowerCase().replace(/^www\./, "");
+      const isTryMeMainHost =
+        host === "tryme.lk" ||
+        host.endsWith(".tryme.lk") ||
+        host === "try-me-clothing.vercel.app" ||
+        (host.startsWith("try-me-clothing") && host.endsWith(".vercel.app")) ||
+        host === "localhost" ||
+        host === "127.0.0.1";
+
+      if (!isTryMeMainHost) {
+        return "/";
+      }
+    }
+    // Also if domainOrSlug is a domain name (contains a dot) and not on localhost/tryme
+    return `/site/${domainOrSlug}`;
+  };
+
+  // On initial mount on a custom domain, ensure the browser URL bar never shows /site/<domain>
+  useEffect(() => {
+    if (isPreview || typeof window === "undefined") return;
+    const basePath = getPublicBasePath();
+    if (basePath === "/" && window.location.pathname.startsWith("/site/")) {
+      const search = window.location.search || "";
+      const hash = window.location.hash || "";
+      window.history.replaceState(null, "", `/${search}${hash}`);
+    }
+  }, [isPreview, domainOrSlug]);
+
   const navigateTo = (page: string, itemSlug?: string | null) => {
     setActivePage(page);
     setActiveItemSlug(itemSlug || null);
@@ -147,7 +178,12 @@ export default function StandaloneSiteClient({
       params.set("item", itemSlug);
     }
     const qs = params.toString();
-    router.push(`/site/${domainOrSlug}${qs ? `?${qs}` : ""}`, { scroll: false });
+    const basePath = getPublicBasePath();
+    const targetUrl =
+      basePath === "/"
+        ? `/${qs ? `?${qs}` : ""}`
+        : `${basePath}${qs ? `?${qs}` : ""}`;
+    router.push(targetUrl, { scroll: false });
   };
 
   // Persistent Cart State (for 6-page / 12-page websites)
