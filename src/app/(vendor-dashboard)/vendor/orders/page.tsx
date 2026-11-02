@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { getVendorOrders as getVendorOrdersDirect } from "@/lib/services/vendor-order-service";
 import { VendorOrdersTable } from "@/components/vendor/orders/VendorOrdersTable";
 import { WebsiteInquiriesManager } from "@/components/vendor/orders/WebsiteInquiriesManager";
-import { Package, Store, Globe, Inbox, Sparkles } from "lucide-react";
+import { Package, Store, Globe, Inbox } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,7 +115,7 @@ export default async function VendorOrdersPage({
         </div>
         <Link href="/vendor/website-builder">
           <Button variant="outline" size="sm" className="font-bold">
-            <Sparkles className="w-4 h-4 mr-2 text-primary" />
+            <Store className="w-4 h-4 mr-2 text-primary" />
             Website Checkout Settings
           </Button>
         </Link>

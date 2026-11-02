@@ -45,7 +45,7 @@ export const DEFAULT_SERVICE_CATEGORIES = [
     name: "Beauty, Salon & Spa",
     slug: "beauty-salon-spa",
     description: "Hair styling, bridal dressing, skincare and wellness",
-    icon: "Sparkles",
+    icon: "Heart",
     sortOrder: 4,
     subCategories: [
       { name: "Hair Cutting & Styling", slug: "hair-cutting-styling", sortOrder: 1 },

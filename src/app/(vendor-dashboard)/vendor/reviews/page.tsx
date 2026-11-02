@@ -9,7 +9,6 @@ import {
   Globe,
   Eye,
   EyeOff,
-  Sparkles,
   MessageSquareReply,
   Trash2,
   Plus,
@@ -494,7 +493,7 @@ export default function VendorReviewsPage() {
 
                         {source === "website" && review.isFeatured && (
                           <Badge className="bg-amber-500 text-white text-[10px] py-0 gap-1">
-                            <Sparkles className="w-2.5 h-2.5" /> Featured on Home
+                            <Star className="w-2.5 h-2.5" /> Featured on Home
                           </Badge>
                         )}
 
@@ -589,7 +588,7 @@ export default function VendorReviewsPage() {
                               : ""
                           }`}
                         >
-                          <Sparkles className="w-3.5 h-3.5" />
+                          <Star className="w-3.5 h-3.5" />
                           {review.isFeatured ? "Featured" : "Feature on Home"}
                         </Button>
 

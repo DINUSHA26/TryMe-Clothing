@@ -18,7 +18,6 @@ import {
   ShieldCheck,
   Calendar,
   Layers,
-  Sparkles,
   ExternalLink,
   ArrowRight,
   TrendingUp,
@@ -299,7 +298,7 @@ export default function AdminWebsiteSubscriptionsPage() {
             <CardTitle className="text-xs font-bold uppercase tracking-wider text-purple-600">
               6-Page Website (Rs 4,990)
             </CardTitle>
-            <Sparkles className="w-4 h-4 text-purple-500" />
+            <Globe className="w-4 h-4 text-purple-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black text-slate-900 dark:text-white">
@@ -1135,7 +1134,7 @@ export default function AdminWebsiteSubscriptionsPage() {
                           }
                           className="h-9 rounded-xl text-xs font-bold gap-1.5"
                         >
-                          <Sparkles className="w-3.5 h-3.5" />
+                          <Globe className="w-3.5 h-3.5" />
                           <span>Change / Upgrade Plan</span>
                         </Button>
                       </div>

@@ -7,7 +7,6 @@ import {
   Lock,
   Unlock,
   CheckCircle2,
-  Sparkles,
   Smartphone,
   Tablet,
   Monitor,
@@ -1179,7 +1178,7 @@ export default function WebsiteBuilderPage() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center gap-4 p-6">
         <div className="relative">
           <div className="w-14 h-14 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <Sparkles className="w-6 h-6 text-primary absolute inset-0 m-auto animate-pulse" />
+          <Globe className="w-6 h-6 text-primary absolute inset-0 m-auto" />
         </div>
         <div className="text-center space-y-1.5">
           <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100 tracking-tight">
@@ -1199,7 +1198,7 @@ export default function WebsiteBuilderPage() {
       <header className="h-auto md:h-16 py-3 md:py-0 px-3.5 md:px-6 border-b bg-white dark:bg-slate-900 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-0 sticky top-0 z-40">
         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 w-full md:w-auto">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary animate-pulse shrink-0" />
+            <Globe className="w-5 h-5 text-primary shrink-0" />
             <h1 className="font-black text-base md:text-lg tracking-tight">WEBSITE BUILDER</h1>
           </div>
 
@@ -1370,7 +1369,7 @@ export default function WebsiteBuilderPage() {
               </>
             ) : (
               <>
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                <Globe className="w-3.5 h-3.5 mr-1.5" />
                 Publish
               </>
             )}
@@ -1646,7 +1645,7 @@ export default function WebsiteBuilderPage() {
               <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
+                    <Globe className="w-4 h-4 text-primary" />
                     <h3 className="font-bold text-sm">Hero Banner</h3>
                   </div>
                   <Switch
@@ -1725,7 +1724,7 @@ export default function WebsiteBuilderPage() {
               <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
+                    <ShoppingBag className="w-4 h-4 text-emerald-600" />
                     <h3 className="font-bold text-sm">Products &amp; Ads (Live Synced)</h3>
                   </div>
                   <Switch
@@ -3673,7 +3672,6 @@ export default function WebsiteBuilderPage() {
                                 className="h-8 px-3 rounded-xl text-xs font-black uppercase tracking-wider gap-1.5 shadow-sm text-white"
                                 style={{ backgroundColor: config.primaryColor }}
                               >
-                                <Sparkles className="w-3.5 h-3.5" />
                                 <span>Design Page</span>
                               </Button>
                               <Button
@@ -4206,7 +4204,7 @@ export default function WebsiteBuilderPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-primary" />
+              <Globe className="w-6 h-6 text-primary" />
               {isSubscriptionExpired ? "Renew or Upgrade Your Website Plan" : "Upgrade Your Website Plan"}
             </DialogTitle>
             <DialogDescription>

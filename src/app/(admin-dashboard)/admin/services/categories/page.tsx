@@ -24,7 +24,6 @@ import {
   ChevronDown,
   ChevronRight,
   Layers,
-  Sparkles,
   Tag,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";

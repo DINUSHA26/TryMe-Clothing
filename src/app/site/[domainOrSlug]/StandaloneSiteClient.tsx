@@ -15,7 +15,7 @@ import {
   ChevronRight,
   ShoppingBag,
   ShoppingCart,
-  Sparkles,
+  Briefcase,
   CheckCircle2,
   Building2,
   Search,
@@ -1023,7 +1023,7 @@ export default function StandaloneSiteClient({
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-400 p-4 text-center">
-                <Sparkles className="w-8 h-8 mb-1 opacity-50" />
+                <Briefcase className="w-8 h-8 mb-1 opacity-50" />
                 <span className="text-[10px] uppercase font-bold tracking-wider">Service Package</span>
               </div>
             )}
@@ -1947,7 +1947,7 @@ export default function StandaloneSiteClient({
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <Sparkles className="w-16 h-16" />
+                        <Briefcase className="w-16 h-16" />
                       </div>
                     )}
                   </div>
@@ -2709,7 +2709,6 @@ export default function StandaloneSiteClient({
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider text-white shadow-sm"
                 style={{ backgroundColor: primaryColor }}
               >
-                <Sparkles className="w-3.5 h-3.5" />
                 <span>
                   {config?.productsSection?.badge ||
                     (entityType === "ADS_SELLER" ? "VERIFIED CLASSIFIEDS" : "OFFICIAL STORE CATALOG")}
@@ -2949,7 +2948,6 @@ export default function StandaloneSiteClient({
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider text-white shadow-sm"
                 style={{ backgroundColor: primaryColor }}
               >
-                <Sparkles className="w-3.5 h-3.5" />
                 <span>{requestedCustomPage.sectionsJson?.banner?.badge || vendor?.businessName}</span>
               </div>
               <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">
@@ -2995,7 +2993,7 @@ export default function StandaloneSiteClient({
                         className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-xs"
                         style={{ backgroundColor: primaryColor }}
                       >
-                        <Sparkles className="w-4 h-4" />
+                        <CheckCircle2 className="w-4 h-4" />
                       </div>
                       <h3 className="font-extrabold text-base text-slate-900">{card.title}</h3>
                       {card.description && (
@@ -3065,7 +3063,6 @@ export default function StandaloneSiteClient({
                       className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-white shadow-sm"
                       style={{ backgroundColor: primaryColor }}
                     >
-                      <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                       <span className="truncate">{hero.badgeText}</span>
                     </div>
                   )}
@@ -3190,7 +3187,6 @@ export default function StandaloneSiteClient({
                       className="text-[11px] sm:text-xs font-black uppercase tracking-widest inline-flex items-center gap-1.5"
                       style={{ color: primaryColor }}
                     >
-                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
                       <span>{config?.productsSection?.badge || "STORE INVENTORY"}</span>
                     </span>
                     <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mt-1">

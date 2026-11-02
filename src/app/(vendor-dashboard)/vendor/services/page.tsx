@@ -21,7 +21,6 @@ import {
   ExternalLink,
   Loader2,
   Globe,
-  Sparkles,
   AlertCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";

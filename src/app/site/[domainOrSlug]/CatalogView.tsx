@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Search, ShoppingBag, MessageCircle, Sparkles } from "lucide-react";
+import { Search, ShoppingBag, MessageCircle } from "lucide-react";
 
 interface CatalogViewProps {
   products: any[];
@@ -42,7 +42,6 @@ export default function CatalogView({
             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider text-white shadow-sm"
             style={{ backgroundColor: primaryColor }}
           >
-            <Sparkles className="w-3.5 h-3.5" />
             <span>{badge || (entityType === "ADS_SELLER" ? "VERIFIED CLASSIFIEDS" : "OUR STORE CATALOG")}</span>
           </span>
 

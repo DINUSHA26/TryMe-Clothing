@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/layout/shared/Logo";
-import { ArrowLeft, Check, ChevronRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CategoryPicker } from "@/components/ads/CategoryPicker";
 
@@ -184,7 +184,7 @@ export default function AdsSellerRegisterPage() {
           <Logo variant="icon" size="lg" className="mb-4" />
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
             <span>Become an Ads Seller</span>
-            <Sparkles className="h-5 w-5 text-[#FF6600] animate-pulse" />
+            <Check className="h-5 w-5 text-[#FF6600]" />
           </h1>
           <p className="text-gray-600">Register to publish classified ads on TryMe</p>
         </div>

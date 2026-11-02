@@ -21,7 +21,6 @@ import {
   CreditCard,
   LayoutGrid,
   Mail,
-  Sparkles,
   Globe,
   Briefcase,
 } from "lucide-react";
@@ -201,7 +200,7 @@ export const vendorNavItems: NavItem[] = [
   {
     label: "Website Builder",
     href: "/vendor/website-builder",
-    icon: Sparkles,
+    icon: Globe,
   },
   {
     label: "Settings",
@@ -249,7 +248,7 @@ export const adsSellerNavItems: NavItem[] = [
   {
     label: "Website Builder",
     href: "/ads-seller/website-builder",
-    icon: Sparkles,
+    icon: Globe,
   },
   {
     label: "Settings",
