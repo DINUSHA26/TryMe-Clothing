@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
       rawItems = await (prisma as any).classifiedAd.findMany({
         where: {
           sellerId: target.entity.id,
-          status: "ACTIVE",
+          status: { in: ["ACTIVE", "PENDING"] },
         },
         orderBy: { createdAt: "desc" },
         take: 36,

@@ -312,11 +312,59 @@ export default function AdsSellerDashboardHome() {
                       {ad.price ? `Rs. ${Number(ad.price).toLocaleString("en-LK")}` : "Contact"}
                     </TableCell>
                     <TableCell>
-                      {ad.status === "PENDING" && <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200">Pending</Badge>}
-                      {ad.status === "ACTIVE" && <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Active</Badge>}
-                      {ad.status === "REJECTED" && <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">Rejected</Badge>}
-                      {ad.status === "EXPIRED" && <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">Expired</Badge>}
-                      {ad.status === "PAUSED" && <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">Paused</Badge>}
+                      <div className="flex flex-col gap-1.5 min-w-[160px]">
+                        {/* 🌐 My Website Status */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-gray-500 font-medium">
+                            🌐 <span className="font-semibold text-gray-700">Website:</span>
+                          </span>
+                          {ad.status === "ACTIVE" || ad.status === "PENDING" ? (
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold py-0 h-4.5">
+                              Live
+                            </Badge>
+                          ) : ad.status === "REJECTED" ? (
+                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0 h-4.5">
+                              Hidden
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0 h-4.5">
+                              {ad.status}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* 🛒 TryMe Marketplace Status */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-gray-500 font-medium">
+                            🛒 <span className="font-semibold text-gray-700">Market:</span>
+                          </span>
+                          {ad.status === "PENDING" && (
+                            <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 text-[10px] font-bold py-0 h-4.5">
+                              Pending
+                            </Badge>
+                          )}
+                          {ad.status === "ACTIVE" && (
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold py-0 h-4.5">
+                              Live
+                            </Badge>
+                          )}
+                          {ad.status === "REJECTED" && (
+                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0 h-4.5">
+                              Rejected
+                            </Badge>
+                          )}
+                          {ad.status === "EXPIRED" && (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0 h-4.5">
+                              Expired
+                            </Badge>
+                          )}
+                          {ad.status === "PAUSED" && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] font-bold py-0 h-4.5">
+                              Paused
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {formatDistance(new Date(ad.createdAt), new Date(), { addSuffix: true })}

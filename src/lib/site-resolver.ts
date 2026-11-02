@@ -44,7 +44,7 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
               },
             },
             ads: {
-              where: { status: "ACTIVE" },
+              where: { status: { in: ["ACTIVE", "PENDING"] } },
               take: 48,
               orderBy: { createdAt: "desc" },
             },
@@ -95,7 +95,7 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
               },
             },
             ads: {
-              where: { status: "ACTIVE" },
+              where: { status: { in: ["ACTIVE", "PENDING"] } },
               take: 48,
               orderBy: { createdAt: "desc" },
             },
