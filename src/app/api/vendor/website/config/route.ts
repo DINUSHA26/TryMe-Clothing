@@ -137,6 +137,7 @@ export async function GET(request: NextRequest) {
           isActive: true,
           isDraft: false,
           isDisabledByAdmin: false,
+          showOnWebsite: true,
         },
         include: { images: true },
         orderBy: { createdAt: "desc" },
@@ -147,6 +148,7 @@ export async function GET(request: NextRequest) {
         where: {
           sellerId: target.entity.id,
           status: { in: ["ACTIVE", "PENDING"] },
+          showOnWebsite: true,
         },
         orderBy: { createdAt: "desc" },
         take: 36,

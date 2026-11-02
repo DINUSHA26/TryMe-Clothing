@@ -37,7 +37,7 @@ export async function GET(
       },
     });
 
-    if (!ad || ad.status !== "ACTIVE") {
+    if (!ad || ad.status !== "ACTIVE" || ad.showOnMarketplace === false) {
       return NextResponse.json(
         { success: false, error: "Classified ad not found or inactive." },
         { status: 404 }

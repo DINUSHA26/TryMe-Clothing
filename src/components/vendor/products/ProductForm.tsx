@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { CategorySelector } from "@/components/admin/categories/CategorySelector";
 import { LinkedCategorySelector } from "./LinkedCategorySelector";
@@ -147,6 +148,8 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
       sku: initialData?.sku || "",
       stock: initialData?.stock || 0,
       lowStockThreshold: initialData?.lowStockThreshold || 5,
+      showOnWebsite: (initialData as any)?.showOnWebsite !== undefined ? (initialData as any).showOnWebsite : true,
+      showOnMarketplace: (initialData as any)?.showOnMarketplace !== undefined ? (initialData as any).showOnMarketplace : true,
       images: initialData?.images || [],
       variants: initialData?.variants || [],
       sizeChart: initialData?.sizeChart || "",
@@ -173,6 +176,8 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
         images: initialData.images || [],
         variants: initialData.variants || [],
         sizeChart: initialData.sizeChart || "",
+        showOnWebsite: (initialData as any).showOnWebsite !== undefined ? (initialData as any).showOnWebsite : true,
+        showOnMarketplace: (initialData as any).showOnMarketplace !== undefined ? (initialData as any).showOnMarketplace : true,
       });
 
       // Update local states
@@ -750,6 +755,70 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
             productImages={images}
             onSettingsChange={setVariantSettings}
           />
+        </div>
+
+        <Separator />
+
+        {/* Publishing Channels */}
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-xl font-bold">Publishing Channels</h2>
+            <p className="text-sm text-muted-foreground">
+              Choose where this product should be displayed (both channels are active by default).
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="showOnWebsite"
+              render={({ field }) => (
+                <FormItem className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                  field.value !== false ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200 bg-gray-50/50 opacity-70"
+                }`}>
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-sm font-semibold flex items-center gap-1.5 cursor-pointer">
+                      <span>🌐</span> My Website
+                    </FormLabel>
+                    <FormDescription className="text-xs">
+                      Display on your personal branded website.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value !== false}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="showOnMarketplace"
+              render={({ field }) => (
+                <FormItem className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                  field.value !== false ? "border-orange-200 bg-orange-50/30" : "border-gray-200 bg-gray-50/50 opacity-70"
+                }`}>
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-sm font-semibold flex items-center gap-1.5 cursor-pointer">
+                      <span>🛒</span> TryMe Marketplace
+                    </FormLabel>
+                    <FormDescription className="text-xs">
+                      List on the public TryMe.lk marketplace.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value !== false}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <Separator />

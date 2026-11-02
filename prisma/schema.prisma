@@ -290,6 +290,8 @@ model Product {
   isDraft            Boolean          @default(false)
   isDisabledByAdmin  Boolean          @default(false)
   adminDisableReason String?
+  showOnWebsite      Boolean          @default(true)
+  showOnMarketplace  Boolean          @default(true)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
@@ -1096,6 +1098,8 @@ model ClassifiedAd {
   // Moderation & display
   status          AdStatus        @default(PENDING)
   isTopAd         Boolean         @default(false)
+  showOnWebsite   Boolean         @default(true)
+  showOnMarketplace Boolean       @default(true)
   views           Int             @default(0)
   rejectionReason String?
   adminNote       String?

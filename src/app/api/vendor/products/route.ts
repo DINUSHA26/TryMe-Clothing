@@ -85,6 +85,8 @@ export async function POST(request: NextRequest) {
           sizeChart: data.sizeChart || null,
           isActive: true,
           isDraft: !!data.isDraft,
+          showOnWebsite: data.showOnWebsite !== undefined ? !!data.showOnWebsite : true,
+          showOnMarketplace: data.showOnMarketplace !== undefined ? !!data.showOnMarketplace : true,
         },
       });
 

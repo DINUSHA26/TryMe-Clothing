@@ -88,4 +88,6 @@ export interface ProductFormData {
     image?: string;
   }[];
   sizeChart?: string | null;
+  showOnWebsite?: boolean;
+  showOnMarketplace?: boolean;
 }

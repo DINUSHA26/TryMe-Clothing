@@ -268,7 +268,7 @@ export default function AdsSellerDashboardHome() {
                 <TableHead>Sub-Category</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="min-w-[210px]">Status</TableHead>
                 <TableHead>Posted</TableHead>
                 <TableHead className="text-right">Views</TableHead>
               </TableRow>
@@ -311,55 +311,63 @@ export default function AdsSellerDashboardHome() {
                     <TableCell className="text-sm font-semibold text-gray-800">
                       {ad.price ? `Rs. ${Number(ad.price).toLocaleString("en-LK")}` : "Contact"}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1.5 min-w-[160px]">
+                    <TableCell className="whitespace-nowrap min-w-[210px]">
+                      <div className="flex flex-col gap-1.5">
                         {/* 🌐 My Website Status */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-gray-500 font-medium">
-                            🌐 <span className="font-semibold text-gray-700">Website:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap w-[84px] shrink-0 flex items-center gap-1">
+                            <span>🌐</span>
+                            <span className="font-semibold text-gray-700">Website:</span>
                           </span>
-                          {ad.status === "ACTIVE" || ad.status === "PENDING" ? (
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold py-0 h-4.5">
+                          {ad.showOnWebsite === false ? (
+                            <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200 text-[10px] font-medium py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
+                              Off
+                            </Badge>
+                          ) : ad.status === "ACTIVE" || ad.status === "PENDING" ? (
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Live
                             </Badge>
                           ) : ad.status === "REJECTED" ? (
-                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0 h-4.5">
+                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Hidden
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0 h-4.5">
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               {ad.status}
                             </Badge>
                           )}
                         </div>
 
                         {/* 🛒 TryMe Marketplace Status */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-gray-500 font-medium">
-                            🛒 <span className="font-semibold text-gray-700">Market:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap w-[84px] shrink-0 flex items-center gap-1">
+                            <span>🛒</span>
+                            <span className="font-semibold text-gray-700">Market:</span>
                           </span>
-                          {ad.status === "PENDING" && (
-                            <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 text-[10px] font-bold py-0 h-4.5">
-                              Pending
+                          {ad.showOnMarketplace === false ? (
+                            <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200 text-[10px] font-medium py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
+                              Off
                             </Badge>
-                          )}
-                          {ad.status === "ACTIVE" && (
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold py-0 h-4.5">
+                          ) : ad.status === "PENDING" ? (
+                            <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
+                              Pending Approval
+                            </Badge>
+                          ) : ad.status === "ACTIVE" ? (
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Live
                             </Badge>
-                          )}
-                          {ad.status === "REJECTED" && (
-                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0 h-4.5">
+                          ) : ad.status === "REJECTED" ? (
+                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Rejected
                             </Badge>
-                          )}
+                          ) : null}
                           {ad.status === "EXPIRED" && (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0 h-4.5">
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Expired
                             </Badge>
                           )}
                           {ad.status === "PAUSED" && (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] font-bold py-0 h-4.5">
+                            <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Paused
                             </Badge>
                           )}

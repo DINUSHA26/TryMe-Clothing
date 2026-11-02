@@ -204,6 +204,8 @@ export async function PATCH(
           ...(data.sizeChart !== undefined && { sizeChart: data.sizeChart }),
           ...(data.isActive !== undefined && { isActive: data.isActive }),
           ...(data.isDraft !== undefined && { isDraft: data.isDraft }),
+          ...(data.showOnWebsite !== undefined && { showOnWebsite: data.showOnWebsite }),
+          ...(data.showOnMarketplace !== undefined && { showOnMarketplace: data.showOnMarketplace }),
         },
         include: {
           category: {

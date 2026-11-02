@@ -22,7 +22,7 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
               },
             },
             products: {
-              where: { isActive: true, isDraft: false, isDisabledByAdmin: false },
+              where: { isActive: true, isDraft: false, isDisabledByAdmin: false, showOnWebsite: true },
               take: 48,
               include: {
                 images: { orderBy: { position: "asc" } },
@@ -44,7 +44,7 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
               },
             },
             ads: {
-              where: { status: { in: ["ACTIVE", "PENDING"] } },
+              where: { status: { in: ["ACTIVE", "PENDING"] }, showOnWebsite: true },
               take: 48,
               orderBy: { createdAt: "desc" },
             },
@@ -70,7 +70,7 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
             },
           },
           products: {
-            where: { isActive: true, isDraft: false, isDisabledByAdmin: false },
+            where: { isActive: true, isDraft: false, isDisabledByAdmin: false, showOnWebsite: true },
             take: 48,
             include: {
               images: { orderBy: { position: "asc" } },
@@ -95,7 +95,7 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
               },
             },
             ads: {
-              where: { status: { in: ["ACTIVE", "PENDING"] } },
+              where: { status: { in: ["ACTIVE", "PENDING"] }, showOnWebsite: true },
               take: 48,
               orderBy: { createdAt: "desc" },
             },

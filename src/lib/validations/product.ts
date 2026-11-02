@@ -21,6 +21,8 @@ const productVariantSchema = z.object({
 export const createProductSchema = z
   .object({
     isDraft: z.boolean().default(false).optional(),
+    showOnWebsite: z.boolean().default(true).optional(),
+    showOnMarketplace: z.boolean().default(true).optional(),
     categoryId: z.string().cuid("Invalid category"),
     name: z
       .string()
@@ -114,6 +116,8 @@ export const updateProductSchema = z.object({
   stock: z.number().int().min(0, "Stock cannot be negative").optional(),
   lowStockThreshold: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
+  showOnWebsite: z.boolean().optional(),
+  showOnMarketplace: z.boolean().optional(),
   images: z
     .array(
       z.object({

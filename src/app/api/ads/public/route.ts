@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     // Build the query where parameters
     const where: Prisma.ClassifiedAdWhereInput = {
       status: "ACTIVE", // Only show active/approved ads publicly
+      showOnMarketplace: true,
     };
 
     // Category filter by slug

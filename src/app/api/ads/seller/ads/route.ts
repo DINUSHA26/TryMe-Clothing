@@ -150,6 +150,8 @@ export async function POST(request: NextRequest) {
       priceNegotiable,
       images,
       specifications,
+      showOnWebsite,
+      showOnMarketplace,
     } = body;
 
     // Basic fields validation
@@ -205,6 +207,8 @@ export async function POST(request: NextRequest) {
         images: Array.isArray(images) ? images : [],
         specifications: parsedSpecs,
         status: "PENDING",
+        showOnWebsite: showOnWebsite !== undefined ? !!showOnWebsite : true,
+        showOnMarketplace: showOnMarketplace !== undefined ? !!showOnMarketplace : true,
       },
     });
 

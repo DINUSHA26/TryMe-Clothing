@@ -85,6 +85,46 @@ export function ProductTable({
     }
   };
 
+  const handleToggleChannel = async (
+    productId: string,
+    channel: "website" | "marketplace",
+    currentValue: boolean
+  ) => {
+    try {
+      const field = channel === "website" ? "showOnWebsite" : "showOnMarketplace";
+      const response = await fetch(`/api/vendor/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: !currentValue }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error || "Failed to update channel visibility",
+        });
+        return;
+      }
+
+      toast({
+        title: "Channel Updated",
+        description: `${channel === "website" ? "My Website" : "Marketplace"} visibility ${!currentValue ? "enabled" : "disabled"}.`,
+      });
+
+      onProductUpdated();
+    } catch (error) {
+      console.error("Error toggling channel:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An unexpected error occurred",
+      });
+    }
+  };
+
   const handleDelete = async () => {
     if (!deletingProduct) return;
 
@@ -248,25 +288,65 @@ export function ProductTable({
                     )}
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-2">
+                <TableCell className="min-w-[190px]">
+                  <div className="flex flex-col gap-1.5">
                     {product.isDisabledByAdmin ? (
                       <Badge variant="destructive">Disabled by Admin</Badge>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={product.isActive}
-                          onCheckedChange={() =>
-                            handleToggleStatus(product.id, product.isActive)
-                          }
-                          disabled={product.isDisabledByAdmin}
-                        />
-                        <Badge
-                          variant={product.isActive ? "default" : "secondary"}
-                        >
-                          {product.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={product.isActive}
+                            onCheckedChange={() =>
+                              handleToggleStatus(product.id, product.isActive)
+                            }
+                            disabled={product.isDisabledByAdmin}
+                          />
+                          <Badge
+                            variant={product.isActive ? "default" : "secondary"}
+                          >
+                            {product.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+
+                        {/* Channels Status */}
+                        {product.isActive && (
+                          <div className="flex flex-col gap-1 pt-1 border-t border-gray-100">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-gray-500 w-[60px] shrink-0 font-medium">🌐 Website:</span>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleChannel(product.id, "website", (product as any).showOnWebsite !== false)}
+                                title="Click to toggle Website visibility"
+                                className="cursor-pointer group"
+                              >
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[9px] py-0 px-2 h-4 font-bold transition-colors ${(product as any).showOnWebsite !== false ? "bg-emerald-50 text-emerald-700 border-emerald-200 group-hover:bg-red-50 group-hover:text-red-600" : "bg-gray-100 text-gray-400 border-gray-200 group-hover:bg-emerald-50 group-hover:text-emerald-700"}`}
+                                >
+                                  {(product as any).showOnWebsite !== false ? "Live" : "Off"}
+                                </Badge>
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-gray-500 w-[60px] shrink-0 font-medium">🛒 Market:</span>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleChannel(product.id, "marketplace", (product as any).showOnMarketplace !== false)}
+                                title="Click to toggle Marketplace visibility"
+                                className="cursor-pointer group"
+                              >
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[9px] py-0 px-2 h-4 font-bold transition-colors ${(product as any).showOnMarketplace !== false ? "bg-orange-50 text-orange-700 border-orange-200 group-hover:bg-red-50 group-hover:text-red-600" : "bg-gray-100 text-gray-400 border-gray-200 group-hover:bg-orange-50 group-hover:text-orange-700"}`}
+                                >
+                                  {(product as any).showOnMarketplace !== false ? "Live" : "Off"}
+                                </Badge>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </TableCell>

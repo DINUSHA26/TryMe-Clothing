@@ -17,7 +17,7 @@ import Link from "next/link";
 import { formatDistance } from "date-fns";
 
 export default function MyAdsPage() {
-  const [ads, setAds] = useState([]);
+  const [ads, setAds] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 10,
@@ -104,6 +104,41 @@ export default function MyAdsPage() {
     }
   };
 
+  const handleToggleChannel = async (adId: string, channel: "website" | "marketplace", currentValue: boolean) => {
+    const field = channel === "website" ? "showOnWebsite" : "showOnMarketplace";
+    const nextVal = !currentValue;
+
+    // Optimistic update
+    setAds((prev: any[]) =>
+      prev.map((ad: any) => (ad.id === adId ? { ...ad, [field]: nextVal } : ad))
+    );
+
+    try {
+      const response = await fetch(`/api/ads/seller/ads/${adId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: nextVal }),
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update channel");
+      }
+
+      toast({
+        title: "Channel Visibility Updated",
+        description: `${channel === "website" ? "My Website" : "Marketplace"} visibility is now ${nextVal ? "ON" : "OFF"}.`,
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: err.message || "Failed to update visibility",
+      });
+      fetchAds(); // rollback on error
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -179,7 +214,7 @@ export default function MyAdsPage() {
                 <TableHead>Category</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="min-w-[220px]">Status</TableHead>
                 <TableHead>Posted</TableHead>
                 <TableHead>Views</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -229,63 +264,99 @@ export default function MyAdsPage() {
                       {ad.price ? `Rs. ${Number(ad.price).toLocaleString("en-LK")}` : "Contact"}
                       {ad.priceNegotiable && <span className="text-[9px] font-normal text-gray-400 block">Negotiable</span>}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1.5 min-w-[170px]">
+                    <TableCell className="whitespace-nowrap min-w-[220px]">
+                      <div className="flex flex-col gap-1.5">
                         {/* 🌐 My Website Status */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-gray-500 font-medium">
-                            🌐 <span className="font-semibold text-gray-700">My Website:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap w-[96px] shrink-0 flex items-center gap-1">
+                            <span>🌐</span>
+                            <span className="font-semibold text-gray-700">My Website:</span>
                           </span>
-                          {ad.status === "ACTIVE" || ad.status === "PENDING" ? (
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold py-0 h-5">
-                              Live
-                            </Badge>
+                          {ad.showOnWebsite === false ? (
+                            <button
+                              onClick={() => handleToggleChannel(ad.id, "website", false)}
+                              title="Click to enable on My Website"
+                              className="cursor-pointer group"
+                            >
+                              <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200 group-hover:bg-emerald-50 group-hover:text-emerald-700 group-hover:border-emerald-200 text-[10px] font-medium py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                                Off (Hidden)
+                              </Badge>
+                            </button>
+                          ) : ad.status === "ACTIVE" || ad.status === "PENDING" ? (
+                            <button
+                              onClick={() => handleToggleChannel(ad.id, "website", true)}
+                              title="Click to hide from My Website"
+                              className="cursor-pointer group"
+                            >
+                              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                                Live
+                              </Badge>
+                            </button>
                           ) : ad.status === "REJECTED" ? (
-                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0 h-5">
+                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Hidden
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0 h-5">
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               {ad.status}
                             </Badge>
                           )}
                         </div>
 
                         {/* 🛒 TryMe Marketplace Status */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-gray-500 font-medium">
-                            🛒 <span className="font-semibold text-gray-700">Marketplace:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap w-[96px] shrink-0 flex items-center gap-1">
+                            <span>🛒</span>
+                            <span className="font-semibold text-gray-700">Marketplace:</span>
                           </span>
-                          {ad.status === "PENDING" && (
-                            <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 text-[10px] font-bold py-0 h-5">
-                              Pending Approval
-                            </Badge>
-                          )}
-                          {ad.status === "ACTIVE" && (
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold py-0 h-5">
-                              Live
-                            </Badge>
-                          )}
-                          {ad.status === "REJECTED" && (
-                            <div className="space-y-0.5">
-                              <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0 h-5">
+                          {ad.showOnMarketplace === false ? (
+                            <button
+                              onClick={() => handleToggleChannel(ad.id, "marketplace", false)}
+                              title="Click to enable on TryMe Marketplace"
+                              className="cursor-pointer group"
+                            >
+                              <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200 group-hover:bg-orange-50 group-hover:text-orange-700 group-hover:border-orange-200 text-[10px] font-medium py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                                Off (Hidden)
+                              </Badge>
+                            </button>
+                          ) : ad.status === "PENDING" ? (
+                            <button
+                              onClick={() => handleToggleChannel(ad.id, "marketplace", true)}
+                              title="Click to hide from Marketplace"
+                              className="cursor-pointer group"
+                            >
+                              <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                                Pending Approval
+                              </Badge>
+                            </button>
+                          ) : ad.status === "ACTIVE" ? (
+                            <button
+                              onClick={() => handleToggleChannel(ad.id, "marketplace", true)}
+                              title="Click to hide from Marketplace"
+                              className="cursor-pointer group"
+                            >
+                              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                                Live
+                              </Badge>
+                            </button>
+                          ) : ad.status === "REJECTED" ? (
+                            <div className="flex items-center gap-1.5">
+                              <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                                 Rejected
                               </Badge>
                               {ad.rejectionReason && (
-                                <p className="text-[9px] text-red-500 max-w-[150px] truncate" title={ad.rejectionReason}>
-                                  {ad.rejectionReason}
-                                </p>
+                                <span className="text-[9px] text-red-500 max-w-[120px] truncate" title={ad.rejectionReason}>
+                                  ({ad.rejectionReason})
+                                </span>
                               )}
                             </div>
-                          )}
-                          {ad.status === "EXPIRED" && (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0 h-5">
+                          ) : ad.status === "EXPIRED" ? (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Expired
                             </Badge>
-                          )}
-                          {ad.status === "PAUSED" && (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] font-bold py-0 h-5">
-                              Paused
+                          ) : (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
+                              {ad.status}
                             </Badge>
                           )}
                         </div>

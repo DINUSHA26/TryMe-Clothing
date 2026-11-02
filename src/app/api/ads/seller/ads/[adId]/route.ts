@@ -102,22 +102,23 @@ export async function PUT(
     }
 
     // Update the ad
+    const updateData: any = {};
+    if (body.categoryId !== undefined) updateData.categoryId = body.categoryId;
+    if (body.subCategoryId !== undefined) updateData.subCategoryId = body.subCategoryId;
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.price !== undefined) updateData.price = body.price;
+    if (body.priceNegotiable !== undefined) updateData.priceNegotiable = body.priceNegotiable;
+    if (body.images !== undefined) updateData.images = body.images;
+    if (body.district !== undefined) updateData.district = body.district;
+    if (body.localArea !== undefined) updateData.localArea = body.localArea;
+    if (body.specifications !== undefined) updateData.specifications = body.specifications;
+    if (body.showOnWebsite !== undefined) updateData.showOnWebsite = !!body.showOnWebsite;
+    if (body.showOnMarketplace !== undefined) updateData.showOnMarketplace = !!body.showOnMarketplace;
+
     const updatedAd = await prisma.classifiedAd.update({
       where: { id: adId },
-      data: {
-        categoryId: body.categoryId,
-        subCategoryId: body.subCategoryId,
-        title: body.title,
-        description: body.description,
-        price: body.price,
-        priceNegotiable: body.priceNegotiable,
-        condition: body.condition,
-        images: body.images,
-        district: body.district,
-        localArea: body.localArea,
-        specifications: body.specifications,
-        // Status is NOT changed to PENDING, keeps existing status
-      },
+      data: updateData,
     });
 
     // Notify all super admins

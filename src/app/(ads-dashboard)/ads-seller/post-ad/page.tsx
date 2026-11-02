@@ -21,6 +21,8 @@ import {
   Loader2,
   ChevronRight,
   ArrowLeft,
+  Globe,
+  ShoppingCart,
 } from "lucide-react";
 import { compressImage } from "@/lib/utils/image";
 
@@ -49,6 +51,8 @@ export default function PostAdPage() {
   const [priceNegotiable, setPriceNegotiable] = useState(false);
   const [contactForPrice, setContactForPrice] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [showOnWebsite, setShowOnWebsite] = useState(true);
+  const [showOnMarketplace, setShowOnMarketplace] = useState(true);
 
   // UI utility states
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -169,6 +173,15 @@ export default function PostAdPage() {
       return;
     }
 
+    if (!showOnWebsite && !showOnMarketplace) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please select at least one publishing destination (My Website or TryMe Marketplace).",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
@@ -182,6 +195,8 @@ export default function PostAdPage() {
         priceNegotiable,
         images,
         specifications,
+        showOnWebsite,
+        showOnMarketplace,
       };
 
       const response = await fetch("/api/ads/seller/ads", {
@@ -555,6 +570,68 @@ export default function PostAdPage() {
                 ))}
               </div>
               <p className="text-[10px] text-gray-400">Supported formats: JPG, PNG. Max file size: 5MB. Upload high-quality, real photos of your items.</p>
+            </div>
+
+            {/* Publishing Channels */}
+            <div className="pt-4 border-t border-gray-100 space-y-3">
+              <div>
+                <Label className="text-xs font-bold text-gray-800">Publishing Channels</Label>
+                <p className="text-[11px] text-gray-500">Choose where this classified ad should be published (both enabled by default).</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div
+                  onClick={() => setShowOnWebsite(!showOnWebsite)}
+                  className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
+                    showOnWebsite
+                      ? "border-emerald-200 bg-emerald-50/40"
+                      : "border-gray-100 bg-gray-50/50 opacity-60"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      showOnWebsite ? "bg-emerald-100 text-emerald-700" : "bg-gray-200 text-gray-500"
+                    }`}>
+                      <Globe className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block">My Website</span>
+                      <span className="text-[10px] text-gray-500 block">Instantly live on your website</span>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={showOnWebsite}
+                    onCheckedChange={setShowOnWebsite}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+
+                <div
+                  onClick={() => setShowOnMarketplace(!showOnMarketplace)}
+                  className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
+                    showOnMarketplace
+                      ? "border-orange-200 bg-orange-50/40"
+                      : "border-gray-100 bg-gray-50/50 opacity-60"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      showOnMarketplace ? "bg-orange-100 text-orange-700" : "bg-gray-200 text-gray-500"
+                    }`}>
+                      <ShoppingCart className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block">TryMe Marketplace</span>
+                      <span className="text-[10px] text-gray-500 block">Show on TryMe public portal</span>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={showOnMarketplace}
+                    onCheckedChange={setShowOnMarketplace}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

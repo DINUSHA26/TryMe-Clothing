@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     const where: Prisma.ProductWhereInput = {
       isActive: true,
       isDisabledByAdmin: false,
+      showOnMarketplace: true,
       vendor: {
         status: "ACTIVE",
         user: {

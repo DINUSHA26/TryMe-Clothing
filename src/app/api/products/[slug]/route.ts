@@ -13,6 +13,7 @@ export async function GET(
         slug,
         isActive: true,
         isDisabledByAdmin: false,
+        showOnMarketplace: true,
       },
       include: {
         images: {
