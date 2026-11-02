@@ -132,6 +132,7 @@ export default function WebsiteBuilderPage() {
   const [builderTab, setBuilderTab] = useState<string>("branding");
   const [editingPage, setEditingPage] = useState<any | null>(null);
   const [isSavingPage, setIsSavingPage] = useState(false);
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
 
   // New Page Dialog
   const [newPageModalOpen, setNewPageModalOpen] = useState(false);
@@ -1190,19 +1191,19 @@ export default function WebsiteBuilderPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
       {/* ── Builder Top Toolbar ── */}
-      <header className="h-16 border-b bg-white dark:bg-slate-900 px-6 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-4">
+      <header className="h-auto md:h-16 py-3 md:py-0 px-3.5 md:px-6 border-b bg-white dark:bg-slate-900 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-0 sticky top-0 z-40">
+        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 w-full md:w-auto">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-            <h1 className="font-black text-lg tracking-tight">WEBSITE BUILDER</h1>
+            <Sparkles className="w-5 h-5 text-primary animate-pulse shrink-0" />
+            <h1 className="font-black text-base md:text-lg tracking-tight">WEBSITE BUILDER</h1>
           </div>
 
           {/* Active Plan & Expiry Date Badge */}
-          <div className="flex items-center gap-2 pl-4 border-l flex-wrap">
+          <div className="flex items-center justify-start gap-1.5 md:gap-2 md:pl-4 md:border-l flex-wrap">
             {activeSubscription ? (
               <>
-                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold px-3 py-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold px-2.5 md:px-3 py-1 flex items-center gap-1.5 text-xs">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                   <span>{tierMeta.name} (Active)</span>
                 </Badge>
                 {formattedExpiryDate && (
@@ -1214,7 +1215,7 @@ export default function WebsiteBuilderPage() {
                         : "border-slate-200 bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                     }`}
                   >
-                    <Clock className="w-3 h-3" />
+                    <Clock className="w-3 h-3 shrink-0" />
                     <span>
                       Expires: {formattedExpiryDate}
                       {typeof subscriptionLifecycle?.daysRemaining === "number"
@@ -1226,8 +1227,8 @@ export default function WebsiteBuilderPage() {
               </>
             ) : isSubscriptionExpired ? (
               <>
-                <Badge className="bg-rose-500/10 text-rose-600 border-rose-500/30 font-bold px-3 py-1 flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" />
+                <Badge className="bg-rose-500/10 text-rose-600 border-rose-500/30 font-bold px-2.5 md:px-3 py-1 flex items-center gap-1.5 text-xs">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{tierMeta.name} (Expired on {formattedExpiryDate})</span>
                 </Badge>
                 {subscriptionLifecycle?.state === "EXPIRED_GRACE_PERIOD" ? (
@@ -1241,8 +1242,8 @@ export default function WebsiteBuilderPage() {
                 )}
               </>
             ) : (
-              <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 font-bold px-3 py-1 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5" />
+              <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 font-bold px-2.5 md:px-3 py-1 flex items-center gap-1.5 text-xs">
+                <Lock className="w-3.5 h-3.5 shrink-0" />
                 <span>Free Trial Mode</span>
               </Badge>
             )}
@@ -1260,15 +1261,15 @@ export default function WebsiteBuilderPage() {
                 }
                 setUpgradeModalOpen(true);
               }}
-              className="text-xs font-black uppercase tracking-wider rounded-lg border-primary text-primary hover:bg-primary hover:text-white"
+              className="h-8 text-xs font-black uppercase tracking-wider rounded-lg border-primary text-primary hover:bg-primary hover:text-white"
             >
               {isSubscriptionExpired ? "Renew / Upgrade Plan" : "Upgrade Plan"}
             </Button>
           </div>
         </div>
 
-        {/* Device Switcher & Action Buttons */}
-        <div className="flex items-center gap-3">
+        {/* Device Switcher & Action Buttons (Left-aligned on Mobile: Save Draft, Publish, Preview) */}
+        <div className="w-full md:w-auto flex items-center justify-start md:justify-end gap-2 md:gap-3 flex-wrap pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
           {pages.length > 0 && (
             <div className="hidden md:flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold text-slate-600">
               <span className="text-[10px] uppercase font-black px-2 text-slate-400">View:</span>
@@ -1306,7 +1307,7 @@ export default function WebsiteBuilderPage() {
             </div>
           )}
 
-          <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
             <button
               onClick={() => setDeviceView("desktop")}
               className={`p-1.5 rounded-lg transition-colors ${deviceView === "desktop" ? "bg-white dark:bg-slate-900 shadow-sm text-primary" : "text-slate-500"}`}
@@ -1369,6 +1370,28 @@ export default function WebsiteBuilderPage() {
               </>
             )}
           </Button>
+
+          {/* Mobile-only Preview Toggle Button */}
+          <Button
+            type="button"
+            variant={mobilePreviewOpen ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              const next = !mobilePreviewOpen;
+              setMobilePreviewOpen(next);
+              if (next) {
+                setTimeout(() => sendPreviewUpdate(), 100);
+              }
+            }}
+            className={`md:hidden font-bold text-xs rounded-xl gap-1.5 ${
+              mobilePreviewOpen
+                ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                : "border-slate-300 text-slate-700 dark:text-slate-200"
+            }`}
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>{mobilePreviewOpen ? "Close Preview" : "Preview"}</span>
+          </Button>
         </div>
       </header>
 
@@ -1426,15 +1449,19 @@ export default function WebsiteBuilderPage() {
       {/* ── Main Split View ── */}
       <div className="flex-1 flex overflow-hidden">
         {/* ── Left Editor Sidebar ── */}
-        <div className="w-full lg:w-[480px] border-r bg-white dark:bg-slate-900 overflow-y-auto p-6 space-y-6">
+        <div
+          className={`${
+            mobilePreviewOpen ? "hidden md:block" : "block"
+          } w-full lg:w-[480px] border-r bg-white dark:bg-slate-900 overflow-y-auto p-3.5 md:p-6 space-y-5 md:space-y-6`}
+        >
           <Tabs value={builderTab} onValueChange={setBuilderTab} className="w-full">
-            <TabsList className="grid grid-cols-6 w-full bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-              <TabsTrigger value="branding" className="text-[11px] font-bold rounded-lg px-1.5">Branding</TabsTrigger>
-              <TabsTrigger value="sections" className="text-[11px] font-bold rounded-lg px-1.5">Sections</TabsTrigger>
-              <TabsTrigger value="menu" className="text-[11px] font-bold rounded-lg px-1.5">Navbar</TabsTrigger>
-              <TabsTrigger value="pages" className="text-[11px] font-bold rounded-lg px-1.5">Pages</TabsTrigger>
-              <TabsTrigger value="checkout" className="text-[11px] font-bold rounded-lg px-1.5">Shop/Pay</TabsTrigger>
-              <TabsTrigger value="domain" className="text-[11px] font-bold rounded-lg px-1.5">Domain</TabsTrigger>
+            <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto bg-slate-100 dark:bg-slate-800 p-1 gap-1 md:gap-0 rounded-xl">
+              <TabsTrigger value="branding" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Branding</TabsTrigger>
+              <TabsTrigger value="sections" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Sections</TabsTrigger>
+              <TabsTrigger value="menu" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Navbar</TabsTrigger>
+              <TabsTrigger value="pages" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Pages</TabsTrigger>
+              <TabsTrigger value="checkout" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Shop/Pay</TabsTrigger>
+              <TabsTrigger value="domain" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Domain</TabsTrigger>
             </TabsList>
 
             {/* TAB 1: BRANDING & THEME */}
@@ -2857,19 +2884,19 @@ export default function WebsiteBuilderPage() {
                     : "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900"
                 } space-y-2`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Menu className="w-4 h-4 text-primary" />
+                    <Menu className="w-4 h-4 text-primary shrink-0" />
                     <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">
                       Navbar &amp; Menu Customizer
                     </h3>
                   </div>
                   <Badge
-                    className={
+                    className={`${
                       currentTier === "ONE_PAGE"
                         ? "bg-amber-500 text-white font-bold text-[10px]"
                         : "bg-emerald-600 text-white font-bold text-[10px]"
-                    }
+                    } shrink-0 whitespace-nowrap`}
                   >
                     {currentTier === "ONE_PAGE" ? "1-Page Scroll Mode" : "Multi-Page Mode Unlocked"}
                   </Badge>
@@ -2936,7 +2963,7 @@ export default function WebsiteBuilderPage() {
                     <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       Navigation Action
                     </Label>
-                    <div className="grid grid-cols-2 gap-2 mt-1.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1.5">
                       <button
                         type="button"
                         onClick={() => handleUpdateNavItem("products", { type: "scroll" })}
@@ -3753,19 +3780,19 @@ export default function WebsiteBuilderPage() {
                           : "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200"
                       } space-y-2`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <ShoppingBag className="w-4 h-4 text-primary" />
+                          <ShoppingBag className="w-4 h-4 text-primary shrink-0" />
                           <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">
                             Ordering, Cart &amp; Payment Settings
                           </h3>
                         </div>
                         <Badge
-                          className={
+                          className={`${
                             currentTier === "ONE_PAGE"
                               ? "bg-amber-500 text-white text-[10px]"
                               : "bg-emerald-600 text-white text-[10px]"
-                          }
+                          } shrink-0 whitespace-nowrap`}
                         >
                           {currentTier === "ONE_PAGE" ? "1-Page Inquiry Mode" : "6/12-Page E-Commerce"}
                         </Badge>
@@ -3899,7 +3926,7 @@ export default function WebsiteBuilderPage() {
                             Your Bank Account Details (Shown at Checkout)
                           </p>
 
-                          <div className="grid grid-cols-2 gap-2.5">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                             <div>
                               <Label className="text-[11px] font-bold">Bank Name</Label>
                               <Input
@@ -3920,7 +3947,7 @@ export default function WebsiteBuilderPage() {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2.5">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                             <div>
                               <Label className="text-[11px] font-bold">Account Holder Name</Label>
                               <Input
@@ -3950,7 +3977,7 @@ export default function WebsiteBuilderPage() {
                         Delivery &amp; Shipping Settings
                       </h4>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                           <Label className="text-[11px] font-bold">Standard Delivery Fee (Rs.)</Label>
                           <Input
@@ -4095,10 +4122,61 @@ export default function WebsiteBuilderPage() {
           </Tabs>
         </div>
 
-        {/* ── Right Live Interactive Preview ── */}
-        <div className="flex-1 bg-slate-200/70 dark:bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden">
+        {/* ── Right Live Interactive Preview (On mobile, only visible when Preview button is clicked) ── */}
+        <div
+          className={`${
+            mobilePreviewOpen ? "flex" : "hidden md:flex"
+          } flex-1 bg-slate-200/70 dark:bg-slate-950 flex-col items-center justify-center p-2.5 md:p-4 overflow-hidden`}
+        >
+          {/* Mobile-only Preview Top Bar */}
+          <div className="md:hidden w-full flex items-center justify-between gap-2 mb-2 px-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMobilePreviewOpen(false)}
+              className="h-8 px-3 rounded-xl text-xs font-bold gap-1.5 bg-white dark:bg-slate-900 shadow-sm"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Editor</span>
+            </Button>
+
+            {pages.length > 0 && (
+              <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border text-[11px] font-bold overflow-x-auto max-w-[60%]">
+                <button
+                  type="button"
+                  onClick={handleBackToPageList}
+                  className={`px-2 py-0.5 rounded-lg transition-all shrink-0 ${
+                    !editingPage
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                      : "text-slate-500"
+                  }`}
+                >
+                  Home
+                </button>
+                {pages.map((p) => {
+                  const isSelected = editingPage?.id === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => handleSelectPageForDesign(p)}
+                      className={`px-2 py-0.5 rounded-lg transition-all truncate max-w-[90px] shrink-0 ${
+                        isSelected
+                          ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      {p.title}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <div
-            className={`transition-all duration-300 h-full w-full bg-white rounded-2xl shadow-2xl border overflow-hidden flex flex-col ${
+            className={`transition-all duration-300 h-[calc(100vh-190px)] md:h-full w-full bg-white rounded-2xl shadow-2xl border overflow-hidden flex flex-col ${
               deviceView === "mobile"
                 ? "max-w-[375px] max-h-[780px] rounded-[40px] border-[12px] border-slate-900 shadow-2xl"
                 : deviceView === "tablet"
