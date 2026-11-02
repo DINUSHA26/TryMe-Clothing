@@ -70,7 +70,6 @@ const HERO_DESIGN_PRESETS: {
   name: string;
   badge: string;
   description: string;
-  descriptionSi: string;
   previewBg: string;
   icon: any;
 }[] = [
@@ -79,7 +78,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Classic Split Showcase",
     badge: "Default Choice",
     description: "Balanced left typography with rounded 4:3 product image and dual action buttons.",
-    descriptionSi: "වම්පසින් විස්තරය සහ දකුණින් ආකර්ෂණීය ඡායාරූපය සහිත සම්භාව්‍ය මෝස්තරය.",
     previewBg: "from-blue-600/10 via-indigo-600/5 to-slate-50",
     icon: LayoutTemplate,
   },
@@ -88,7 +86,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Corporate Enterprise Overlay",
     badge: "Bashwara Style",
     description: "Cinematic full-width dark backdrop, gold accent highlights & bottom category tabs.",
-    descriptionSi: "සම්පූර්ණ පසුබිම් ඡායාරූපය සහ පහළින් කාණ්ඩ ටැබ් සහිත උසස් ආයතනික පෙනුම.",
     previewBg: "from-slate-950 via-slate-900 to-amber-950/40",
     icon: Building2,
   },
@@ -97,7 +94,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Smart Tech & App Showcase",
     badge: "HumanTec Style",
     description: "Vibrant cyan gradient, modern pill buttons & floating live store care card.",
-    descriptionSi: "නූතන Gradient වර්ණ සහ පාවෙන සජීවී කාඩ්පත් සහිත තාක්ෂණික මෝස්තරය.",
     previewBg: "from-cyan-500/10 via-teal-500/5 to-slate-50",
     icon: Sparkles,
   },
@@ -106,7 +102,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Organic Minimalist Luxury",
     badge: "TrueHive Style",
     description: "Warm sand/cream canvas, refined editorial serif typography & framed product hero.",
-    descriptionSi: "ස්වභාවික සුවපහසු වර්ණ සහ අලංකාර අකුරු සහිත සුඛෝපභෝගී අවම මෝස්තරය.",
     previewBg: "from-amber-100/40 via-stone-100/30 to-amber-50/20",
     icon: Palette,
   },
@@ -115,7 +110,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Fashion Editorial Boutique",
     badge: "Fashion Bug Style",
     description: "Full-bleed high-contrast boutique banner with centered bold typography & nav arrows.",
-    descriptionSi: "විලාසිතා සාප්පු සඳහා සුදුසු විශාල අකුරු සහ සවිස්තරාත්මක ඡායාරූප සහිත මෝස්තරය.",
     previewBg: "from-rose-950/30 via-slate-900 to-stone-900",
     icon: ShoppingBag,
   },
@@ -124,7 +118,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Centered High-Impact Bold",
     badge: "Maximum Focus",
     description: "Center-aligned punchy typography with ratings trust bar and prominent dual CTAs.",
-    descriptionSi: "මැදට කේන්ද්‍රගත වූ ප්‍රබල ශීර්ෂ පාඨය සහ පාරිභෝගික ඇගයීම් තීරුව.",
     previewBg: "from-violet-500/10 via-indigo-500/5 to-slate-50",
     icon: Star,
   },
@@ -133,7 +126,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Dark Neon Glassmorphism",
     badge: "Futuristic & Sleek",
     description: "Dark ambient backdrop with glowing color orbs & translucent frosted glass card.",
-    descriptionSi: "වීදුරු ආචරණය (Glassmorphism) සහ විදුලි බුබුළු ආලෝක සහිත අනාගතවාදී පෙනුම.",
     previewBg: "from-slate-950 via-slate-900 to-cyan-950",
     icon: Sparkles,
   },
@@ -142,7 +134,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Mega Sale & Urgency Banner",
     badge: "High Conversion",
     description: "Vibrant promotional gradient with hot deal tags, discounts and countdown feel.",
-    descriptionSi: "විශේෂ වට්ටම්, දීමනා සහ ප්‍රවර්ධන සඳහා සකස් කළ ඉහළ ආකර්ෂණයක් සහිත මෝස්තරය.",
     previewBg: "from-rose-500/15 via-pink-500/10 to-amber-500/10",
     icon: Flame,
   },
@@ -151,7 +142,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Cinematic Video / Ambient Hero",
     badge: "Visual Story",
     description: "Full-height ambient motion hero with play button prompt & dark readability gradient.",
-    descriptionSi: "වීඩියෝ හෝ සජීවී පසුබිම් සහිත චිත්‍රපටික කථාන්දර පෙනුම.",
     previewBg: "from-slate-950 via-slate-900 to-slate-950",
     icon: Video,
   },
@@ -160,7 +150,6 @@ const HERO_DESIGN_PRESETS: {
     name: "Store Catalog & Quick Search",
     badge: "E-Commerce Ready",
     description: "Prominent store search bar with horizontal category chips and mini product previews.",
-    descriptionSi: "භාණ්ඩ සෙවුම් තීරුව (Search Bar) සහ ප්‍රමුඛ භාණ්ඩ පෙරදසුන් සහිත වෙළඳසැල් මෝස්තරය.",
     previewBg: "from-emerald-500/10 via-teal-500/5 to-slate-50",
     icon: Search,
   },
@@ -2273,7 +2262,7 @@ export default function WebsiteBuilderPage() {
                       <div className="flex items-center justify-between">
                         <Label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                           <Palette className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Select Hero Design Style (මෝස්තර 10කින් කැමති එකක් තෝරන්න)</span>
+                          <span>Select Hero Design Style</span>
                         </Label>
                         <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md">
                           Active: {HERO_DESIGN_PRESETS.find((p) => p.id === (config.heroSection?.style || "split_classic"))?.name}
@@ -2324,9 +2313,6 @@ export default function WebsiteBuilderPage() {
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
                                 {preset.description}
                               </p>
-                              <p className="text-[10px] text-blue-600/90 dark:text-blue-400 font-medium truncate">
-                                {preset.descriptionSi}
-                              </p>
 
                               {isSelected && (
                                 <div className="absolute top-2 right-2">
@@ -2346,12 +2332,12 @@ export default function WebsiteBuilderPage() {
                     <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 space-y-4">
                       <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Hero Content &amp; Headlines (ශීර්ෂ පාඨ සහ විස්තර)</span>
+                        <span>Hero Content &amp; Headlines</span>
                       </h4>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Main Headline (ප්‍රධාන ශීර්ෂය)</Label>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Main Headline</Label>
                           <Input
                             value={config.heroSection?.title || ""}
                             onChange={(e) =>
@@ -2367,7 +2353,7 @@ export default function WebsiteBuilderPage() {
 
                         <div>
                           <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">
-                            Accent Highlight Word (වර්ණයෙන් බැබළෙන වචනය)
+                            Accent Highlight Word
                           </Label>
                           <Input
                             value={config.heroSection?.highlightText || ""}
@@ -2380,13 +2366,13 @@ export default function WebsiteBuilderPage() {
                             placeholder="e.g. Inspired or Care or Always"
                             className="rounded-xl mt-1 text-xs font-semibold"
                           />
-                          <span className="text-[10px] text-slate-400 mt-0.5 block">Headline එකේ මෙම වචනය විශේෂ Accent පාටින් පෙන්වයි.</span>
+                          <span className="text-[10px] text-slate-400 mt-0.5 block">This word will be highlighted in your store's primary accent color.</span>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Badge / Kicker Pill (කුඩා Badge නම)</Label>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Badge / Kicker Pill</Label>
                           <Input
                             value={config.heroSection?.badgeText || ""}
                             onChange={(e) =>
@@ -2402,7 +2388,7 @@ export default function WebsiteBuilderPage() {
 
                         {(config.heroSection?.style === "promo_sale") && (
                           <div>
-                            <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Discount / Deal Tag (වට්ටම් Tag එක)</Label>
+                            <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Discount / Deal Tag</Label>
                             <Input
                               value={config.heroSection?.discountTag || ""}
                               onChange={(e) =>
@@ -2419,7 +2405,7 @@ export default function WebsiteBuilderPage() {
 
                         {(config.heroSection?.style === "corporate_overlay") && (
                           <div>
-                            <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Bottom Category Ticker Items (කොමා මගින් වෙන් කරන්න)</Label>
+                            <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Bottom Category Ticker Items (Comma-separated)</Label>
                             <Input
                               value={(config.heroSection?.tickerItems || []).join(", ")}
                               onChange={(e) =>
@@ -2439,7 +2425,7 @@ export default function WebsiteBuilderPage() {
                       </div>
 
                       <div>
-                        <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Subtitle Description (උප ශීර්ෂ විස්තරය)</Label>
+                        <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Subtitle Description</Label>
                         <Textarea
                           rows={2}
                           value={config.heroSection?.subtitle || ""}
@@ -2459,12 +2445,12 @@ export default function WebsiteBuilderPage() {
                     <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 space-y-4">
                       <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                         <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Action Buttons (ක්‍රියාකාරී බොත්තම්)</span>
+                        <span>Action Buttons</span>
                       </h4>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Primary Button Text (ප්‍රධාන බොත්තම)</Label>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Primary Button Text</Label>
                           <Input
                             value={config.heroSection?.buttonText || ""}
                             onChange={(e) =>
@@ -2495,7 +2481,7 @@ export default function WebsiteBuilderPage() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Secondary Button Text (දෙවන බොත්තම)</Label>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Secondary Button Text</Label>
                           <Input
                             value={config.heroSection?.secondaryButtonText || ""}
                             onChange={(e) =>
@@ -2529,7 +2515,7 @@ export default function WebsiteBuilderPage() {
                     <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 space-y-4">
                       <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                         <Camera className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Hero Photo &amp; Media (පසුබිම් ඡායාරූපය)</span>
+                        <span>Hero Photo &amp; Media</span>
                       </h4>
 
                       <div>
@@ -2556,7 +2542,7 @@ export default function WebsiteBuilderPage() {
                     <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                       <div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show &apos;Home&apos; in Top Navbar</span>
-                        <span className="text-[10px] text-slate-500 block">Navbar එකේ නම පෙන්වීම / සැඟවීම (Hero section එක පිටුවේ පවතී)</span>
+                        <span className="text-[10px] text-slate-500 block">Show or hide the link in the top navigation bar while keeping the section on the page</span>
                       </div>
                       <Switch
                         checked={getEffectiveNavItems().find((it: any) => it.id === "home")?.visible !== false}
@@ -2663,7 +2649,7 @@ export default function WebsiteBuilderPage() {
                     <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                       <div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
-                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Products section එක පිටුවේ පවතී)</span>
+                        <span className="text-[10px] text-slate-500 block">Show or hide the link in the top navigation bar while keeping the section on the page</span>
                       </div>
                       <Switch
                         checked={getEffectiveNavItems().find((it: any) => it.id === "products")?.visible !== false}
@@ -2816,7 +2802,7 @@ export default function WebsiteBuilderPage() {
                     <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                       <div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
-                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Services section එක පිටුවේ පවතී)</span>
+                        <span className="text-[10px] text-slate-500 block">Show or hide the link in the top navigation bar while keeping the section on the page</span>
                       </div>
                       <Switch
                         checked={getEffectiveNavItems().find((it: any) => it.id === "services")?.visible !== false}
@@ -3083,7 +3069,7 @@ export default function WebsiteBuilderPage() {
                     <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                       <div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
-                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (About section එක පිටුවේ පවතී)</span>
+                        <span className="text-[10px] text-slate-500 block">Show or hide the link in the top navigation bar while keeping the section on the page</span>
                       </div>
                       <Switch
                         checked={getEffectiveNavItems().find((it: any) => it.id === "about")?.visible !== false}
@@ -3204,7 +3190,7 @@ export default function WebsiteBuilderPage() {
                     <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                       <div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
-                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Gallery section එක පිටුවේ පවතී)</span>
+                        <span className="text-[10px] text-slate-500 block">Show or hide the link in the top navigation bar while keeping the section on the page</span>
                       </div>
                       <Switch
                         checked={getEffectiveNavItems().find((it: any) => it.id === "gallery")?.visible !== false}
@@ -3357,7 +3343,7 @@ export default function WebsiteBuilderPage() {
                     <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                       <div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
-                        <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Reviews section එක පිටුවේ පවතී)</span>
+                        <span className="text-[10px] text-slate-500 block">Show or hide the link in the top navigation bar while keeping the section on the page</span>
                       </div>
                       <Switch
                         checked={getEffectiveNavItems().find((it: any) => it.id === "reviews")?.visible !== false}
@@ -3624,7 +3610,7 @@ export default function WebsiteBuilderPage() {
                   <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                     <div>
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
-                      <span className="text-[10px] text-slate-500 block">Navbar එකේ link එක පමණක් පෙන්වීම / සැඟවීම (Contact section එක පිටුවේ පවතී)</span>
+                      <span className="text-[10px] text-slate-500 block">Show or hide the link in the top navigation bar while keeping the section on the page</span>
                     </div>
                     <Switch
                       checked={getEffectiveNavItems().find((it: any) => it.id === "contact")?.visible !== false}
