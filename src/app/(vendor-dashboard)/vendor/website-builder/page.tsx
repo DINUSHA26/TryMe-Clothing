@@ -1195,7 +1195,7 @@ export default function WebsiteBuilderPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
       {/* ── Builder Top Toolbar ── */}
-      <header className="h-auto md:h-16 py-3 md:py-0 px-3.5 md:px-6 border-b bg-white dark:bg-slate-900 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-0 sticky top-0 z-40">
+      <header className="h-auto md:h-16 py-3 md:py-0 px-3.5 md:px-6 border-b bg-white dark:bg-slate-900 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-0 relative md:sticky md:top-0 z-40">
         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 w-full md:w-auto">
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-primary shrink-0" />
@@ -1452,12 +1452,12 @@ export default function WebsiteBuilderPage() {
       )}
 
       {/* ── Main Split View ── */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex md:overflow-hidden">
         {/* ── Left Editor Sidebar ── */}
         <div
           className={`${
             mobilePreviewOpen ? "hidden md:block" : "block"
-          } w-full lg:w-[480px] border-r bg-white dark:bg-slate-900 overflow-y-auto p-3.5 md:p-6 space-y-5 md:space-y-6`}
+          } w-full lg:w-[480px] border-r bg-white dark:bg-slate-900 md:overflow-y-auto p-3.5 md:p-6 space-y-5 md:space-y-6`}
         >
           <Tabs value={builderTab} onValueChange={setBuilderTab} className="w-full">
             <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full h-auto bg-slate-100 dark:bg-slate-800 p-1 gap-1 md:gap-0 rounded-xl">
