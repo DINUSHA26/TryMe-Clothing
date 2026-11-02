@@ -743,7 +743,7 @@ export default function CustomDynamicSectionClient({
 
   // 14. CUSTOMER REVIEWS
   if (section.type === "reviews_list") {
-    const allReviews = [...(localReviews || []), ...(reviews?.items || [])];
+    const allReviews = [...(localReviews || []), ...((reviews as any)?.items || (Array.isArray(reviews) ? reviews : []))];
     return (
       <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
         <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">

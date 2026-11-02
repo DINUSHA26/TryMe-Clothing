@@ -44,6 +44,11 @@ import {
   Send,
   Share2,
   RotateCcw,
+  Sparkles,
+  Palette,
+  LayoutTemplate,
+  Flame,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,8 +60,111 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/utils/image";
-import { TIER_LIMITS, WebsiteTier, CustomWebsiteSection, CustomSectionType } from "@/types/website-builder";
+import { TIER_LIMITS, WebsiteTier, CustomWebsiteSection, CustomSectionType, HeroDesignStyle } from "@/types/website-builder";
 import CustomSectionEditor from "./CustomSectionEditor";
+
+
+// 10 Hero Section Design Presets for Storefront
+const HERO_DESIGN_PRESETS: {
+  id: HeroDesignStyle;
+  name: string;
+  badge: string;
+  description: string;
+  descriptionSi: string;
+  previewBg: string;
+  icon: any;
+}[] = [
+  {
+    id: "split_classic",
+    name: "Classic Split Showcase",
+    badge: "Default Choice",
+    description: "Balanced left typography with rounded 4:3 product image and dual action buttons.",
+    descriptionSi: "වම්පසින් විස්තරය සහ දකුණින් ආකර්ෂණීය ඡායාරූපය සහිත සම්භාව්‍ය මෝස්තරය.",
+    previewBg: "from-blue-600/10 via-indigo-600/5 to-slate-50",
+    icon: LayoutTemplate,
+  },
+  {
+    id: "corporate_overlay",
+    name: "Corporate Enterprise Overlay",
+    badge: "Bashwara Style",
+    description: "Cinematic full-width dark backdrop, gold accent highlights & bottom category tabs.",
+    descriptionSi: "සම්පූර්ණ පසුබිම් ඡායාරූපය සහ පහළින් කාණ්ඩ ටැබ් සහිත උසස් ආයතනික පෙනුම.",
+    previewBg: "from-slate-950 via-slate-900 to-amber-950/40",
+    icon: Building2,
+  },
+  {
+    id: "tech_modern",
+    name: "Smart Tech & App Showcase",
+    badge: "HumanTec Style",
+    description: "Vibrant cyan gradient, modern pill buttons & floating live store care card.",
+    descriptionSi: "නූතන Gradient වර්ණ සහ පාවෙන සජීවී කාඩ්පත් සහිත තාක්ෂණික මෝස්තරය.",
+    previewBg: "from-cyan-500/10 via-teal-500/5 to-slate-50",
+    icon: Sparkles,
+  },
+  {
+    id: "organic_minimal",
+    name: "Organic Minimalist Luxury",
+    badge: "TrueHive Style",
+    description: "Warm sand/cream canvas, refined editorial serif typography & framed product hero.",
+    descriptionSi: "ස්වභාවික සුවපහසු වර්ණ සහ අලංකාර අකුරු සහිත සුඛෝපභෝගී අවම මෝස්තරය.",
+    previewBg: "from-amber-100/40 via-stone-100/30 to-amber-50/20",
+    icon: Palette,
+  },
+  {
+    id: "fashion_editorial",
+    name: "Fashion Editorial Boutique",
+    badge: "Fashion Bug Style",
+    description: "Full-bleed high-contrast boutique banner with centered bold typography & nav arrows.",
+    descriptionSi: "විලාසිතා සාප්පු සඳහා සුදුසු විශාල අකුරු සහ සවිස්තරාත්මක ඡායාරූප සහිත මෝස්තරය.",
+    previewBg: "from-rose-950/30 via-slate-900 to-stone-900",
+    icon: ShoppingBag,
+  },
+  {
+    id: "centered_impact",
+    name: "Centered High-Impact Bold",
+    badge: "Maximum Focus",
+    description: "Center-aligned punchy typography with ratings trust bar and prominent dual CTAs.",
+    descriptionSi: "මැදට කේන්ද්‍රගත වූ ප්‍රබල ශීර්ෂ පාඨය සහ පාරිභෝගික ඇගයීම් තීරුව.",
+    previewBg: "from-violet-500/10 via-indigo-500/5 to-slate-50",
+    icon: Star,
+  },
+  {
+    id: "glassmorphism",
+    name: "Dark Neon Glassmorphism",
+    badge: "Futuristic & Sleek",
+    description: "Dark ambient backdrop with glowing color orbs & translucent frosted glass card.",
+    descriptionSi: "වීදුරු ආචරණය (Glassmorphism) සහ විදුලි බුබුළු ආලෝක සහිත අනාගතවාදී පෙනුම.",
+    previewBg: "from-slate-950 via-slate-900 to-cyan-950",
+    icon: Sparkles,
+  },
+  {
+    id: "promo_sale",
+    name: "Mega Sale & Urgency Banner",
+    badge: "High Conversion",
+    description: "Vibrant promotional gradient with hot deal tags, discounts and countdown feel.",
+    descriptionSi: "විශේෂ වට්ටම්, දීමනා සහ ප්‍රවර්ධන සඳහා සකස් කළ ඉහළ ආකර්ෂණයක් සහිත මෝස්තරය.",
+    previewBg: "from-rose-500/15 via-pink-500/10 to-amber-500/10",
+    icon: Flame,
+  },
+  {
+    id: "video_motion",
+    name: "Cinematic Video / Ambient Hero",
+    badge: "Visual Story",
+    description: "Full-height ambient motion hero with play button prompt & dark readability gradient.",
+    descriptionSi: "වීඩියෝ හෝ සජීවී පසුබිම් සහිත චිත්‍රපටික කථාන්දර පෙනුම.",
+    previewBg: "from-slate-950 via-slate-900 to-slate-950",
+    icon: Video,
+  },
+  {
+    id: "store_catalog",
+    name: "Store Catalog & Quick Search",
+    badge: "E-Commerce Ready",
+    description: "Prominent store search bar with horizontal category chips and mini product previews.",
+    descriptionSi: "භාණ්ඩ සෙවුම් තීරුව (Search Bar) සහ ප්‍රමුඛ භාණ්ඩ පෙරදසුන් සහිත වෙළඳසැල් මෝස්තරය.",
+    previewBg: "from-emerald-500/10 via-teal-500/5 to-slate-50",
+    icon: Search,
+  },
+];
 
 export default function WebsiteBuilderPage() {
   const [loading, setLoading] = useState(true);
@@ -2111,18 +2219,19 @@ export default function WebsiteBuilderPage() {
                   </div>
                 );
               })}
-              {/* HERO SECTION */}
+              {/* HERO SECTION (10 MODERN DESIGN PRESETS & INTUITIVE CONTROLS) */}
               <div
-                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
+                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-5 shadow-xs ${
                   config.heroSection?.enabled !== false
                     ? "border-blue-200/90 dark:border-blue-900/60 bg-gradient-to-b from-blue-50/70 via-white to-white dark:from-blue-950/25 dark:to-slate-900 border-l-4 border-l-blue-600"
                     : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
                 }`}
               >
+                {/* Header & Toggle */}
                 <div className="flex items-center justify-between pb-1">
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
                         config.heroSection?.enabled !== false
                           ? "bg-blue-600 text-white"
                           : "bg-slate-200 dark:bg-slate-800 text-slate-500"
@@ -2132,12 +2241,12 @@ export default function WebsiteBuilderPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Hero Banner</h3>
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                          Header
+                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Hero Section (Home Banner)</h3>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 uppercase tracking-wider">
+                          10 Designs Available
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 font-medium">Main welcome headline, intro tagline &amp; hero photo</p>
+                      <p className="text-[11px] text-slate-500 font-medium">Main welcome headline, design layout, CTA buttons &amp; hero media</p>
                     </div>
                   </div>
                   <Switch
@@ -2158,53 +2267,293 @@ export default function WebsiteBuilderPage() {
                 )}
 
                 {config.heroSection?.enabled !== false && (
-                  <div className="space-y-3 pt-2">
-                    <div>
-                      <Label className="text-xs text-slate-500 font-semibold">Headline</Label>
-                      <Input
-                        value={config.heroSection?.title || ""}
-                        onChange={(e) =>
-                          setConfig((prev: any) => ({
-                            ...prev,
-                            heroSection: { ...prev.heroSection, title: e.target.value },
-                          }))
-                        }
-                        className="rounded-xl mt-1 text-sm font-medium"
-                      />
-                    </div>
+                  <div className="space-y-6 pt-2">
+                    {/* VISUAL HERO STYLE SELECTOR (10 DISTINCT PRESETS) */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                          <Palette className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Select Hero Design Style (මෝස්තර 10කින් කැමති එකක් තෝරන්න)</span>
+                        </Label>
+                        <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md">
+                          Active: {HERO_DESIGN_PRESETS.find((p) => p.id === (config.heroSection?.style || "split_classic"))?.name}
+                        </span>
+                      </div>
 
-                    <div>
-                      <Label className="text-xs text-slate-500 font-semibold">Subtitle Description</Label>
-                      <Textarea
-                        rows={2}
-                        value={config.heroSection?.subtitle || ""}
-                        onChange={(e) =>
-                          setConfig((prev: any) => ({
-                            ...prev,
-                            heroSection: { ...prev.heroSection, subtitle: e.target.value },
-                          }))
-                        }
-                        className="rounded-xl mt-1 text-xs"
-                      />
-                    </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[380px] overflow-y-auto p-1.5 border border-slate-200/80 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40">
+                        {HERO_DESIGN_PRESETS.map((preset) => {
+                          const Icon = preset.icon;
+                          const isSelected = (config.heroSection?.style || "split_classic") === preset.id;
+                          return (
+                            <div
+                              key={preset.id}
+                              onClick={() =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  heroSection: { ...prev.heroSection, style: preset.id },
+                                }))
+                              }
+                              className={`relative cursor-pointer p-3 rounded-xl border-2 transition-all flex flex-col justify-between space-y-2 text-left ${
+                                isSelected
+                                  ? "border-blue-600 bg-white dark:bg-slate-800 shadow-md ring-2 ring-blue-500/20"
+                                  : "border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                                      isSelected
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                    }`}
+                                  >
+                                    <Icon className="w-3.5 h-3.5" />
+                                  </div>
+                                  <span className="font-extrabold text-xs text-slate-900 dark:text-slate-100 leading-tight">
+                                    {preset.name}
+                                  </span>
+                                </div>
+                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                                  isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                                }`}>
+                                  {preset.badge}
+                                </span>
+                              </div>
 
-                    <div>
-                      <Label className="text-xs text-slate-500 font-semibold">Hero Photo</Label>
-                      <div className="mt-1.5 flex items-center gap-3">
-                        {config.heroSection?.bgImage && (
-                          <div className="relative w-12 h-12 rounded-xl overflow-hidden border">
-                            <Image src={config.heroSection.bgImage} alt="Hero" fill className="object-cover" />
-                          </div>
-                        )}
-                        <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50 shadow-sm">
-                          <CloudUpload className="w-3.5 h-3.5" />
-                          <span>Upload Image</span>
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "heroImage")} />
-                        </label>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                                {preset.description}
+                              </p>
+                              <p className="text-[10px] text-blue-600/90 dark:text-blue-400 font-medium truncate">
+                                {preset.descriptionSi}
+                              </p>
+
+                              {isSelected && (
+                                <div className="absolute top-2 right-2">
+                                  <span className="flex h-2 w-2 relative">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600" />
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                    {/* CONTENT & TYPOGRAPHY INPUTS */}
+                    <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 space-y-4">
+                      <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Hero Content &amp; Headlines (ශීර්ෂ පාඨ සහ විස්තර)</span>
+                      </h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Main Headline (ප්‍රධාන ශීර්ෂය)</Label>
+                          <Input
+                            value={config.heroSection?.title || ""}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, title: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. Empowering Our Inspired People"
+                            className="rounded-xl mt-1 text-xs font-bold"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">
+                            Accent Highlight Word (වර්ණයෙන් බැබළෙන වචනය)
+                          </Label>
+                          <Input
+                            value={config.heroSection?.highlightText || ""}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, highlightText: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. Inspired or Care or Always"
+                            className="rounded-xl mt-1 text-xs font-semibold"
+                          />
+                          <span className="text-[10px] text-slate-400 mt-0.5 block">Headline එකේ මෙම වචනය විශේෂ Accent පාටින් පෙන්වයි.</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Badge / Kicker Pill (කුඩා Badge නම)</Label>
+                          <Input
+                            value={config.heroSection?.badgeText || ""}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, badgeText: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. PREMIUM SELECTION or PURITY YOU CAN VERIFY"
+                            className="rounded-xl mt-1 text-xs uppercase font-semibold"
+                          />
+                        </div>
+
+                        {(config.heroSection?.style === "promo_sale") && (
+                          <div>
+                            <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Discount / Deal Tag (වට්ටම් Tag එක)</Label>
+                            <Input
+                              value={config.heroSection?.discountTag || ""}
+                              onChange={(e) =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  heroSection: { ...prev.heroSection, discountTag: e.target.value },
+                                }))
+                              }
+                              placeholder="e.g. 🔥 MEGA SALE • UP TO 50% OFF"
+                              className="rounded-xl mt-1 text-xs font-bold text-rose-600"
+                            />
+                          </div>
+                        )}
+
+                        {(config.heroSection?.style === "corporate_overlay") && (
+                          <div>
+                            <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Bottom Category Ticker Items (කොමා මගින් වෙන් කරන්න)</Label>
+                            <Input
+                              value={(config.heroSection?.tickerItems || []).join(", ")}
+                              onChange={(e) =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  heroSection: {
+                                    ...prev.heroSection,
+                                    tickerItems: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                                  },
+                                }))
+                              }
+                              placeholder="e.g. Our Story, Verified Quality, Fast Delivery"
+                              className="rounded-xl mt-1 text-xs"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Subtitle Description (උප ශීර්ෂ විස්තරය)</Label>
+                        <Textarea
+                          rows={2}
+                          value={config.heroSection?.subtitle || ""}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              heroSection: { ...prev.heroSection, subtitle: e.target.value },
+                            }))
+                          }
+                          placeholder="e.g. Dedicated to providing exceptional quality and customer care across Sri Lanka."
+                          className="rounded-xl mt-1 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* CALL TO ACTION BUTTONS */}
+                    <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 space-y-4">
+                      <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Action Buttons (ක්‍රියාකාරී බොත්තම්)</span>
+                      </h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Primary Button Text (ප්‍රධාන බොත්තම)</Label>
+                          <Input
+                            value={config.heroSection?.buttonText || ""}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, buttonText: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. Shop Online Now or Order via WhatsApp"
+                            className="rounded-xl mt-1 text-xs font-bold"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Primary Button Link (URL or #section)</Label>
+                          <Input
+                            value={config.heroSection?.buttonLink || ""}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, buttonLink: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. #products or /products or #contact"
+                            className="rounded-xl mt-1 text-xs font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Secondary Button Text (දෙවන බොත්තම)</Label>
+                          <Input
+                            value={config.heroSection?.secondaryButtonText || ""}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, secondaryButtonText: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. Direct Inquiry or Chat on WhatsApp"
+                            className="rounded-xl mt-1 text-xs font-medium"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Secondary Button Link (URL or #section)</Label>
+                          <Input
+                            value={config.heroSection?.secondaryButtonLink || ""}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, secondaryButtonLink: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. #contact or #about"
+                            className="rounded-xl mt-1 text-xs font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* HERO MEDIA & PHOTOS */}
+                    <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 space-y-4">
+                      <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Hero Photo &amp; Media (පසුබිම් ඡායාරූපය)</span>
+                      </h4>
+
+                      <div>
+                        <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Main Hero Photo / Banner</Label>
+                        <div className="mt-2 flex items-center gap-3">
+                          {config.heroSection?.bgImage && (
+                            <div className="relative w-16 h-16 rounded-xl overflow-hidden border shadow-xs bg-slate-100">
+                              <Image src={config.heroSection.bgImage} alt="Hero" fill className="object-cover" />
+                            </div>
+                          )}
+                          <div className="space-y-1">
+                            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50 shadow-sm">
+                              <CloudUpload className="w-3.5 h-3.5" />
+                              <span>{config.heroSection?.bgImage ? "Change Hero Photo" : "Upload Hero Photo"}</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "heroImage")} />
+                            </label>
+                            <p className="text-[10px] text-slate-400">High-resolution horizontal photo recommended (1920x1080 or 1200x800).</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* NAVBAR SHOW/HIDE TOGGLE */}
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                       <div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show &apos;Home&apos; in Top Navbar</span>
                         <span className="text-[10px] text-slate-500 block">Navbar එකේ නම පෙන්වීම / සැඟවීම (Hero section එක පිටුවේ පවතී)</span>

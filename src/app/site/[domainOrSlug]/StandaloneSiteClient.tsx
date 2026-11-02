@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import ContactSectionClient from "./ContactSectionClient";
 import FooterSectionClient from "./FooterSectionClient";
 import CustomDynamicSectionClient from "./CustomDynamicSectionClient";
+import HeroSectionClient from "./HeroSectionClient";
 import {
   Phone,
   Mail,
@@ -3251,92 +3252,17 @@ export default function StandaloneSiteClient({
             if (secId === "hero") {
               return (
                 <div key="hero">
-                  {/* Hero Section (Responsive Mobile, Tablet & Desktop Alignment) */}
-          {hero.enabled !== false && (
-            <section id="home" className="relative py-10 sm:py-16 lg:py-24 overflow-hidden bg-slate-50/60 border-b">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
-                <div className="space-y-4 sm:space-y-6 text-left">
-                  {hero.badgeText && (
-                    <div
-                      className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-white shadow-sm"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      <span className="truncate">{hero.badgeText}</span>
-                    </div>
-                  )}
-
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.15] text-slate-900 break-words">
-                    {hero.title || vendor?.businessName}
-                  </h1>
-
-                  <p className="text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed max-w-xl">
-                    {hero.subtitle || "Premium quality and personalized customer service."}
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3.5 pt-1">
-                    {isMultiPage ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => navigateTo("products")}
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-white font-black text-xs sm:text-sm shadow-xl hover:opacity-95 transition-all"
-                          style={{ backgroundColor: primaryColor }}
-                        >
-                          <ShoppingBag className="w-4 h-4 shrink-0" />
-                          <span>Shop Online Now</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleInquiryViaWhatsApp()}
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3.5 sm:py-4 rounded-full bg-white border border-slate-200 text-slate-800 font-bold text-xs sm:text-sm shadow-sm hover:bg-slate-100 transition-all"
-                        >
-                          <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>{hero.buttonText || "Chat on WhatsApp"}</span>
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => handleInquiryViaWhatsApp()}
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-white font-black text-xs sm:text-sm shadow-xl hover:opacity-95 transition-all"
-                          style={{ backgroundColor: primaryColor }}
-                        >
-                          <MessageCircle className="w-4 h-4 shrink-0" />
-                          <span>{hero.buttonText || "Order via WhatsApp"}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openInquiryModal({ name: vendor?.businessName || "Store Inquiry" }, "PRODUCT")
-                          }
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3.5 sm:py-4 rounded-full bg-white border border-slate-200 text-slate-800 font-bold text-xs sm:text-sm shadow-sm hover:bg-slate-100 transition-all"
-                        >
-                          <Mail className="w-4 h-4 shrink-0" />
-                          <span>Email / Direct Inquiry</span>
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="relative">
-                  <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-200">
-                    {hero.bgImage ? (
-                      <Image src={hero.bgImage} alt="Hero" fill className="object-cover" priority />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-tr from-slate-200 to-slate-100 text-slate-400 p-6 text-center">
-                        <ShoppingBag className="w-16 h-16 mb-2 opacity-40" />
-                        <span className="text-xs uppercase font-bold tracking-widest">
-                          {vendor?.businessName}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
+                  <HeroSectionClient
+                    hero={hero}
+                    vendor={vendor}
+                    primaryColor={primaryColor}
+                    isMultiPage={isMultiPage}
+                    navigateTo={navigateTo}
+                    handleInquiryViaWhatsApp={handleInquiryViaWhatsApp}
+                    openInquiryModal={openInquiryModal}
+                    products={products}
+                    categories={[]}
+                  />
                 </div>
               );
             }

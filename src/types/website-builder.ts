@@ -10,14 +10,33 @@ export type WebSubscriptionStatus =
 
 export type DomainDnsStatus = "PENDING_VERIFICATION" | "ACTIVE" | "FAILED";
 
+export type HeroDesignStyle =
+  | "split_classic"
+  | "corporate_overlay"
+  | "tech_modern"
+  | "organic_minimal"
+  | "fashion_editorial"
+  | "centered_impact"
+  | "glassmorphism"
+  | "promo_sale"
+  | "video_motion"
+  | "store_catalog";
+
 export interface HeroSectionConfig {
   enabled: boolean;
+  style?: HeroDesignStyle;
   title: string;
+  highlightText?: string;
   subtitle: string;
   buttonText: string;
   buttonLink: string;
   bgImage?: string;
+  secondaryImage?: string;
+  videoUrl?: string;
   badgeText?: string;
+  discountTag?: string;
+  tickerItems?: string[];
+  faviconUrl?: string;
   secondaryButtonText?: string;
   secondaryButtonLink?: string;
 }
