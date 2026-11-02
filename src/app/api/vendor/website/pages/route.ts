@@ -25,7 +25,7 @@ async function getVendorConfig(userId: string) {
 
   return {
     type: "VENDOR",
-    id: vendor.id,
+    id: vendor!.id,
     whereClause,
   };
 }

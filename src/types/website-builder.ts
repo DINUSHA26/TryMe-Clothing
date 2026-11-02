@@ -113,6 +113,58 @@ export interface FooterSectionConfig {
   customLinks?: Array<{ label: string; url: string }>;
 }
 
+
+export type CustomSectionType = "slider" | "video" | "carousel" | "image_banner";
+
+export interface CustomSlideItem {
+  id: string;
+  imageUrl: string;
+  headline?: string;
+  subheadline?: string;
+  badgeText?: string;
+  buttonText?: string;
+  buttonLink?: string;
+}
+
+export interface CustomCarouselItem {
+  id: string;
+  imageUrl: string;
+  title: string;
+  description?: string;
+  badge?: string;
+  price?: string;
+  linkUrl?: string;
+}
+
+export interface CustomWebsiteSection {
+  id: string;
+  type: CustomSectionType;
+  title?: string;
+  subtitle?: string;
+  enabled: boolean;
+  // Slider fields
+  slides?: CustomSlideItem[];
+  autoplay?: boolean;
+  // Video fields
+  videoUrl?: string;
+  videoTitle?: string;
+  videoSubtitle?: string;
+  aspectRatio?: "16:9" | "4:3" | "1:1";
+  videoButtonText?: string;
+  videoButtonLink?: string;
+  // Carousel fields
+  carouselItems?: CustomCarouselItem[];
+  // Image Banner fields
+  bannerImageUrl?: string;
+  bannerLinkUrl?: string;
+  bannerAltText?: string;
+  bannerHeight?: "compact" | "medium" | "tall" | "auto";
+  bannerOverlayHeadline?: string;
+  bannerOverlaySubheadline?: string;
+  bannerOverlayBtnText?: string;
+  bannerOverlayBtnLink?: string;
+}
+
 export interface VendorWebsiteConfigData {
   id?: string;
   vendorId?: string;
@@ -130,6 +182,8 @@ export interface VendorWebsiteConfigData {
   reviewsSection: ReviewsSectionConfig;
   contactSection: ContactSectionConfig;
   footerSection: FooterSectionConfig;
+  customSections?: CustomWebsiteSection[];
+  sectionsOrder?: string[];
   metaTitle?: string;
   metaDescription?: string;
   ogImage?: string;

@@ -1184,6 +1184,8 @@ model VendorWebsiteConfig {
   reviewsSection    Json?
   contactSection    Json?
   footerSection     Json?
+  customSections    Json?
+  sectionsOrder     Json?
   
   // Custom SEO & Analytics
   metaTitle         String?

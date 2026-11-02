@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import ContactSectionClient from "./ContactSectionClient";
 import FooterSectionClient from "./FooterSectionClient";
+import CustomDynamicSectionClient from "./CustomDynamicSectionClient";
 import {
   Phone,
   Mail,
@@ -545,6 +546,27 @@ export default function StandaloneSiteClient({
       navItems.push(def);
     }
   });
+
+  const orderedSectionIds: string[] = useMemo(() => {
+    const defaultOrder = ["hero", "products", "services", "about", "gallery", "reviews", "contact"];
+    let order: string[] = Array.isArray(config?.sectionsOrder) && config.sectionsOrder.length > 0
+      ? [...config.sectionsOrder]
+      : defaultOrder;
+
+    if (Array.isArray(config?.customSections)) {
+      for (const csec of config.customSections) {
+        if (csec?.id && !order.includes(csec.id)) {
+          order.push(csec.id);
+        }
+      }
+    }
+
+    if (!order.includes("contact")) {
+      order.push("contact");
+    }
+
+    return order;
+  }, [config?.sectionsOrder, config?.customSections]);
 
   const visibleNavItems = navItems.filter((item: any) => {
     if (item.visible === false || item.visible === "false") return false;
@@ -3123,6 +3145,22 @@ export default function StandaloneSiteClient({
               </div>
             )}
 
+            {/* Dynamic Custom Sections on this Page (Sliders, Videos, Carousels, Image Banners) */}
+            {Array.isArray(requestedCustomPage.sectionsJson?.customSections) &&
+              requestedCustomPage.sectionsJson.customSections.length > 0 && (
+                <div className="space-y-12">
+                  {requestedCustomPage.sectionsJson.customSections.map((csec: any) => (
+                    <CustomDynamicSectionClient
+                      key={csec.id}
+                      section={csec}
+                      primaryColor={primaryColor}
+                      navigateTo={navigateTo}
+                      handleInquiryViaWhatsApp={handleInquiryViaWhatsApp}
+                    />
+                  ))}
+                </div>
+              )}
+
             {Array.isArray(requestedCustomPage.sectionsJson?.featureCards) &&
               requestedCustomPage.sectionsJson.featureCards.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -3195,7 +3233,25 @@ export default function StandaloneSiteClient({
       ) : (
         /* ── HOME PAGE VIEW (1-Page Inquiry Mode OR 6/12-Page Multi-Page Home) ── */
         <>
-          {/* Hero Section (Responsive Mobile, Tablet & Desktop Alignment) */}
+          {/* ── HOME PAGE VIEW (Dynamic Ordered Sections) ── */}
+          {orderedSectionIds.map((secId) => {
+            if (secId.startsWith("csec-")) {
+              const csec = (config?.customSections || []).find((s: any) => s.id === secId);
+              if (!csec) return null;
+              return (
+                <CustomDynamicSectionClient
+                  key={secId}
+                  section={csec}
+                  primaryColor={primaryColor}
+                  navigateTo={navigateTo}
+                  handleInquiryViaWhatsApp={handleInquiryViaWhatsApp}
+                />
+              );
+            }
+            if (secId === "hero") {
+              return (
+                <div key="hero">
+                  {/* Hero Section (Responsive Mobile, Tablet & Desktop Alignment) */}
           {hero.enabled !== false && (
             <section id="home" className="relative py-10 sm:py-16 lg:py-24 overflow-hidden bg-slate-50/60 border-b">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
@@ -3281,8 +3337,13 @@ export default function StandaloneSiteClient({
               </div>
             </section>
           )}
-
-          {/* Services Section */}
+                </div>
+              );
+            }
+            if (secId === "services") {
+              return (
+                <div key="services">
+                  {/* Services Section */}
           {services.enabled !== false && normalizedServices.length > 0 && (
             <section id="services" className="py-12 sm:py-16 lg:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-3 sm:gap-4">
@@ -3318,8 +3379,13 @@ export default function StandaloneSiteClient({
               </div>
             </section>
           )}
-
-          {/* Products / Ads Showcase Section */}
+                </div>
+              );
+            }
+            if (secId === "products") {
+              return (
+                <div key="products">
+                  {/* Products / Ads Showcase Section */}
           {config?.productsSection?.enabled !== false && (
             <section id="products" className="py-12 sm:py-16 lg:py-20 bg-slate-50/50 border-b">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -3369,8 +3435,13 @@ export default function StandaloneSiteClient({
               </div>
             </section>
           )}
-
-          {/* About Section */}
+                </div>
+              );
+            }
+            if (secId === "about") {
+              return (
+                <div key="about">
+                  {/* About Section */}
           {about.enabled !== false && (
             <section id="about" className="py-12 sm:py-16 lg:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
@@ -3403,8 +3474,34 @@ export default function StandaloneSiteClient({
               </div>
             </section>
           )}
-
-          {/* Reviews / Testimonials Section on Home */}
+                </div>
+              );
+            }
+            if (secId === "gallery") {
+              return gallery.enabled !== false && Array.isArray(gallery.images) && gallery.images.length > 0 ? (
+                <section key="gallery" id="gallery" className="py-12 sm:py-16 lg:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
+                  <div className="max-w-7xl mx-auto text-center space-y-2 mb-10">
+                    <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
+                      PHOTO GALLERY
+                    </span>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+                      {gallery.title || "A Glimpse of Our Work"}
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {gallery.images.map((img: string, idx: number) => (
+                      <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border shadow-xs group bg-slate-100">
+                        <Image src={img} alt="Gallery item" fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="300px" />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null;
+            }
+            if (secId === "reviews") {
+              return (
+                <div key="reviews">
+                  {/* Reviews / Testimonials Section on Home */}
           {(reviews.enabled || localReviews.length > 0) && (
             <section id="reviews" className="py-20 bg-slate-50/50 border-b">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -3478,16 +3575,34 @@ export default function StandaloneSiteClient({
               </div>
             </section>
           )}
+                </div>
+              );
+            }
+            if (secId === "contact") {
+              return (
+                <ContactSectionClient
+                  key="contact"
+                  contact={contact}
+                  vendor={vendor}
+                  primaryColor={primaryColor}
+                  whatsappUrl={whatsappUrl}
+                />
+              );
+            }
+            return null;
+          })}
         </>
       )}
 
-      {/* ── Contact Us Section ── */}
-      <ContactSectionClient
-        contact={contact}
-        vendor={vendor}
-        primaryColor={primaryColor}
-        whatsappUrl={whatsappUrl}
-      />
+      {/* ── Contact Us Section (Always visible on other sub-pages) ── */}
+      {activePage !== "home" && (
+        <ContactSectionClient
+          contact={contact}
+          vendor={vendor}
+          primaryColor={primaryColor}
+          whatsappUrl={whatsappUrl}
+        />
+      )}
 
       {/* ── Rich Multi-Column Footer ── */}
       <FooterSectionClient

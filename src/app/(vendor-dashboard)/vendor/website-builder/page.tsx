@@ -31,6 +31,9 @@ import {
   HelpCircle,
   ShoppingBag,  Briefcase,  Menu,
   Sliders,
+  Video,
+  Layers,
+  ChevronUp,
   Camera,
   Star,
   Clock,
@@ -52,7 +55,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/utils/image";
-import { TIER_LIMITS, WebsiteTier } from "@/types/website-builder";
+import { TIER_LIMITS, WebsiteTier, CustomWebsiteSection, CustomSectionType } from "@/types/website-builder";
+import CustomSectionEditor from "./CustomSectionEditor";
 
 export default function WebsiteBuilderPage() {
   const [loading, setLoading] = useState(true);
@@ -129,6 +133,9 @@ export default function WebsiteBuilderPage() {
   // Builder Active Tab & Custom Page Designer State
   const [builderTab, setBuilderTab] = useState<string>("branding");
   const [editingPage, setEditingPage] = useState<any | null>(null);
+  const [addSectionModalOpen, setAddSectionModalOpen] = useState(false);
+  const [addSectionForPage, setAddSectionForPage] = useState(false);
+
   const [isSavingPage, setIsSavingPage] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
 
@@ -1045,6 +1052,261 @@ export default function WebsiteBuilderPage() {
     }
   };
 
+
+  // ── CUSTOM DYNAMIC SECTIONS & REORDERING LOGIC ──
+  const getSectionsOrder = (): string[] => {
+    const defaultOrder = ["hero", "products", "services", "about", "gallery", "reviews", "contact"];
+    let order: string[] = Array.isArray(config?.sectionsOrder) && config.sectionsOrder.length > 0
+      ? [...config.sectionsOrder]
+      : defaultOrder;
+
+    if (Array.isArray(config?.customSections)) {
+      for (const csec of config.customSections) {
+        if (csec?.id && !order.includes(csec.id)) {
+          order.push(csec.id);
+        }
+      }
+    }
+
+    for (const std of defaultOrder) {
+      if (!order.includes(std)) {
+        order.push(std);
+      }
+    }
+
+    return order;
+  };
+
+  const getSectionIndex = (secId: string): number => {
+    const idx = getSectionsOrder().indexOf(secId);
+    return idx !== -1 ? idx : 0;
+  };
+
+  const handleMoveSection = (sectionId: string, direction: "up" | "down") => {
+    const currentOrder = [...getSectionsOrder()];
+    const idx = currentOrder.indexOf(sectionId);
+    if (idx === -1) return;
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= currentOrder.length) return;
+
+    const temp = currentOrder[idx];
+    currentOrder[idx] = currentOrder[targetIdx];
+    currentOrder[targetIdx] = temp;
+
+    const updated = {
+      ...config,
+      sectionsOrder: currentOrder,
+    };
+    setConfig(updated);
+    autoSaveConfig(updated);
+    sendPreviewUpdate();
+    toast.success(`Section shifted ${direction === "up" ? "up ⬆️" : "down ⬇️"}`);
+  };
+
+  const handleAddCustomSection = (type: CustomSectionType, isForPage: boolean = false) => {
+    const newId = "csec-" + Date.now();
+    let newSection: CustomWebsiteSection;
+
+    if (type === "slider") {
+      newSection = {
+        id: newId,
+        type: "slider",
+        title: "Promo Banner Slider",
+        enabled: true,
+        autoplay: true,
+        slides: [
+          {
+            id: "slide-1",
+            imageUrl: "",
+            badgeText: "NEW ARRIVAL",
+            headline: "Discover Our Exclusive Collection",
+            subheadline: "Handpicked selections curated with premium quality.",
+            buttonText: "Shop Collection",
+            buttonLink: "#products",
+          },
+          {
+            id: "slide-2",
+            imageUrl: "",
+            badgeText: "LIMITED TIME",
+            headline: "Special WhatsApp Deals",
+            subheadline: "Contact our team directly to claim exclusive discounts.",
+            buttonText: "Chat on WhatsApp",
+            buttonLink: "#contact",
+          },
+        ],
+      };
+    } else if (type === "video") {
+      newSection = {
+        id: newId,
+        type: "video",
+        title: "Product Showcase Video",
+        videoTitle: "Watch Our Product Video",
+        videoSubtitle: "Discover the quality, craftsmanship, and features behind our products.",
+        videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        aspectRatio: "16:9",
+        videoButtonText: "Inquire Now",
+        videoButtonLink: "#contact",
+        enabled: true,
+      };
+    } else if (type === "carousel") {
+      newSection = {
+        id: newId,
+        type: "carousel",
+        title: "Featured Highlights",
+        subtitle: "Swipe or scroll through our popular items and collections.",
+        enabled: true,
+        carouselItems: [
+          {
+            id: "card-1",
+            imageUrl: "",
+            title: "Featured Item #1",
+            badge: "BESTSELLER",
+            price: "Rs. 2,500",
+            description: "Top rated by verified customers islandwide.",
+            linkUrl: "#products",
+          },
+          {
+            id: "card-2",
+            imageUrl: "",
+            title: "Featured Item #2",
+            badge: "HOT DEAL",
+            price: "Rs. 3,200",
+            description: "Limited stock available for delivery.",
+            linkUrl: "#products",
+          },
+          {
+            id: "card-3",
+            imageUrl: "",
+            title: "Featured Item #3",
+            badge: "TRENDING",
+            price: "Rs. 1,850",
+            description: "Premium quality guaranteed with easy returns.",
+            linkUrl: "#products",
+          },
+        ],
+      };
+    } else {
+      newSection = {
+        id: newId,
+        type: "image_banner",
+        title: "Promotional Banner",
+        enabled: true,
+        bannerImageUrl: "",
+        bannerLinkUrl: "#products",
+        bannerHeight: "medium",
+        bannerOverlayHeadline: "Seasonal Special Offers!",
+        bannerOverlaySubheadline: "Save up to 30% on selected products today.",
+        bannerOverlayBtnText: "View Products",
+        bannerOverlayBtnLink: "#products",
+      };
+    }
+
+    if (isForPage && editingPage) {
+      const existingPageSecs = editingPage.sectionsJson?.customSections || [];
+      const updatedPage = {
+        ...editingPage,
+        sectionsJson: {
+          ...editingPage.sectionsJson,
+          customSections: [...existingPageSecs, newSection],
+        },
+      };
+      setEditingPage(updatedPage);
+      setPages((prev) => prev.map((p) => (p.id === updatedPage.id ? updatedPage : p)));
+      toast.success(`Added ${newSection.title} to this page! Click 'Save Page' to persist.`);
+    } else {
+      const existingCustom = config.customSections || [];
+      const existingOrder = getSectionsOrder();
+      const updated = {
+        ...config,
+        customSections: [...existingCustom, newSection],
+        sectionsOrder: [...existingOrder, newId],
+      };
+      setConfig(updated);
+      autoSaveConfig(updated);
+      sendPreviewUpdate();
+      toast.success(`Added ${newSection.title} to Home Page!`);
+    }
+    setAddSectionModalOpen(false);
+  };
+
+  const handleUpdateCustomSection = (secId: string, updatedSection: CustomWebsiteSection, isForPage: boolean = false) => {
+    if (isForPage && editingPage) {
+      const pageSecs = (editingPage.sectionsJson?.customSections || []).map((s: any) =>
+        s.id === secId ? updatedSection : s
+      );
+      const updatedPage = {
+        ...editingPage,
+        sectionsJson: {
+          ...editingPage.sectionsJson,
+          customSections: pageSecs,
+        },
+      };
+      setEditingPage(updatedPage);
+      setPages((prev) => prev.map((p) => (p.id === updatedPage.id ? updatedPage : p)));
+    } else {
+      const customSecs = (config.customSections || []).map((s: any) =>
+        s.id === secId ? updatedSection : s
+      );
+      const updated = {
+        ...config,
+        customSections: customSecs,
+      };
+      setConfig(updated);
+      autoSaveConfig(updated);
+      sendPreviewUpdate();
+    }
+  };
+
+  const handleRemoveCustomSection = (secId: string, isForPage: boolean = false) => {
+    if (!confirm("Are you sure you want to remove this section?")) return;
+    if (isForPage && editingPage) {
+      const pageSecs = (editingPage.sectionsJson?.customSections || []).filter((s: any) => s.id !== secId);
+      const updatedPage = {
+        ...editingPage,
+        sectionsJson: {
+          ...editingPage.sectionsJson,
+          customSections: pageSecs,
+        },
+      };
+      setEditingPage(updatedPage);
+      setPages((prev) => prev.map((p) => (p.id === updatedPage.id ? updatedPage : p)));
+      toast.success("Section removed from page");
+    } else {
+      const customSecs = (config.customSections || []).filter((s: any) => s.id !== secId);
+      const order = getSectionsOrder().filter((id) => id !== secId);
+      const updated = {
+        ...config,
+        customSections: customSecs,
+        sectionsOrder: order,
+      };
+      setConfig(updated);
+      autoSaveConfig(updated);
+      sendPreviewUpdate();
+      toast.success("Section removed from Home Page");
+    }
+  };
+
+  const handleMovePageCustomSection = (idx: number, direction: "up" | "down") => {
+    if (!editingPage) return;
+    const pageSecs = [...(editingPage.sectionsJson?.customSections || [])];
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= pageSecs.length) return;
+
+    const temp = pageSecs[idx];
+    pageSecs[idx] = pageSecs[targetIdx];
+    pageSecs[targetIdx] = temp;
+
+    const updatedPage = {
+      ...editingPage,
+      sectionsJson: {
+        ...editingPage.sectionsJson,
+        customSections: pageSecs,
+      },
+    };
+    setEditingPage(updatedPage);
+    setPages((prev) => prev.map((p) => (p.id === updatedPage.id ? updatedPage : p)));
+  };
+
   const handlePageBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editingPage) return;
@@ -1800,7 +2062,55 @@ export default function WebsiteBuilderPage() {
             </TabsContent>
 
             {/* TAB 2: SECTIONS BUILDER */}
-            <TabsContent value="sections" className="space-y-6 pt-4">
+            <TabsContent value="sections" className="flex flex-col space-y-6 pt-4">
+              {/* TOP ACTION BAR */}
+              <div
+                style={{ order: -1 }}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 shadow-xs"
+              >
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-primary" />
+                    <span>Page Sections &amp; Layout Order</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Use ⬆️ Up and ⬇️ Down buttons on any section to shift its position. Click &quot;+ Add Custom Section&quot; to add dynamic Sliders, Videos, Carousels, or Banners.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setAddSectionForPage(false);
+                    setAddSectionModalOpen(true);
+                  }}
+                  className="h-9 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-sm shrink-0 flex items-center gap-1.5"
+                  style={{ backgroundColor: config.primaryColor }}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Custom Section</span>
+                </Button>
+              </div>
+
+              {/* DYNAMIC CUSTOM SECTIONS (Sliders, Videos, Carousels, Banners) */}
+              {(config.customSections || []).map((csec: any) => {
+                const secIdx = getSectionIndex(csec.id);
+                const totalSecs = getSectionsOrder().length;
+                return (
+                  <div key={csec.id} style={{ order: secIdx }}>
+                    <CustomSectionEditor
+                      section={csec}
+                      index={secIdx}
+                      total={totalSecs}
+                      onUpdate={(u) => handleUpdateCustomSection(csec.id, u)}
+                      onDelete={() => handleRemoveCustomSection(csec.id)}
+                      onMoveUp={() => handleMoveSection(csec.id, "up")}
+                      onMoveDown={() => handleMoveSection(csec.id, "down")}
+                      canMoveUp={secIdx > 0}
+                      canMoveDown={secIdx < totalSecs - 1}
+                    />
+                  </div>
+                );
+              })}
               {/* HERO SECTION */}
               <div
                 className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
@@ -3786,6 +4096,57 @@ export default function WebsiteBuilderPage() {
                     </div>
                   </div>
 
+                  {/* Dynamic Custom Sections on this Custom Page */}
+                  <div className="space-y-4 border p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50">
+                    <div className="flex items-center justify-between pb-2 border-b">
+                      <div>
+                        <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500">
+                          Dynamic Page Sections ({(editingPage.sectionsJson?.customSections || []).length})
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Add interactive Sliders, Videos, Carousels, and Image Banners to this page.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          setAddSectionForPage(true);
+                          setAddSectionModalOpen(true);
+                        }}
+                        className="h-7 text-xs font-bold rounded-lg text-white gap-1 shadow-xs"
+                        style={{ backgroundColor: config.primaryColor }}
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Section
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {(editingPage.sectionsJson?.customSections || []).map((sec: any, pIdx: number) => (
+                        <CustomSectionEditor
+                          key={sec.id || pIdx}
+                          section={sec}
+                          index={pIdx}
+                          total={(editingPage.sectionsJson?.customSections || []).length}
+                          onUpdate={(updated) => handleUpdateCustomSection(sec.id, updated, true)}
+                          onDelete={() => handleRemoveCustomSection(sec.id, true)}
+                          onMoveUp={() => handleMovePageCustomSection(pIdx, "up")}
+                          onMoveDown={() => handleMovePageCustomSection(pIdx, "down")}
+                          canMoveUp={pIdx > 0}
+                          canMoveDown={pIdx < (editingPage.sectionsJson?.customSections || []).length - 1}
+                        />
+                      ))}
+                      {(editingPage.sectionsJson?.customSections || []).length === 0 && (
+                        <div className="p-6 border border-dashed rounded-xl text-center text-slate-400 bg-white dark:bg-slate-800">
+                          <p className="text-xs font-bold">No dynamic sections added to this page yet.</p>
+                          <p className="text-[11px] text-slate-500 mt-1">
+                            Click &quot;+ Add Section&quot; to add a Slider, Video, Carousel, or Banner.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Main Story & Content Description */}
                   <div className="space-y-3 border p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50">
                     <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500">Page Content & Details</h4>
@@ -4582,6 +4943,107 @@ export default function WebsiteBuilderPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Add Custom Section Modal Dialog ── */}
+      <Dialog open={addSectionModalOpen} onOpenChange={setAddSectionModalOpen}>
+        <DialogContent className="max-w-2xl rounded-3xl p-6 sm:p-8">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-2">
+              <Plus className="w-5 h-5 text-primary" />
+              <span>{addSectionForPage ? "Add Dynamic Section to Custom Page" : "Add Dynamic Section to Home Page"}</span>
+            </DialogTitle>
+            <DialogDescription>
+              Choose a section type to insert. You can customize images, texts, links, and shift its position anytime with Move Up / Down.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            {/* 1. Slider */}
+            <button
+              type="button"
+              onClick={() => handleAddCustomSection("slider", addSectionForPage)}
+              className="p-5 rounded-2xl border-2 border-indigo-200/90 hover:border-indigo-600 bg-gradient-to-b from-indigo-50/70 to-white dark:from-indigo-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+            >
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                  <Sliders className="w-5 h-5" />
+                </div>
+                <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-indigo-600">Multi-Slide Banner / Slider</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Full-width rotating slideshow with images, headlines, promotional badges, auto-play, and call-to-action buttons.
+                </p>
+              </div>
+              <span className="text-[11px] font-extrabold text-indigo-600 dark:text-indigo-400 pt-3 flex items-center gap-1">
+                <span>+ Add Slider</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
+            </button>
+
+            {/* 2. Video */}
+            <button
+              type="button"
+              onClick={() => handleAddCustomSection("video", addSectionForPage)}
+              className="p-5 rounded-2xl border-2 border-rose-200/90 hover:border-rose-600 bg-gradient-to-b from-rose-50/70 to-white dark:from-rose-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+            >
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                  <Video className="w-5 h-5" />
+                </div>
+                <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-rose-600">Video Showcase Player</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Embedded video player supporting YouTube, Shorts, Vimeo, or direct MP4 links with custom title and action button.
+                </p>
+              </div>
+              <span className="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 pt-3 flex items-center gap-1">
+                <span>+ Add Video</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
+            </button>
+
+            {/* 3. Carousel */}
+            <button
+              type="button"
+              onClick={() => handleAddCustomSection("carousel", addSectionForPage)}
+              className="p-5 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+            >
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-amber-600">Feature Carousel Cards</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Horizontal touch-swipeable card carousel for featured products, collections, bestsellers, or highlights with prices.
+                </p>
+              </div>
+              <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 pt-3 flex items-center gap-1">
+                <span>+ Add Carousel</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
+            </button>
+
+            {/* 4. Image Banner */}
+            <button
+              type="button"
+              onClick={() => handleAddCustomSection("image_banner", addSectionForPage)}
+              className="p-5 rounded-2xl border-2 border-teal-200/90 hover:border-teal-600 bg-gradient-to-b from-teal-50/70 to-white dark:from-teal-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+            >
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-teal-600">Promotional Image Banner</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  High-impact promotional banner image with clickable target link, custom height, and optional text overlay.
+                </p>
+              </div>
+              <span className="text-[11px] font-extrabold text-teal-600 dark:text-teal-400 pt-3 flex items-center gap-1">
+                <span>+ Add Banner</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Plan Upgrade Dialog (PayHere Online + Bank Slip) ── */}
       <Dialog open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen}>
