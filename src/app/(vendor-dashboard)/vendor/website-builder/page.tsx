@@ -2520,6 +2520,246 @@ export default function WebsiteBuilderPage() {
                       </div>
                     </div>
 
+
+                    {/* TRUST HIGHLIGHTS & FLOATING GUARANTEE CARD CUSTOMIZATION */}
+                    <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 space-y-5">
+                      <div className="flex items-center gap-2 pb-2 border-b">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
+                          <ShieldCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                            Trust Highlights &amp; Floating Guarantee Card
+                          </h4>
+                          <p className="text-[11px] text-slate-400 font-medium">
+                            Customize trust points (100% Genuine, Fast Delivery) and floating verification card
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* 1. Quick Trust Badges */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-xs text-slate-700 dark:text-slate-300 font-bold block">
+                              Show Trust Highlights
+                            </Label>
+                            <span className="text-[10px] text-slate-400">
+                              Display guarantee badges under action buttons
+                            </span>
+                          </div>
+                          <Switch
+                            checked={config.heroSection?.showTrustBadges !== false}
+                            onCheckedChange={(c) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, showTrustBadges: c },
+                              }))
+                            }
+                          />
+                        </div>
+
+                        {config.heroSection?.showTrustBadges !== false && (
+                          <div className="space-y-2 pt-1">
+                            {(
+                              config.heroSection?.trustBadges || [
+                                { id: "b1", text: "100% Genuine", icon: "shield", enabled: true },
+                                { id: "b2", text: "Fast Delivery", icon: "truck", enabled: true },
+                                { id: "b3", text: "Top Rated", icon: "star", enabled: true },
+                              ]
+                            ).map((b: any, idx: number) => (
+                              <div
+                                key={b.id || idx}
+                                className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50"
+                              >
+                                <Switch
+                                  checked={b.enabled !== false}
+                                  onCheckedChange={(val) => {
+                                    const current = [
+                                      ...(config.heroSection?.trustBadges || [
+                                        { id: "b1", text: "100% Genuine", icon: "shield", enabled: true },
+                                        { id: "b2", text: "Fast Delivery", icon: "truck", enabled: true },
+                                        { id: "b3", text: "Top Rated", icon: "star", enabled: true },
+                                      ]),
+                                    ];
+                                    current[idx] = { ...current[idx], enabled: val };
+                                    setConfig((prev: any) => ({
+                                      ...prev,
+                                      heroSection: { ...prev.heroSection, trustBadges: current },
+                                    }));
+                                  }}
+                                />
+
+                                <select
+                                  value={b.icon || "shield"}
+                                  onChange={(e) => {
+                                    const current = [
+                                      ...(config.heroSection?.trustBadges || [
+                                        { id: "b1", text: "100% Genuine", icon: "shield", enabled: true },
+                                        { id: "b2", text: "Fast Delivery", icon: "truck", enabled: true },
+                                        { id: "b3", text: "Top Rated", icon: "star", enabled: true },
+                                      ]),
+                                    ];
+                                    current[idx] = { ...current[idx], icon: e.target.value };
+                                    setConfig((prev: any) => ({
+                                      ...prev,
+                                      heroSection: { ...prev.heroSection, trustBadges: current },
+                                    }));
+                                  }}
+                                  className="h-8 px-2 rounded-lg border bg-white dark:bg-slate-800 text-xs font-semibold"
+                                >
+                                  <option value="shield">🛡️ Shield</option>
+                                  <option value="truck">🚚 Truck</option>
+                                  <option value="star">⭐️ Star</option>
+                                  <option value="check">✅ Check</option>
+                                  <option value="zap">⚡ Fast Zap</option>
+                                  <option value="heart">🤝 Heart</option>
+                                </select>
+
+                                <Input
+                                  value={b.text || ""}
+                                  onChange={(e) => {
+                                    const current = [
+                                      ...(config.heroSection?.trustBadges || [
+                                        { id: "b1", text: "100% Genuine", icon: "shield", enabled: true },
+                                        { id: "b2", text: "Fast Delivery", icon: "truck", enabled: true },
+                                        { id: "b3", text: "Top Rated", icon: "star", enabled: true },
+                                      ]),
+                                    ];
+                                    current[idx] = { ...current[idx], text: e.target.value };
+                                    setConfig((prev: any) => ({
+                                      ...prev,
+                                      heroSection: { ...prev.heroSection, trustBadges: current },
+                                    }));
+                                  }}
+                                  placeholder="e.g. 100% Genuine"
+                                  className="h-8 rounded-lg text-xs font-bold flex-1"
+                                />
+
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const current = [
+                                      ...(config.heroSection?.trustBadges || [
+                                        { id: "b1", text: "100% Genuine", icon: "shield", enabled: true },
+                                        { id: "b2", text: "Fast Delivery", icon: "truck", enabled: true },
+                                        { id: "b3", text: "Top Rated", icon: "star", enabled: true },
+                                      ]),
+                                    ];
+                                    current.splice(idx, 1);
+                                    setConfig((prev: any) => ({
+                                      ...prev,
+                                      heroSection: { ...prev.heroSection, trustBadges: current },
+                                    }));
+                                  }}
+                                  className="h-8 w-8 p-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            ))}
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const current = [
+                                  ...(config.heroSection?.trustBadges || [
+                                    { id: "b1", text: "100% Genuine", icon: "shield", enabled: true },
+                                    { id: "b2", text: "Fast Delivery", icon: "truck", enabled: true },
+                                    { id: "b3", text: "Top Rated", icon: "star", enabled: true },
+                                  ]),
+                                ];
+                                current.push({
+                                  id: "b-" + Date.now(),
+                                  text: "New Guarantee",
+                                  icon: "check",
+                                  enabled: true,
+                                });
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  heroSection: { ...prev.heroSection, trustBadges: current },
+                                }));
+                              }}
+                              className="w-full text-xs font-bold rounded-xl border-dashed py-2"
+                            >
+                              <Plus className="w-3.5 h-3.5 mr-1" />
+                              <span>Add Custom Trust Badge</span>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="h-px bg-slate-200/80 dark:bg-slate-700/80" />
+
+                      {/* 2. Floating Guarantee Card */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-xs text-slate-700 dark:text-slate-300 font-bold block">
+                              Show Floating Card on Hero Image
+                            </Label>
+                            <span className="text-[10px] text-slate-400">
+                              Displays the floating verification badge over the store photo
+                            </span>
+                          </div>
+                          <Switch
+                            checked={config.heroSection?.showFloatingCard !== false}
+                            onCheckedChange={(c) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, showFloatingCard: c },
+                              }))
+                            }
+                          />
+                        </div>
+
+                        {config.heroSection?.showFloatingCard !== false && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div>
+                              <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">
+                                Card Title
+                              </Label>
+                              <Input
+                                value={config.heroSection?.floatingCardTitle ?? "Verified Seller"}
+                                onChange={(e) =>
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    heroSection: { ...prev.heroSection, floatingCardTitle: e.target.value },
+                                  }))
+                                }
+                                placeholder="e.g. Verified Seller"
+                                className="rounded-xl mt-1 text-xs font-bold"
+                              />
+                            </div>
+
+                            <div>
+                              <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">
+                                Card Subtitle
+                              </Label>
+                              <Input
+                                value={
+                                  config.heroSection?.floatingCardSubtitle ??
+                                  "Islandwide Delivery & Support"
+                                }
+                                onChange={(e) =>
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    heroSection: { ...prev.heroSection, floatingCardSubtitle: e.target.value },
+                                  }))
+                                }
+                                placeholder="e.g. Islandwide Delivery & Support"
+                                className="rounded-xl mt-1 text-xs"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     {/* NAVBAR SHOW/HIDE TOGGLE */}
                     <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                       <div>

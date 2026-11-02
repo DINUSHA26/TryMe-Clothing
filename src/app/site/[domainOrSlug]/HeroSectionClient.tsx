@@ -19,8 +19,9 @@ import {
   Play,
   HeartHandshake,
   Tag,
+  Zap,
 } from "lucide-react";
-import { HeroSectionConfig, HeroDesignStyle } from "@/types/website-builder";
+import { HeroSectionConfig, HeroDesignStyle, HeroTrustBadge } from "@/types/website-builder";
 
 interface HeroSectionClientProps {
   hero: HeroSectionConfig;
@@ -59,6 +60,40 @@ export default function HeroSectionClient({
   const mainImage = hero.bgImage || vendor?.banner || "";
   const secondaryImage = hero.secondaryImage || "";
   const highlightText = hero.highlightText || "";
+
+  // Configurable Trust Badges
+  const showTrustBadges = hero.showTrustBadges !== false;
+  const defaultTrustBadges: HeroTrustBadge[] = [
+    { id: "b1", text: "100% Genuine", icon: "shield", enabled: true },
+    { id: "b2", text: "Fast Delivery", icon: "truck", enabled: true },
+    { id: "b3", text: "Top Rated", icon: "star", enabled: true },
+  ];
+  const activeTrustBadges = (
+    hero.trustBadges && hero.trustBadges.length > 0 ? hero.trustBadges : defaultTrustBadges
+  ).filter((b) => b.enabled !== false && b.text.trim().length > 0);
+
+  const renderBadgeIcon = (iconName?: string) => {
+    switch (iconName) {
+      case "truck":
+        return <Truck className="w-4 h-4 text-blue-600 shrink-0" />;
+      case "star":
+        return <Star className="w-4 h-4 text-amber-500 fill-amber-400 shrink-0" />;
+      case "check":
+        return <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />;
+      case "zap":
+        return <Zap className="w-4 h-4 text-purple-600 shrink-0" />;
+      case "heart":
+        return <HeartHandshake className="w-4 h-4 text-rose-600 shrink-0" />;
+      case "shield":
+      default:
+        return <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />;
+    }
+  };
+
+  // Configurable Floating Card
+  const showFloatingCard = hero.showFloatingCard !== false;
+  const floatingCardTitle = hero.floatingCardTitle || "Verified Seller";
+  const floatingCardSubtitle = hero.floatingCardSubtitle || "Islandwide Delivery & Support";
 
   // Helper to highlight a specific word in the title if specified
   const renderHighlightedTitle = (baseTitle: string, highlight?: string, highlightColor?: string) => {

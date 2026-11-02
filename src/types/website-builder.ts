@@ -22,6 +22,13 @@ export type HeroDesignStyle =
   | "video_motion"
   | "store_catalog";
 
+export interface HeroTrustBadge {
+  id: string;
+  text: string;
+  icon?: "shield" | "truck" | "star" | "check" | "zap" | "heart";
+  enabled?: boolean;
+}
+
 export interface HeroSectionConfig {
   enabled: boolean;
   style?: HeroDesignStyle;
@@ -39,6 +46,12 @@ export interface HeroSectionConfig {
   faviconUrl?: string;
   secondaryButtonText?: string;
   secondaryButtonLink?: string;
+  // Trust Badges & Floating Guarantee Card
+  showTrustBadges?: boolean;
+  trustBadges?: HeroTrustBadge[];
+  showFloatingCard?: boolean;
+  floatingCardTitle?: string;
+  floatingCardSubtitle?: string;
 }
 
 export interface AboutSectionConfig {
