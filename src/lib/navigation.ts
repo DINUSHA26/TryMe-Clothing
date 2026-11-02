@@ -23,6 +23,7 @@ import {
   Mail,
   Sparkles,
   Globe,
+  Briefcase,
 } from "lucide-react";
 
 export interface NavItem {
@@ -144,6 +145,16 @@ export const adminNavItems: NavItem[] = [
     href: "/admin/website-subscriptions",
     icon: Globe,
   },
+  {
+    label: "Service Categories",
+    href: "/admin/services/categories",
+    icon: FolderTree,
+  },
+  {
+    label: "All Services",
+    href: "/admin/services",
+    icon: Briefcase,
+  },
 ];
 
 export const vendorNavItems: NavItem[] = [
@@ -161,6 +172,11 @@ export const vendorNavItems: NavItem[] = [
     label: "Products",
     href: "/vendor/products",
     icon: Package,
+  },
+  {
+    label: "My Services",
+    href: "/vendor/services",
+    icon: Briefcase,
   },
   {
     label: "Orders",
@@ -209,6 +225,11 @@ export const adsSellerNavItems: NavItem[] = [
     label: "My Ads",
     href: "/ads-seller/my-ads",
     icon: LayoutGrid,
+  },
+  {
+    label: "My Services",
+    href: "/ads-seller/services",
+    icon: Briefcase,
   },
   {
     label: "Post an Ad",

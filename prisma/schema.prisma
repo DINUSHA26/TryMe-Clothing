@@ -204,6 +204,7 @@ model Vendor {
   websiteConfig        VendorWebsiteConfig?
   customDomain         VendorCustomDomain?
   websiteSubscriptions VendorWebsiteSubscription[]
+  services             WebsiteService[]
 
   @@index([slug])
   @@index([status, isShopOpen])
@@ -940,6 +941,7 @@ model AdsSeller {
   websiteConfig        VendorWebsiteConfig?
   customDomain         VendorCustomDomain?
   websiteSubscriptions VendorWebsiteSubscription[]
+  services             WebsiteService[]
 }
 
 // Mini-website custom service pages
@@ -1260,5 +1262,83 @@ model VendorWebsiteSubscription {
   @@index([status])
 }
 
+enum ServicePriceType {
+  FIXED
+  STARTING_FROM
+  HOURLY
+  CONTACT_FOR_PRICE
+}
 
+model ServiceCategory {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?
+  icon        String?
+  image       String?
+  isActive    Boolean          @default(true)
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
+  subCategories ServiceSubCategory[]
+  services      WebsiteService[]
+}
+
+model ServiceSubCategory {
+  id          String           @id @default(cuid())
+  categoryId  String
+  category    ServiceCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String
+  description String?
+  icon        String?
+  isActive    Boolean          @default(true)
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  services    WebsiteService[]
+
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+}
+
+model WebsiteService {
+  id                 String              @id @default(cuid())
+
+  vendorId           String?
+  vendor             Vendor?             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  adsSellerId        String?
+  adsSeller          AdsSeller?          @relation(fields: [adsSellerId], references: [id], onDelete: Cascade)
+
+  categoryId         String
+  category           ServiceCategory     @relation(fields: [categoryId], references: [id])
+  subCategoryId      String?
+  subCategory        ServiceSubCategory? @relation(fields: [subCategoryId], references: [id])
+
+  name               String
+  slug               String
+  description        String           @db.Text
+  shortDesc          String?
+  price              Decimal?         @db.Decimal(10, 2)
+  priceType          ServicePriceType @default(FIXED)
+  duration           String?
+  images             String[]
+  features           String[]
+
+  isActive           Boolean          @default(true)
+  isFeatured         Boolean          @default(false)
+  sortOrder          Int              @default(0)
+
+  isDisabledByAdmin  Boolean          @default(false)
+  adminNote          String?
+
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([vendorId])
+  @@index([adsSellerId])
+  @@index([categoryId])
+  @@index([subCategoryId])
+}

@@ -372,8 +372,38 @@ export default function StandaloneSiteClient({
   const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}` : "#";
   const vendorEmail = contact.email || vendor?.email || vendor?.businessEmail || "";
 
-  // Normalize Services List with IDs & Slugs
+  // Normalize Services List with IDs & Slugs (Prioritizes Real Database Services)
   const normalizedServices = useMemo(() => {
+    // 1. If dedicated services exist from database, use them
+    const dbServices = (siteData as any)?.services;
+    if (dbServices && Array.isArray(dbServices) && dbServices.length > 0) {
+      return dbServices.map((s: any, idx: number) => ({
+        id: s.id,
+        slug: s.slug || s.id,
+        name: s.name,
+        price:
+          s.priceType === "CONTACT_FOR_PRICE"
+            ? "Contact for price"
+            : s.priceType === "STARTING_FROM"
+            ? `Starting from Rs. ${Number(s.price || 0).toLocaleString()}`
+            : s.priceType === "HOURLY"
+            ? `Rs. ${Number(s.price || 0).toLocaleString()} / hr`
+            : s.price != null
+            ? `Rs. ${Number(s.price).toLocaleString()}`
+            : "Contact for price",
+        numericPrice: s.price != null ? Number(s.price) : 0,
+        imageUrl: s.images?.[0] || null,
+        images: s.images || [],
+        duration: s.duration || null,
+        description: s.description || s.shortDesc || "",
+        shortDesc: s.shortDesc || "",
+        features: s.features || [],
+        category: s.category || null,
+        subCategory: s.subCategory || null,
+      }));
+    }
+
+    // 2. Otherwise fallback to manual builder items or products
     const raw =
       services.items && services.items.length > 0
         ? services.items
@@ -401,7 +431,7 @@ export default function StandaloneSiteClient({
           ? s.price
           : parseFloat(String(s.price || "0").replace(/[^0-9.]/g, "")) || 0,
     }));
-  }, [services.items, products, entityType]);
+  }, [(siteData as any)?.services, services.items, products, entityType]);
 
   // Reset detail state when activeItemSlug changes
   useEffect(() => {
@@ -999,6 +1029,20 @@ export default function StandaloneSiteClient({
             )}
           </div>
           <div>
+            {(s.category || s.subCategory) && (
+              <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+                {s.category && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                    {s.category.name}
+                  </span>
+                )}
+                {s.subCategory && (
+                  <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
+                    {s.subCategory.name}
+                  </span>
+                )}
+              </div>
+            )}
             <h3 className="font-extrabold text-sm sm:text-base text-slate-900 group-hover:underline line-clamp-2">
               {s.name}
             </h3>

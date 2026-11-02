@@ -179,6 +179,19 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const services = await (prisma as any).websiteService.findMany({
+      where: {
+        ...(target.type === "VENDOR" ? { vendorId: target.entity.id } : { adsSellerId: target.entity.id }),
+        isActive: true,
+        isDisabledByAdmin: false,
+      },
+      include: {
+        category: true,
+        subCategory: true,
+      },
+      orderBy: { sortOrder: "asc" },
+    });
+
     return NextResponse.json({
       success: true,
       data: {
@@ -196,6 +209,7 @@ export async function GET(request: NextRequest) {
           phone: (target.entity as any).businessPhone || (target.entity as any).phone || "",
         },
         products,
+        services,
       },
     });
   } catch (error: any) {

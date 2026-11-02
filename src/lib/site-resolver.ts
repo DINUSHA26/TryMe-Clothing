@@ -31,6 +31,14 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
               },
               orderBy: { createdAt: "desc" },
             },
+            services: {
+              where: { isActive: true, isDisabledByAdmin: false },
+              include: {
+                category: { select: { id: true, name: true, slug: true, icon: true } },
+                subCategory: { select: { id: true, name: true, slug: true } },
+              },
+              orderBy: { sortOrder: "asc" },
+            },
           },
         },
         adsSeller: {
@@ -47,6 +55,14 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
               where: { status: { in: ["ACTIVE", "PENDING"] }, showOnWebsite: true },
               take: 48,
               orderBy: { createdAt: "desc" },
+            },
+            services: {
+              where: { isActive: true, isDisabledByAdmin: false },
+              include: {
+                category: { select: { id: true, name: true, slug: true, icon: true } },
+                subCategory: { select: { id: true, name: true, slug: true } },
+              },
+              orderBy: { sortOrder: "asc" },
             },
           },
         },
@@ -79,6 +95,14 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
             },
             orderBy: { createdAt: "desc" },
           },
+          services: {
+            where: { isActive: true, isDisabledByAdmin: false },
+            include: {
+              category: { select: { id: true, name: true, slug: true, icon: true } },
+              subCategory: { select: { id: true, name: true, slug: true } },
+            },
+            orderBy: { sortOrder: "asc" },
+          },
         },
       });
 
@@ -98,6 +122,14 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
               where: { status: { in: ["ACTIVE", "PENDING"] }, showOnWebsite: true },
               take: 48,
               orderBy: { createdAt: "desc" },
+            },
+            services: {
+              where: { isActive: true, isDisabledByAdmin: false },
+              include: {
+                category: { select: { id: true, name: true, slug: true, icon: true } },
+                subCategory: { select: { id: true, name: true, slug: true } },
+              },
+              orderBy: { sortOrder: "asc" },
             },
           },
         });
@@ -225,6 +257,7 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
       subscription: activeSub,
       subscriptionLifecycle: lifecycle,
       products,
+      services: (entity as any).services || [],
       websiteReviews: websiteReviewsRaw,
     };
   } catch (error) {

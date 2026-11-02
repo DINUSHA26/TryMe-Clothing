@@ -81,7 +81,9 @@ const protectedRoutes: Record<string, Role[]> = {
   "/api/notifications": ["CUSTOMER", "ADMIN", "VENDOR", "ADS_SELLER"],
   "/api/profile": ["CUSTOMER", "VENDOR", "ADMIN", "ADS_SELLER"],
   // ── Role-restricted API routes ────────────────────────────────────────────
+  "/api/vendor/services": ["VENDOR", "ADS_SELLER", "ADMIN"],
   "/api/vendor/website": ["VENDOR", "ADS_SELLER", "ADMIN"],
+  "/api/admin/services/categories": ["ADMIN", "VENDOR", "ADS_SELLER"],
   "/api/admin/website-subscriptions": ["ADMIN"],
   "/api/admin/ads-sellers": ["ADMIN"],
   "/api/admin/ads-plans": ["ADMIN"],
