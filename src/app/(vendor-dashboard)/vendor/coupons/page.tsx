@@ -69,6 +69,7 @@ export default function VendorCouponsPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [channelFilter, setChannelFilter] = useState<string>("all");
 
   // Dialogs
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -80,7 +81,7 @@ export default function VendorCouponsPage() {
 
   useEffect(() => {
     fetchCoupons();
-  }, [search, typeFilter, statusFilter]);
+  }, [search, typeFilter, statusFilter, channelFilter]);
 
   const fetchCoupons = async () => {
     try {
@@ -90,6 +91,7 @@ export default function VendorCouponsPage() {
       if (search) params.append("search", search);
       if (typeFilter !== "all") params.append("type", typeFilter);
       if (statusFilter !== "all") params.append("isActive", statusFilter);
+      if (channelFilter !== "all") params.append("applicableTo", channelFilter);
 
       const response = await fetch(`/api/vendor/coupons?${params.toString()}`);
       const data = await response.json();
@@ -245,6 +247,18 @@ export default function VendorCouponsPage() {
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value={CouponType.PERCENTAGE}>Percentage</SelectItem>
             <SelectItem value={CouponType.FLAT}>Flat Amount</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={channelFilter} onValueChange={setChannelFilter}>
+          <SelectTrigger className="w-full md:w-[190px]">
+            <SelectValue placeholder="All Channels" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Channels</SelectItem>
+            <SelectItem value="BOTH">🌐 TryMe &amp; Website</SelectItem>
+            <SelectItem value="OWN_WEBSITE">🏪 Own Website Only</SelectItem>
+            <SelectItem value="TRYME">🛍️ TryMe.lk Only</SelectItem>
           </SelectContent>
         </Select>
 

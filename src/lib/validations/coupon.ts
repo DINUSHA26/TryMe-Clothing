@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { CouponType } from "@prisma/client";
+import { CouponType, CouponApplicableTo } from "@prisma/client";
 
 /**
  * Schema for creating a new coupon
@@ -47,6 +47,11 @@ export const createCouponSchema = z
     vendorId: z.string().optional().nullable(),
     isActive: z.boolean().default(true),
     isFeatured: z.boolean().default(false),
+    applicableTo: z
+      .nativeEnum(CouponApplicableTo, {
+        message: "Invalid application channel",
+      })
+      .default(CouponApplicableTo.BOTH),
     validFrom: z.coerce.date(),
     validUntil: z.coerce.date().optional().nullable(),
   })
@@ -104,6 +109,11 @@ export const updateCouponSchema = z
       .optional(),
     isActive: z.boolean().optional(),
     isFeatured: z.boolean().optional(),
+    applicableTo: z
+      .nativeEnum(CouponApplicableTo, {
+        message: "Invalid application channel",
+      })
+      .optional(),
     validFrom: z.coerce.date().optional(),
     validUntil: z.coerce.date().optional().nullable(),
   })
@@ -128,6 +138,7 @@ export const couponFiltersSchema = z.object({
   search: z.string().optional(),
   type: z.nativeEnum(CouponType).optional(),
   isActive: z.enum(["true", "false"]).optional(),
+  applicableTo: z.nativeEnum(CouponApplicableTo).optional(),
   vendorId: z.string().optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),

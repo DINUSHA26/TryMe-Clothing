@@ -2,7 +2,9 @@
  * Coupon types for discount validation and application
  */
 
-import { CouponType } from "@prisma/client";
+import { CouponType, CouponApplicableTo } from "@prisma/client";
+
+export { CouponApplicableTo };
 
 /**
  * Coupon validation result
@@ -17,6 +19,7 @@ export interface CouponValidation {
     minOrderAmount?: number | null;
     maxDiscount?: number | null;
     vendorId?: string | null;
+    applicableTo?: CouponApplicableTo;
   };
   discount?: {
     amount: number;
@@ -39,6 +42,7 @@ export interface ValidateCouponRequest {
     quantity: number;
     price: number;
   }[];
+  channel?: "TRYME" | "OWN_WEBSITE";
 }
 
 /**

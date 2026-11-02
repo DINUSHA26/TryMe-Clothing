@@ -160,6 +160,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Check channel applicability
+      if (coupon.applicableTo === "OWN_WEBSITE") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "This coupon is only valid on the vendor's standalone website, not on TryMe.lk",
+          },
+          { status: 400 }
+        );
+      }
+
       // Validate coupon (date, usage, etc.)
       const now = new Date();
       if (

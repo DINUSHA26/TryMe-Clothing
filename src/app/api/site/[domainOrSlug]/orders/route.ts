@@ -116,6 +116,7 @@ export async function POST(
       paymentSlipUrl,
       bankReference,
       notes,
+      couponCode,
     } = body;
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -259,11 +260,84 @@ export async function POST(
         }
       }
 
+      // Validate and apply coupon if provided
+      let coupon: any = null;
+      let discountAmount = 0;
+
+      if (couponCode && typeof couponCode === "string" && couponCode.trim()) {
+        const cleanCode = couponCode.trim().toUpperCase();
+        coupon = await prisma.coupon.findUnique({
+          where: { code: cleanCode },
+        });
+
+        if (!coupon || !coupon.isActive) {
+          return NextResponse.json(
+            { success: false, error: "Invalid or inactive coupon code" },
+            { status: 400 }
+          );
+        }
+
+        // Channel check: cannot be TryMe-only
+        if (coupon.applicableTo === "TRYME") {
+          return NextResponse.json(
+            { success: false, error: "This coupon is only valid on the TryMe.lk marketplace" },
+            { status: 400 }
+          );
+        }
+
+        // Vendor check
+        if (coupon.vendorId && coupon.vendorId !== vendorId) {
+          return NextResponse.json(
+            { success: false, error: "This coupon is not valid for this store" },
+            { status: 400 }
+          );
+        }
+
+        // Date check
+        const now = new Date();
+        if (now < coupon.validFrom || (coupon.validUntil && now > coupon.validUntil)) {
+          return NextResponse.json(
+            { success: false, error: "Coupon is not valid at this time" },
+            { status: 400 }
+          );
+        }
+
+        // Total usage limit check
+        if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
+          return NextResponse.json(
+            { success: false, error: "Coupon has reached its maximum usage limit" },
+            { status: 400 }
+          );
+        }
+
+        // Min order amount check
+        if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount.toNumber()) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Minimum order amount for this coupon is Rs. ${coupon.minOrderAmount.toNumber().toFixed(2)}`,
+            },
+            { status: 400 }
+          );
+        }
+
+        // Calculate discount with precise 2-decimal rounding
+        if (coupon.type === "PERCENTAGE") {
+          discountAmount = (subtotal * Number(coupon.value)) / 100;
+          if (coupon.maxDiscount && discountAmount > Number(coupon.maxDiscount)) {
+            discountAmount = Number(coupon.maxDiscount);
+          }
+        } else {
+          discountAmount = Math.min(Number(coupon.value), subtotal);
+        }
+        discountAmount = Number(discountAmount.toFixed(2));
+      }
+
       const shippingAmount =
         freeShippingThreshold > 0 && subtotal >= freeShippingThreshold
           ? 0
           : shippingFeeSetting;
-      const totalAmount = subtotal + shippingAmount;
+      const totalAmount = Math.max(0, Number((subtotal - discountAmount + shippingAmount).toFixed(2)));
 
       // Initial status:
       // For COD, set to PAYMENT_CONFIRMED so vendor can immediately process/ship, or PENDING_VERIFICATION for Bank Deposit
@@ -304,9 +378,10 @@ export async function POST(
               customerId,
               status: initialOrderStatus,
               subtotal: new Prisma.Decimal(subtotal),
-              discountAmount: new Prisma.Decimal(0),
+              discountAmount: new Prisma.Decimal(discountAmount),
               shippingAmount: new Prisma.Decimal(shippingAmount),
               totalAmount: new Prisma.Decimal(totalAmount),
+              couponId: coupon?.id || null,
               shippingAddressJson: addressSnapshot as any,
               notes: notes
                 ? `[Website Direct Order - ${normalizedMethod}] ${notes}`
@@ -371,6 +446,20 @@ export async function POST(
             },
           });
 
+          if (coupon) {
+            await tx.coupon.update({
+              where: { id: coupon.id },
+              data: { usageCount: { increment: 1 } },
+            });
+            await tx.couponUsage.create({
+              data: {
+                couponId: coupon.id,
+                customerId,
+                orderId: order.id,
+              },
+            });
+          }
+
           return order;
         });
 
@@ -382,8 +471,10 @@ export async function POST(
             status: createdOrder.status,
             paymentMethod: normalizedMethod,
             subtotal,
+            discountAmount,
             shippingAmount,
             totalAmount,
+            couponCode: coupon?.code || null,
             createdAt: createdOrder.createdAt.toISOString(),
           },
         });

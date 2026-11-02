@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { search, type, isActive, vendorId, page, limit } = validation.data;
+    const { search, type, isActive, applicableTo, vendorId, page, limit } = validation.data;
 
     // Build where clause
     const where: Prisma.CouponWhereInput = {};
@@ -57,6 +57,10 @@ export async function GET(request: NextRequest) {
 
     if (isActive !== undefined) {
       where.isActive = isActive === "true";
+    }
+
+    if (applicableTo) {
+      where.applicableTo = applicableTo;
     }
 
     if (vendorId) {
@@ -206,6 +210,7 @@ export async function POST(request: NextRequest) {
         vendorId: data.vendorId,
         isActive: data.isActive,
         isFeatured: data.isFeatured ?? false,
+        applicableTo: data.applicableTo ?? "BOTH",
         validFrom: data.validFrom,
         validUntil: data.validUntil,
       },

@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { search, type, isActive, page, limit } = validation.data;
+    const { search, type, isActive, applicableTo, page, limit } = validation.data;
 
     // Build where clause - vendor can only see their own coupons
     const where: Prisma.CouponWhereInput = {
@@ -72,6 +72,10 @@ export async function GET(request: NextRequest) {
 
     if (isActive !== undefined) {
       where.isActive = isActive === "true";
+    }
+
+    if (applicableTo) {
+      where.applicableTo = applicableTo;
     }
 
     // Get total count
@@ -204,6 +208,7 @@ export async function POST(request: NextRequest) {
         vendorId, // Always set to current vendor
         isActive: data.isActive,
         isFeatured: data.isFeatured ?? false,
+        applicableTo: data.applicableTo ?? "BOTH",
         validFrom: data.validFrom,
         validUntil: data.validUntil,
       },

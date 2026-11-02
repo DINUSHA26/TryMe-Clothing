@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let { code, subtotal, cartItems } = validation.data;
+    let { code, subtotal, cartItems, channel = "TRYME" } = validation.data;
     
     // Round subtotal to 2 decimal places to avoid floating point issues
     subtotal = Number(subtotal.toFixed(2));
@@ -76,6 +76,27 @@ export async function POST(request: NextRequest) {
         data: {
           isValid: false,
           error: "Invalid coupon code",
+        },
+      });
+    }
+
+    // Check channel applicability
+    if (channel === "TRYME" && coupon.applicableTo === "OWN_WEBSITE") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          isValid: false,
+          error: "This coupon is only valid on the vendor's standalone website",
+        },
+      });
+    }
+
+    if (channel === "OWN_WEBSITE" && coupon.applicableTo === "TRYME") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          isValid: false,
+          error: "This coupon is only valid on the TryMe.lk marketplace",
         },
       });
     }
@@ -203,6 +224,7 @@ export async function POST(request: NextRequest) {
           minOrderAmount: coupon.minOrderAmount?.toNumber() || null,
           maxDiscount: coupon.maxDiscount?.toNumber() || null,
           vendorId: coupon.vendorId,
+          applicableTo: coupon.applicableTo,
         },
         discount: {
           amount: discountAmount,

@@ -5,7 +5,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Coupon, CouponType } from "@prisma/client";
+import { Coupon, CouponType, CouponApplicableTo } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -61,6 +61,7 @@ export function CouponForm({
       usageLimit: coupon?.usageLimit || undefined,
       perUserLimit: coupon?.perUserLimit || 1,
       vendorId: coupon?.vendorId || null,
+      applicableTo: (coupon as any)?.applicableTo || CouponApplicableTo.BOTH,
       isActive: coupon?.isActive ?? true,
       isFeatured: (coupon as any)?.isFeatured ?? false,
       validFrom: coupon?.validFrom
@@ -339,6 +340,41 @@ export function CouponForm({
               )}
             />
           )}
+
+          <FormField
+            control={form.control as any}
+            name="applicableTo"
+            render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                <FormLabel>Offer Applicable Channels (Where Can This Offer Be Used?)</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select where this coupon can be used" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={CouponApplicableTo.BOTH}>
+                      🌐 Both TryMe.lk Marketplace &amp; Own Website
+                    </SelectItem>
+                    <SelectItem value={CouponApplicableTo.OWN_WEBSITE}>
+                      🏪 Own Standalone Website Only
+                    </SelectItem>
+                    <SelectItem value={CouponApplicableTo.TRYME}>
+                      🛍️ TryMe.lk Marketplace Only
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Choose whether this coupon discount applies on your own standalone website, TryMe.lk marketplace, or both channels.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control as any}

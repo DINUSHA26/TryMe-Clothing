@@ -29,6 +29,7 @@ import {
   Send,
   Upload,
   X,
+  Tag,
   Package,
   FileText,
   ExternalLink,
@@ -303,7 +304,59 @@ export default function StandaloneSiteClient({
       : freeShippingThreshold > 0 && cartSubtotal >= freeShippingThreshold
       ? 0
       : shippingFee;
-  const cartTotal = cartSubtotal + cartShipping;
+  // Coupon State on Standalone Site
+  const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    amount: number;
+    type: "PERCENTAGE" | "FLAT";
+    value: number;
+  } | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  const handleApplyCoupon = async () => {
+    const code = couponCodeInput.trim().toUpperCase();
+    if (!code) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+    setIsApplyingCoupon(true);
+    setCouponError(null);
+    try {
+      const res = await fetch(`/api/site/${domainOrSlug}/coupons/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal: cartSubtotal }),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.isValid) {
+        setAppliedCoupon({
+          code: data.data.coupon.code,
+          amount: data.data.discount.amount,
+          type: data.data.coupon.type,
+          value: data.data.coupon.value,
+        });
+        setCouponCodeInput("");
+        showToast(`Coupon "${data.data.coupon.code}" applied: Rs. ${data.data.discount.amount.toFixed(2)} OFF!`);
+      } else {
+        setCouponError(data.data?.error || data.error || "Invalid coupon code");
+      }
+    } catch {
+      setCouponError("Failed to apply coupon");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+    setCouponCodeInput("");
+  };
+
+  const cartDiscount = appliedCoupon ? appliedCoupon.amount : 0;
+  const cartTotal = Math.max(0, Number((cartSubtotal - cartDiscount + cartShipping).toFixed(2)));
 
   // 1-Page Inquiry Modal State (also available on 6/12 page for quick inquiry)
   const [inquiryModalItem, setInquiryModalItem] = useState<any | null>(null);
@@ -780,6 +833,7 @@ export default function StandaloneSiteClient({
           paymentSlipUrl,
           bankReference: checkoutForm.bankReference,
           notes: checkoutForm.notes,
+          couponCode: appliedCoupon?.code || null,
         }),
       });
       const data = await res.json();
@@ -789,6 +843,7 @@ export default function StandaloneSiteClient({
           items: [...cart],
           shippingAddress: { ...checkoutForm },
         });
+        setAppliedCoupon(null);
         saveCart([]);
         navigateTo("order-success");
       } else {
@@ -2143,6 +2198,15 @@ export default function StandaloneSiteClient({
                       Rs. {cartSubtotal.toLocaleString()}
                     </span>
                   </div>
+                  {cartDiscount > 0 && (
+                    <div className="flex justify-between text-emerald-600 font-bold">
+                      <span className="flex items-center gap-1">
+                        <Tag className="w-3.5 h-3.5" />
+                        Discount ({appliedCoupon?.code})
+                      </span>
+                      <span>- Rs. {cartDiscount.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-slate-500">Delivery Charge</span>
                     <span className="font-bold text-slate-900">
@@ -2548,11 +2612,81 @@ export default function StandaloneSiteClient({
                     ))}
                   </div>
 
+                                    {/* Coupon / Discount Code Input */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                      Have a Coupon / Promo Code?
+                    </span>
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>
+                            <strong>{appliedCoupon.code}</strong> applied (- Rs. {appliedCoupon.amount.toFixed(2)})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
+                          title="Remove Coupon"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponCodeInput}
+                          onChange={(e) => {
+                            setCouponCodeInput(e.target.value.toUpperCase());
+                            setCouponError(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleApplyCoupon();
+                            }
+                          }}
+                          placeholder="ENTER COUPON CODE"
+                          className="flex-1 px-3 py-2 text-xs font-black uppercase rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2"
+                        />
+                        <button
+                          type="button"
+                          disabled={isApplyingCoupon || !couponCodeInput.trim()}
+                          onClick={handleApplyCoupon}
+                          className="px-4 py-2 rounded-xl text-white text-xs font-black uppercase tracking-wider disabled:opacity-50 transition-all shrink-0"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          {isApplyingCoupon ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            "Apply"
+                          )}
+                        </button>
+                      </div>
+                    )}
+                    {couponError && (
+                      <p className="text-[11px] font-bold text-rose-600">{couponError}</p>
+                    )}
+                  </div>
+
                   <div className="space-y-2 text-xs pt-2 border-t">
-                    <div className="flex justify-between">
+                                        <div className="flex justify-between">
                       <span className="text-slate-500">Subtotal</span>
                       <span className="font-bold">Rs. {cartSubtotal.toLocaleString()}</span>
                     </div>
+                    {cartDiscount > 0 && (
+                      <div className="flex justify-between text-emerald-600 font-bold">
+                        <span className="flex items-center gap-1">
+                          <Tag className="w-3 h-3" />
+                          Coupon Discount ({appliedCoupon?.code})
+                        </span>
+                        <span>- Rs. {cartDiscount.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-slate-500">Delivery Fee</span>
                       <span className="font-bold">
@@ -2657,6 +2791,12 @@ export default function StandaloneSiteClient({
               </div>
 
               <div className="space-y-1.5 text-xs">
+                {Number(placedOrder?.discountAmount || 0) > 0 && (
+                  <div className="flex justify-between font-bold text-emerald-600 text-xs">
+                    <span>Coupon Discount {placedOrder?.couponCode ? `(${placedOrder.couponCode})` : ""}</span>
+                    <span>- Rs. {Number(placedOrder.discountAmount).toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-slate-900 text-sm pt-1">
                   <span>Total Amount</span>
                   <span style={{ color: primaryColor }}>

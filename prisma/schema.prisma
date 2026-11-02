@@ -68,6 +68,12 @@ enum CouponType {
   PERCENTAGE
 }
 
+enum CouponApplicableTo {
+  BOTH
+  TRYME
+  OWN_WEBSITE
+}
+
 enum PayoutStatus {
   PENDING
   PROCESSING
@@ -636,6 +642,7 @@ model Coupon {
   vendor         Vendor?      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   isActive       Boolean      @default(true)
   isFeatured     Boolean      @default(false)
+  applicableTo   CouponApplicableTo @default(BOTH)
   validFrom      DateTime     @default(now())
   validUntil     DateTime?
   createdAt      DateTime     @default(now())
@@ -649,6 +656,7 @@ model Coupon {
   @@index([vendorId])
   @@index([isActive])
   @@index([isActive, isFeatured])
+  @@index([applicableTo])
 }
 
 model CouponUsage {

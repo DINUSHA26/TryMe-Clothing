@@ -78,6 +78,7 @@ export default function AdminCouponsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [vendorFilter, setVendorFilter] = useState<string>("all");
+  const [channelFilter, setChannelFilter] = useState<string>("all");
 
   // Dialogs
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -98,7 +99,7 @@ export default function AdminCouponsPage() {
 
   useEffect(() => {
     fetchCoupons();
-  }, [search, typeFilter, statusFilter, vendorFilter]);
+  }, [search, typeFilter, statusFilter, vendorFilter, channelFilter]);
 
   const fetchVendors = async () => {
     try {
@@ -127,6 +128,7 @@ export default function AdminCouponsPage() {
       if (typeFilter !== "all") params.append("type", typeFilter);
       if (statusFilter !== "all") params.append("isActive", statusFilter);
       if (vendorFilter !== "all") params.append("vendorId", vendorFilter);
+      if (channelFilter !== "all") params.append("applicableTo", channelFilter);
 
       const response = await fetch(`/api/admin/coupons?${params.toString()}`);
       const data = await response.json();
@@ -288,6 +290,18 @@ export default function AdminCouponsPage() {
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value={CouponType.PERCENTAGE}>Percentage</SelectItem>
             <SelectItem value={CouponType.FLAT}>Flat Amount</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={channelFilter} onValueChange={setChannelFilter}>
+          <SelectTrigger className="w-full md:w-[190px]">
+            <SelectValue placeholder="All Channels" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Channels</SelectItem>
+            <SelectItem value="BOTH">🌐 TryMe &amp; Website</SelectItem>
+            <SelectItem value="OWN_WEBSITE">🏪 Own Website Only</SelectItem>
+            <SelectItem value="TRYME">🛍️ TryMe.lk Only</SelectItem>
           </SelectContent>
         </Select>
 

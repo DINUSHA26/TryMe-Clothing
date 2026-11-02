@@ -225,6 +225,7 @@ export async function PATCH(
         }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
         ...(data.isFeatured !== undefined && { isFeatured: data.isFeatured }),
+        ...(data.applicableTo && { applicableTo: data.applicableTo }),
         ...(data.validFrom && { validFrom: data.validFrom }),
         ...(data.validUntil !== undefined && { validUntil: data.validUntil }),
       },

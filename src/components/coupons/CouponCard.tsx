@@ -89,8 +89,12 @@ export function CouponCard({
             </div>
             <p className="text-2xl font-bold text-green-600">{discountText}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
             <CouponBadge type={coupon.type} />
+            <CouponBadge
+              variant="channel"
+              applicableTo={(coupon as any).applicableTo || "BOTH"}
+            />
             <CouponBadge
               type={coupon.type}
               isActive={coupon.isActive && !isExpired}

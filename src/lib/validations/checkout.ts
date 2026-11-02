@@ -28,6 +28,7 @@ export const validateCouponSchema = z.object({
       })
     )
     .min(1, "Cart must have at least one item"),
+  channel: z.enum(["TRYME", "OWN_WEBSITE"]).optional().default("TRYME"),
 });
 
 export type ValidateCouponInput = z.infer<typeof validateCouponSchema>;
