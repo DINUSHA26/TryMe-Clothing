@@ -1460,8 +1460,9 @@ export default function WebsiteBuilderPage() {
           } w-full lg:w-[480px] border-r bg-white dark:bg-slate-900 overflow-y-auto p-3.5 md:p-6 space-y-5 md:space-y-6`}
         >
           <Tabs value={builderTab} onValueChange={setBuilderTab} className="w-full">
-            <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto bg-slate-100 dark:bg-slate-800 p-1 gap-1 md:gap-0 rounded-xl">
+            <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full h-auto bg-slate-100 dark:bg-slate-800 p-1 gap-1 md:gap-0 rounded-xl">
               <TabsTrigger value="branding" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Branding</TabsTrigger>
+              <TabsTrigger value="contact" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate text-[#FF6600]">Inquiries</TabsTrigger>
               <TabsTrigger value="sections" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Sections</TabsTrigger>
               <TabsTrigger value="menu" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Navbar</TabsTrigger>
               <TabsTrigger value="pages" className="text-[11px] font-bold rounded-lg px-2 py-1.5 md:py-1 md:px-1.5 truncate">Pages</TabsTrigger>
@@ -1636,6 +1637,166 @@ export default function WebsiteBuilderPage() {
                     <option value="Roboto">Roboto (Bold Standard)</option>
                   </select>
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* TAB: WHATSAPP, PHONE & INQUIRIES */}
+            <TabsContent value="contact" className="space-y-6 pt-4">
+              <div className="p-4 rounded-2xl bg-orange-50/80 dark:bg-orange-950/40 border border-orange-200/90 dark:border-orange-800/60 space-y-2">
+                <div className="flex items-center gap-2 text-[#FF6600]">
+                  <MessageCircle className="w-5 h-5 shrink-0" />
+                  <h3 className="font-extrabold text-sm text-gray-900 dark:text-white">
+                    Store WhatsApp, Inquiries & Contacts
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                  Configure the dedicated contact channels where your website visitors will submit 1-click WhatsApp orders, direct phone calls, and email inquiries. You can use any custom business numbers here without affecting your TryMe login credentials.
+                </p>
+              </div>
+
+              {/* 1. WHATSAPP CONFIGURATION */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-emerald-600" />
+                    <h3 className="font-bold text-sm">WhatsApp Inquiries & Orders</h3>
+                  </div>
+                  {config.contactSection?.whatsapp ? (
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                      Not Configured
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    WhatsApp Number
+                  </Label>
+                  <Input
+                    value={config.contactSection?.whatsapp || ""}
+                    onChange={(e) => handleUpdateContactSection({ whatsapp: e.target.value })}
+                    placeholder="e.g. 0771234567 or 94771234567"
+                    className="rounded-xl text-xs font-medium"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    When visitors click &quot;Order via WhatsApp&quot;, &quot;Inquire via WhatsApp&quot;, or the floating chat button, it opens a direct chat with this number.
+                  </p>
+                  {config.contactSection?.whatsapp && (
+                    <div className="pt-1">
+                      <a
+                        href={`https://wa.me/${(() => {
+                          let p = (config.contactSection.whatsapp || "").replace(/[^0-9]/g, "");
+                          if (p.startsWith("0") && p.length === 10) p = "94" + p.slice(1);
+                          return p;
+                        })()}?text=Hello%20Store%2C%20testing%20WhatsApp%20order%20link`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Test WhatsApp Link (Opens Chat)
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. DIRECT CALL NUMBER */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-blue-600" />
+                  <h3 className="font-bold text-sm">Direct Phone Call Hotline</h3>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    Hotline / Mobile Number
+                  </Label>
+                  <Input
+                    value={config.contactSection?.phone || ""}
+                    onChange={(e) => handleUpdateContactSection({ phone: e.target.value })}
+                    placeholder="e.g. 0112345678 or 0771234567"
+                    className="rounded-xl text-xs font-medium"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    Displayed on your website header, contact card, and footer for direct telephone calls (tel link).
+                  </p>
+                </div>
+              </div>
+
+              {/* 3. EMAIL ADDRESS */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-purple-600" />
+                  <h3 className="font-bold text-sm">Store Inquiries Email</h3>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    Customer Inquiries Email
+                  </Label>
+                  <Input
+                    value={config.contactSection?.email || ""}
+                    onChange={(e) => handleUpdateContactSection({ email: e.target.value })}
+                    placeholder="e.g. sales@yourstore.lk or business@gmail.com"
+                    className="rounded-xl text-xs font-medium"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    Used for &quot;Order via Email&quot; and inquiry form notifications from your personal website.
+                  </p>
+                </div>
+              </div>
+
+              {/* 4. ADDRESS & SHOP LOCATION */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-rose-600" />
+                  <h3 className="font-bold text-sm">Physical Shop / Office Address</h3>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    Shop / Pickup Address (Optional)
+                  </Label>
+                  <Input
+                    value={config.contactSection?.address || ""}
+                    onChange={(e) => handleUpdateContactSection({ address: e.target.value })}
+                    placeholder="e.g. No. 45, Galle Road, Colombo 03"
+                    className="rounded-xl text-xs font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* 5. OPENING HOURS & FORM SETTINGS */}
+              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-600" />
+                    <h3 className="font-bold text-sm">Opening / Business Hours</h3>
+                  </div>
+                  <Switch
+                    checked={config.contactSection?.showOpeningHours !== false}
+                    onCheckedChange={(c) => handleUpdateContactSection({ showOpeningHours: c })}
+                  />
+                </div>
+                {config.contactSection?.showOpeningHours !== false && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      Hours Schedule
+                    </Label>
+                    <Textarea
+                      rows={2}
+                      value={
+                        config.contactSection?.openingHours ??
+                        "Monday – Saturday: 9:00 AM – 8:00 PM\nSunday: 10:00 AM – 5:00 PM"
+                      }
+                      onChange={(e) => handleUpdateContactSection({ openingHours: e.target.value })}
+                      placeholder="e.g. Mon - Sat: 9:00 AM - 7:00 PM"
+                      className="rounded-xl text-xs resize-none"
+                    />
+                  </div>
+                )}
               </div>
             </TabsContent>
 

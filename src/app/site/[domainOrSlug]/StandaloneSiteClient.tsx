@@ -365,10 +365,12 @@ export default function StandaloneSiteClient({
   const contact = config?.contactSection || {};
   const footer = config?.footerSection || {};
 
-  const whatsappPhone = (contact.whatsapp || contact.phone || vendor?.phone || "").replace(
-    /[^0-9]/g,
-    ""
-  );
+  const rawWhatsapp = contact.whatsapp || contact.phone || vendor?.phone || "";
+  let cleanWhatsapp = rawWhatsapp.replace(/[^0-9]/g, "");
+  if (cleanWhatsapp.startsWith("0") && cleanWhatsapp.length === 10) {
+    cleanWhatsapp = "94" + cleanWhatsapp.slice(1);
+  }
+  const whatsappPhone = cleanWhatsapp;
   const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}` : "#";
   const vendorEmail = contact.email || vendor?.email || vendor?.businessEmail || "";
 
@@ -3540,6 +3542,24 @@ export default function StandaloneSiteClient({
             )}
           </div>
         </div>
+      )}
+
+      {/* Floating WhatsApp Action Button */}
+      {whatsappPhone && (
+        <a
+          href={`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(
+            `Hello ${vendor?.businessName || "Store"}, I am browsing your website and would like to inquire about your offerings.`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 left-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-2 group"
+          title="Chat with us on WhatsApp"
+        >
+          <MessageCircle className="w-6 h-6 shrink-0" />
+          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap text-xs font-bold pr-1">
+            WhatsApp Us
+          </span>
+        </a>
       )}
     </div>
   );

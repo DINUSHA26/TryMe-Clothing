@@ -38,7 +38,10 @@ export default function ContactSectionClient({
 
   const phone = contact?.phone || vendor?.phone || vendor?.businessPhone || "";
   const whatsappNumber = contact?.whatsapp || phone;
-  const cleanWhatsapp = (whatsappNumber || "").replace(/[^0-9]/g, "");
+  let cleanWhatsapp = (whatsappNumber || "").replace(/[^0-9]/g, "");
+  if (cleanWhatsapp.startsWith("0") && cleanWhatsapp.length === 10) {
+    cleanWhatsapp = "94" + cleanWhatsapp.slice(1);
+  }
   const email = contact?.email || vendor?.businessEmail || vendor?.email || "";
   const address = contact?.address || vendor?.businessAddress || "";
 
