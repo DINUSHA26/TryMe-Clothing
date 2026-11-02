@@ -389,14 +389,19 @@ export default function WebsiteBuilderPage() {
   };
 
   // Send live update to iframe whenever config changes or preview asks for it
-  const sendPreviewUpdate = () => {
+  const sendPreviewUpdate = (overrideDeviceView?: "desktop" | "tablet" | "mobile") => {
     if (loading) return;
     if (iframeRef.current && iframeRef.current.contentWindow) {
+      const effectiveDeviceView =
+        overrideDeviceView ||
+        (mobilePreviewOpen || (typeof window !== "undefined" && window.innerWidth < 768)
+          ? "mobile"
+          : deviceView);
       iframeRef.current.contentWindow.postMessage(
         {
           type: "PREVIEW_UPDATE",
           activePageSlug: editingPage?.slug || "home",
-          deviceView,
+          deviceView: effectiveDeviceView,
           payload: {
             config,
             entityInfo,
@@ -1380,7 +1385,8 @@ export default function WebsiteBuilderPage() {
               const next = !mobilePreviewOpen;
               setMobilePreviewOpen(next);
               if (next) {
-                setTimeout(() => sendPreviewUpdate(), 100);
+                setDeviceView("mobile");
+                setTimeout(() => sendPreviewUpdate("mobile"), 100);
               }
             }}
             className={`md:hidden font-bold text-xs rounded-xl gap-1.5 ${
@@ -4178,7 +4184,7 @@ export default function WebsiteBuilderPage() {
           <div
             className={`transition-all duration-300 h-[calc(100vh-190px)] md:h-full w-full bg-white rounded-2xl shadow-2xl border overflow-hidden flex flex-col ${
               deviceView === "mobile"
-                ? "max-w-[375px] max-h-[780px] rounded-[40px] border-[12px] border-slate-900 shadow-2xl"
+                ? "md:max-w-[375px] md:max-h-[780px] md:rounded-[40px] md:border-[12px] md:border-slate-900 shadow-2xl"
                 : deviceView === "tablet"
                 ? "max-w-[768px] max-h-[920px] rounded-[28px] border-[8px] border-slate-900 shadow-2xl"
                 : "max-w-full"
@@ -4188,7 +4194,7 @@ export default function WebsiteBuilderPage() {
               ref={iframeRef}
               src="/site-preview"
               title="Website Preview"
-              onLoad={sendPreviewUpdate}
+              onLoad={() => sendPreviewUpdate()}
               className="w-full h-full border-none"
             />
           </div>

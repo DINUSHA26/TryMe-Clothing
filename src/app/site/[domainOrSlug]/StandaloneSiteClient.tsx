@@ -1113,11 +1113,7 @@ export default function StandaloneSiteClient({
           {/* Center: Desktop / Tablet Navigation Links */}
           <nav
             className={`${
-              isPreview
-                ? previewDevice === "mobile"
-                  ? "hidden"
-                  : "flex"
-                : "hidden md:flex"
+              isPreview && previewDevice === "mobile" ? "hidden" : "hidden md:flex"
             } flex-wrap items-center justify-center gap-3.5 lg:gap-5 xl:gap-6 text-sm font-semibold text-slate-600`}
           >
             {visibleNavItems.map((item: any) => {
@@ -1215,11 +1211,7 @@ export default function StandaloneSiteClient({
               type="button"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
               className={`${
-                isPreview
-                  ? previewDevice === "mobile"
-                    ? "inline-flex"
-                    : "hidden"
-                  : "md:hidden inline-flex"
+                isPreview && previewDevice === "mobile" ? "inline-flex" : "md:hidden inline-flex"
               } items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-900 transition-colors shrink-0`}
               aria-label="Toggle Menu"
             >
@@ -1236,7 +1228,7 @@ export default function StandaloneSiteClient({
         {mobileMenuOpen && (
           <div
             className={`${
-              isPreview ? (previewDevice === "mobile" ? "block" : "hidden") : "md:hidden"
+              isPreview && previewDevice === "mobile" ? "block" : "md:hidden block"
             } border-t border-slate-200 bg-white shadow-2xl px-4 pt-3 pb-5 space-y-3 animate-in fade-in slide-in-from-top-2`}
           >
             <div className="flex flex-col space-y-1">
