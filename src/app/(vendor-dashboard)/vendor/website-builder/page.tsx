@@ -3125,6 +3125,25 @@ export default function WebsiteBuilderPage() {
                     </div>
                   </div>
 
+                  {/* CONTACT DETAILS CARDS OPTION */}
+                  <div className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                          Show Direct Contact Cards (Phone, WhatsApp, Email, Location)
+                        </span>
+                      </div>
+                      <Switch
+                        checked={config.contactSection?.showContactCards !== false}
+                        onCheckedChange={(c) => handleUpdateContactSection({ showContactCards: c })}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Display interactive direct call, WhatsApp chat, email, and address info cards.
+                    </p>
+                  </div>
+
                   {/* OPENING HOURS OPTION */}
                   <div className="p-3 border rounded-xl bg-white dark:bg-slate-950 space-y-2">
                     <div className="flex items-center justify-between">
@@ -4957,91 +4976,322 @@ export default function WebsiteBuilderPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            {/* 1. Slider */}
-            <button
-              type="button"
-              onClick={() => handleAddCustomSection("slider", addSectionForPage)}
-              className="p-5 rounded-2xl border-2 border-indigo-200/90 hover:border-indigo-600 bg-gradient-to-b from-indigo-50/70 to-white dark:from-indigo-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
-            >
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                  <Sliders className="w-5 h-5" />
-                </div>
-                <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-indigo-600">Multi-Slide Banner / Slider</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Full-width rotating slideshow with images, headlines, promotional badges, auto-play, and call-to-action buttons.
-                </p>
-              </div>
-              <span className="text-[11px] font-extrabold text-indigo-600 dark:text-indigo-400 pt-3 flex items-center gap-1">
-                <span>+ Add Slider</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </span>
-            </button>
+          <Tabs defaultValue="media" className="w-full pt-2">
+            <TabsList className="grid grid-cols-3 w-full rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-4">
+              <TabsTrigger value="media" className="rounded-lg text-xs font-bold py-1.5">
+                🌟 Media &amp; Sliders
+              </TabsTrigger>
+              <TabsTrigger value="contact" className="rounded-lg text-xs font-bold py-1.5">
+                📩 Contact Features
+              </TabsTrigger>
+              <TabsTrigger value="store" className="rounded-lg text-xs font-bold py-1.5">
+                🛍️ Store Sections
+              </TabsTrigger>
+            </TabsList>
 
-            {/* 2. Video */}
-            <button
-              type="button"
-              onClick={() => handleAddCustomSection("video", addSectionForPage)}
-              className="p-5 rounded-2xl border-2 border-rose-200/90 hover:border-rose-600 bg-gradient-to-b from-rose-50/70 to-white dark:from-rose-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
-            >
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                  <Video className="w-5 h-5" />
+            {/* TAB 1: DYNAMIC MEDIA */}
+            <TabsContent value="media" className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* 1. Slider */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("slider", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-indigo-200/90 hover:border-indigo-600 bg-gradient-to-b from-indigo-50/70 to-white dark:from-indigo-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Sliders className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-indigo-600">Multi-Slide Banner Slider</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Rotating slideshow with photos, headlines, badges, auto-play, and action buttons.
+                  </p>
                 </div>
-                <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-rose-600">Video Showcase Player</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Embedded video player supporting YouTube, Shorts, Vimeo, or direct MP4 links with custom title and action button.
-                </p>
-              </div>
-              <span className="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 pt-3 flex items-center gap-1">
-                <span>+ Add Video</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </span>
-            </button>
+                <span className="text-[11px] font-extrabold text-indigo-600 dark:text-indigo-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Slider</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
 
-            {/* 3. Carousel */}
-            <button
-              type="button"
-              onClick={() => handleAddCustomSection("carousel", addSectionForPage)}
-              className="p-5 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
-            >
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                  <Layers className="w-5 h-5" />
+              {/* 2. Video */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("video", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-rose-200/90 hover:border-rose-600 bg-gradient-to-b from-rose-50/70 to-white dark:from-rose-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Video className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-rose-600">Video Showcase Player</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Responsive player for YouTube, Shorts, Vimeo, or MP4 video links with CTA button.
+                  </p>
                 </div>
-                <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-amber-600">Feature Carousel Cards</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Horizontal touch-swipeable card carousel for featured products, collections, bestsellers, or highlights with prices.
-                </p>
-              </div>
-              <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 pt-3 flex items-center gap-1">
-                <span>+ Add Carousel</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </span>
-            </button>
+                <span className="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Video</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
 
-            {/* 4. Image Banner */}
-            <button
-              type="button"
-              onClick={() => handleAddCustomSection("image_banner", addSectionForPage)}
-              className="p-5 rounded-2xl border-2 border-teal-200/90 hover:border-teal-600 bg-gradient-to-b from-teal-50/70 to-white dark:from-teal-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
-            >
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                  <Camera className="w-5 h-5" />
+              {/* 3. Carousel */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("carousel", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-amber-600">Feature Carousel Cards</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Horizontal touch-swipeable card carousel with images, tags, prices, and links.
+                  </p>
                 </div>
-                <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-teal-600">Promotional Image Banner</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  High-impact promotional banner image with clickable target link, custom height, and optional text overlay.
-                </p>
-              </div>
-              <span className="text-[11px] font-extrabold text-teal-600 dark:text-teal-400 pt-3 flex items-center gap-1">
-                <span>+ Add Banner</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </span>
-            </button>
-          </div>
+                <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Carousel</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* 4. Image Banner */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("image_banner", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-teal-200/90 hover:border-teal-600 bg-gradient-to-b from-teal-50/70 to-white dark:from-teal-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-teal-600">Promotional Image Banner</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Full-width promo banner with click link, height choices, and headline text overlay.
+                  </p>
+                </div>
+                <span className="text-[11px] font-extrabold text-teal-600 dark:text-teal-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Banner</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+            </TabsContent>
+
+            {/* TAB 2: CONTACT & LOCATION STANDALONE FEATURES */}
+            <TabsContent value="contact" className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Form Only */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("contact_form", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-sky-200/90 hover:border-sky-600 bg-gradient-to-b from-sky-50/70 to-white dark:from-sky-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Send className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-sky-600">Inquiry &amp; Contact Form Only</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Embed JUST the inquiry form (Name, Phone, Email, Message, WhatsApp submit) without any other cards.
+                  </p>
+                </div>
+                <span className="text-[11px] font-extrabold text-sky-600 dark:text-sky-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Form Only</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* Map Only */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("location_map", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-emerald-200/90 hover:border-emerald-600 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-emerald-600">Google Maps Location Only</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Embed JUST the interactive store map with directions button and address.
+                  </p>
+                </div>
+                <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Map Only</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* Cards Only */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("contact_cards", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-violet-200/90 hover:border-violet-600 bg-gradient-to-b from-violet-50/70 to-white dark:from-violet-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-violet-600">Direct Contact Cards Only</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Embed JUST Phone Call, WhatsApp Chat, Email, and Shop Address info cards.
+                  </p>
+                </div>
+                <span className="text-[11px] font-extrabold text-violet-600 dark:text-violet-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Cards Only</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* Hours Only */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("opening_hours", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-amber-600">Opening &amp; Working Hours Only</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Embed JUST the store opening and working hours schedule box.
+                  </p>
+                </div>
+                <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Hours Only</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* Full Contact */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("full_contact", addSectionForPage)}
+                className="sm:col-span-2 p-4 rounded-2xl border-2 border-teal-200/90 hover:border-teal-600 bg-gradient-to-b from-teal-50/70 to-white dark:from-teal-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex items-center justify-between"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black px-2 py-0.5 rounded-full bg-teal-600 text-white">Full Section</span>
+                    <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-teal-600">Complete Contact &amp; Location Block</h4>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Includes Contact Cards, Opening Hours, Location Map, and the Inquiry Form together.
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-teal-600 shrink-0 ml-4 flex items-center gap-1">
+                  <span>+ Add Full Contact</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+            </TabsContent>
+
+            {/* TAB 3: STORE CONTENT SECTIONS */}
+            <TabsContent value="store" className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Products Catalog */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("products_catalog", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-emerald-200/90 hover:border-emerald-600 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-emerald-600">Products &amp; Ads Catalog</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Embed synced catalog items directly from your store on this page.
+                  </p>
+                </div>
+                <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Products</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* Services List */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("services_list", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-blue-200/90 hover:border-blue-600 bg-gradient-to-b from-blue-50/70 to-white dark:from-blue-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Briefcase className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-blue-600">Services &amp; Offerings</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Embed your list of featured services and booking details on this page.
+                  </p>
+                </div>
+                <span className="text-[11px] font-extrabold text-blue-600 dark:text-blue-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Services</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* About Story */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("about_story", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-purple-200/90 hover:border-purple-600 bg-gradient-to-b from-purple-50/70 to-white dark:from-purple-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-purple-600">About Our Story</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Embed your business background story and photo on this page.
+                  </p>
+                </div>
+                <span className="text-[11px] font-extrabold text-purple-600 dark:text-purple-400 pt-2 flex items-center gap-1">
+                  <span>+ Add About Story</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* Photo Gallery */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("photo_gallery", addSectionForPage)}
+                className="p-4 rounded-2xl border-2 border-rose-200/90 hover:border-rose-600 bg-gradient-to-b from-rose-50/70 to-white dark:from-rose-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+              >
+                <div className="space-y-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-rose-600">Photo Gallery Showcase</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Embed your photo gallery grid on this page.
+                  </p>
+                </div>
+                <span className="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 pt-2 flex items-center gap-1">
+                  <span>+ Add Gallery</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              {/* Reviews Testimonials */}
+              <button
+                type="button"
+                onClick={() => handleAddCustomSection("reviews_list", addSectionForPage)}
+                className="sm:col-span-2 p-4 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex items-center justify-between"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-amber-600">Customer Testimonials &amp; Reviews</h4>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Embed verified customer feedback, star ratings, and review cards.
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-amber-600 shrink-0 ml-4 flex items-center gap-1">
+                  <span>+ Add Reviews</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 

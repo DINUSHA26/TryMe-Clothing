@@ -3594,8 +3594,8 @@ export default function StandaloneSiteClient({
         </>
       )}
 
-      {/* ── Contact Us Section (Always visible on other sub-pages) ── */}
-      {activePage !== "home" && (
+      {/* ── Contact Us Section (Shown on dedicated contact page) ── */}
+      {activePage === "contact" && (
         <ContactSectionClient
           contact={contact}
           vendor={vendor}

@@ -78,6 +78,7 @@ export interface ContactSectionConfig {
   whatsapp?: string;
   email?: string;
   address?: string;
+  showContactCards?: boolean;
   // Opening Hours
   showOpeningHours?: boolean;
   openingHours?: string;
@@ -114,7 +115,21 @@ export interface FooterSectionConfig {
 }
 
 
-export type CustomSectionType = "slider" | "video" | "carousel" | "image_banner";
+export type CustomSectionType =
+  | "slider"
+  | "video"
+  | "carousel"
+  | "image_banner"
+  | "contact_form"
+  | "location_map"
+  | "contact_cards"
+  | "opening_hours"
+  | "full_contact"
+  | "products_catalog"
+  | "services_list"
+  | "about_story"
+  | "photo_gallery"
+  | "reviews_list";
 
 export interface CustomSlideItem {
   id: string;

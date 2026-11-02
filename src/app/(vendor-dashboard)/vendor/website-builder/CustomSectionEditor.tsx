@@ -16,6 +16,15 @@ import {
   Play,
   ExternalLink,
   Loader2,
+  MessageSquare,
+  MapPin,
+  Phone,
+  Clock,
+  ShoppingBag,
+  Sparkles,
+  Info,
+  Images,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,7 +91,10 @@ export default function CustomSectionEditor({
   };
 
   // Section Type Badges & Themes
-  const themeConfig = {
+  const sectionThemes: Record<
+    string,
+    { label: string; icon: any; badgeColor: string; borderActive: string; accentText: string }
+  > = {
     slider: {
       label: "Banner Slider",
       icon: Sliders,
@@ -115,7 +127,79 @@ export default function CustomSectionEditor({
         "border-teal-200/90 dark:border-teal-900/60 bg-gradient-to-b from-teal-50/70 via-white to-white dark:from-teal-950/25 dark:to-slate-900 border-l-4 border-l-teal-600",
       accentText: "text-teal-600 dark:text-teal-400",
     },
-  }[section.type] || {
+    contact_form: {
+      label: "Inquiry & Contact Form",
+      icon: MessageSquare,
+      badgeColor: "bg-emerald-600 text-white",
+      borderActive: "border-emerald-200/90 bg-white border-l-4 border-l-emerald-600",
+      accentText: "text-emerald-600",
+    },
+    location_map: {
+      label: "Store Location Map",
+      icon: MapPin,
+      badgeColor: "bg-blue-600 text-white",
+      borderActive: "border-blue-200/90 bg-white border-l-4 border-l-blue-600",
+      accentText: "text-blue-600",
+    },
+    contact_cards: {
+      label: "Direct Contact Cards",
+      icon: Phone,
+      badgeColor: "bg-cyan-600 text-white",
+      borderActive: "border-cyan-200/90 bg-white border-l-4 border-l-cyan-600",
+      accentText: "text-cyan-600",
+    },
+    opening_hours: {
+      label: "Opening & Working Hours",
+      icon: Clock,
+      badgeColor: "bg-purple-600 text-white",
+      borderActive: "border-purple-200/90 bg-white border-l-4 border-l-purple-600",
+      accentText: "text-purple-600",
+    },
+    full_contact: {
+      label: "Full Contact Section",
+      icon: Phone,
+      badgeColor: "bg-emerald-700 text-white",
+      borderActive: "border-emerald-300 bg-white border-l-4 border-l-emerald-700",
+      accentText: "text-emerald-700",
+    },
+    products_catalog: {
+      label: "Products Catalog",
+      icon: ShoppingBag,
+      badgeColor: "bg-violet-600 text-white",
+      borderActive: "border-violet-200/90 bg-white border-l-4 border-l-violet-600",
+      accentText: "text-violet-600",
+    },
+    services_list: {
+      label: "Services & Offerings",
+      icon: Sparkles,
+      badgeColor: "bg-pink-600 text-white",
+      borderActive: "border-pink-200/90 bg-white border-l-4 border-l-pink-600",
+      accentText: "text-pink-600",
+    },
+    about_story: {
+      label: "About Our Store",
+      icon: Info,
+      badgeColor: "bg-orange-600 text-white",
+      borderActive: "border-orange-200/90 bg-white border-l-4 border-l-orange-600",
+      accentText: "text-orange-600",
+    },
+    photo_gallery: {
+      label: "Photo Gallery",
+      icon: Images,
+      badgeColor: "bg-fuchsia-600 text-white",
+      borderActive: "border-fuchsia-200/90 bg-white border-l-4 border-l-fuchsia-600",
+      accentText: "text-fuchsia-600",
+    },
+    reviews_list: {
+      label: "Customer Reviews",
+      icon: Star,
+      badgeColor: "bg-yellow-600 text-white",
+      borderActive: "border-yellow-200/90 bg-white border-l-4 border-l-yellow-600",
+      accentText: "text-yellow-600",
+    },
+  };
+
+  const themeConfig = sectionThemes[section.type] || {
     label: "Custom Section",
     icon: Sliders,
     badgeColor: "bg-slate-600 text-white",
@@ -748,6 +832,23 @@ export default function CustomSectionEditor({
                     className="text-xs rounded-lg h-8"
                   />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Standalone / Preset Component Info Panel */}
+          {["contact_form", "location_map", "contact_cards", "opening_hours", "full_contact", "products_catalog", "services_list", "about_story", "photo_gallery", "reviews_list"].includes(section.type) && (
+            <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="text-xs space-y-1">
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  Live Synced Store Feature: {themeConfig.label}
+                </p>
+                <p className="text-slate-500 leading-relaxed">
+                  This section renders your store&#39;s {themeConfig.label.toLowerCase()} dynamically. You can adjust the section title and subtitle above or re-order it on this page. All details and settings automatically sync from your website&#39;s configuration.
+                </p>
               </div>
             </div>
           )}
