@@ -68,7 +68,6 @@ import CustomSectionEditor from "./CustomSectionEditor";
 const HERO_DESIGN_PRESETS: {
   id: HeroDesignStyle;
   name: string;
-  badge: string;
   description: string;
   previewBg: string;
   icon: any;
@@ -76,7 +75,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "split_classic",
     name: "Classic Split Showcase",
-    badge: "Default Choice",
     description: "Balanced left typography with rounded 4:3 product image and dual action buttons.",
     previewBg: "from-blue-600/10 via-indigo-600/5 to-slate-50",
     icon: LayoutTemplate,
@@ -84,7 +82,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "corporate_overlay",
     name: "Corporate Enterprise Overlay",
-    badge: "Bashwara Style",
     description: "Cinematic full-width dark backdrop, gold accent highlights & bottom category tabs.",
     previewBg: "from-slate-950 via-slate-900 to-amber-950/40",
     icon: Building2,
@@ -92,7 +89,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "tech_modern",
     name: "Smart Tech & App Showcase",
-    badge: "HumanTec Style",
     description: "Vibrant cyan gradient, modern pill buttons & floating live store care card.",
     previewBg: "from-cyan-500/10 via-teal-500/5 to-slate-50",
     icon: Sparkles,
@@ -100,7 +96,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "organic_minimal",
     name: "Organic Minimalist Luxury",
-    badge: "TrueHive Style",
     description: "Warm sand/cream canvas, refined editorial serif typography & framed product hero.",
     previewBg: "from-amber-100/40 via-stone-100/30 to-amber-50/20",
     icon: Palette,
@@ -108,7 +103,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "fashion_editorial",
     name: "Fashion Editorial Boutique",
-    badge: "Fashion Bug Style",
     description: "Full-bleed high-contrast boutique banner with centered bold typography & nav arrows.",
     previewBg: "from-rose-950/30 via-slate-900 to-stone-900",
     icon: ShoppingBag,
@@ -116,7 +110,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "centered_impact",
     name: "Centered High-Impact Bold",
-    badge: "Maximum Focus",
     description: "Center-aligned punchy typography with ratings trust bar and prominent dual CTAs.",
     previewBg: "from-violet-500/10 via-indigo-500/5 to-slate-50",
     icon: Star,
@@ -124,7 +117,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "glassmorphism",
     name: "Dark Neon Glassmorphism",
-    badge: "Futuristic & Sleek",
     description: "Dark ambient backdrop with glowing color orbs & translucent frosted glass card.",
     previewBg: "from-slate-950 via-slate-900 to-cyan-950",
     icon: Sparkles,
@@ -132,7 +124,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "promo_sale",
     name: "Mega Sale & Urgency Banner",
-    badge: "High Conversion",
     description: "Vibrant promotional gradient with hot deal tags, discounts and countdown feel.",
     previewBg: "from-rose-500/15 via-pink-500/10 to-amber-500/10",
     icon: Flame,
@@ -140,7 +131,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "video_motion",
     name: "Cinematic Video / Ambient Hero",
-    badge: "Visual Story",
     description: "Full-height ambient motion hero with play button prompt & dark readability gradient.",
     previewBg: "from-slate-950 via-slate-900 to-slate-950",
     icon: Video,
@@ -148,7 +138,6 @@ const HERO_DESIGN_PRESETS: {
   {
     id: "store_catalog",
     name: "Store Catalog & Quick Search",
-    badge: "E-Commerce Ready",
     description: "Prominent store search bar with horizontal category chips and mini product previews.",
     previewBg: "from-emerald-500/10 via-teal-500/5 to-slate-50",
     icon: Search,
@@ -961,7 +950,7 @@ export default function WebsiteBuilderPage() {
       const initialSectionsJson = {
         showInNavbar: newPageInNavbar,
         showInFooter: newPageInFooter,
-        banner: { title: newPageTitle.trim(), subtitle: "", badge: "", bgImage: "" },
+        banner: { title: newPageTitle.trim(), subtitle: "", bgImage: "" },
         featureCards: [],
         faq: [],
         cta: { title: `Have questions about ${newPageTitle.trim()}?`, buttonText: "Chat on WhatsApp" },
@@ -1011,7 +1000,7 @@ export default function WebsiteBuilderPage() {
       sectionsJson: {
         showInNavbar: page.sectionsJson?.showInNavbar !== false,
         showInFooter: page.sectionsJson?.showInFooter !== false,
-        banner: { title: page.title, subtitle: "", badge: "", bgImage: "" },
+        banner: { title: page.title, subtitle: "", bgImage: "" },
         featureCards: [],
         faq: [],
         cta: { title: `Have questions about ${page.title}?`, buttonText: "Chat on WhatsApp" },
@@ -1257,7 +1246,6 @@ export default function WebsiteBuilderPage() {
             id: "card-1",
             imageUrl: "",
             title: "Featured Item #1",
-            badge: "BESTSELLER",
             price: "Rs. 2,500",
             description: "Top rated by verified customers islandwide.",
             linkUrl: "#products",
@@ -1266,7 +1254,6 @@ export default function WebsiteBuilderPage() {
             id: "card-2",
             imageUrl: "",
             title: "Featured Item #2",
-            badge: "HOT DEAL",
             price: "Rs. 3,200",
             description: "Limited stock available for delivery.",
             linkUrl: "#products",
@@ -1275,7 +1262,6 @@ export default function WebsiteBuilderPage() {
             id: "card-3",
             imageUrl: "",
             title: "Featured Item #3",
-            badge: "TRENDING",
             price: "Rs. 1,850",
             description: "Premium quality guaranteed with easy returns.",
             linkUrl: "#products",
@@ -2303,25 +2289,21 @@ export default function WebsiteBuilderPage() {
                                     {preset.name}
                                   </span>
                                 </div>
-                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
-                                  isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
-                                }`}>
-                                  {preset.badge}
-                                </span>
+                                {isSelected ? (
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 bg-blue-600 text-white shadow-xs">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                    Active
+                                  </span>
+                                ) : preset.id === "split_classic" ? (
+                                  <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                                    Default
+                                  </span>
+                                ) : null}
                               </div>
 
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
                                 {preset.description}
                               </p>
-
-                              {isSelected && (
-                                <div className="absolute top-2 right-2">
-                                  <span className="flex h-2 w-2 relative">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600" />
-                                  </span>
-                                </div>
-                              )}
                             </div>
                           );
                         })}
