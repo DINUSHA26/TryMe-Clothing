@@ -29,8 +29,7 @@ import {
   Loader2,
   ArrowLeft,
   HelpCircle,
-  ShoppingBag,
-  Menu,
+  ShoppingBag,  Briefcase,  Menu,
   Sliders,
   Camera,
   Star,
@@ -1803,11 +1802,33 @@ export default function WebsiteBuilderPage() {
             {/* TAB 2: SECTIONS BUILDER */}
             <TabsContent value="sections" className="space-y-6 pt-4">
               {/* HERO SECTION */}
-              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-primary" />
-                    <h3 className="font-bold text-sm">Hero Banner</h3>
+              <div
+                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
+                  config.heroSection?.enabled !== false
+                    ? "border-blue-200/90 dark:border-blue-900/60 bg-gradient-to-b from-blue-50/70 via-white to-white dark:from-blue-950/25 dark:to-slate-900 border-l-4 border-l-blue-600"
+                    : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
+                }`}
+              >
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                        config.heroSection?.enabled !== false
+                          ? "bg-blue-600 text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Globe className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Hero Banner</h3>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                          Header
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">Main welcome headline, intro tagline &amp; hero photo</p>
+                    </div>
                   </div>
                   <Switch
                     checked={config.heroSection?.enabled !== false}
@@ -1819,6 +1840,12 @@ export default function WebsiteBuilderPage() {
                     }
                   />
                 </div>
+
+                {config.heroSection?.enabled === false && (
+                  <p className="text-[11px] font-bold text-slate-400 italic pt-1">
+                    This section is currently disabled and hidden from your website.
+                  </p>
+                )}
 
                 {config.heroSection?.enabled !== false && (
                   <div className="space-y-3 pt-2">
@@ -1882,11 +1909,33 @@ export default function WebsiteBuilderPage() {
               </div>
 
               {/* PRODUCTS & MY ADS SHOWCASE (⚡ LIVE SYNCED WITH TRYME) */}
-              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-emerald-600" />
-                    <h3 className="font-bold text-sm">Products &amp; Ads (Live Synced)</h3>
+              <div
+                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
+                  config.productsSection?.enabled !== false
+                    ? "border-emerald-200/90 dark:border-emerald-900/60 bg-gradient-to-b from-emerald-50/70 via-white to-white dark:from-emerald-950/25 dark:to-slate-900 border-l-4 border-l-emerald-600"
+                    : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
+                }`}
+              >
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                        config.productsSection?.enabled !== false
+                          ? "bg-emerald-600 text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <ShoppingBag className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Products &amp; Ads (Live Synced)</h3>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
+                          Catalog
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">Automatic catalog items live synced from TryMe</p>
+                    </div>
                   </div>
                   <Switch
                     checked={config.productsSection?.enabled !== false}
@@ -1898,6 +1947,12 @@ export default function WebsiteBuilderPage() {
                     }
                   />
                 </div>
+
+                {config.productsSection?.enabled === false && (
+                  <p className="text-[11px] font-bold text-slate-400 italic pt-1">
+                    This section is currently disabled and hidden from your website.
+                  </p>
+                )}
 
                 <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-300">
@@ -1961,11 +2016,33 @@ export default function WebsiteBuilderPage() {
               </div>
 
               {/* SERVICES SECTION */}
-              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-primary" />
-                    <h3 className="font-bold text-sm">Services & Offerings</h3>
+              <div
+                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
+                  config.servicesSection?.enabled !== false
+                    ? "border-amber-200/90 dark:border-amber-900/60 bg-gradient-to-b from-amber-50/70 via-white to-white dark:from-amber-950/25 dark:to-slate-900 border-l-4 border-l-amber-500"
+                    : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
+                }`}
+              >
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                        config.servicesSection?.enabled !== false
+                          ? "bg-amber-500 text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Briefcase className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Services &amp; Offerings</h3>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
+                          Bespoke
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">Custom services, tailoring, repairs &amp; packages</p>
+                    </div>
                   </div>
                   <Switch
                     checked={config.servicesSection?.enabled !== false}
@@ -1977,6 +2054,12 @@ export default function WebsiteBuilderPage() {
                     }
                   />
                 </div>
+
+                {config.servicesSection?.enabled === false && (
+                  <p className="text-[11px] font-bold text-slate-400 italic pt-1">
+                    This section is currently disabled and hidden from your website.
+                  </p>
+                )}
 
                 {config.servicesSection?.enabled !== false && (
                   <div className="space-y-3 pt-2">
@@ -2086,11 +2169,33 @@ export default function WebsiteBuilderPage() {
               </div>
 
               {/* ABOUT SECTION */}
-              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-primary" />
-                    <h3 className="font-bold text-sm">About Section</h3>
+              <div
+                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
+                  config.aboutSection?.enabled !== false
+                    ? "border-purple-200/90 dark:border-purple-900/60 bg-gradient-to-b from-purple-50/70 via-white to-white dark:from-purple-950/25 dark:to-slate-900 border-l-4 border-l-purple-600"
+                    : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
+                }`}
+              >
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                        config.aboutSection?.enabled !== false
+                          ? "bg-purple-600 text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">About Section</h3>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300">
+                          Story &amp; Trust
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">Brand story, mission, photos and why customers choose you</p>
+                    </div>
                   </div>
                   <Switch
                     checked={config.aboutSection?.enabled !== false}
@@ -2102,6 +2207,12 @@ export default function WebsiteBuilderPage() {
                     }
                   />
                 </div>
+
+                {config.aboutSection?.enabled === false && (
+                  <p className="text-[11px] font-bold text-slate-400 italic pt-1">
+                    This section is currently disabled and hidden from your website.
+                  </p>
+                )}
 
                 {config.aboutSection?.enabled !== false && (
                   <div className="space-y-4 pt-2">
@@ -2325,11 +2436,33 @@ export default function WebsiteBuilderPage() {
               </div>
 
               {/* GALLERY SECTION */}
-              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Camera className="w-4 h-4 text-primary" />
-                    <h3 className="font-bold text-sm">Gallery Showcase</h3>
+              <div
+                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
+                  Boolean(config.gallerySection?.enabled)
+                    ? "border-rose-200/90 dark:border-rose-900/60 bg-gradient-to-b from-rose-50/70 via-white to-white dark:from-rose-950/25 dark:to-slate-900 border-l-4 border-l-rose-500"
+                    : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
+                }`}
+              >
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                        Boolean(config.gallerySection?.enabled)
+                          ? "bg-rose-500 text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Gallery Showcase</h3>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300">
+                          Photos
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">Showcase store photos, work samples and product collections</p>
+                    </div>
                   </div>
                   <Switch
                     checked={Boolean(config.gallerySection?.enabled)}
@@ -2341,6 +2474,12 @@ export default function WebsiteBuilderPage() {
                     }
                   />
                 </div>
+
+                {!Boolean(config.gallerySection?.enabled) && (
+                  <p className="text-[11px] font-bold text-slate-400 italic pt-1">
+                    This section is currently disabled and hidden from your website.
+                  </p>
+                )}
 
                 {Boolean(config.gallerySection?.enabled) && (
                   <div className="space-y-4 pt-2">
@@ -2418,11 +2557,33 @@ export default function WebsiteBuilderPage() {
               </div>
 
               {/* REVIEWS & TESTIMONIALS */}
-              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <h3 className="font-bold text-sm">Customer Reviews / Testimonials</h3>
+              <div
+                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
+                  Boolean(config.reviewsSection?.enabled)
+                    ? "border-amber-300/80 dark:border-amber-900/60 bg-gradient-to-b from-amber-50/70 via-white to-white dark:from-amber-950/25 dark:to-slate-900 border-l-4 border-l-amber-500"
+                    : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
+                }`}
+              >
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                        Boolean(config.reviewsSection?.enabled)
+                          ? "bg-amber-500 text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Star className="w-5 h-5 fill-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Customer Reviews &amp; Testimonials</h3>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
+                          Reviews
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">Customer ratings, feedback &amp; trust testimonials</p>
+                    </div>
                   </div>
                   <Switch
                     checked={Boolean(config.reviewsSection?.enabled)}
@@ -2434,6 +2595,12 @@ export default function WebsiteBuilderPage() {
                     }
                   />
                 </div>
+
+                {!Boolean(config.reviewsSection?.enabled) && (
+                  <p className="text-[11px] font-bold text-slate-400 italic pt-1">
+                    This section is currently disabled and hidden from your website.
+                  </p>
+                )}
 
                 {Boolean(config.reviewsSection?.enabled) && (
                   <div className="space-y-4 pt-2">
@@ -2543,17 +2710,45 @@ export default function WebsiteBuilderPage() {
               </div>
 
               {/* CONTACT US & LOCATION SECTION */}
-              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-primary" />
-                    <h3 className="font-bold text-sm">Contact Us &amp; Location</h3>
+              <div
+                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
+                  config.contactSection?.enabled !== false
+                    ? "border-teal-200/90 dark:border-teal-900/60 bg-gradient-to-b from-teal-50/70 via-white to-white dark:from-teal-950/25 dark:to-slate-900 border-l-4 border-l-teal-600"
+                    : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
+                }`}
+              >
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                        config.contactSection?.enabled !== false
+                          ? "bg-teal-600 text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Contact Us &amp; Location</h3>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300">
+                          Inquiry
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">Physical address, phone, email, Google Maps &amp; opening hours</p>
+                    </div>
                   </div>
                   <Switch
                     checked={config.contactSection?.enabled !== false}
                     onCheckedChange={(c) => handleUpdateContactSection({ enabled: c })}
                   />
                 </div>
+
+                {config.contactSection?.enabled === false && (
+                  <p className="text-[11px] font-bold text-slate-400 italic pt-1">
+                    This section is currently disabled and hidden from your website.
+                  </p>
+                )}
 
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
@@ -2762,11 +2957,33 @@ export default function WebsiteBuilderPage() {
               </div>
 
               {/* RICH CUSTOMIZABLE FOOTER */}
-              <div className="border rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-primary" />
-                    <h3 className="font-bold text-sm">Footer &amp; Navigation Columns</h3>
+              <div
+                className={`rounded-2xl border-2 transition-all p-4 md:p-5 space-y-4 shadow-xs ${
+                  config.footerSection?.enabled !== false
+                    ? "border-slate-300 dark:border-slate-700 bg-gradient-to-b from-slate-100/70 via-white to-white dark:from-slate-800/40 dark:to-slate-900 border-l-4 border-l-slate-700"
+                    : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
+                }`}
+              >
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                        config.footerSection?.enabled !== false
+                          ? "bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Footer &amp; Navigation Columns</h3>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
+                          Footer
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">Store bio, navigation links, copyright notice &amp; payment badges</p>
+                    </div>
                   </div>
                   <Switch
                     checked={config.footerSection?.enabled !== false}
@@ -2778,6 +2995,12 @@ export default function WebsiteBuilderPage() {
                     }
                   />
                 </div>
+
+                {config.footerSection?.enabled === false && (
+                  <p className="text-[11px] font-bold text-slate-400 italic pt-1">
+                    This section is currently disabled and hidden from your website.
+                  </p>
+                )}
 
                 <div className="space-y-4">
                   <div>
