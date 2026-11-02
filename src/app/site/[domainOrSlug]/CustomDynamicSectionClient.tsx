@@ -573,3 +573,4 @@ function CarouselSectionRenderer({
     </section>
   );
 }
+
