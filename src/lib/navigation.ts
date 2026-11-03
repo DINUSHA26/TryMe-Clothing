@@ -300,14 +300,9 @@ export const storefrontNavItems: NavItem[] = [
     icon: Home,
   },
   {
-    label: "Shop",
+    label: "Shop by Category",
     href: "/products",
     icon: ShoppingBag,
-  },
-  {
-    label: "Categories",
-    href: "/categories",
-    icon: FolderTree,
   },
   {
     label: "Marketplace",

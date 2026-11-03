@@ -95,10 +95,10 @@ export function StorefrontFooter() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href="/categories"
+                  href="/products"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  All Categories
+                  Shop by Category
                 </Link>
               </li>
               <li>

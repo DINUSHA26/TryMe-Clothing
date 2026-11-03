@@ -35,19 +35,41 @@ export async function GET(request: NextRequest) {
       },
     };
 
+    const categorySlug = searchParams.get("category");
+
+    const andConditions: any[] = [];
+
     // Search in name and description
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-      ];
+      andConditions.push({
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ],
+      });
     }
 
     // Filter by category (including subcategories)
     if (categoryId) {
-      where.OR = [
-        { categoryId },
-        { category: { parentId: categoryId } },
+      andConditions.push({
+        OR: [
+          { categoryId },
+          { category: { parentId: categoryId } },
+        ],
+      });
+    } else if (categorySlug) {
+      andConditions.push({
+        OR: [
+          { category: { slug: categorySlug } },
+          { category: { parent: { slug: categorySlug } } },
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      where.AND = [
+        ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
+        ...andConditions,
       ];
     }
 

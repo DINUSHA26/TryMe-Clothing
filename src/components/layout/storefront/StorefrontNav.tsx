@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { storefrontNavItems, customerNavItems } from "@/lib/navigation";
 import { useActiveRoute } from "@/hooks/useActiveRoute";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/utils";
-import { CategoryMegaMenu } from "./CategoryMegaMenu";
 
 export function StorefrontNav() {
+  const pathname = usePathname();
   const { isActive } = useActiveRoute();
   const { isAuthenticated, user } = useAuthStore();
 
@@ -29,11 +30,10 @@ export function StorefrontNav() {
     <nav className="hidden md:block border-b bg-[#FF6600]">
       <div className="container flex items-center justify-center space-x-8 h-12 px-4 md:px-6">
         {navItems.map((item) => {
-          if (item.label === "Categories" && item.href === "/categories") {
-            return <CategoryMegaMenu key={item.href} />;
-          }
-
-          const isItemActive = isActive(item.href, item.href === "/");
+          const isItemActive =
+            item.href === "/products"
+              ? pathname.startsWith("/products") || pathname.startsWith("/categories")
+              : isActive(item.href, item.href === "/");
 
           return (
             <Link
