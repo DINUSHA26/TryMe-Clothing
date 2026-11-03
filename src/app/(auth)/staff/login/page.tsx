@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { Logo } from "@/components/layout/shared/Logo";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 function StaffLoginContent() {
@@ -36,36 +36,23 @@ function StaffLoginContent() {
                 <div className="border bg-white rounded-2xl shadow-xl p-8 border-gray-100">
                     <LoginForm userType="staff" redirectUrl={returnUrl} />
 
-                    {/* Footer Links */}
-                    <div className="mt-6 pt-6 border-t border-gray-200">
-                        <div className="text-center space-y-2">
-                            <p className="text-sm text-gray-600">
-                                Are you a customer?{" "}
-                                <Link
-                                    href="/login"
-                                    className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
-                                >
-                                    Customer Login
-                                </Link>
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                Interested in selling?{" "}
-                                <Link
-                                    href="/vendor/register"
-                                    className="text-orange-600 hover:text-orange-700 font-medium hover:underline"
-                                >
-                                    Become a Vendor
-                                </Link>
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                Want to ads with us?{" "}
-                                <Link
-                                    href="/ads-seller/register"
-                                    className="text-orange-600 hover:text-orange-700 font-medium hover:underline"
-                                >
-                                    Become an Ads Seller
-                                </Link>
-                            </p>
+                    {/* Footer Links: Customer Login & Staff Register */}
+                    <div className="mt-6 pt-5 border-t border-gray-100">
+                        <div className="flex items-center justify-between text-xs sm:text-sm font-medium">
+                            <Link
+                                href="/login"
+                                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline flex items-center gap-1.5 transition-colors"
+                            >
+                                <span>Customer Login</span>
+                            </Link>
+                            <span className="text-gray-300">|</span>
+                            <Link
+                                href="/staff/register"
+                                className="text-[#FF6600] hover:text-orange-700 font-semibold hover:underline flex items-center gap-1.5 transition-colors"
+                            >
+                                <span>Staff Register</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -92,4 +79,3 @@ export default function StaffLoginPage() {
         </Suspense>
     );
 }
-

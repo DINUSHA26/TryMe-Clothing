@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { OTPForm } from "@/components/auth/OTPForm";
 import { Logo } from "@/components/layout/shared/Logo";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 function CustomerLoginContent() {
@@ -51,36 +51,23 @@ function CustomerLoginContent() {
             </p>
           </div>
 
-          {/* Footer Links */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">
-                Are you a staff member?{" "}
-                <Link
-                  href="/staff/login"
-                  className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
-                >
-                  Staff Login
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                Want to sell with us?{" "}
-                <Link
-                  href="/vendor/register"
-                  className="text-orange-600 hover:text-orange-700 font-medium hover:underline"
-                >
-                  Become a Vendor
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                Want to post classified ads?{" "}
-                <Link
-                  href="/ads-seller/register"
-                  className="text-orange-600 hover:text-orange-700 font-medium hover:underline"
-                >
-                  Become an Ads Seller
-                </Link>
-              </p>
+          {/* Footer Links: Staff Login on Left, Staff Register on Right */}
+          <div className="mt-6 pt-5 border-t border-gray-100">
+            <div className="flex items-center justify-between text-xs sm:text-sm font-medium">
+              <Link
+                href="/staff/login"
+                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline flex items-center gap-1.5 transition-colors"
+              >
+                <span>Staff Login</span>
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/staff/register"
+                className="text-[#FF6600] hover:text-orange-700 font-semibold hover:underline flex items-center gap-1.5 transition-colors"
+              >
+                <span>Staff Register</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
         </div>
