@@ -15,6 +15,7 @@ const vendorRegisterSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z.string().min(2, "First name is required"),
   lastName: z.string().min(2, "Last name is required"),
+  primaryCategory: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -128,6 +129,7 @@ export async function POST(request: NextRequest) {
             businessEmail: data.businessEmail,
             businessPhone: data.businessPhone,
             slug,
+            primaryCategory: data.primaryCategory || null,
             status: "PENDING",
             isShopOpen: false,
           },
@@ -172,6 +174,7 @@ export async function POST(request: NextRequest) {
             businessEmail: data.businessEmail,
             businessPhone: data.businessPhone,
             slug,
+            primaryCategory: data.primaryCategory || null,
             status: "PENDING",
             isShopOpen: false,
           },

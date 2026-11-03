@@ -189,6 +189,7 @@ model Vendor {
   businessPhone    String
   businessAddress  String?
   description      String?
+  primaryCategory  String?  // Top-level business category
   logo             String?
   banner           String?
   slug             String   @unique
