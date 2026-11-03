@@ -403,5 +403,23 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
     },
     vendorItems,
     shippingAddress: order.shippingAddressJson,
+    vendor: await prisma.vendor.findUnique({
+      where: { id: vendorId },
+      select: {
+        id: true,
+        businessName: true,
+        businessEmail: true,
+        businessPhone: true,
+        businessAddress: true,
+        logo: true,
+        slug: true,
+        websiteConfig: {
+          select: {
+            heroSection: true,
+            contactSection: true,
+          },
+        },
+      },
+    }),
   };
 }

@@ -29,6 +29,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageCustomerButton } from "@/components/chat/MessageCustomerButton";
+import { PrintOrderBillModal } from "@/components/vendor/orders/PrintOrderBillModal";
 
 interface VendorOrderDetailsPageProps {
   params: Promise<{
@@ -76,7 +77,7 @@ export default async function VendorOrderDetailsPage({
     redirect("/vendor/orders");
   }
 
-  const { order, vendorItems, shippingAddress } = data;
+  const { order, vendorItems, shippingAddress, vendor } = data;
   const isWebsiteOrder = order.orderSource === "VENDOR_WEBSITE";
   const cleanPhone = (shippingAddress?.phone || "").replace(/[^0-9]/g, "");
 
@@ -134,6 +135,12 @@ export default async function VendorOrderDetailsPage({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <PrintOrderBillModal
+              order={order}
+              vendorItems={vendorItems}
+              shippingAddress={shippingAddress}
+              vendor={vendor}
+            />
             {cleanPhone && (
               <a
                 href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(

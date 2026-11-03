@@ -10,6 +10,7 @@ import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { VendorOrderGroup } from "@/components/orders/VendorOrderGroup";
 import { OverrideStatusDialog } from "@/components/admin/orders/OverrideStatusDialog";
+import { PrintOrderBillModal } from "@/components/vendor/orders/PrintOrderBillModal";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import {
@@ -160,6 +161,29 @@ export default function AdminOrderDetailsPage({
           </div>
           <div className="flex items-center gap-2">
             <OrderStatusBadge status={order.status} items={order.items} />
+            <PrintOrderBillModal
+              order={{
+                id: order.id,
+                orderNumber: order.orderNumber,
+                orderSource: order.orderNumber.startsWith("WEB-")
+                  ? "VENDOR_WEBSITE"
+                  : "TRYME_MARKETPLACE",
+                paymentMethod: order.payment?.paymentMethod || order.paymentMethod,
+                paymentStatus: order.payment?.status,
+                status: order.status,
+                bankReference: order.payment?.notificationData?.bankReference,
+                shippingAmount: order.shippingAmount,
+                totalAmount: order.totalAmount,
+                notes: order.notes,
+                customerEmail: order.customer?.user?.email,
+                createdAt: order.createdAt,
+              }}
+              vendorItems={order.items || []}
+              shippingAddress={order.shippingAddress || order.shippingAddressJson}
+              vendor={{
+                businessName: itemsByVendor?.[0]?.vendorName,
+              }}
+            />
             {order.status === "SHIPPED" && (
               <Button
                 variant="outline"
