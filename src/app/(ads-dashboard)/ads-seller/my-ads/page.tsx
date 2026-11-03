@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Eye, LayoutGrid, PlusCircle, RefreshCw, Edit } from "lucide-react";
+import { Trash2, Eye, LayoutGrid, PlusCircle, RefreshCw, Edit, Barcode } from "lucide-react";
+import { BarcodeGeneratorModal } from "@/components/products/BarcodeGeneratorModal";
 import Link from "next/link";
 import { formatDistance } from "date-fns";
 
@@ -377,6 +378,26 @@ export default function MyAdsPage() {
                             </a>
                           </Button>
                         )}
+                        <BarcodeGeneratorModal
+                          product={{
+                            id: ad.id,
+                            name: ad.title,
+                            sku: ad.specifications?.sku || `AD-${ad.id.slice(-6).toUpperCase()}`,
+                            price: Number(ad.price || 0),
+                            stock: ad.specifications?.stock || 10,
+                          }}
+                          storeName="My Ads Store"
+                          triggerButton={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Generate Barcode & Print Labels"
+                              className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg"
+                            >
+                              <Barcode className="h-4.5 w-4.5" />
+                            </Button>
+                          }
+                        />
                         <Button variant="ghost" size="icon" asChild title="Edit Ad">
                           <Link href={`/ads-seller/edit-ad/${ad.id}`}>
                             <Edit className="h-4.5 w-4.5 text-blue-500 hover:text-blue-600" />

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Edit, Trash, MoreHorizontal, AlertCircle } from "lucide-react";
+import { Edit, Trash, MoreHorizontal, AlertCircle, Barcode } from "lucide-react";
+import { BarcodeGeneratorModal } from "@/components/products/BarcodeGeneratorModal";
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -351,12 +352,33 @@ export function ProductTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                  <div className="flex items-center gap-1 justify-end">
+                    <BarcodeGeneratorModal
+                      product={{
+                        id: product.id,
+                        name: product.name,
+                        sku: product.sku,
+                        price: Number(product.price),
+                        stock: product.stock,
+                        variants: product.variants,
+                      }}
+                      triggerButton={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Generate Barcode & Print Labels"
+                          className="h-8 w-8 p-0 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950"
+                        >
+                          <Barcode className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild>
                         <Link href={`/vendor/products/${product.id}`}>
@@ -374,6 +396,7 @@ export function ProductTable({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

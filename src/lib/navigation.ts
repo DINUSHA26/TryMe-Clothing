@@ -23,6 +23,7 @@ import {
   Mail,
   Globe,
   Briefcase,
+  ScanBarcode,
 } from "lucide-react";
 
 export interface NavItem {
@@ -168,6 +169,11 @@ export const vendorNavItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    label: "POS System",
+    href: "/vendor/pos",
+    icon: ScanBarcode,
+  },
+  {
     label: "Products",
     href: "/vendor/products",
     icon: Package,
@@ -219,6 +225,11 @@ export const adsSellerNavItems: NavItem[] = [
     label: "Dashboard",
     href: "/ads-seller",
     icon: LayoutDashboard,
+  },
+  {
+    label: "POS System",
+    href: "/ads-seller/pos",
+    icon: ScanBarcode,
   },
   {
     label: "My Ads",
