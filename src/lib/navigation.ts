@@ -232,6 +232,11 @@ export const adsSellerNavItems: NavItem[] = [
     icon: ScanBarcode,
   },
   {
+    label: "Products",
+    href: "/ads-seller/products",
+    icon: Package,
+  },
+  {
     label: "My Ads",
     href: "/ads-seller/my-ads",
     icon: LayoutGrid,

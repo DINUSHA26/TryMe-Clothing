@@ -8,11 +8,11 @@ import { requireAdmin, handleAuthError } from "@/lib/auth-helpers";
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { planId: string } }
+  context: { params: Promise<{ planId: string }> }
 ) {
   try {
     const admin = requireAdmin(request);
-    const { planId } = params;
+    const { planId } = await context.params;
     const body = await request.json();
 
     const plan = await prisma.adsPlan.findUnique({

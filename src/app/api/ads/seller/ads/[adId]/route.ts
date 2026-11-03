@@ -130,7 +130,7 @@ export async function PUT(
     for (const admin of admins) {
       await createNotification({
         userId: admin.id,
-        type: "SYSTEM_ANNOUNCEMENT", // Use SYSTEM_ANNOUNCEMENT as it works for admins
+        type: "SYSTEM_ANNOUNCEMENT" as any, // Use SYSTEM_ANNOUNCEMENT as it works for admins
         title: "Classified Ad Edited",
         message: `Seller has edited the ad "${updatedAd.title}" (ID: ${updatedAd.id}). It remains active without re-approval.`,
         link: `/marketplace/${updatedAd.id}`,

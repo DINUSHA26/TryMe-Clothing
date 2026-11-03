@@ -19,7 +19,20 @@ import {
   ChevronRight,
   User,
   Store,
+  ShoppingBag,
+  CheckCircle2,
+  Truck,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { format, differenceInDays } from "date-fns";
 import Link from "next/link";
 import { optimizeImageUrl } from "@/lib/imageLoader";
@@ -40,6 +53,61 @@ export default function PublicAdDetailPage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const [orderName, setOrderName] = useState("");
+  const [orderPhone, setOrderPhone] = useState("");
+  const [orderAddress, setOrderAddress] = useState("");
+  const [orderCity, setOrderCity] = useState("");
+  const [orderPaymentMethod, setOrderPaymentMethod] = useState("COD");
+  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [orderNotes, setOrderNotes] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState<any>(null);
+
+  const handlePlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderName.trim() || !orderPhone.trim() || !orderAddress.trim() || !orderCity.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Details required",
+        description: "Please enter your full name, phone number, and delivery address.",
+      });
+      return;
+    }
+    setIsPlacingOrder(true);
+    try {
+      const res = await fetch(`/api/marketplace/ads/${ad.id}/order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: orderName.trim(),
+          phone: orderPhone.trim(),
+          addressLine1: orderAddress.trim(),
+          city: orderCity.trim(),
+          paymentMethod: orderPaymentMethod,
+          quantity: orderQuantity,
+          notes: orderNotes.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to place order");
+      }
+      setOrderSuccess(data.data);
+      toast({
+        title: "Order Placed Successfully!",
+        description: `Order #${data.data.orderNumber} has been received.`,
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Order Failed",
+        description: err.message || "Could not place order",
+      });
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
 
   useEffect(() => {
     if (ad?.seller) {
@@ -407,6 +475,26 @@ ${shortDesc}`;
             </div>
 
             <div className="space-y-3 pt-2 border-t border-gray-50">
+              {/* TryMe Marketplace Online Checkout Button */}
+              {ad?.showOnMarketplace !== false && ad?.price && (
+                <div className="space-y-2 pb-1">
+                  <Button
+                    onClick={() => {
+                      setOrderSuccess(null);
+                      setIsOrderOpen(true);
+                    }}
+                    className="w-full bg-[#FF6600] hover:bg-[#e65c00] text-white rounded-xl py-6 font-black flex items-center justify-center gap-2 text-base shadow-md transition-all hover:scale-[1.01]"
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                    <span>Buy Online via TryMe</span>
+                  </Button>
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 font-medium">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>TryMe Buyer Guarantee & Verified Delivery</span>
+                  </div>
+                </div>
+              )}
+
               {/* Phone reveal button */}
               {showPhone ? (
                 <div className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-50 border border-orange-100 text-[#FF6600] rounded-xl font-bold text-base shadow-sm">
@@ -479,6 +567,162 @@ ${shortDesc}`;
           </div>
         </div>
       )}
+      {/* ONLINE ORDER MODAL */}
+      <Dialog open={isOrderOpen} onOpenChange={setIsOrderOpen}>
+        <DialogContent className="max-w-md rounded-3xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-gray-900 flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-[#FF6600]" />
+              Order Online via TryMe
+            </DialogTitle>
+            <DialogDescription className="text-xs text-gray-500 line-clamp-1">
+              {ad?.title} • Rs. {Number(ad?.price || 0).toLocaleString("en-LK")}
+            </DialogDescription>
+          </DialogHeader>
+
+          {orderSuccess ? (
+            <div className="py-6 text-center space-y-4">
+              <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle2 className="h-8 w-8" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Order Confirmed!</h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Your order reference is <span className="font-mono font-bold text-gray-800">{orderSuccess.orderNumber}</span>.
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  The seller <span className="font-semibold text-gray-800">{orderSuccess.sellerName}</span> will process and dispatch your item.
+                </p>
+              </div>
+              <div className="bg-orange-50 border border-orange-100 rounded-2xl p-3 text-xs text-gray-700">
+                <div className="font-bold text-[#FF6600]">Total Payable: Rs. {Number(orderSuccess.totalAmount).toLocaleString("en-LK")}</div>
+                <div className="text-[11px] text-gray-500 mt-0.5">Platform Commission & Guarantee Included</div>
+              </div>
+              <Button
+                onClick={() => setIsOrderOpen(false)}
+                className="w-full bg-gray-900 hover:bg-black text-white font-bold rounded-xl h-10"
+              >
+                Done
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handlePlaceOrder} className="space-y-3.5 pt-2">
+              <div>
+                <Label className="text-xs font-bold text-gray-700">Full Name *</Label>
+                <Input
+                  required
+                  placeholder="e.g. Kasun Perera"
+                  value={orderName}
+                  onChange={(e) => setOrderName(e.target.value)}
+                  className="mt-1 h-10 rounded-xl"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <Label className="text-xs font-bold text-gray-700">Phone Number *</Label>
+                  <Input
+                    required
+                    placeholder="077XXXXXXX"
+                    value={orderPhone}
+                    onChange={(e) => setOrderPhone(e.target.value)}
+                    className="mt-1 h-10 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold text-gray-700">Quantity</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={orderQuantity}
+                    onChange={(e) => setOrderQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="mt-1 h-10 rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-bold text-gray-700">Delivery Address *</Label>
+                <Input
+                  required
+                  placeholder="No, Street, Landmark"
+                  value={orderAddress}
+                  onChange={(e) => setOrderAddress(e.target.value)}
+                  className="mt-1 h-10 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs font-bold text-gray-700">City / District *</Label>
+                <Input
+                  required
+                  placeholder="e.g. Colombo, Kandy, Galle"
+                  value={orderCity}
+                  onChange={(e) => setOrderCity(e.target.value)}
+                  className="mt-1 h-10 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs font-bold text-gray-700">Payment Method</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setOrderPaymentMethod("COD")}
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all ${
+                      orderPaymentMethod === "COD"
+                        ? "border-[#FF6600] bg-orange-50 text-[#FF6600]"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Cash on Delivery
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderPaymentMethod("BANK_TRANSFER")}
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all ${
+                      orderPaymentMethod === "BANK_TRANSFER"
+                        ? "border-[#FF6600] bg-orange-50 text-[#FF6600]"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Bank Transfer
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-3 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-gray-700">Total Price</div>
+                  <div className="text-[10px] text-gray-400">Includes TryMe safe checkout</div>
+                </div>
+                <div className="text-base font-black text-[#FF6600]">
+                  Rs. {(Number(ad?.price || 0) * orderQuantity).toLocaleString("en-LK")}
+                </div>
+              </div>
+
+              <DialogFooter className="pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsOrderOpen(false)}
+                  className="rounded-xl h-10 font-bold"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isPlacingOrder}
+                  className="bg-[#FF6600] hover:bg-[#e65c00] text-white rounded-xl h-10 font-bold"
+                >
+                  {isPlacingOrder ? "Placing Order..." : "Confirm & Place Order"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

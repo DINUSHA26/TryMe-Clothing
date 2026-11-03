@@ -323,7 +323,7 @@ export function PostCard({ post }: { post: SocialPostType }) {
                     {post.user.vendor?.logo ? (
                         <AvatarImage src={post.user.vendor.logo} />
                     ) : (post.user.adsSeller?.contactInfo as any)?.logo ? (
-                        <AvatarImage src={(post.user.adsSeller.contactInfo as any).logo} />
+                        <AvatarImage src={(post.user.adsSeller?.contactInfo as any)?.logo} />
                     ) : null}
                     <AvatarFallback>{getInitials(post.user.firstName, post.user.lastName, post.user.email)}</AvatarFallback>
                 </Avatar>

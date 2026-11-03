@@ -10,11 +10,11 @@ import { VendorStatus } from "@prisma/client";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const admin = requireAdmin(request);
-    const { id } = params;
+    const { id } = await context.params;
 
     const seller = await prisma.adsSeller.findUnique({
       where: { id },
@@ -75,11 +75,11 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const admin = requireAdmin(request);
-    const { id } = params;
+    const { id } = await context.params;
     const body = await request.json();
 
     const seller = await prisma.adsSeller.findUnique({

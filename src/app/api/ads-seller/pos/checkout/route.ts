@@ -65,6 +65,37 @@ export async function POST(request: NextRequest) {
         totalPrice: lineFinalTotal,
         itemDiscount,
       });
+
+      // Deduct stock in ClassifiedAd
+      try {
+        const adId = item.productId || item.id;
+        const ad = await (prisma as any).classifiedAd.findUnique({
+          where: { id: adId },
+          select: { id: true, specifications: true, sellerId: true },
+        });
+
+        if (ad && ad.sellerId === adsSeller.id) {
+          const specs = typeof ad.specifications === "object" && ad.specifications ? { ...ad.specifications } : {};
+          if (item.variantId && Array.isArray(specs.variants)) {
+            const varIdx = specs.variants.findIndex(
+              (v: any, i: number) => `${ad.id}-var-${i}` === item.variantId || v.id === item.variantId
+            );
+            if (varIdx !== -1 && specs.variants[varIdx]) {
+              const vStock = specs.variants[varIdx].stock !== undefined ? Number(specs.variants[varIdx].stock) : 10;
+              specs.variants[varIdx].stock = Math.max(0, vStock - quantity);
+            }
+          }
+          const curStock = specs.stock !== undefined ? Number(specs.stock) : 10;
+          specs.stock = Math.max(0, curStock - quantity);
+
+          await (prisma as any).classifiedAd.update({
+            where: { id: ad.id },
+            data: { specifications: specs },
+          });
+        }
+      } catch (stockErr) {
+        console.warn("Failed to deduct stock for ad item:", stockErr);
+      }
     }
 
     let calculatedOverallDiscount = 0;

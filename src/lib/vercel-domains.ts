@@ -169,7 +169,7 @@ export async function getDomainConfig(domain: string): Promise<{
 
     return {
       misconfigured: Boolean(data.misconfigured),
-      configuredBy: data.configuredBy || null,
+      configuredBy: (data.configuredBy as any) || null,
       sslActive: !data.misconfigured,
     };
   } catch (err: any) {
