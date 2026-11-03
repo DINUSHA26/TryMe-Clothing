@@ -42,6 +42,7 @@ interface PayoutHistoryTableProps {
   onPageChange: (page: number) => void;
   onCancelSuccess: () => void;
   isLoading?: boolean;
+  cancelEndpointPrefix?: string;
 }
 
 export function PayoutHistoryTable({
@@ -50,6 +51,7 @@ export function PayoutHistoryTable({
   onPageChange,
   onCancelSuccess,
   isLoading = false,
+  cancelEndpointPrefix = "/api/vendor/wallet/payouts",
 }: PayoutHistoryTableProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedPayoutId, setSelectedPayoutId] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export function PayoutHistoryTable({
 
     try {
       const response = await fetch(
-        `/api/vendor/wallet/payouts/${selectedPayoutId}`,
+        `${cancelEndpointPrefix}/${selectedPayoutId}`,
         {
           method: "DELETE",
         }

@@ -252,6 +252,21 @@ export const adsSellerNavItems: NavItem[] = [
     icon: Megaphone,
   },
   {
+    label: "Coupons",
+    href: "/ads-seller/coupons",
+    icon: Tag,
+  },
+  {
+    label: "Wallet",
+    href: "/ads-seller/wallet",
+    icon: Wallet,
+  },
+  {
+    label: "Reviews",
+    href: "/ads-seller/reviews",
+    icon: Star,
+  },
+  {
     label: "Pricing Plans",
     href: "/ads-seller/plans",
     icon: CreditCard,

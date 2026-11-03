@@ -45,6 +45,7 @@ interface PayoutRequestFormProps {
   availableBalance: number;
   hasPendingPayout: boolean;
   onSuccess: () => void;
+  apiEndpoint?: string;
 }
 
 export function PayoutRequestForm({
@@ -53,6 +54,7 @@ export function PayoutRequestForm({
   availableBalance,
   hasPendingPayout,
   onSuccess,
+  apiEndpoint = "/api/vendor/wallet/payouts",
 }: PayoutRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -93,7 +95,7 @@ export function PayoutRequestForm({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/vendor/wallet/payouts", {
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
