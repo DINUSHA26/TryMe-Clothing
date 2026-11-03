@@ -4,6 +4,8 @@ import { useState } from "react";
 import { format } from "date-fns";
 import {
   Printer,
+  Download,
+  Loader2,
   X,
   Store,
   Globe,
@@ -73,6 +75,7 @@ export function PrintOrderBillModal({
   triggerButton,
 }: PrintOrderBillModalProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const isWebsiteOrder =
     order.orderSource === "VENDOR_WEBSITE" ||
@@ -141,6 +144,37 @@ export function PrintOrderBillModal({
     window.print();
   };
 
+  const handleDownloadPdf = async () => {
+    setIsDownloading(true);
+    try {
+      const element = document.getElementById("printable-order-bill");
+      if (!element) {
+        window.print();
+        return;
+      }
+
+      // Dynamically import html2pdf.js for client-side execution
+      // @ts-ignore
+      const html2pdfModule = await import("html2pdf.js");
+      const html2pdf = html2pdfModule.default || html2pdfModule;
+
+      const opt = {
+        margin: 8,
+        filename: `${order.orderNumber}-Bill.pdf`,
+        image: { type: "jpeg" as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
+      };
+
+      await html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error("PDF generation error, falling back to print dialog:", error);
+      window.print();
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -154,29 +188,52 @@ export function PrintOrderBillModal({
               className="font-bold border-indigo-200 hover:border-indigo-400 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800"
             >
               <Printer className="w-4 h-4 mr-1.5" />
-              <span>Print Bill</span>
+              <span>Print / Download Bill</span>
             </Button>
           )}
         </DialogTrigger>
 
         <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0 border-0 bg-transparent shadow-2xl">
           {/* Action Bar (Not Printed) */}
-          <div className="no-print sticky top-0 z-50 flex items-center justify-between px-6 py-4 bg-gray-900 text-white rounded-t-xl shadow-md">
+          <div className="no-print sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-gray-900 text-white rounded-t-xl shadow-md">
             <div className="flex items-center gap-2">
               <Printer className="w-5 h-5 text-indigo-400" />
               <DialogTitle className="text-base font-bold text-white">
                 Order Bill &amp; Summary ({order.orderNumber})
               </DialogTitle>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Download PDF Button */}
+              <Button
+                size="sm"
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm inline-flex items-center gap-1.5"
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Generating PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span>Download PDF</span>
+                  </>
+                )}
+              </Button>
+
+              {/* Print Now Button */}
               <Button
                 size="sm"
                 onClick={handlePrint}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-sm"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-sm inline-flex items-center gap-1.5"
               >
-                <Printer className="w-4 h-4 mr-1.5" />
-                Print Now
+                <Printer className="w-4 h-4" />
+                <span>Print Now</span>
               </Button>
+
+              {/* Close Button */}
               <Button
                 size="sm"
                 variant="ghost"
@@ -184,7 +241,7 @@ export function PrintOrderBillModal({
                 className="text-gray-300 hover:text-white hover:bg-gray-800"
               >
                 <X className="w-4 h-4 mr-1" />
-                Close
+                <span>Close</span>
               </Button>
             </div>
           </div>
