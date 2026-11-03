@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       const compareAtPrice = specs.compareAtPrice ? Number(specs.compareAtPrice) : null;
 
       totalProducts++;
-      if (ad.status === "ACTIVE" || ad.status === "APPROVED") activeProducts++;
+      if (ad.status === "ACTIVE") activeProducts++;
       if (stock <= 5) lowStockProducts++;
       if (ad.showOnMarketplace !== false) liveMarketplaceCount++;
       if (ad.showOnWebsite !== false) liveWebsiteCount++;

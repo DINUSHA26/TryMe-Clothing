@@ -195,7 +195,7 @@ export default function AdsSellerProductsPage() {
   // Stats
   const stats = useMemo(() => {
     const total = products.length;
-    const active = products.filter((p) => p.status === "ACTIVE" || p.status === "APPROVED").length;
+    const active = products.filter((p) => p.status === "ACTIVE").length;
     const lowStock = products.filter((p) => p.stock <= 5).length;
     const marketplaceLive = products.filter((p) => p.showOnMarketplace).length;
     const websiteLive = products.filter((p) => p.showOnWebsite).length;

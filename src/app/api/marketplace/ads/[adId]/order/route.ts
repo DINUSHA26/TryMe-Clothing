@@ -97,7 +97,7 @@ export async function POST(
       },
     });
 
-    if (!ad || (ad.status !== "ACTIVE" && ad.status !== "APPROVED")) {
+    if (!ad || ad.status !== "ACTIVE") {
       return NextResponse.json({ success: false, error: "Item not found or not active" }, { status: 404 });
     }
 

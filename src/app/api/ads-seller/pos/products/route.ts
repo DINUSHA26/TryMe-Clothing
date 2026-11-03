@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const ads = await (prisma as any).classifiedAd.findMany({
       where: {
         sellerId: adsSeller.id,
-        status: { in: ["ACTIVE", "APPROVED"] },
+        status: "ACTIVE",
         ...(search
           ? {
               OR: [
