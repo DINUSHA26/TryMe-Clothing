@@ -380,3 +380,4 @@ export default async function AdsSellerOrderDetailsPage({
     </div>
   );
 }
+
