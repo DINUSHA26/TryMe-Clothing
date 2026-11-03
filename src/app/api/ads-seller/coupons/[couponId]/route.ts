@@ -175,3 +175,4 @@ export async function DELETE(
     return NextResponse.json({ success: false, error: error.message || "Failed to delete coupon" }, { status: 500 });
   }
 }
+

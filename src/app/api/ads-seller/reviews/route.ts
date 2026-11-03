@@ -359,3 +359,4 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message || "Failed to update review" }, { status: 500 });
   }
 }
+

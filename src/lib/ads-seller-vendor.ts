@@ -52,3 +52,4 @@ export async function getOrCreateAdsSellerVendor(userId: string) {
 
   return { vendor, wallet };
 }
+
