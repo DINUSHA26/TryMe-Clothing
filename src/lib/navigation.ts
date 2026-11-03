@@ -252,6 +252,11 @@ export const adsSellerNavItems: NavItem[] = [
     icon: Megaphone,
   },
   {
+    label: "Orders",
+    href: "/ads-seller/orders",
+    icon: ShoppingCart,
+  },
+  {
     label: "Coupons",
     href: "/ads-seller/coupons",
     icon: Tag,

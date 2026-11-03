@@ -25,6 +25,7 @@ import { OrderStatus } from "@prisma/client";
 import { toast } from "sonner";
 
 interface UpdateOrderItemStatusFormProps {
+  apiEndpointPrefix?: string;
   orderItemId: string;
   currentStatus: OrderStatus;
   productName: string;
@@ -38,6 +39,7 @@ export function UpdateOrderItemStatusForm({
   productName,
   isWebsiteOrder = false,
   onSuccess,
+  apiEndpointPrefix = "/api/vendor/orders/items",
 }: UpdateOrderItemStatusFormProps) {
   const router = useRouter();
   const [status, setStatus] = useState<string>("");
@@ -90,7 +92,7 @@ export function UpdateOrderItemStatusForm({
 
     try {
       const response = await fetch(
-        `/api/vendor/orders/items/${orderItemId}/status`,
+        `${apiEndpointPrefix}/${orderItemId}/status`,
         {
           method: "PATCH",
           headers: {

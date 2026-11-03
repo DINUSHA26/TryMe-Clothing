@@ -28,9 +28,10 @@ interface VendorOrder {
 
 interface VendorOrdersTableProps {
   orders: VendorOrder[];
+  linkPrefix?: string;
 }
 
-export function VendorOrdersTable({ orders }: VendorOrdersTableProps) {
+export function VendorOrdersTable({ orders, linkPrefix = "/vendor/orders" }: VendorOrdersTableProps) {
   if (orders.length === 0) {
     return (
       <div className="text-center py-12 border rounded-lg bg-muted/10">
@@ -66,7 +67,7 @@ export function VendorOrdersTable({ orders }: VendorOrdersTableProps) {
                 <tr key={order.id} className="hover:bg-muted/40 transition-colors">
                   <td className="px-4 py-3.5">
                     <Link
-                      href={`/vendor/orders/${order.id}`}
+                      href={`${linkPrefix}/${order.id}`}
                       className="font-bold text-sm hover:underline text-primary"
                     >
                       {order.orderNumber}
@@ -145,7 +146,7 @@ export function VendorOrdersTable({ orders }: VendorOrdersTableProps) {
                     <OrderStatusBadge status={order.status} items={order.vendorItems} />
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <Link href={`/vendor/orders/${order.id}`}>
+                    <Link href={`${linkPrefix}/${order.id}`}>
                       <Button variant="outline" size="sm" className="h-8 text-xs font-bold">
                         <Eye className="w-3.5 h-3.5 mr-1.5" />
                         Manage
