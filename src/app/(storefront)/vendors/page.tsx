@@ -139,25 +139,25 @@ export default function VendorsPage() {
         {/* Horizontal Category Strip */}
         <div
           ref={scrollContainerRef}
-          className="flex items-start gap-5 sm:gap-7 overflow-x-auto pb-3 pt-1 scrollbar-none scroll-smooth px-1"
+          className="flex items-start gap-3.5 sm:gap-6 overflow-x-auto pb-3 pt-1 scrollbar-none scroll-smooth px-1"
         >
           {/* "All" circular button */}
           <button
             type="button"
             onClick={() => setSelectedCategory("all")}
-            className="flex flex-col items-center flex-shrink-0 group cursor-pointer transition-transform active:scale-95"
+            className="flex flex-col items-center shrink-0 flex-shrink-0 group cursor-pointer transition-transform active:scale-95"
           >
             <div
-              className={`w-18 h-18 sm:w-20 sm:h-20 md:w-22 md:h-22 rounded-full border-2 flex items-center justify-center transition-all duration-300 shadow-xs ${
+              className={`w-14 h-14 sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center shrink-0 flex-shrink-0 transition-all duration-300 shadow-xs ${
                 selectedCategory === "all"
                   ? "border-[#FF6600] ring-4 ring-[#FF6600]/20 bg-[#FF6600] text-white scale-105"
                   : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 group-hover:border-primary group-hover:shadow-md text-slate-700 dark:text-slate-200"
               }`}
             >
-              <LayoutGrid className="w-7 h-7 sm:w-8 sm:h-8" />
+              <LayoutGrid className="w-5 h-5 sm:w-8 sm:h-8" />
             </div>
             <span
-              className={`text-xs md:text-sm font-bold text-center mt-2.5 max-w-[85px] leading-tight transition-colors ${
+              className={`text-[11px] sm:text-xs md:text-sm font-bold text-center mt-2 max-w-[65px] sm:max-w-[85px] leading-tight transition-colors ${
                 selectedCategory === "all"
                   ? "text-[#FF6600]"
                   : "text-slate-700 dark:text-slate-300 group-hover:text-primary"
@@ -175,10 +175,10 @@ export default function VendorsPage() {
                 key={cat.id}
                 type="button"
                 onClick={() => handleCategoryClick(cat.name)}
-                className="flex flex-col items-center flex-shrink-0 group cursor-pointer transition-transform active:scale-95"
+                className="flex flex-col items-center shrink-0 flex-shrink-0 group cursor-pointer transition-transform active:scale-95"
               >
                 <div
-                  className={`w-18 h-18 sm:w-20 sm:h-20 md:w-22 md:h-22 rounded-full border-2 overflow-hidden flex items-center justify-center transition-all duration-300 bg-white dark:bg-slate-900 shadow-xs ${
+                  className={`relative w-14 h-14 sm:w-20 sm:h-20 rounded-full border-2 overflow-hidden flex items-center justify-center shrink-0 flex-shrink-0 transition-all duration-300 bg-white dark:bg-slate-900 shadow-xs ${
                     isSelected
                       ? "border-[#FF6600] ring-4 ring-[#FF6600]/25 scale-105 shadow-md"
                       : "border-slate-200 dark:border-slate-700 group-hover:border-primary group-hover:shadow-md"
@@ -191,11 +191,11 @@ export default function VendorsPage() {
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                   ) : (
-                    <span className="text-2xl sm:text-3xl">{cat.icon || "📁"}</span>
+                    <span className="text-xl sm:text-3xl">{cat.icon || "📁"}</span>
                   )}
                 </div>
                 <span
-                  className={`text-xs md:text-sm font-bold text-center mt-2.5 max-w-[95px] line-clamp-2 leading-tight transition-colors ${
+                  className={`text-[11px] sm:text-xs md:text-sm font-bold text-center mt-2 max-w-[65px] sm:max-w-[95px] line-clamp-2 leading-tight transition-colors ${
                     isSelected
                       ? "text-[#FF6600]"
                       : "text-slate-700 dark:text-slate-300 group-hover:text-primary"
