@@ -5692,37 +5692,43 @@ export default function WebsiteBuilderPage() {
 
       {/* ── Add Custom Section Modal Dialog ── */}
       <Dialog open={addSectionModalOpen} onOpenChange={setAddSectionModalOpen}>
-        <DialogContent className="max-w-2xl rounded-3xl p-6 sm:p-8">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-2">
+        <DialogContent className="max-w-2xl w-[95vw] sm:w-full max-h-[92dvh] sm:max-h-[88vh] flex flex-col rounded-3xl p-4 sm:p-6 md:p-8 overflow-hidden">
+          <DialogHeader className="shrink-0 pb-1">
+            <DialogTitle className="text-lg sm:text-xl font-black tracking-tight flex items-center gap-2">
               <Plus className="w-5 h-5 text-primary" />
               <span>{addSectionForPage ? "Add Dynamic Section to Custom Page" : "Add Dynamic Section to Home Page"}</span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs sm:text-sm">
               Choose a section type to insert. You can customize images, texts, links, and shift its position anytime with Move Up / Down.
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue="media" className="w-full pt-2">
-            <TabsList className="grid grid-cols-3 w-full rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-4">
-              <TabsTrigger value="media" className="rounded-lg text-xs font-bold py-1.5">
-                🌟 Media &amp; Sliders
+          <Tabs defaultValue="media" className="w-full pt-1 flex-1 min-h-0 flex flex-col">
+            <TabsList className="grid grid-cols-3 w-full rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-3 shrink-0 h-auto">
+              <TabsTrigger value="media" className="rounded-lg text-[11px] sm:text-xs font-bold py-2 px-1 text-center truncate">
+                <span>🌟 </span>
+                <span className="hidden sm:inline">Media &amp; Sliders</span>
+                <span className="sm:hidden">Media</span>
               </TabsTrigger>
-              <TabsTrigger value="contact" className="rounded-lg text-xs font-bold py-1.5">
-                📩 Contact Features
+              <TabsTrigger value="contact" className="rounded-lg text-[11px] sm:text-xs font-bold py-2 px-1 text-center truncate">
+                <span>📩 </span>
+                <span className="hidden sm:inline">Contact Features</span>
+                <span className="sm:hidden">Contact</span>
               </TabsTrigger>
-              <TabsTrigger value="store" className="rounded-lg text-xs font-bold py-1.5">
-                🛍️ Store Sections
+              <TabsTrigger value="store" className="rounded-lg text-[11px] sm:text-xs font-bold py-2 px-1 text-center truncate">
+                <span>🛍️ </span>
+                <span className="hidden sm:inline">Store Sections</span>
+                <span className="sm:hidden">Store</span>
               </TabsTrigger>
             </TabsList>
 
             {/* TAB 1: DYNAMIC MEDIA */}
-            <TabsContent value="media" className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <TabsContent value="media" className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 sm:pr-2 pb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5 focus-visible:outline-none">
               {/* 1. Slider */}
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("slider", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-indigo-200/90 hover:border-indigo-600 bg-gradient-to-b from-indigo-50/70 to-white dark:from-indigo-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-indigo-200/90 hover:border-indigo-600 bg-gradient-to-b from-indigo-50/70 to-white dark:from-indigo-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5743,7 +5749,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("video", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-rose-200/90 hover:border-rose-600 bg-gradient-to-b from-rose-50/70 to-white dark:from-rose-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-rose-200/90 hover:border-rose-600 bg-gradient-to-b from-rose-50/70 to-white dark:from-rose-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5764,7 +5770,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("carousel", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5785,7 +5791,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("image_banner", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-teal-200/90 hover:border-teal-600 bg-gradient-to-b from-teal-50/70 to-white dark:from-teal-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-teal-200/90 hover:border-teal-600 bg-gradient-to-b from-teal-50/70 to-white dark:from-teal-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5804,12 +5810,12 @@ export default function WebsiteBuilderPage() {
             </TabsContent>
 
             {/* TAB 2: CONTACT & LOCATION STANDALONE FEATURES */}
-            <TabsContent value="contact" className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <TabsContent value="contact" className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 sm:pr-2 pb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5 focus-visible:outline-none">
               {/* Form Only */}
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("contact_form", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-sky-200/90 hover:border-sky-600 bg-gradient-to-b from-sky-50/70 to-white dark:from-sky-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-sky-200/90 hover:border-sky-600 bg-gradient-to-b from-sky-50/70 to-white dark:from-sky-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5830,7 +5836,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("location_map", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-emerald-200/90 hover:border-emerald-600 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-200/90 hover:border-emerald-600 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5851,7 +5857,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("contact_cards", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-violet-200/90 hover:border-violet-600 bg-gradient-to-b from-violet-50/70 to-white dark:from-violet-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-violet-200/90 hover:border-violet-600 bg-gradient-to-b from-violet-50/70 to-white dark:from-violet-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5872,7 +5878,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("opening_hours", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5893,7 +5899,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("full_contact", addSectionForPage)}
-                className="sm:col-span-2 p-4 rounded-2xl border-2 border-teal-200/90 hover:border-teal-600 bg-gradient-to-b from-teal-50/70 to-white dark:from-teal-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex items-center justify-between"
+                className="sm:col-span-2 p-3.5 sm:p-4 rounded-2xl border-2 border-teal-200/90 hover:border-teal-600 bg-gradient-to-b from-teal-50/70 to-white dark:from-teal-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -5904,7 +5910,7 @@ export default function WebsiteBuilderPage() {
                     Includes Contact Cards, Opening Hours, Location Map, and the Inquiry Form together.
                   </p>
                 </div>
-                <span className="text-xs font-bold text-teal-600 shrink-0 ml-4 flex items-center gap-1">
+                <span className="text-xs font-bold text-teal-600 shrink-0 sm:ml-4 flex items-center gap-1">
                   <span>+ Add Full Contact</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </span>
@@ -5912,12 +5918,12 @@ export default function WebsiteBuilderPage() {
             </TabsContent>
 
             {/* TAB 3: STORE CONTENT SECTIONS */}
-            <TabsContent value="store" className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <TabsContent value="store" className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 sm:pr-2 pb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5 focus-visible:outline-none">
               {/* Products Catalog */}
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("products_catalog", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-emerald-200/90 hover:border-emerald-600 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-200/90 hover:border-emerald-600 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5938,7 +5944,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("services_list", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-blue-200/90 hover:border-blue-600 bg-gradient-to-b from-blue-50/70 to-white dark:from-blue-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-blue-200/90 hover:border-blue-600 bg-gradient-to-b from-blue-50/70 to-white dark:from-blue-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5959,7 +5965,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("about_story", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-purple-200/90 hover:border-purple-600 bg-gradient-to-b from-purple-50/70 to-white dark:from-purple-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-purple-200/90 hover:border-purple-600 bg-gradient-to-b from-purple-50/70 to-white dark:from-purple-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -5980,7 +5986,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("photo_gallery", addSectionForPage)}
-                className="p-4 rounded-2xl border-2 border-rose-200/90 hover:border-rose-600 bg-gradient-to-b from-rose-50/70 to-white dark:from-rose-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
+                className="p-3.5 sm:p-4 rounded-2xl border-2 border-rose-200/90 hover:border-rose-600 bg-gradient-to-b from-rose-50/70 to-white dark:from-rose-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="space-y-1.5">
                   <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
@@ -6001,7 +6007,7 @@ export default function WebsiteBuilderPage() {
               <button
                 type="button"
                 onClick={() => handleAddCustomSection("reviews_list", addSectionForPage)}
-                className="sm:col-span-2 p-4 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex items-center justify-between"
+                className="sm:col-span-2 p-3.5 sm:p-4 rounded-2xl border-2 border-amber-200/90 hover:border-amber-600 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/20 dark:to-slate-900 text-left transition-all hover:shadow-md group flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -6012,7 +6018,7 @@ export default function WebsiteBuilderPage() {
                     Embed verified customer feedback, star ratings, and review cards.
                   </p>
                 </div>
-                <span className="text-xs font-bold text-amber-600 shrink-0 ml-4 flex items-center gap-1">
+                <span className="text-xs font-bold text-amber-600 shrink-0 sm:ml-4 flex items-center gap-1">
                   <span>+ Add Reviews</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </span>
