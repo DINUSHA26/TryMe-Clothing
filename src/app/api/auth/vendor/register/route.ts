@@ -34,86 +34,186 @@ export async function POST(request: NextRequest) {
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: data.businessEmail },
+      include: {
+        vendor: true,
+        adsSeller: true,
+        customer: true,
+      },
     });
 
-    if (existingUser) {
-      return NextResponse.json(
-        { success: false, error: "A user with this email already exists" },
-        { status: 409 }
-      );
-    }
-
-    // Hash password
-    const passwordHash = await passwordUtils.hash(data.password);
-
-    // Generate unique slug
+    // Generate unique slug for the vendor business
     const baseSlug = generateSlug(data.businessName);
-    const slug = await generateUniqueSlug(baseSlug, async (slug) => {
-      const existing = await prisma.vendor.findUnique({ where: { slug } });
+    const slug = await generateUniqueSlug(baseSlug, async (s) => {
+      const existing = await prisma.vendor.findUnique({ where: { slug: s } });
       return !!existing;
     });
 
-    // Create vendor in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Create User
-      const user = await tx.user.create({
-        data: {
-          email: data.businessEmail,
-          passwordHash,
-          role: UserRole.VENDOR,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          isActive: true,
-          emailVerified: false,
-        },
+    let resultUser: any = null;
+    let resultVendor: any = null;
+
+    if (existingUser) {
+      // 1. If user already has a vendor profile
+      if (existingUser.vendor) {
+        if (existingUser.vendor.status === "PENDING") {
+          return NextResponse.json(
+            {
+              success: false,
+              alreadyRegistered: true,
+              error: "A vendor registration with this email has already been submitted and is pending review. Please sign in to check status.",
+            },
+            { status: 409 }
+          );
+        }
+
+        return NextResponse.json(
+          {
+            success: false,
+            alreadyRegistered: true,
+            error: "An active vendor account already exists with this email address. Please sign in.",
+          },
+          { status: 409 }
+        );
+      }
+
+      // 2. User exists (e.g. Customer, Ads Seller, or POS Guest) but DOES NOT have a Vendor profile
+      // Check password if existing user has a real password set
+      const isWalkIn =
+        !existingUser.passwordHash ||
+        existingUser.passwordHash === "POS_WALK_IN_NOPASSWORD" ||
+        existingUser.passwordHash === "MARKETPLACE_GUEST_NOPASSWORD";
+
+      if (!isWalkIn) {
+        const passwordMatches = await passwordUtils.compare(
+          data.password,
+          existingUser.passwordHash!
+        );
+        if (!passwordMatches) {
+          return NextResponse.json(
+            {
+              success: false,
+              alreadyRegistered: true,
+              error:
+                "An account with this email already exists. Please enter your existing account password to add a Vendor store, or sign in.",
+            },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Valid existing user upgrading or linking vendor profile
+      const newPasswordHash = isWalkIn
+        ? await passwordUtils.hash(data.password)
+        : existingUser.passwordHash;
+
+      const updatedData = await prisma.$transaction(async (tx) => {
+        // Update user
+        const u = await tx.user.update({
+          where: { id: existingUser.id },
+          data: {
+            firstName: existingUser.firstName || data.firstName,
+            lastName: existingUser.lastName || data.lastName,
+            passwordHash: newPasswordHash,
+            role:
+              existingUser.role === UserRole.ADMIN
+                ? UserRole.ADMIN
+                : UserRole.VENDOR,
+          },
+        });
+
+        // Create Vendor profile
+        const v = await tx.vendor.create({
+          data: {
+            userId: u.id,
+            businessName: data.businessName,
+            businessEmail: data.businessEmail,
+            businessPhone: data.businessPhone,
+            slug,
+            status: "PENDING",
+            isShopOpen: false,
+          },
+        });
+
+        // Create Wallet if doesn't exist
+        const existingWallet = await tx.wallet.findUnique({
+          where: { vendorId: v.id },
+        });
+        if (!existingWallet) {
+          await tx.wallet.create({
+            data: { vendorId: v.id },
+          });
+        }
+
+        return { user: u, vendor: v };
       });
 
-      // 2. Create Vendor with PENDING status
-      const vendor = await tx.vendor.create({
-        data: {
-          userId: user.id,
-          businessName: data.businessName,
-          businessEmail: data.businessEmail,
-          businessPhone: data.businessPhone,
-          slug,
-          status: "PENDING",
-          isShopOpen: false, // Don't open shop until approved
-        },
+      resultUser = updatedData.user;
+      resultVendor = updatedData.vendor;
+    } else {
+      // 3. New user registration
+      const passwordHash = await passwordUtils.hash(data.password);
+
+      const createdData = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            email: data.businessEmail,
+            passwordHash,
+            role: UserRole.VENDOR,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            isActive: true,
+            emailVerified: false,
+          },
+        });
+
+        const vendor = await tx.vendor.create({
+          data: {
+            userId: user.id,
+            businessName: data.businessName,
+            businessEmail: data.businessEmail,
+            businessPhone: data.businessPhone,
+            slug,
+            status: "PENDING",
+            isShopOpen: false,
+          },
+        });
+
+        await tx.wallet.create({
+          data: {
+            vendorId: vendor.id,
+          },
+        });
+
+        return { user, vendor };
       });
 
-      // 3. Create Wallet
-      await tx.wallet.create({
-        data: {
-          vendorId: vendor.id,
-        },
-      });
+      resultUser = createdData.user;
+      resultVendor = createdData.vendor;
+    }
 
-      return { user, vendor };
-    });
-
-    // Generate tokens so they can log in immediately (but will see pending view)
+    // Generate tokens so they can log in immediately
     const tokens = tokenUtils.generateTokenPair({
-      userId: result.user.id,
-      email: result.user.email!,
-      role: result.user.role,
+      userId: resultUser.id,
+      email: resultUser.email!,
+      role: resultUser.role,
     });
 
     const response = NextResponse.json({
       success: true,
+      message: "Vendor application submitted successfully!",
       data: {
         user: {
-          id: result.user.id,
-          email: result.user.email,
-          phone: result.user.phone,
-          role: result.user.role,
-          firstName: result.user.firstName,
-          lastName: result.user.lastName,
-          avatar: (result.user as any).avatar,
+          id: resultUser.id,
+          email: resultUser.email,
+          phone: resultUser.phone,
+          role: resultUser.role,
+          firstName: resultUser.firstName,
+          lastName: resultUser.lastName,
+          avatar: (resultUser as any).avatar,
           vendor: {
-            id: result.vendor.id,
-            status: result.vendor.status,
-            businessName: result.vendor.businessName,
-            isShopOpen: result.vendor.isShopOpen,
+            id: resultVendor.id,
+            status: resultVendor.status,
+            businessName: resultVendor.businessName,
+            isShopOpen: resultVendor.isShopOpen,
           },
         },
         accessToken: tokens.accessToken,
@@ -139,10 +239,10 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Vendor registration error:", error);
     return NextResponse.json(
-      { success: false, error: "An error occurred during registration" },
+      { success: false, error: error.message || "An error occurred during registration" },
       { status: 500 }
     );
   }

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Store, ArrowLeft } from "lucide-react";
+import { Loader2, Store, ArrowLeft, AlertCircle, ArrowRight } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
 const SL_PHONE_REGEX = /^(?:\+94|0)7[01245678]\d{7}$/;
@@ -34,6 +34,11 @@ export default function VendorRegisterPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationError, setRegistrationError] = useState<{
+    message: string;
+    email?: string;
+    isExisting?: boolean;
+  } | null>(null);
 
   const {
     register,
@@ -45,6 +50,7 @@ export default function VendorRegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
+    setRegistrationError(null);
     try {
       const response = await fetch("/api/auth/vendor/register", {
         method: "POST",
@@ -55,16 +61,29 @@ export default function VendorRegisterPage() {
       const result = await response.json();
 
       if (!result.success) {
+        const isExisting =
+          !!result.alreadyRegistered ||
+          result.error?.toLowerCase().includes("already exists") ||
+          result.error?.toLowerCase().includes("already been submitted");
+
+        setRegistrationError({
+          message: result.error || "Registration failed",
+          email: data.businessEmail,
+          isExisting,
+        });
         toast.error(result.error || "Registration failed");
         return;
       }
 
       setAuth(result.data.user, result.data.accessToken, result.data.refreshToken);
-      toast.success("Registration successful!");
+      toast.success(result.message || "Registration successful!");
       router.push("/vendor");
     } catch (error) {
       console.error("Registration error:", error);
       toast.error("An unexpected error occurred");
+      setRegistrationError({
+        message: "An unexpected network error occurred. Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -91,6 +110,31 @@ export default function VendorRegisterPage() {
               Join Try Me and start selling to thousands of customers.
             </p>
           </div>
+
+          {/* Registration Error Banner */}
+          {registrationError && (
+            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 space-y-2.5">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <p className="text-xs font-semibold leading-relaxed">
+                  {registrationError.message}
+                </p>
+              </div>
+
+              {registrationError.isExisting && (
+                <div className="pt-2 border-t border-red-100 flex items-center justify-between">
+                  <span className="text-[11px] text-red-600 font-medium">Already registered?</span>
+                  <Link
+                    href={`/vendor/login?email=${encodeURIComponent(registrationError.email || "")}`}
+                    className="inline-flex items-center text-xs font-bold text-red-700 hover:text-red-900 underline"
+                  >
+                    <span>Sign In Here</span>
+                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -124,7 +168,7 @@ export default function VendorRegisterPage() {
               <Label htmlFor="businessName">Business Name</Label>
               <Input
                 id="businessName"
-                placeholder="Your Shop Name"
+                placeholder="My Awesome Store"
                 {...register("businessName")}
                 disabled={isLoading}
               />
@@ -188,11 +232,15 @@ export default function VendorRegisterPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full bg-gray-900 hover:bg-gray-800 h-11" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold h-11 rounded-xl"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Account...
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Registering...
                 </>
               ) : (
                 "Register as Vendor"
@@ -202,15 +250,14 @@ export default function VendorRegisterPage() {
 
           <div className="mt-6 text-center text-sm text-gray-500">
             Already have a vendor account?{" "}
-            <Link href="/vendor/login" className="text-gray-900 font-semibold hover:underline">
+            <Link
+              href="/vendor/login"
+              className="font-medium text-gray-900 hover:underline"
+            >
               Sign In
             </Link>
           </div>
         </div>
-
-        <p className="mt-8 text-center text-xs text-gray-400">
-          Secure registration • Protected by encryption
-        </p>
       </div>
     </div>
   );
