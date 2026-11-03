@@ -1268,7 +1268,7 @@ export default function WebsiteBuilderPage() {
           },
         ],
       };
-    } else {
+    } else if (type === "image_banner") {
       newSection = {
         id: newId,
         type: "image_banner",
@@ -1282,6 +1282,95 @@ export default function WebsiteBuilderPage() {
         bannerOverlayBtnText: "View Products",
         bannerOverlayBtnLink: "#products",
       };
+    } else if (type === "contact_form") {
+      newSection = {
+        id: newId,
+        type: "contact_form",
+        title: "Send Us a Message or Order Inquiry",
+        subtitle: "Fill out your details below and our team will get in touch with you promptly.",
+        enabled: true,
+        buttonText: "Submit Direct Inquiry",
+      };
+    } else if (type === "location_map") {
+      newSection = {
+        id: newId,
+        type: "location_map",
+        title: "Store Location & Directions",
+        subtitle: "Visit our store or get interactive driving directions.",
+        enabled: true,
+      };
+    } else if (type === "contact_cards") {
+      newSection = {
+        id: newId,
+        type: "contact_cards",
+        title: "Direct Contact Information",
+        subtitle: "Reach us directly via Phone, WhatsApp, Email, or visit our store.",
+        enabled: true,
+      };
+    } else if (type === "opening_hours") {
+      newSection = {
+        id: newId,
+        type: "opening_hours",
+        title: "Opening & Working Hours",
+        subtitle: "When you can visit us or receive instant customer support.",
+        enabled: true,
+      };
+    } else if (type === "full_contact") {
+      newSection = {
+        id: newId,
+        type: "full_contact",
+        title: "Get in Touch",
+        subtitle: "We'd love to hear from you. Contact our team anytime.",
+        enabled: true,
+      };
+    } else if (type === "products_catalog") {
+      newSection = {
+        id: newId,
+        type: "products_catalog",
+        title: "Products & Ads Catalog",
+        subtitle: "Explore our latest collections and popular items directly from our store.",
+        enabled: true,
+        itemsLimit: 12,
+      };
+    } else if (type === "services_list") {
+      newSection = {
+        id: newId,
+        type: "services_list",
+        title: "Our Services & Offerings",
+        subtitle: "Explore our range of professional services and packages.",
+        enabled: true,
+      };
+    } else if (type === "about_story") {
+      newSection = {
+        id: newId,
+        type: "about_story",
+        title: "About Our Story",
+        subtitle: "Learn more about our heritage, mission, and commitment to quality.",
+        enabled: true,
+      };
+    } else if (type === "photo_gallery") {
+      newSection = {
+        id: newId,
+        type: "photo_gallery",
+        title: "Photo Gallery Showcase",
+        subtitle: "Take a visual tour through our store highlights and customer favorites.",
+        enabled: true,
+      };
+    } else if (type === "reviews_list") {
+      newSection = {
+        id: newId,
+        type: "reviews_list",
+        title: "Customer Testimonials & Reviews",
+        subtitle: "Verified ratings and reviews from our customers islandwide.",
+        enabled: true,
+      };
+    } else {
+      newSection = {
+        id: newId,
+        type: type,
+        title: "Custom Section",
+        enabled: true,
+      };
     }
 
     if (isForPage && editingPage) {
@@ -1294,8 +1383,41 @@ export default function WebsiteBuilderPage() {
         },
       };
       setEditingPage(updatedPage);
-      setPages((prev) => prev.map((p) => (p.id === updatedPage.id ? updatedPage : p)));
-      toast.success(`Added ${newSection.title} to this page! Click 'Save Page' to persist.`);
+      const updatedPages = pages.map((p) => (p.id === updatedPage.id ? updatedPage : p));
+      setPages(updatedPages);
+
+      // Instantly update live preview iframe
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: "PREVIEW_SET_PAGE",
+            pageSlug: updatedPage.slug,
+            page: updatedPage,
+          },
+          "*"
+        );
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: "PREVIEW_UPDATE",
+            activePageSlug: updatedPage.slug,
+            deviceView,
+            payload: {
+              config,
+              entityInfo,
+              pages: updatedPages,
+              products,
+              entityType,
+              activeTier: activeSubscription?.tier || "ONE_PAGE",
+            },
+          },
+          "*"
+        );
+      }
+
+      toast.success(`"${newSection.title}" has been added to the bottom of the page! (පහළට Add විය)`, {
+        description: "Scroll down to configure this section or click 'Save Page' to persist your changes.",
+        duration: 5000,
+      });
     } else {
       const existingCustom = config.customSections || [];
       const existingOrder = getSectionsOrder();
@@ -1307,9 +1429,26 @@ export default function WebsiteBuilderPage() {
       setConfig(updated);
       autoSaveConfig(updated);
       sendPreviewUpdate();
-      toast.success(`Added ${newSection.title} to Home Page!`);
+
+      toast.success(`"${newSection.title}" has been added to the bottom of the page! (පහළට Add විය)`, {
+        description: "Scroll down to the bottom of the section list to configure or move it up.",
+        duration: 5000,
+      });
     }
+
     setAddSectionModalOpen(false);
+
+    // Smooth scroll down to the newly added section and highlight it with a focus ring
+    setTimeout(() => {
+      const targetElement = document.getElementById(`custom-section-item-${newId}`);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        targetElement.classList.add("ring-2", "ring-indigo-500", "ring-offset-2", "rounded-2xl", "transition-all");
+        setTimeout(() => {
+          targetElement.classList.remove("ring-2", "ring-indigo-500", "ring-offset-2");
+        }, 2500);
+      }
+    }, 300);
   };
 
   const handleUpdateCustomSection = (secId: string, updatedSection: CustomWebsiteSection, isForPage: boolean = false) => {
@@ -1326,6 +1465,16 @@ export default function WebsiteBuilderPage() {
       };
       setEditingPage(updatedPage);
       setPages((prev) => prev.map((p) => (p.id === updatedPage.id ? updatedPage : p)));
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: "PREVIEW_SET_PAGE",
+            pageSlug: updatedPage.slug,
+            page: updatedPage,
+          },
+          "*"
+        );
+      }
     } else {
       const customSecs = (config.customSections || []).map((s: any) =>
         s.id === secId ? updatedSection : s
@@ -1353,6 +1502,16 @@ export default function WebsiteBuilderPage() {
       };
       setEditingPage(updatedPage);
       setPages((prev) => prev.map((p) => (p.id === updatedPage.id ? updatedPage : p)));
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: "PREVIEW_SET_PAGE",
+            pageSlug: updatedPage.slug,
+            page: updatedPage,
+          },
+          "*"
+        );
+      }
       toast.success("Section removed from page");
     } else {
       const customSecs = (config.customSections || []).filter((s: any) => s.id !== secId);
@@ -1388,6 +1547,16 @@ export default function WebsiteBuilderPage() {
     };
     setEditingPage(updatedPage);
     setPages((prev) => prev.map((p) => (p.id === updatedPage.id ? updatedPage : p)));
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        {
+          type: "PREVIEW_SET_PAGE",
+          pageSlug: updatedPage.slug,
+          page: updatedPage,
+        },
+        "*"
+      );
+    }
   };
 
   const handlePageBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2179,7 +2348,7 @@ export default function WebsiteBuilderPage() {
                 const secIdx = getSectionIndex(csec.id);
                 const totalSecs = getSectionsOrder().length;
                 return (
-                  <div key={csec.id} style={{ order: secIdx }}>
+                  <div key={csec.id} id={`custom-section-item-${csec.id}`} style={{ order: secIdx }}>
                     <CustomSectionEditor
                       section={csec}
                       index={secIdx}
@@ -4699,18 +4868,19 @@ export default function WebsiteBuilderPage() {
 
                     <div className="space-y-4">
                       {(editingPage.sectionsJson?.customSections || []).map((sec: any, pIdx: number) => (
-                        <CustomSectionEditor
-                          key={sec.id || pIdx}
-                          section={sec}
-                          index={pIdx}
-                          total={(editingPage.sectionsJson?.customSections || []).length}
-                          onUpdate={(updated) => handleUpdateCustomSection(sec.id, updated, true)}
-                          onDelete={() => handleRemoveCustomSection(sec.id, true)}
-                          onMoveUp={() => handleMovePageCustomSection(pIdx, "up")}
-                          onMoveDown={() => handleMovePageCustomSection(pIdx, "down")}
-                          canMoveUp={pIdx > 0}
-                          canMoveDown={pIdx < (editingPage.sectionsJson?.customSections || []).length - 1}
-                        />
+                        <div key={sec.id || pIdx} id={`custom-section-item-${sec.id}`}>
+                          <CustomSectionEditor
+                            section={sec}
+                            index={pIdx}
+                            total={(editingPage.sectionsJson?.customSections || []).length}
+                            onUpdate={(updated) => handleUpdateCustomSection(sec.id, updated, true)}
+                            onDelete={() => handleRemoveCustomSection(sec.id, true)}
+                            onMoveUp={() => handleMovePageCustomSection(pIdx, "up")}
+                            onMoveDown={() => handleMovePageCustomSection(pIdx, "down")}
+                            canMoveUp={pIdx > 0}
+                            canMoveDown={pIdx < (editingPage.sectionsJson?.customSections || []).length - 1}
+                          />
+                        </div>
                       ))}
                       {(editingPage.sectionsJson?.customSections || []).length === 0 && (
                         <div className="p-6 border border-dashed rounded-xl text-center text-slate-400 bg-white dark:bg-slate-800">

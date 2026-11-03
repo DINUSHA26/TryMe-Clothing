@@ -31,7 +31,7 @@ interface Props {
   localReviews?: any[];
   navigateTo?: (page: string) => void;
   handleInquiryViaWhatsApp?: (item?: any) => void;
-  renderProductCard?: (item: any) => React.ReactNode;
+  renderProductCard?: (item: any, idx: number) => React.ReactNode;
   renderServiceCard?: (item: any, idx: number) => React.ReactNode;
 }
 
@@ -288,9 +288,15 @@ export default function CustomDynamicSectionClient({
 
   // 5. CONTACT / INQUIRY FORM ONLY
   if (section.type === "contact_form") {
+    const mergedContact = {
+      ...(contact || {}),
+      formTitle: section.title || contact?.formTitle,
+      formSubtitle: section.subtitle || contact?.formSubtitle,
+      formButtonText: section.buttonText || contact?.formButtonText,
+    };
     return (
       <ContactSectionClient
-        contact={contact}
+        contact={mergedContact}
         vendor={vendor}
         primaryColor={primaryColor}
         featureOnly="form"
@@ -300,9 +306,15 @@ export default function CustomDynamicSectionClient({
 
   // 6. GOOGLE MAPS LOCATION ONLY
   if (section.type === "location_map") {
+    const mergedContact = {
+      ...(contact || {}),
+      mapTitle: section.title || contact?.mapTitle,
+      mapSubtitle: section.subtitle || contact?.mapSubtitle,
+      mapEmbedUrl: section.mapEmbedUrl || contact?.mapEmbedUrl,
+    };
     return (
       <ContactSectionClient
-        contact={contact}
+        contact={mergedContact}
         vendor={vendor}
         primaryColor={primaryColor}
         featureOnly="map"
@@ -312,9 +324,13 @@ export default function CustomDynamicSectionClient({
 
   // 7. DIRECT CONTACT CARDS ONLY
   if (section.type === "contact_cards") {
+    const mergedContact = {
+      ...(contact || {}),
+      cardsTitle: section.title || contact?.cardsTitle,
+    };
     return (
       <ContactSectionClient
-        contact={contact}
+        contact={mergedContact}
         vendor={vendor}
         primaryColor={primaryColor}
         featureOnly="cards"
@@ -324,9 +340,13 @@ export default function CustomDynamicSectionClient({
 
   // 8. OPENING HOURS ONLY
   if (section.type === "opening_hours") {
+    const mergedContact = {
+      ...(contact || {}),
+      hoursTitle: section.title || contact?.hoursTitle,
+    };
     return (
       <ContactSectionClient
-        contact={contact}
+        contact={mergedContact}
         vendor={vendor}
         primaryColor={primaryColor}
         featureOnly="hours"
@@ -336,9 +356,14 @@ export default function CustomDynamicSectionClient({
 
   // 9. FULL CONTACT SECTION
   if (section.type === "full_contact") {
+    const mergedContact = {
+      ...(contact || {}),
+      title: section.title || contact?.title,
+      subtitle: section.subtitle || contact?.subtitle,
+    };
     return (
       <ContactSectionClient
-        contact={contact}
+        contact={mergedContact}
         vendor={vendor}
         primaryColor={primaryColor}
       />
@@ -347,6 +372,7 @@ export default function CustomDynamicSectionClient({
 
   // 10. PRODUCTS & ADS CATALOG GRID
   if (section.type === "products_catalog") {
+    const maxItems = section.itemsLimit || 12;
     return (
       <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
         <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
@@ -361,9 +387,9 @@ export default function CustomDynamicSectionClient({
 
         {products && products.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {products.slice(0, 12).map((item: any, idx: number) =>
+            {products.slice(0, maxItems).map((item: any, idx: number) =>
               renderProductCard ? (
-                renderProductCard(item)
+                renderProductCard(item, idx)
               ) : (
                 <div key={item.id || idx} className="rounded-2xl border bg-white p-3 shadow-xs space-y-2">
                   <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100">
@@ -432,6 +458,7 @@ export default function CustomDynamicSectionClient({
   // 12. ABOUT STORY SECTION
   if (section.type === "about_story") {
     const aboutData = about || {};
+    const storyImg = section.aboutImageUrl || aboutData.images?.[0];
     return (
       <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
@@ -447,8 +474,8 @@ export default function CustomDynamicSectionClient({
             </p>
           </div>
           <div className="aspect-[4/3] rounded-3xl bg-slate-100 overflow-hidden relative border shadow-lg">
-            {aboutData.images?.[0] ? (
-              <Image src={aboutData.images[0]} alt="About" fill className="object-cover" />
+            {storyImg ? (
+              <Image src={storyImg} alt="About" fill className="object-cover" />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
                 <Building2 className="w-12 h-12 opacity-30 text-slate-500 mb-2" />
@@ -496,254 +523,6 @@ export default function CustomDynamicSectionClient({
   // 14. CUSTOMER REVIEWS
   if (section.type === "reviews_list") {
     const allReviews = [...(localReviews || []), ...(Array.isArray(reviews) ? reviews : (reviews as any)?.items || [])];
-    return (
-      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-        <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
-          <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-            REVIEWS
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {section.title || "What Customers Say"}
-          </h2>
-          {section.subtitle && <p className="text-xs text-slate-500">{section.subtitle}</p>}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {(allReviews.length > 0
-            ? allReviews.slice(0, 6)
-            : [
-                { name: "Chathuri Fernando", comment: "Amazing service and quality items!", rating: 5 },
-                { name: "Nimali Perera", comment: "Fast islandwide delivery and friendly communication.", rating: 5 },
-                { name: "Yasara Silva", comment: "100% genuine products. Highly recommended!", rating: 5 },
-              ]
-          ).map((r: any, idx: number) => (
-            <div key={r.id || idx} className="bg-white p-6 rounded-2xl border shadow-xs space-y-3">
-              <div className="flex gap-1 text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`w-4 h-4 ${i < (r.rating || 5) ? "fill-amber-400" : "text-slate-200"}`} />
-                ))}
-              </div>
-              <p className="text-sm text-slate-600 italic">&ldquo;{r.comment}&rdquo;</p>
-              <div className="pt-2 border-t">
-                <p className="text-xs font-extrabold text-slate-900">{r.customerName || r.name || "Verified Customer"}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  // 5. CONTACT / INQUIRY FORM ONLY
-  if (section.type === "contact_form") {
-    return (
-      <ContactSectionClient
-        contact={contact}
-        vendor={vendor}
-        primaryColor={primaryColor}
-        featureOnly="form"
-      />
-    );
-  }
-
-  // 6. GOOGLE MAPS LOCATION ONLY
-  if (section.type === "location_map") {
-    return (
-      <ContactSectionClient
-        contact={contact}
-        vendor={vendor}
-        primaryColor={primaryColor}
-        featureOnly="map"
-      />
-    );
-  }
-
-  // 7. DIRECT CONTACT CARDS ONLY
-  if (section.type === "contact_cards") {
-    return (
-      <ContactSectionClient
-        contact={contact}
-        vendor={vendor}
-        primaryColor={primaryColor}
-        featureOnly="cards"
-      />
-    );
-  }
-
-  // 8. OPENING HOURS ONLY
-  if (section.type === "opening_hours") {
-    return (
-      <ContactSectionClient
-        contact={contact}
-        vendor={vendor}
-        primaryColor={primaryColor}
-        featureOnly="hours"
-      />
-    );
-  }
-
-  // 9. FULL CONTACT SECTION
-  if (section.type === "full_contact") {
-    return (
-      <ContactSectionClient
-        contact={contact}
-        vendor={vendor}
-        primaryColor={primaryColor}
-      />
-    );
-  }
-
-  // 10. PRODUCTS & ADS CATALOG GRID
-  if (section.type === "products_catalog") {
-    return (
-      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-        <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
-          <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-            OUR COLLECTION
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {section.title || "Featured Products & Deals"}
-          </h2>
-          {section.subtitle && <p className="text-xs text-slate-500">{section.subtitle}</p>}
-        </div>
-
-        {products && products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {products.slice(0, 12).map((item: any, idx: number) =>
-              renderProductCard ? (
-                renderProductCard(item)
-              ) : (
-                <div key={item.id || idx} className="rounded-2xl border bg-white p-3 shadow-xs space-y-2">
-                  <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100">
-                    {item.images?.[0] ? (
-                      <Image src={item.images[0]} alt={item.title || "Product"} fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <ShoppingBag className="w-8 h-8" />
-                      </div>
-                    )}
-                  </div>
-                  <h4 className="font-extrabold text-xs text-slate-900 line-clamp-1">{item.title}</h4>
-                  <p className="font-black text-xs" style={{ color: primaryColor }}>
-                    Rs. {Number(item.price || 0).toLocaleString()}
-                  </p>
-                </div>
-              )
-            )}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-xs text-slate-400 border border-dashed rounded-2xl">
-            No products available at the moment.
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  // 11. SERVICES & OFFERINGS GRID
-  if (section.type === "services_list") {
-    return (
-      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-        <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
-          <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-            SERVICES
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {section.title || "Our Services & Offerings"}
-          </h2>
-          {section.subtitle && <p className="text-xs text-slate-500">{section.subtitle}</p>}
-        </div>
-
-        {services && services.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {services.map((item: any, idx: number) =>
-              renderServiceCard ? (
-                renderServiceCard(item, idx)
-              ) : (
-                <div key={item.id || idx} className="p-5 rounded-2xl border bg-white shadow-xs space-y-2">
-                  <h4 className="font-extrabold text-sm text-slate-900">{item.name || item.title}</h4>
-                  {item.price && <p className="text-xs font-black text-primary">{item.price}</p>}
-                  {item.description && <p className="text-xs text-slate-500 line-clamp-2">{item.description}</p>}
-                </div>
-              )
-            )}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-xs text-slate-400 border border-dashed rounded-2xl">
-            No services listed yet.
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  // 12. ABOUT STORY SECTION
-  if (section.type === "about_story") {
-    const aboutData = about || {};
-    return (
-      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
-          <div className="space-y-4">
-            <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-              {aboutData.badge || "ABOUT US"}
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              {section.title || aboutData.title || `About ${vendor?.businessName}`}
-            </h2>
-            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-              {section.subtitle || aboutData.content || "Dedicated to providing exceptional quality and customer care."}
-            </p>
-          </div>
-          <div className="aspect-[4/3] rounded-3xl bg-slate-100 overflow-hidden relative border shadow-lg">
-            {aboutData.images?.[0] ? (
-              <Image src={aboutData.images[0]} alt="About" fill className="object-cover" />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
-                <Building2 className="w-12 h-12 opacity-30 text-slate-500 mb-2" />
-                <span className="font-bold text-xs uppercase tracking-widest">{vendor?.businessName}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // 13. PHOTO GALLERY GRID
-  if (section.type === "photo_gallery") {
-    const galImages = gallery?.images || [];
-    return (
-      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-        <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
-          <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-            GALLERY
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {section.title || gallery?.title || "Photo Showcase"}
-          </h2>
-          {section.subtitle && <p className="text-xs text-slate-500">{section.subtitle}</p>}
-        </div>
-
-        {galImages.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {galImages.map((img: string, idx: number) => (
-              <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border shadow-xs group bg-slate-100">
-                <Image src={img} alt="Gallery item" fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="300px" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-xs text-slate-400 border border-dashed rounded-2xl">
-            No gallery photos added yet.
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  // 14. CUSTOMER REVIEWS
-  if (section.type === "reviews_list") {
-    const allReviews = [...(localReviews || []), ...((reviews as any)?.items || (Array.isArray(reviews) ? reviews : []))];
     return (
       <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
         <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">

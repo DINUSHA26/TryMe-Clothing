@@ -210,6 +210,12 @@ export interface CustomWebsiteSection {
   bannerOverlaySubheadline?: string;
   bannerOverlayBtnText?: string;
   bannerOverlayBtnLink?: string;
+  // Feature Specific overrides
+  buttonText?: string;
+  buttonLink?: string;
+  mapEmbedUrl?: string;
+  aboutImageUrl?: string;
+  itemsLimit?: number;
 }
 
 export interface VendorWebsiteConfigData {

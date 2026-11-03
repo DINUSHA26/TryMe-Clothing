@@ -3146,7 +3146,7 @@ export default function StandaloneSiteClient({
               </div>
             )}
 
-            {/* Dynamic Custom Sections on this Page (Sliders, Videos, Carousels, Image Banners) */}
+            {/* Dynamic Custom Sections on this Page (Sliders, Videos, Carousels, Image Banners, Store Sections) */}
             {Array.isArray(requestedCustomPage.sectionsJson?.customSections) &&
               requestedCustomPage.sectionsJson.customSections.length > 0 && (
                 <div className="space-y-12">
@@ -3155,8 +3155,18 @@ export default function StandaloneSiteClient({
                       key={csec.id}
                       section={csec}
                       primaryColor={primaryColor}
+                      vendor={vendor}
+                      contact={contact}
+                      products={products}
+                      services={normalizedServices}
+                      about={about}
+                      gallery={gallery}
+                      reviews={reviews}
+                      localReviews={localReviews}
                       navigateTo={navigateTo}
                       handleInquiryViaWhatsApp={handleInquiryViaWhatsApp}
+                      renderProductCard={renderProductCard}
+                      renderServiceCard={renderServiceCard}
                     />
                   ))}
                 </div>
@@ -3244,8 +3254,18 @@ export default function StandaloneSiteClient({
                   key={secId}
                   section={csec}
                   primaryColor={primaryColor}
+                  vendor={vendor}
+                  contact={contact}
+                  products={products}
+                  services={normalizedServices}
+                  about={about}
+                  gallery={gallery}
+                  reviews={reviews}
+                  localReviews={localReviews}
                   navigateTo={navigateTo}
                   handleInquiryViaWhatsApp={handleInquiryViaWhatsApp}
+                  renderProductCard={renderProductCard}
+                  renderServiceCard={renderServiceCard}
                 />
               );
             }

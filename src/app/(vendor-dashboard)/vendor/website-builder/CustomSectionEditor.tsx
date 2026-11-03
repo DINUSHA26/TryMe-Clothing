@@ -838,18 +838,110 @@ export default function CustomSectionEditor({
 
           {/* Standalone / Preset Component Info Panel */}
           {["contact_form", "location_map", "contact_cards", "opening_hours", "full_contact", "products_catalog", "services_list", "about_story", "photo_gallery", "reviews_list"].includes(section.type) && (
-            <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
-                <Sparkles className="w-4 h-4" />
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="text-xs space-y-1">
+                  <p className="font-bold text-slate-800 dark:text-slate-200">
+                    Live Synced Store Feature: {themeConfig.label}
+                  </p>
+                  <p className="text-slate-500 leading-relaxed">
+                    This section renders your store&#39;s {themeConfig.label.toLowerCase()} dynamically. You can adjust the section title and subtitle above or re-order it on this page. All details and settings automatically sync from your website&#39;s configuration.
+                  </p>
+                </div>
               </div>
-              <div className="text-xs space-y-1">
-                <p className="font-bold text-slate-800 dark:text-slate-200">
-                  Live Synced Store Feature: {themeConfig.label}
-                </p>
-                <p className="text-slate-500 leading-relaxed">
-                  This section renders your store&#39;s {themeConfig.label.toLowerCase()} dynamically. You can adjust the section title and subtitle above or re-order it on this page. All details and settings automatically sync from your website&#39;s configuration.
-                </p>
-              </div>
+
+              {/* Feature Specific Optional Overrides */}
+              {section.type === "products_catalog" && (
+                <div>
+                  <Label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Maximum Items to Display
+                  </Label>
+                  <select
+                    value={section.itemsLimit || 12}
+                    onChange={(e) => onUpdate({ ...section, itemsLimit: Number(e.target.value) })}
+                    className="mt-1 w-full h-9 px-3 rounded-xl border bg-white dark:bg-slate-800 text-xs font-bold"
+                  >
+                    <option value={4}>4 Products / Items</option>
+                    <option value={8}>8 Products / Items</option>
+                    <option value={12}>12 Products / Items (Default)</option>
+                    <option value={16}>16 Products / Items</option>
+                    <option value={24}>24 Products / Items</option>
+                  </select>
+                </div>
+              )}
+
+              {section.type === "location_map" && (
+                <div>
+                  <Label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Custom Google Maps Embed URL (Optional)
+                  </Label>
+                  <Input
+                    value={section.mapEmbedUrl || ""}
+                    onChange={(e) => onUpdate({ ...section, mapEmbedUrl: e.target.value })}
+                    placeholder="https://www.google.com/maps/embed?... (leave empty to use store address)"
+                    className="mt-1 rounded-xl text-xs font-mono"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Leave empty to use your default store address location from Contact Settings.
+                  </p>
+                </div>
+              )}
+
+              {section.type === "about_story" && (
+                <div>
+                  <Label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Custom Story Image (Optional override)
+                  </Label>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    {section.aboutImageUrl && (
+                      <div className="relative w-16 h-12 rounded-xl overflow-hidden border bg-slate-100">
+                        <Image
+                          src={section.aboutImageUrl}
+                          alt="Story"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-xl border bg-white dark:bg-slate-700 text-xs font-bold hover:bg-slate-50 shadow-xs">
+                      <CloudUpload className="w-4 h-4 text-orange-600" />
+                      <span>Upload Photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleUpload(f, (url) => onUpdate({ ...section, aboutImageUrl: url }));
+                        }}
+                      />
+                    </label>
+                    <Input
+                      value={section.aboutImageUrl || ""}
+                      onChange={(e) => onUpdate({ ...section, aboutImageUrl: e.target.value })}
+                      placeholder="or paste image URL..."
+                      className="text-xs rounded-xl h-9 font-mono"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {section.type === "contact_form" && (
+                <div>
+                  <Label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Inquiry Form Button Label (Optional)
+                  </Label>
+                  <Input
+                    value={section.buttonText || ""}
+                    onChange={(e) => onUpdate({ ...section, buttonText: e.target.value })}
+                    placeholder="e.g. Submit Direct Inquiry / Contact Us"
+                    className="mt-1 rounded-xl text-xs"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
