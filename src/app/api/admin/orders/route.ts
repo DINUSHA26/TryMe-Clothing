@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
       vendorId: searchParams.get("vendorId") || undefined,
       minAmount: searchParams.get("minAmount") || undefined,
       maxAmount: searchParams.get("maxAmount") || undefined,
+      source: searchParams.get("source") || undefined,
     };
 
     const data = await getAdminOrders(filters);

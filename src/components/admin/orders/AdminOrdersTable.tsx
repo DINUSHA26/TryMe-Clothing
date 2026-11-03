@@ -9,12 +9,14 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, Globe, Store } from "lucide-react";
 import { OrderStatus } from "@prisma/client";
 
 interface AdminOrder {
   id: string;
   orderNumber: string;
+  orderSource?: "VENDOR_WEBSITE" | "TRYME_MARKETPLACE";
+  websiteDomainOrSlug?: string | null;
   status: OrderStatus;
   totalAmount: number;
   commissionEarned: number;
@@ -52,6 +54,7 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
           <thead className="bg-muted">
             <tr>
               <th className="text-left px-4 py-3 font-medium">Order #</th>
+              <th className="text-left px-4 py-3 font-medium">Channel</th>
               <th className="text-left px-4 py-3 font-medium">Customer</th>
               <th className="text-left px-4 py-3 font-medium">Vendor(s)</th>
               <th className="text-left px-4 py-3 font-medium">Date</th>
@@ -62,7 +65,11 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {orders.map((order) => (
+            {orders.map((order) => {
+              const isWebsite =
+                order.orderSource === "VENDOR_WEBSITE" ||
+                order.orderNumber.startsWith("WEB-");
+              return (
               <tr key={order.id} className="hover:bg-muted/50">
                 <td className="px-4 py-3">
                   <Link
@@ -71,6 +78,19 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
                   >
                     {order.orderNumber}
                   </Link>
+                </td>
+                <td className="px-4 py-3">
+                  {isWebsite ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      <Globe className="w-3.5 h-3.5 shrink-0" />
+                      <span>Vendor Website</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <Store className="w-3.5 h-3.5 shrink-0" />
+                      <span>TryMe.lk</span>
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-sm">{order.customer.email}</td>
                 <td className="px-4 py-3 text-sm">
@@ -94,12 +114,28 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
                     maximumFractionDigits: 2,
                   })}
                 </td>
-                <td className="px-4 py-3 text-sm font-medium text-green-600">
-                  Rs.{" "}
-                  {order.commissionEarned.toLocaleString("en-LK", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                <td className="px-4 py-3 text-sm font-medium">
+                  {isWebsite ? (
+                    <div>
+                      <span className="font-semibold text-slate-400">Rs. 0.00</span>
+                      <span className="block text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                        0% Direct Site
+                      </span>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="font-bold text-emerald-600">
+                        Rs.{" "}
+                        {order.commissionEarned.toLocaleString("en-LK", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                      <span className="block text-[10px] text-slate-400 font-medium">
+                        Platform Fee
+                      </span>
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <OrderStatusBadge 
@@ -116,7 +152,8 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
                   </Link>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

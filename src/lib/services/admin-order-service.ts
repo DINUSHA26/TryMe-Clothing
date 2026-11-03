@@ -11,6 +11,7 @@ export interface AdminOrderFilters {
   vendorId?: string;
   minAmount?: string;
   maxAmount?: string;
+  source?: string;
 }
 
 export async function getAdminOrders(filters: AdminOrderFilters) {
@@ -25,6 +26,7 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     vendorId: filters.vendorId || undefined,
     minAmount: filters.minAmount || undefined,
     maxAmount: filters.maxAmount || undefined,
+    source: (filters.source === "tryme" || filters.source === "website" || filters.source === "inquiries") ? filters.source : undefined,
   };
 
   const validation = orderFiltersSchema.safeParse(queryParams);
@@ -43,6 +45,7 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     vendorId,
     minAmount,
     maxAmount,
+    source,
   } = validation.data;
 
   // Build dynamic WHERE clause for raw SQL
@@ -79,10 +82,16 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     whereClause += ` AND o."createdAt" <= $${queryParamsRaw.length}`;
   }
 
-  if (vendorId) {
+  if (vendorId && vendorId !== "all") {
     queryParamsRaw.push(vendorId);
-    whereClause += ` AND EXISTS (SELECT 1 FROM "OrderItem" i WHERE i."orderId" = o."id" AND i."vendorId" = $${queryParamsRaw.length})`;
+    whereClause += ` AND EXISTS (SELECT 1 FROM "OrderItem" i WHERE i."orderId" = o."id" AND i."vendorId" = ${queryParamsRaw.length})`;
   }
+  if (source === "tryme") {
+    whereClause += ` AND o."orderNumber" NOT LIKE 'WEB-%'`;
+  } else if (source === "website") {
+    whereClause += ` AND o."orderNumber" LIKE 'WEB-%'`;
+  }
+
 
   if (minAmount !== undefined) {
     queryParamsRaw.push(Number(minAmount));
@@ -188,13 +197,36 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     }
   }
 
-  // Calculate total revenue using raw SQL
+  // Calculate detailed revenue breakdown using raw SQL
   const revenueResult = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT SUM("totalAmount")::float as "totalRevenue" FROM "Order" 
-     WHERE "status" IN ('PAYMENT_CONFIRMED'::"OrderStatus", 'PROCESSING'::"OrderStatus", 'SHIPPED'::"OrderStatus", 'PARTIALLY_SHIPPED'::"OrderStatus", 'DELIVERED'::"OrderStatus", 'DELIVERY_CONFIRMED'::"OrderStatus", 'COMPLETED'::"OrderStatus")`
+    `SELECT 
+       COALESCE(SUM(CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' THEN o."totalAmount" ELSE 0 END), 0)::float as "trymeRevenue",
+       COALESCE(SUM(CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN o."totalAmount" ELSE 0 END), 0)::float as "websiteRevenue",
+       COALESCE(SUM("totalAmount"), 0)::float as "totalRevenue",
+       COUNT(CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' THEN 1 END)::int as "trymeOrdersCount",
+       COUNT(CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN 1 END)::int as "websiteOrdersCount"
+     FROM "Order" o
+     WHERE o."status" IN ('PAYMENT_CONFIRMED'::"OrderStatus", 'PROCESSING'::"OrderStatus", 'SHIPPED'::"OrderStatus", 'PARTIALLY_SHIPPED'::"OrderStatus", 'DELIVERED'::"OrderStatus", 'DELIVERY_CONFIRMED'::"OrderStatus", 'COMPLETED'::"OrderStatus")`
   );
 
+  // Calculate platform commission collected ONLY from TryMe orders
+  const trymeCommissionResult = await prisma.$queryRawUnsafe<any[]>(
+    `SELECT COALESCE(SUM(
+       (i."totalPrice" * COALESCE(v."commissionRate", 10)) / 100
+     ), 0)::float as "trymeCommission"
+     FROM "OrderItem" i
+     JOIN "Order" o ON i."orderId" = o."id"
+     JOIN "Vendor" v ON i."vendorId" = v."id"
+     WHERE o."orderNumber" NOT LIKE 'WEB-%'
+       AND o."status" IN ('PAYMENT_CONFIRMED'::"OrderStatus", 'PROCESSING'::"OrderStatus", 'SHIPPED'::"OrderStatus", 'PARTIALLY_SHIPPED'::"OrderStatus", 'DELIVERED'::"OrderStatus", 'DELIVERY_CONFIRMED'::"OrderStatus", 'COMPLETED'::"OrderStatus")`
+  );
+
+  const trymeRevenue = revenueResult[0]?.trymeRevenue || 0;
+  const websiteRevenue = revenueResult[0]?.websiteRevenue || 0;
   const totalRevenue = revenueResult[0]?.totalRevenue || 0;
+  const trymeCommission = trymeCommissionResult[0]?.trymeCommission || 0;
+  const trymeOrdersCount = revenueResult[0]?.trymeOrdersCount || 0;
+  const websiteOrdersCount = revenueResult[0]?.websiteOrdersCount || 0;
 
   // Format orders
   const formattedOrders = ordersRaw.map((order) => {
@@ -202,29 +234,41 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     const couponVendorId = order.coupon_vendor_id || null;
     const discountAmount = Number(order.discountAmount) || 0;
 
-    const commissionEarned = items.reduce((sum: number, item: any) => {
-      let itemTotal = Number(item.totalPrice);
+    const isWebsiteOrder =
+      String(order.orderNumber).startsWith("WEB-") ||
+      (order.shippingAddressJson &&
+        typeof order.shippingAddressJson === "object" &&
+        (order.shippingAddressJson as any).orderSource === "VENDOR_WEBSITE");
 
-      if (couponVendorId === item.vendor.id && discountAmount > 0) {
-        const vendorSubtotal = items
-          .filter((i: any) => i.vendor.id === couponVendorId)
-          .reduce((s: number, i: any) => s + Number(i.totalPrice), 0);
-        
-        if (vendorSubtotal > 0) {
-          const itemDiscount = (itemTotal / vendorSubtotal) * discountAmount;
-          itemTotal = Math.max(0, itemTotal - itemDiscount);
-        }
-      }
+    // TryMe only charges/takes commission on TryMe Marketplace orders!
+    // Direct Vendor Website sales have 0 commission.
+    const commissionEarned = isWebsiteOrder
+      ? 0
+      : items.reduce((sum: number, item: any) => {
+          let itemTotal = Number(item.totalPrice);
 
-      const commission = (itemTotal * Number(item.vendor.commissionRate)) / 100;
-      return sum + commission;
-    }, 0);
+          if (couponVendorId === item.vendor.id && discountAmount > 0) {
+            const vendorSubtotal = items
+              .filter((i: any) => i.vendor.id === couponVendorId)
+              .reduce((s: number, i: any) => s + Number(i.totalPrice), 0);
+            
+            if (vendorSubtotal > 0) {
+              const itemDiscount = (itemTotal / vendorSubtotal) * discountAmount;
+              itemTotal = Math.max(0, itemTotal - itemDiscount);
+            }
+          }
+
+          const commission = (itemTotal * Number(item.vendor.commissionRate)) / 100;
+          return sum + commission;
+        }, 0);
 
     const vendors = [...new Set(items.map((item: any) => item.vendor.businessName))];
 
     return {
       id: order.id,
       orderNumber: order.orderNumber,
+      orderSource: isWebsiteOrder ? ("VENDOR_WEBSITE" as const) : ("TRYME_MARKETPLACE" as const),
+      websiteDomainOrSlug: (order.shippingAddressJson as any)?.websiteDomainOrSlug || null,
       status: order.status,
       subtotal: Number(order.subtotal),
       discountAmount: Number(order.discountAmount),
@@ -247,6 +291,18 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     };
   });
 
+  // Fetch all active vendors for filter dropdown
+  const vendorsList = await prisma.vendor.findMany({
+    select: {
+      id: true,
+      businessName: true,
+      slug: true,
+    },
+    orderBy: {
+      businessName: "asc",
+    },
+  });
+
   return {
     orders: formattedOrders,
     pagination: {
@@ -258,6 +314,12 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     stats: {
       ...stats,
       totalRevenue,
+      trymeRevenue,
+      websiteRevenue,
+      trymeCommission,
+      trymeOrdersCount,
+      websiteOrdersCount,
     },
+    vendorsList,
   };
 }
