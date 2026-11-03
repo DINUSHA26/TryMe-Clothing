@@ -1414,7 +1414,7 @@ export default function WebsiteBuilderPage() {
         );
       }
 
-      toast.success(`"${newSection.title}" has been added to the bottom of the page! (පහළට Add විය)`, {
+      toast.success(`"${newSection.title}" has been added to the bottom of the page!`, {
         description: "Scroll down to configure this section or click 'Save Page' to persist your changes.",
         duration: 5000,
       });
@@ -1430,7 +1430,7 @@ export default function WebsiteBuilderPage() {
       autoSaveConfig(updated);
       sendPreviewUpdate();
 
-      toast.success(`"${newSection.title}" has been added to the bottom of the page! (පහළට Add විය)`, {
+      toast.success(`"${newSection.title}" has been added to the bottom of the page!`, {
         description: "Scroll down to the bottom of the section list to configure or move it up.",
         duration: 5000,
       });
@@ -2036,7 +2036,7 @@ export default function WebsiteBuilderPage() {
                         Website Favicon (Browser Tab Icon)
                       </Label>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        Browser tab bar eke penwana icon eka (Default: Store Logo)
+                        Browser tab icon displayed to visitors (Default: Store Logo)
                       </p>
                     </div>
                     {config.heroSection?.faviconUrl && (
@@ -2384,12 +2384,7 @@ export default function WebsiteBuilderPage() {
                       <Globe className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Hero Section (Home Banner)</h3>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 uppercase tracking-wider">
-                          10 Designs Available
-                        </span>
-                      </div>
+                      <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Hero Section (Home Banner)</h3>
                       <p className="text-[11px] text-slate-500 font-medium">Main welcome headline, design layout, CTA buttons &amp; hero media</p>
                     </div>
                   </div>
