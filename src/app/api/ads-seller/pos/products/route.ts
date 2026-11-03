@@ -11,10 +11,10 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         businessName: true,
-        businessPhone: true,
-        businessEmail: true,
-        businessAddress: true,
-        logo: true,
+        phone: true,
+        user: {
+          select: { email: true },
+        },
       },
     });
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const ads = await (prisma as any).classifiedAd.findMany({
       where: {
         sellerId: adsSeller.id,
-        status: "APPROVED",
+        status: { in: ["ACTIVE", "APPROVED"] },
         ...(search
           ? {
               OR: [
@@ -89,10 +89,10 @@ export async function GET(request: NextRequest) {
         products,
         vendor: {
           businessName: adsSeller.businessName || "Ads Store",
-          businessPhone: adsSeller.businessPhone || "",
-          businessEmail: adsSeller.businessEmail || "",
-          businessAddress: adsSeller.businessAddress || "",
-          logo: adsSeller.logo || null,
+          businessPhone: adsSeller.phone || "",
+          businessEmail: adsSeller.user?.email || "",
+          businessAddress: "In-Store / Classifieds",
+          logo: null,
         },
       },
     });
@@ -102,4 +102,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message || "Failed to fetch ads products" }, { status: 500 });
   }
 }
-

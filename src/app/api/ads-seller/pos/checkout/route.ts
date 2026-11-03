@@ -11,10 +11,8 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         businessName: true,
-        businessPhone: true,
-        businessEmail: true,
-        businessAddress: true,
-        logo: true,
+        phone: true,
+        user: { select: { email: true } },
       },
     });
 
@@ -101,10 +99,10 @@ export async function POST(request: NextRequest) {
         customerInfo: customerInfo || { fullName: "Walk-in Customer" },
         vendor: {
           businessName: adsSeller.businessName || "Ads Store",
-          businessPhone: adsSeller.businessPhone || "",
-          businessEmail: adsSeller.businessEmail || "",
-          businessAddress: adsSeller.businessAddress || "",
-          logo: adsSeller.logo || null,
+          businessPhone: adsSeller.phone || "",
+          businessEmail: adsSeller.user?.email || "",
+          businessAddress: "In-Store / Classifieds",
+          logo: null,
         },
       },
     });
@@ -114,4 +112,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message || "Failed to process POS checkout" }, { status: 400 });
   }
 }
-

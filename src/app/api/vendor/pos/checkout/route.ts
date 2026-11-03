@@ -71,7 +71,7 @@ async function resolveOrCreatePosCustomer(
       lastName: fullName.split(" ").slice(1).join(" ") || "Customer",
       role: "CUSTOMER",
       passwordHash: "POS_WALK_IN_NOPASSWORD",
-      isEmailVerified: true,
+      emailVerified: true,
       customer: {
         create: {},
       },

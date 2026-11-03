@@ -198,33 +198,43 @@ export function PosRegisterClient({
 
   // Process Scanned Barcode
   const handleBarcodeScanned = (code: string) => {
+    if (!code) return;
     const cleanCode = code.trim().toLowerCase();
 
-    // Check if matches product SKU/Barcode
+    // Check if matches product SKU/Barcode/Name
     for (const p of products) {
       // Check variants
-      const matchedVariant = p.variants.find(
-        (v) => v.barcode.toLowerCase() === cleanCode || v.sku.toLowerCase() === cleanCode
-      );
-      if (matchedVariant) {
-        playBeep();
-        addItemToCart(p, matchedVariant);
-        toast({
-          title: "Barcode Scanned",
-          description: `Added: ${p.name} (${matchedVariant.value})`,
-        });
-        return;
+      if (Array.isArray(p.variants)) {
+        const matchedVariant = p.variants.find(
+          (v) =>
+            (v.barcode && v.barcode.trim().toLowerCase() === cleanCode) ||
+            (v.sku && v.sku.trim().toLowerCase() === cleanCode) ||
+            (v.value && v.value.trim().toLowerCase() === cleanCode)
+        );
+        if (matchedVariant) {
+          playBeep();
+          addItemToCart(p, matchedVariant);
+          toast({
+            title: "Barcode Scanned",
+            description: `Added: ${p.name} (${matchedVariant.value})`,
+          });
+          return;
+        }
       }
 
       // Check main product
-      if (p.barcode.toLowerCase() === cleanCode || p.sku.toLowerCase() === cleanCode) {
+      const matchesBarcode = p.barcode && p.barcode.trim().toLowerCase() === cleanCode;
+      const matchesSku = p.sku && p.sku.trim().toLowerCase() === cleanCode;
+      const matchesName = p.name && p.name.trim().toLowerCase() === cleanCode;
+
+      if (matchesBarcode || matchesSku || matchesName) {
         playBeep();
-        if (p.variants.length > 0) {
+        if (p.variants && p.variants.length > 0) {
           setVariantModalProduct(p);
         } else {
           addItemToCart(p, null);
           toast({
-            title: "Barcode Scanned",
+            title: "Item Added",
             description: `Added: ${p.name}`,
           });
         }
@@ -235,7 +245,7 @@ export function PosRegisterClient({
     toast({
       variant: "destructive",
       title: "Barcode Not Found",
-      description: `No product matching barcode "${code}"`,
+      description: `No product matching "${code}"`,
     });
   };
 
