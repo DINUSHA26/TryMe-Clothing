@@ -139,7 +139,8 @@ export default function VendorsPage() {
         {/* Horizontal Category Strip */}
         <div
           ref={scrollContainerRef}
-          className="flex items-start gap-3.5 sm:gap-6 overflow-x-auto pb-3 pt-1 scrollbar-none scroll-smooth px-1"
+          className="flex items-start gap-3.5 sm:gap-6 overflow-x-auto pb-3 pt-1 no-scrollbar scrollbar-none scroll-smooth px-1 [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {/* "All" circular button */}
           <button
