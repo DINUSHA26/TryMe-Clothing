@@ -1,5 +1,6 @@
-import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
 "use client";
+
+import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
 
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
