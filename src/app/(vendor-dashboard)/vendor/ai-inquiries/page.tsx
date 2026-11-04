@@ -345,3 +345,4 @@ export default function VendorAiInquiriesPage() {
     </div>
   );
 }
+
