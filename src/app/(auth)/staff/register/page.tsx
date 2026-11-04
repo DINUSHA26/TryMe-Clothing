@@ -12,14 +12,7 @@ import {
   ShoppingBag,
   Sparkles,
   Wallet,
-  Tag,
-  Star,
-  Globe,
-  ScanBarcode,
   Truck,
-  MessageCircle,
-  PhoneCall,
-  BadgeCheck,
 } from "lucide-react";
 
 export default function StaffRegisterPage() {
@@ -64,7 +57,7 @@ export default function StaffRegisterPage() {
         {/* Two Choice Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch mb-12">
           {/* ── CARD 1: E-commerce Vendor ── */}
-          <div className="bg-white rounded-3xl border-2 border-orange-200/80 hover:border-[#FF6600] p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between relative group">
+          <div className="bg-white rounded-3xl border-2 border-orange-200/80 hover:border-[#FF6600] p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col relative group">
             {/* Top Badge */}
             <div className="absolute -top-3.5 left-6 bg-[#FF6600] text-white text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-sm flex items-center gap-1.5">
               <ShoppingBag className="w-3.5 h-3.5" />
@@ -92,8 +85,22 @@ export default function StaffRegisterPage() {
                 automated orders, and get your own branded storefront website.
               </p>
 
+              {/* Action CTA Button at TOP */}
+              <div className="mb-6">
+                <Link
+                  href="/vendor/register"
+                  className="w-full py-4 px-6 rounded-2xl bg-[#FF6600] hover:bg-[#e65c00] text-white font-bold text-center flex items-center justify-center gap-2 shadow-md hover:shadow-xl transition-all duration-300 text-base group/btn"
+                >
+                  <span>Register as Vendor</span>
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" />
+                </Link>
+                <p className="text-center text-xs text-gray-500 mt-2.5">
+                  Instant setup · Free basic store profile
+                </p>
+              </div>
+
               {/* Feature Points */}
-              <div className="border-t border-b border-orange-100 py-5 space-y-3.5 mb-6">
+              <div className="border-t border-orange-100 pt-5 space-y-3.5">
                 <div className="flex items-start gap-3">
                   <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -165,24 +172,10 @@ export default function StaffRegisterPage() {
                 </div>
               </div>
             </div>
-
-            {/* Action CTA */}
-            <div>
-              <Link
-                href="/vendor/register"
-                className="w-full py-4 px-6 rounded-2xl bg-[#FF6600] hover:bg-[#e65c00] text-white font-bold text-center flex items-center justify-center gap-2 shadow-md hover:shadow-xl transition-all duration-300 text-base group/btn"
-              >
-                <span>Register as Vendor</span>
-                <ArrowRight className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" />
-              </Link>
-              <p className="text-center text-xs text-gray-500 mt-2.5">
-                Instant setup · Free basic store profile
-              </p>
-            </div>
           </div>
 
           {/* ── CARD 2: Ads Seller ── */}
-          <div className="bg-white rounded-3xl border-2 border-blue-200/80 hover:border-blue-600 p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between relative group">
+          <div className="bg-white rounded-3xl border-2 border-blue-200/80 hover:border-blue-600 p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col relative group">
             {/* Top Badge */}
             <div className="absolute -top-3.5 left-6 bg-blue-600 text-white text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-sm flex items-center gap-1.5">
               <Megaphone className="w-3.5 h-3.5" />
@@ -210,8 +203,22 @@ export default function StaffRegisterPage() {
                 Receive direct inquiries from interested buyers via WhatsApp, Phone, and Chat.
               </p>
 
+              {/* Action CTA Button at TOP */}
+              <div className="mb-6">
+                <Link
+                  href="/ads-seller/register"
+                  className="w-full py-4 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-center flex items-center justify-center gap-2 shadow-md hover:shadow-xl transition-all duration-300 text-base group/btn"
+                >
+                  <span>Register as Ads Seller</span>
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" />
+                </Link>
+                <p className="text-center text-xs text-gray-500 mt-2.5">
+                  Quick 2-minute registration · Start posting today
+                </p>
+              </div>
+
               {/* Feature Points */}
-              <div className="border-t border-b border-blue-100 py-5 space-y-3.5 mb-6">
+              <div className="border-t border-blue-100 pt-5 space-y-3.5">
                 <div className="flex items-start gap-3">
                   <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -283,20 +290,6 @@ export default function StaffRegisterPage() {
                 </div>
               </div>
             </div>
-
-            {/* Action CTA */}
-            <div>
-              <Link
-                href="/ads-seller/register"
-                className="w-full py-4 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-center flex items-center justify-center gap-2 shadow-md hover:shadow-xl transition-all duration-300 text-base group/btn"
-              >
-                <span>Register as Ads Seller</span>
-                <ArrowRight className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" />
-              </Link>
-              <p className="text-center text-xs text-gray-500 mt-2.5">
-                Quick 2-minute registration · Start posting today
-              </p>
-            </div>
           </div>
         </div>
 
@@ -348,4 +341,3 @@ export default function StaffRegisterPage() {
     </div>
   );
 }
-
