@@ -186,9 +186,9 @@ export default function StoreAiAssistant({
 
   return (
     <>
-      {/* ── Floating AI Trigger Button (Top Right Corner) ── */}
+      {/* ── Floating AI Trigger Button (Bottom Right Corner) ── */}
       {!isOpen && (
-        <div style={{ position: "fixed", top: "80px", right: "20px", zIndex: 99999 }} className="flex items-center gap-2.5 pointer-events-auto">
+        <div style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 99999 }} className="flex items-end gap-2.5 pointer-events-auto">
           {/* Welcome Tooltip / Chip when closed */}
           {hasUnreadNotice && (
             <div
@@ -222,9 +222,9 @@ export default function StoreAiAssistant({
         </div>
       )}
 
-      {/* ── Slide-down Interactive Chat Dialog Window (Top Right Corner) ── */}
+      {/* ── Slide-up Interactive Chat Dialog Window (Bottom Right Corner) ── */}
       {isOpen && (
-        <div style={{ position: "fixed", top: "80px", right: "16px", zIndex: 99999 }} className="w-[calc(100vw-32px)] sm:w-[420px] max-h-[calc(100vh-100px)] h-[82vh] sm:h-[600px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden font-sans animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto">
+        <div style={{ position: "fixed", bottom: "24px", right: "20px", zIndex: 99999 }} className="w-[calc(100vw-32px)] sm:w-[420px] max-h-[calc(100vh-100px)] h-[82vh] sm:h-[600px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden font-sans animate-in fade-in slide-in-from-bottom-5 duration-200 pointer-events-auto">
           {/* Header */}
           <div className="px-4 py-3.5 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white flex items-center justify-between shrink-0 shadow-sm">
             <div className="flex items-center gap-2.5 min-w-0">
