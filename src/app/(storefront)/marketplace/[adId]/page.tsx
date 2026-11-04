@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
+
 import { DynamicSpecsDisplay } from "@/components/ads/DynamicSpecsDisplay";
 import { AdCard } from "@/components/ads/AdCard";
 import { Button } from "@/components/ui/button";
@@ -723,6 +725,15 @@ ${shortDesc}`;
           )}
         </DialogContent>
       </Dialog>
+
+      {ad && (
+        <StoreAiAssistant
+          contextType="AD"
+          contextId={params.adId as string}
+          storeName={ad.seller?.businessName || ad.contactName}
+          productTitle={ad.title}
+        />
+      )}
     </div>
   );
 }

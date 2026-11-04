@@ -1,3 +1,4 @@
+import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -3744,6 +3745,13 @@ export default function StandaloneSiteClient({
           </div>
         </div>
       )}
+
+      {/* Store AI Assistant */}
+      <StoreAiAssistant
+        contextType="STANDALONE_SITE"
+        contextId={siteData?.domain || siteData?.slug || ""}
+        storeName={vendor?.businessName || siteData?.entity?.businessName || "Store"}
+      />
 
       {/* Floating WhatsApp Action Button */}
       {whatsappPhone && (

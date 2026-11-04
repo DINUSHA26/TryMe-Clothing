@@ -13,6 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Store, ChevronRight, Package, Hash, Boxes, ShieldCheck, Shield, Truck, Check, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
+
 import { cn } from "@/lib/utils";
 import { useCategoryHistory } from "@/hooks/useCategoryHistory";
 
@@ -723,6 +725,14 @@ export default function ProductDetailPage() {
           <ProductGrid products={relatedProducts} />
         </div>
       )}
+
+      {/* Store AI Assistant */}
+      <StoreAiAssistant
+        contextType="PRODUCT"
+        contextId={slug}
+        storeName={product.vendor?.businessName}
+        productTitle={product.name}
+      />
 
       {/* Image Preloader for instant variant switching */}
       <div className="hidden" aria-hidden="true">

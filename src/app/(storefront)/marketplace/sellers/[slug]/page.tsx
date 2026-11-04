@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
+
 import { AdCard } from "@/components/ads/AdCard";
 import { Button } from "@/components/ui/button";
 import { optimizeImageUrl } from "@/lib/imageLoader";
@@ -437,6 +439,14 @@ export default function PublicSellerStorefrontPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {seller && (
+        <StoreAiAssistant
+          contextType="ADS_SELLER"
+          contextId={params.slug as string}
+          storeName={seller.businessName}
+        />
+      )}
     </div>
   </div>
   );

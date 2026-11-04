@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { ChevronRight, Store, Package, CheckCircle2, Star, Globe, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
+import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
 
 interface Vendor {
   id: string;
@@ -464,6 +465,14 @@ function VendorStorePageContent() {
           )}
         </div>
       </div>
+
+      {vendor && (
+        <StoreAiAssistant
+          contextType="VENDOR"
+          contextId={slug}
+          storeName={vendor.businessName}
+        />
+      )}
     </div>
   );
 }
