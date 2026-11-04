@@ -56,6 +56,17 @@ export default function StoreAiAssistant({
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    const handleToggle = () => setIsOpen((prev) => !prev);
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener("toggle-store-ai", handleToggle);
+    window.addEventListener("open-store-ai", handleOpen);
+    return () => {
+      window.removeEventListener("toggle-store-ai", handleToggle);
+      window.removeEventListener("open-store-ai", handleOpen);
+    };
+  }, []);
+
   const initialGreeting = productTitle
     ? `Hello! 👋 I'm your AI Shopping Assistant for **${storeName}**.\n\nYou're viewing **"${productTitle}"**. You can ask me anything about its price, specifications, stock, or delivery in English, සිංහල, Singlish, or தமிழ்!`
     : `Hello! 👋 Welcome to **${storeName}**.\n\nI'm your official AI Store Assistant. Ask me anything about our products, prices, stock availability, or location in English, සිංහල, Singlish, or தமிழ்!`;
@@ -175,53 +186,45 @@ export default function StoreAiAssistant({
 
   return (
     <>
-      {/* ── Floating AI Trigger Button (Bottom Right) ── */}
-      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] flex items-end gap-2.5 pointer-events-auto">
-        {/* Subtle Welcome Tooltip / Chip when closed */}
-        {!isOpen && hasUnreadNotice && (
-          <div
-            onClick={() => setIsOpen(true)}
-            className="hidden sm:flex items-center gap-2 bg-white dark:bg-slate-900 border border-orange-500/40 text-slate-800 dark:text-slate-100 px-3.5 py-2 rounded-2xl shadow-2xl cursor-pointer hover:border-orange-500 transition-all animate-bounce"
-          >
-            <Sparkles className="w-4 h-4 text-orange-500 shrink-0" />
-            <div className="text-xs font-bold leading-tight">
-              <span>Ask Store AI</span>
-              <span className="block text-[10px] text-slate-400 font-normal">
-                සිංහල • Singlish • English
-              </span>
+      {/* ── Floating AI Trigger Button (Top Right Corner) ── */}
+      {!isOpen && (
+        <div className="fixed top-20 right-4 sm:top-20 sm:right-6 z-[9999] flex items-center gap-2.5 pointer-events-auto">
+          {/* Welcome Tooltip / Chip when closed */}
+          {hasUnreadNotice && (
+            <div
+              onClick={() => setIsOpen(true)}
+              className="hidden sm:flex items-center gap-2 bg-white dark:bg-slate-900 border border-orange-500/40 hover:border-orange-500 text-slate-800 dark:text-slate-100 px-3.5 py-2 rounded-2xl shadow-xl cursor-pointer hover:shadow-2xl transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-orange-500 shrink-0 animate-pulse" />
+              <div className="text-xs font-bold leading-tight">
+                <span className="text-orange-600 dark:text-orange-400">Ask Store AI</span>
+                <span className="block text-[10px] text-slate-400 font-normal">
+                  සිංහල • Singlish • English
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Floating Bubble Button */}
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle Store AI Assistant"
-          className={`relative group flex items-center justify-center rounded-full shadow-2xl transition-all duration-300 cursor-pointer ${
-            isOpen
-              ? "w-12 h-12 bg-slate-800 text-white hover:bg-slate-900"
-              : "w-14 h-14 bg-gradient-to-tr from-orange-600 to-amber-500 text-white hover:scale-105 hover:shadow-orange-500/50 ring-4 ring-orange-500/20"
-          }`}
-        >
-          {isOpen ? (
-            <X className="w-5 h-5" />
-          ) : (
-            <>
-              <div className="absolute inset-0 rounded-full bg-orange-500 animate-ping opacity-25" />
-              <Bot className="w-7 h-7 relative z-10" />
-              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
-              </span>
-            </>
           )}
-        </button>
-      </div>
 
-      {/* ── Slide-up Interactive Chat Dialog Window ── */}
+          {/* Floating Bubble Button */}
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            aria-label="Open Store AI Assistant"
+            className="relative group flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-2xl hover:scale-105 hover:shadow-orange-500/50 ring-4 ring-orange-500/25 transition-all duration-300 cursor-pointer"
+          >
+            <div className="absolute inset-0 rounded-full bg-orange-500 animate-ping opacity-25" />
+            <Bot className="w-7 h-7 relative z-10" />
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* ── Slide-down Interactive Chat Dialog Window (Top Right Corner) ── */}
       {isOpen && (
-        <div className="fixed bottom-20 right-3 sm:right-6 w-[calc(100vw-24px)] sm:w-[420px] max-h-[620px] h-[82vh] sm:h-[580px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl z-[9999] flex flex-col overflow-hidden font-sans animate-in fade-in slide-in-from-bottom-5 duration-200 pointer-events-auto">
+        <div className="fixed top-20 right-3 sm:top-20 sm:right-6 w-[calc(100vw-24px)] sm:w-[420px] max-h-[calc(100vh-96px)] h-[82vh] sm:h-[600px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl z-[9999] flex flex-col overflow-hidden font-sans animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto">
           {/* Header */}
           <div className="px-4 py-3.5 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white flex items-center justify-between shrink-0 shadow-sm">
             <div className="flex items-center gap-2.5 min-w-0">

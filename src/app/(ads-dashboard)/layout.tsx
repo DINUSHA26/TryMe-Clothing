@@ -12,6 +12,7 @@ import { AdsSellerWaitingRoom } from "@/components/layout/ads-seller/AdsSellerWa
 import { AdsSellerRejectedRoom } from "@/components/layout/ads-seller/AdsSellerRejectedRoom";
 import { ChatDialog } from "@/components/chat/ChatDialog";
 import { ChatInitializer } from "@/components/chat/ChatInitializer";
+import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
 
 export default function AdsSellerDashboardLayout({
   children,
@@ -92,6 +93,13 @@ export default function AdsSellerDashboardLayout({
 
       {/* Chat Dialog — rendered once at layout level */}
       <ChatDialog />
+
+      {/* Store AI Assistant — Top Right Corner for all Ads Seller Dashboard pages */}
+      <StoreAiAssistant
+        contextType="ADS_SELLER"
+        contextId={user?.adsSeller?.slug || user?.adsSeller?.id || user?.id || "seller"}
+        storeName={user?.adsSeller?.businessName || (user?.firstName ? `${user.firstName}'s Store` : "My Store")}
+      />
     </div>
   );
 }

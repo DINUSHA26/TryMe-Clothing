@@ -20,8 +20,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
 import { formatDistance } from "date-fns";
-import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
-
 export default function AdsSellerDashboardHome() {
   const { user } = useAuthStore();
   const { toast } = useToast();
@@ -389,13 +387,7 @@ export default function AdsSellerDashboardHome() {
         </CardContent>
       </Card>
 
-      {data?.seller && (
-        <StoreAiAssistant
-          contextType="ADS_SELLER"
-          contextId={data.seller.slug || data.seller.id}
-          storeName={data.seller.businessName}
-        />
-      )}
+      
     </div>
   );
 }

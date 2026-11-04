@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { Menu, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -58,6 +58,22 @@ export function VendorHeader({ onMobileMenuToggle }: VendorHeaderProps) {
       <div className="flex items-center gap-2 ml-auto">
         <ShopStatusToggle />
         <ThemeToggle />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 sm:h-10 sm:w-10 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/40 relative"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent("toggle-store-ai"));
+          }}
+          title="Store AI Assistant"
+          aria-label="Store AI Assistant"
+        >
+          <Bot className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+          <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+          </span>
+        </Button>
         <ChatButton />
         <NotificationBell />
 

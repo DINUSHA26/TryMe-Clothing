@@ -12,6 +12,7 @@ import { VendorWaitingRoom } from "@/components/layout/vendor/VendorWaitingRoom"
 import { VendorRejectedRoom } from "@/components/layout/vendor/VendorRejectedRoom";
 import { ChatDialog } from "@/components/chat/ChatDialog";
 import { ChatInitializer } from "@/components/chat/ChatInitializer";
+import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
 
 export default function VendorDashboardLayout({
   children,
@@ -92,6 +93,13 @@ export default function VendorDashboardLayout({
 
       {/* Chat Dialog — rendered once at layout level */}
       <ChatDialog />
+
+      {/* Store AI Assistant — Top Right Corner for all Vendor Dashboard pages */}
+      <StoreAiAssistant
+        contextType="VENDOR"
+        contextId={user?.vendor?.id || user?.id || "vendor"}
+        storeName={user?.vendor?.businessName || (user?.firstName ? `${user.firstName}'s Store` : "My Store")}
+      />
     </div>
   );
 }

@@ -85,6 +85,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
+        seller: {
+          id: seller.id,
+          businessName: seller.businessName,
+          slug: seller.slug,
+        },
         stats: {
           activeAdsCount,
           pendingAdsCount,
