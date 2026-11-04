@@ -224,7 +224,7 @@ export default function AdminMarketplacePage() {
             placeholder="Search ad title, seller email, or business name..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9 bg-white"
+            className="pl-9 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
           />
         </div>
 
@@ -237,7 +237,7 @@ export default function AdminMarketplacePage() {
               setPagination((prev) => ({ ...prev, page: 1 }));
             }}
           >
-            <SelectTrigger className="bg-white">
+            <SelectTrigger className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white">
               <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
             <SelectContent>
@@ -255,7 +255,7 @@ export default function AdminMarketplacePage() {
         <Button
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 bg-white ${showFilters ? "border-[#FF6600] text-[#FF6600] hover:text-[#FF6600]" : ""}`}
+          className={`flex items-center gap-2 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white ${showFilters ? "border-[#FF6600] text-[#FF6600] hover:text-[#FF6600]" : ""}`}
         >
           <SlidersHorizontal className="h-4 w-4" />
           Filters
@@ -267,7 +267,7 @@ export default function AdminMarketplacePage() {
 
       {/* Advanced Filters Panel */}
       {showFilters && (
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Category Filter */}
             <div className="space-y-1.5">
@@ -279,7 +279,7 @@ export default function AdminMarketplacePage() {
                   setPagination((prev) => ({ ...prev, page: 1 }));
                 }}
               >
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -303,7 +303,7 @@ export default function AdminMarketplacePage() {
                   setPagination((prev) => ({ ...prev, page: 1 }));
                 }}
               >
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                   <SelectValue placeholder="Select Seller" />
                 </SelectTrigger>
                 <SelectContent>
@@ -330,7 +330,7 @@ export default function AdminMarketplacePage() {
                   setPagination((prev) => ({ ...prev, page: 1 }));
                 }}
               >
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                   <SelectValue placeholder="Select Location" />
                 </SelectTrigger>
                 <SelectContent>
@@ -356,7 +356,7 @@ export default function AdminMarketplacePage() {
                     setMinPrice(e.target.value);
                     setPagination((prev) => ({ ...prev, page: 1 }));
                   }}
-                  className="bg-white"
+                  className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
                 <span className="text-gray-400 text-sm">to</span>
                 <Input
@@ -367,13 +367,13 @@ export default function AdminMarketplacePage() {
                     setMaxPrice(e.target.value);
                     setPagination((prev) => ({ ...prev, page: 1 }));
                   }}
-                  className="bg-white"
+                  className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-100 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-100 dark:border-slate-800 dark:border-slate-800 items-end">
             {/* Date Filter */}
             <div className="flex flex-col sm:flex-row gap-4 items-end flex-1">
               <div className="space-y-1.5 w-full sm:w-[200px]">
@@ -389,7 +389,7 @@ export default function AdminMarketplacePage() {
                     setPagination((prev) => ({ ...prev, page: 1 }));
                   }}
                 >
-                  <SelectTrigger className="bg-white">
+                  <SelectTrigger className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                     <SelectValue placeholder="Select Date Range" />
                   </SelectTrigger>
                   <SelectContent>
@@ -413,7 +413,7 @@ export default function AdminMarketplacePage() {
                         setStartDate(e.target.value);
                         setPagination((prev) => ({ ...prev, page: 1 }));
                       }}
-                      className="bg-white h-9"
+                      className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white h-9"
                     />
                   </div>
                   <div className="space-y-1 w-full font-medium text-xs text-gray-400">
@@ -425,7 +425,7 @@ export default function AdminMarketplacePage() {
                         setEndDate(e.target.value);
                         setPagination((prev) => ({ ...prev, page: 1 }));
                       }}
-                      className="bg-white h-9"
+                      className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white h-9"
                     />
                   </div>
                 </div>
@@ -463,21 +463,21 @@ export default function AdminMarketplacePage() {
       {/* Pagination controls */}
       {!isLoading && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-slate-400">
             Showing page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} ads total)
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
               disabled={pagination.page === 1}
-              className="px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 disabled:opacity-40 transition-colors bg-white text-gray-900"
+              className="px-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
             >
               Previous
             </button>
             <button
               onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
               disabled={pagination.page === pagination.totalPages}
-              className="px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 disabled:opacity-40 transition-colors bg-white text-gray-900"
+              className="px-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
             >
               Next
             </button>

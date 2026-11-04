@@ -145,7 +145,7 @@ export default function MyAdsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
             <LayoutGrid className="h-8 w-8 text-[#FF6600]" />
             <span>My Classified Ads</span>
           </h1>
@@ -174,10 +174,10 @@ export default function MyAdsPage() {
               setPagination({ ...pagination, page: 1 });
             }}
           >
-            <SelectTrigger className="bg-white rounded-xl">
+            <SelectTrigger className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white rounded-xl">
               <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
               <SelectItem value="all">All Ads</SelectItem>
               <SelectItem value="PENDING">Pending Moderation</SelectItem>
               <SelectItem value="ACTIVE">Active / Live</SelectItem>
@@ -191,7 +191,7 @@ export default function MyAdsPage() {
           variant="ghost"
           size="sm"
           onClick={fetchAds}
-          className="text-gray-500 hover:text-black flex items-center gap-1"
+          className="text-gray-500 dark:text-slate-400 hover:text-black dark:hover:text-white flex items-center gap-1"
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           <span>Refresh</span>
@@ -207,47 +207,47 @@ export default function MyAdsPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-gray-100 bg-card shadow-sm overflow-hidden">
+        <div className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-card dark:bg-slate-900 shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50/50">
-                <TableHead>Listing</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead className="min-w-[220px]">Status</TableHead>
-                <TableHead>Posted</TableHead>
-                <TableHead>Views</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="bg-gray-50/50 dark:bg-slate-800/60 dark:border-slate-800">
+                <TableHead className="dark:text-slate-300">Listing</TableHead>
+                <TableHead className="dark:text-slate-300">Category</TableHead>
+                <TableHead className="dark:text-slate-300">Location</TableHead>
+                <TableHead className="dark:text-slate-300">Price</TableHead>
+                <TableHead className="min-w-[220px] dark:text-slate-300">Status</TableHead>
+                <TableHead className="dark:text-slate-300">Posted</TableHead>
+                <TableHead className="dark:text-slate-300">Views</TableHead>
+                <TableHead className="text-right dark:text-slate-300">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {ads.length === 0 ? (
-                <TableRow>
+                <TableRow className="dark:border-slate-800">
                   <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
                     No ads found. Get started by posting your first classified ad!
                   </TableCell>
                 </TableRow>
               ) : (
                 ads.map((ad: any) => (
-                  <TableRow key={ad.id} className="hover:bg-gray-50/30">
-                    <TableCell className="font-semibold text-gray-900 max-w-[240px] truncate">
+                  <TableRow key={ad.id} className="hover:bg-gray-50/30 dark:hover:bg-slate-800/40 dark:border-slate-800">
+                    <TableCell className="font-semibold text-gray-900 dark:text-white max-w-[240px] truncate">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-100 border border-gray-100 rounded-xl shrink-0 overflow-hidden relative">
+                        <div className="w-12 h-12 bg-gray-100 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl shrink-0 overflow-hidden relative">
                           {ad.images?.[0] ? (
                             <img src={ad.images[0]} alt={ad.title} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="flex items-center justify-center w-full h-full text-[10px] text-gray-400">No Image</span>
+                            <span className="flex items-center justify-center w-full h-full text-[10px] text-gray-400 dark:text-slate-500">No Image</span>
                           )}
                         </div>
                         <div className="truncate">
-                          <span className="font-semibold text-sm text-gray-900 block truncate">{ad.title}</span>
-                          <span className="text-[10px] text-gray-400 font-normal block truncate">ID: {ad.id}</span>
+                          <span className="font-semibold text-sm text-gray-900 dark:text-white block truncate">{ad.title}</span>
+                          <span className="text-[10px] text-gray-400 dark:text-slate-400 font-normal block truncate">ID: {ad.id}</span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">
-                      <div className="flex items-center gap-1 text-gray-800 font-medium">
+                      <div className="flex items-center gap-1 text-gray-800 dark:text-slate-200 font-medium">
                         {ad.category?.icon && (ad.category.icon.startsWith("/") || ad.category.icon.startsWith("http")) ? (
                           <img src={ad.category.icon} alt="" className="w-5 h-5 object-contain shrink-0" />
                         ) : (
@@ -255,23 +255,23 @@ export default function MyAdsPage() {
                         )}
                         <span>{ad.category?.name}</span>
                       </div>
-                      <div className="text-[10px] text-gray-400">{ad.subCategory?.name}</div>
+                      <div className="text-[10px] text-gray-400 dark:text-slate-400">{ad.subCategory?.name}</div>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-gray-600 dark:text-slate-300">
                       <span>{ad.district}</span>
-                      {ad.localArea && <span className="text-xs text-gray-400 block">{ad.localArea}</span>}
+                      {ad.localArea && <span className="text-xs text-gray-400 dark:text-slate-400 block">{ad.localArea}</span>}
                     </TableCell>
-                    <TableCell className="text-sm font-semibold text-gray-800">
+                    <TableCell className="text-sm font-semibold text-gray-800 dark:text-slate-100">
                       {ad.price ? `Rs. ${Number(ad.price).toLocaleString("en-LK")}` : "Contact"}
-                      {ad.priceNegotiable && <span className="text-[9px] font-normal text-gray-400 block">Negotiable</span>}
+                      {ad.priceNegotiable && <span className="text-[9px] font-normal text-gray-400 dark:text-slate-400 block">Negotiable</span>}
                     </TableCell>
                     <TableCell className="whitespace-nowrap min-w-[220px]">
                       <div className="flex flex-col gap-1.5">
                         {/* 🌐 My Website Status */}
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap w-[96px] shrink-0 flex items-center gap-1">
+                          <span className="text-[11px] text-gray-500 dark:text-slate-400 font-medium whitespace-nowrap w-[96px] shrink-0 flex items-center gap-1">
                             <span>🌐</span>
-                            <span className="font-semibold text-gray-700">My Website:</span>
+                            <span className="font-semibold text-gray-700 dark:text-slate-300">My Website:</span>
                           </span>
                           {ad.showOnWebsite === false ? (
                             <button
@@ -279,7 +279,7 @@ export default function MyAdsPage() {
                               title="Click to enable on My Website"
                               className="cursor-pointer group"
                             >
-                              <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200 group-hover:bg-emerald-50 group-hover:text-emerald-700 group-hover:border-emerald-200 text-[10px] font-medium py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                              <Badge variant="outline" className="bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/40 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 group-hover:border-emerald-200 dark:group-hover:border-emerald-800 text-[10px] font-medium py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
                                 Off (Hidden)
                               </Badge>
                             </button>
@@ -289,16 +289,16 @@ export default function MyAdsPage() {
                               title="Click to hide from My Website"
                               className="cursor-pointer group"
                             >
-                              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                              <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 group-hover:bg-red-50 dark:group-hover:bg-red-950/40 group-hover:text-red-600 dark:group-hover:text-red-400 group-hover:border-red-200 dark:group-hover:border-red-800 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
                                 Live
                               </Badge>
                             </button>
                           ) : ad.status === "REJECTED" ? (
-                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
+                            <Badge variant="outline" className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Hidden
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
+                            <Badge variant="outline" className="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               {ad.status}
                             </Badge>
                           )}
@@ -306,9 +306,9 @@ export default function MyAdsPage() {
 
                         {/* 🛒 TryMe Marketplace Status */}
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap w-[96px] shrink-0 flex items-center gap-1">
+                          <span className="text-[11px] text-gray-500 dark:text-slate-400 font-medium whitespace-nowrap w-[96px] shrink-0 flex items-center gap-1">
                             <span>🛒</span>
-                            <span className="font-semibold text-gray-700">Marketplace:</span>
+                            <span className="font-semibold text-gray-700 dark:text-slate-300">Marketplace:</span>
                           </span>
                           {ad.showOnMarketplace === false ? (
                             <button
@@ -316,7 +316,7 @@ export default function MyAdsPage() {
                               title="Click to enable on TryMe Marketplace"
                               className="cursor-pointer group"
                             >
-                              <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200 group-hover:bg-orange-50 group-hover:text-orange-700 group-hover:border-orange-200 text-[10px] font-medium py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                              <Badge variant="outline" className="bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700 group-hover:bg-orange-50 dark:group-hover:bg-orange-950/40 group-hover:text-orange-700 dark:group-hover:text-orange-400 group-hover:border-orange-200 dark:group-hover:border-orange-800 text-[10px] font-medium py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
                                 Off (Hidden)
                               </Badge>
                             </button>
@@ -326,7 +326,7 @@ export default function MyAdsPage() {
                               title="Click to hide from Marketplace"
                               className="cursor-pointer group"
                             >
-                              <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                              <Badge variant="outline" className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 group-hover:bg-red-50 dark:group-hover:bg-red-950/40 group-hover:text-red-600 dark:group-hover:text-red-400 group-hover:border-red-200 dark:group-hover:border-red-800 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
                                 Pending Approval
                               </Badge>
                             </button>
@@ -336,13 +336,13 @@ export default function MyAdsPage() {
                               title="Click to hide from Marketplace"
                               className="cursor-pointer group"
                             >
-                              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                              <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 group-hover:bg-red-50 dark:group-hover:bg-red-950/40 group-hover:text-red-600 dark:group-hover:text-red-400 group-hover:border-red-200 dark:group-hover:border-red-800 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
                                 Live
                               </Badge>
                             </button>
                           ) : ad.status === "REJECTED" ? (
                             <div className="flex items-center gap-1.5">
-                              <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
+                              <Badge variant="outline" className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                                 Rejected
                               </Badge>
                               {ad.rejectionReason && (
@@ -352,11 +352,11 @@ export default function MyAdsPage() {
                               )}
                             </div>
                           ) : ad.status === "EXPIRED" ? (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
+                            <Badge variant="outline" className="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               Expired
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
+                            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               {ad.status}
                             </Badge>
                           )}
@@ -366,15 +366,15 @@ export default function MyAdsPage() {
                     <TableCell className="text-xs text-muted-foreground">
                       {formatDistance(new Date(ad.createdAt), new Date(), { addSuffix: true })}
                     </TableCell>
-                    <TableCell className="text-sm font-medium text-gray-700">
+                    <TableCell className="text-sm font-medium text-gray-700 dark:text-slate-300">
                       {ad.views}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         {ad.status === "ACTIVE" && (
-                          <Button variant="ghost" size="icon" asChild title="View on Marketplace">
+                          <Button variant="ghost" size="icon" asChild title="View on Marketplace" className="dark:hover:bg-slate-800">
                             <a href={`/marketplace/${ad.id}`} target="_blank" rel="noreferrer">
-                              <Eye className="h-4.5 w-4.5 text-gray-500" />
+                              <Eye className="h-4.5 w-4.5 text-gray-500 dark:text-slate-400" />
                             </a>
                           </Button>
                         )}
@@ -392,15 +392,15 @@ export default function MyAdsPage() {
                               variant="ghost"
                               size="icon"
                               title="Generate Barcode & Print Labels"
-                              className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg"
+                              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg"
                             >
                               <Barcode className="h-4.5 w-4.5" />
                             </Button>
                           }
                         />
-                        <Button variant="ghost" size="icon" asChild title="Edit Ad">
+                        <Button variant="ghost" size="icon" asChild title="Edit Ad" className="dark:hover:bg-slate-800">
                           <Link href={`/ads-seller/edit-ad/${ad.id}`}>
-                            <Edit className="h-4.5 w-4.5 text-blue-500 hover:text-blue-600" />
+                            <Edit className="h-4.5 w-4.5 text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300" />
                           </Link>
                         </Button>
                         <Button
@@ -408,7 +408,7 @@ export default function MyAdsPage() {
                           size="icon"
                           onClick={() => handleDeleteAd(ad.id)}
                           disabled={deletingId === ad.id}
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                          className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg"
                           title="Delete Ad"
                         >
                           <Trash2 className="h-4.5 w-4.5" />
@@ -425,22 +425,22 @@ export default function MyAdsPage() {
 
       {/* Pagination controls */}
       {!isLoading && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <p className="text-sm text-gray-500">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-slate-800">
+          <p className="text-sm text-gray-500 dark:text-slate-400">
             Showing page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} ads total)
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
               disabled={pagination.page === 1}
-              className="px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 disabled:opacity-40 transition-colors bg-white text-gray-900"
+              className="px-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
             >
               Previous
             </button>
             <button
               onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
               disabled={pagination.page === pagination.totalPages}
-              className="px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 disabled:opacity-40 transition-colors bg-white text-gray-900"
+              className="px-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
             >
               Next
             </button>

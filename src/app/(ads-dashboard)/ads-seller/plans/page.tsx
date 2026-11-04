@@ -66,32 +66,32 @@ const PLAN_ICONS: Record<string, React.ReactNode> = {
 
 const PLAN_COLORS: Record<string, { bg: string; border: string; badge: string; btn: string; icon: string }> = {
   FREE: {
-    bg: "bg-gray-50",
-    border: "border-gray-200",
-    badge: "bg-gray-100 text-gray-600",
-    btn: "bg-gray-800 hover:bg-gray-900",
-    icon: "text-gray-500",
+    bg: "bg-gray-50 dark:bg-slate-900/80",
+    border: "border-gray-200 dark:border-slate-800",
+    badge: "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300",
+    btn: "bg-gray-800 hover:bg-gray-900 dark:bg-slate-800 dark:hover:bg-slate-700",
+    icon: "text-gray-500 dark:text-slate-400",
   },
   BASIC: {
-    bg: "bg-blue-50/40",
-    border: "border-blue-200",
-    badge: "bg-blue-100 text-blue-700",
+    bg: "bg-blue-50/40 dark:bg-slate-900/80",
+    border: "border-blue-200 dark:border-blue-900/50",
+    badge: "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300",
     btn: "bg-blue-600 hover:bg-blue-700",
-    icon: "text-blue-500",
+    icon: "text-blue-500 dark:text-blue-400",
   },
   PRO: {
-    bg: "bg-orange-50/40",
-    border: "border-[#FF6600]/40",
-    badge: "bg-[#FF6600]/10 text-[#FF6600]",
+    bg: "bg-orange-50/40 dark:bg-slate-900/80",
+    border: "border-[#FF6600]/40 dark:border-[#FF6600]/40",
+    badge: "bg-[#FF6600]/10 dark:bg-[#FF6600]/20 text-[#FF6600]",
     btn: "bg-[#FF6600] hover:bg-[#e65c00]",
     icon: "text-[#FF6600]",
   },
   PREMIUM: {
-    bg: "bg-purple-50/40",
-    border: "border-purple-300",
-    badge: "bg-purple-100 text-purple-700",
+    bg: "bg-purple-50/40 dark:bg-slate-900/80",
+    border: "border-purple-300 dark:border-purple-900/50",
+    badge: "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300",
     btn: "bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900",
-    icon: "text-purple-500",
+    icon: "text-purple-500 dark:text-purple-400",
   },
 };
 
@@ -229,7 +229,7 @@ function PaymentModal({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-10">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden my-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden my-auto border border-gray-100 dark:border-slate-800">
         {/* Header */}
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 text-white relative">
           <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors" disabled={isSubmitting}>
@@ -249,8 +249,8 @@ function PaymentModal({
         {/* Tabs */}
         <div className="p-6">
           <Tabs defaultValue="online" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 p-1 rounded-2xl">
-              <TabsTrigger value="online" disabled={isSubmitting} className="rounded-xl py-2.5 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 dark:bg-slate-800 p-1 rounded-2xl">
+              <TabsTrigger value="online" disabled={isSubmitting} className="rounded-xl py-2.5 font-bold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 dark:text-slate-200 data-[state=active]:shadow-sm">
                 <CreditCard className="w-4 h-4 mr-2" />
                 Online Payment
               </TabsTrigger>
@@ -262,10 +262,10 @@ function PaymentModal({
 
             {/* Online Payment Content */}
             <TabsContent value="online" className="space-y-6 focus-visible:outline-none">
-              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-6 text-center">
+              <div className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 p-6 text-center">
                 <CreditCard className="h-10 w-10 mx-auto text-[#FF6600] mb-4" />
-                <h3 className="text-base font-bold text-gray-900 mb-1">Pay securely with PayHere</h3>
-                <p className="text-xs text-gray-500 leading-relaxed mb-6">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Pay securely with PayHere</h3>
+                <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed mb-6">
                   You will be redirected to a secure payment page to complete your order using Visa, MasterCard, Frimi, etc.
                 </p>
                 
@@ -429,7 +429,7 @@ function PaymentSuccessBanner({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 dark:border-slate-800">
         {isOnline ? (
           <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 text-white text-center">
             <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
@@ -460,7 +460,7 @@ function PaymentSuccessBanner({
                   <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                     <Check className="h-3 w-3 text-green-600" />
                   </div>
-                  <span className="text-sm text-gray-700 font-medium">{step}</span>
+                  <span className="text-sm text-gray-700 dark:text-slate-300 font-medium">{step}</span>
                 </div>
               ))
             ) : (
@@ -602,8 +602,8 @@ function AdsSellerPlansPageContent() {
               </Link>
             </Button>
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-gray-900">Choose Your Plan</h1>
-          <p className="text-gray-500 text-sm max-w-xl">
+          <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">Choose Your Plan</h1>
+          <p className="text-gray-500 dark:text-slate-400 text-sm max-w-xl">
             Upgrade to post more listings and get priority visibility in the TryMe marketplace.
           </p>
         </div>
@@ -706,7 +706,7 @@ function AdsSellerPlansPageContent() {
 
         {/* Plans Grid */}
         {plans.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+          <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800">
             <AlertCircle className="h-10 w-10 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 font-medium">No plans configured yet.</p>
             <p className="text-gray-400 text-sm mt-1">Please contact the administrator.</p>
@@ -752,7 +752,7 @@ function AdsSellerPlansPageContent() {
                         <span className={colors.icon}>{PLAN_ICONS[plan.type]}</span>
                       </div>
                       <div>
-                        <h3 className="font-black text-gray-900 text-base">{plan.name}</h3>
+                        <h3 className="font-black text-gray-900 dark:text-white text-base">{plan.name}</h3>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
                           {plan.type}
                         </span>
@@ -762,7 +762,7 @@ function AdsSellerPlansPageContent() {
                     {/* Price */}
                     <div className="space-y-0.5">
                       <div className="flex items-end gap-1.5">
-                        <span className="text-3xl font-black text-gray-900">{formatPrice(plan.price, plan.billingCycle)}</span>
+                        <span className="text-3xl font-black text-gray-900 dark:text-white">{formatPrice(plan.price, plan.billingCycle)}</span>
                       </div>
                       <p className="text-xs text-gray-400 font-medium">
                         {parseFloat(plan.price) === 0 ? "Forever free" : formatCycle(plan.billingCycle)}

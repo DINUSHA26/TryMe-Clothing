@@ -130,7 +130,7 @@ export function DynamicSpecsForm({
         return (
           <div key={field.id} className="space-y-2">
             <div className="flex items-center gap-1.5">
-              <Label className="text-sm font-semibold text-gray-800">
+              <Label className="text-sm font-semibold text-gray-800 dark:text-slate-200">
                 {field.label}
               </Label>
               {field.isRequired ? (
@@ -147,7 +147,7 @@ export function DynamicSpecsForm({
                 placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
                 value={val || ""}
                 onChange={(e) => handleFieldChange(field.fieldKey, e.target.value)}
-                className="bg-white rounded-xl border-gray-200 focus:bg-white"
+                className="bg-white dark:bg-slate-800 rounded-xl border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-800"
               />
             )}
 
@@ -166,7 +166,7 @@ export function DynamicSpecsForm({
                 placeholder={field.placeholder || `Enter details for ${field.label.toLowerCase()}`}
                 value={val || ""}
                 onChange={(e) => handleFieldChange(field.fieldKey, e.target.value)}
-                className="bg-white rounded-xl border-gray-200 focus:bg-white min-h-[80px]"
+                className="bg-white dark:bg-slate-800 rounded-xl border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 min-h-[80px]"
               />
             )}
 
@@ -174,7 +174,7 @@ export function DynamicSpecsForm({
               <select
                 value={val || ""}
                 onChange={(e) => handleFieldChange(field.fieldKey, e.target.value)}
-                className="w-full flex h-10 rounded-xl border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full flex h-10 rounded-xl border border-input dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-gray-900 dark:text-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Select option</option>
                 {optionsList.map((opt) => (
@@ -197,7 +197,7 @@ export function DynamicSpecsForm({
                       className={`px-4 py-2 border rounded-xl text-xs font-semibold transition-all ${
                         isChecked
                           ? "border-[#FF6600] bg-[#FF6600]/10 text-[#FF6600] font-bold"
-                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                          : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
                       }`}
                     >
                       {opt}
@@ -215,7 +215,7 @@ export function DynamicSpecsForm({
                     <label
                       key={opt}
                       className={`flex items-center gap-2.5 px-3 py-2 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors ${
-                        isChecked ? "border-[#FF6600]/50 bg-orange-50/10" : "border-gray-100"
+                        isChecked ? "border-[#FF6600]/50 bg-orange-50/10" : "border-gray-100 dark:border-slate-700"
                       }`}
                     >
                       <input
@@ -224,7 +224,7 @@ export function DynamicSpecsForm({
                         onChange={(e) => handleCheckboxChange(field.fieldKey, opt, e.target.checked)}
                         className="rounded border-gray-300 text-[#FF6600] focus:ring-[#FF6600]"
                       />
-                      <span className="text-xs text-gray-700 font-medium select-none">{opt}</span>
+                      <span className="text-xs text-gray-700 dark:text-slate-300 font-medium select-none">{opt}</span>
                     </label>
                   );
                 })}
@@ -232,7 +232,7 @@ export function DynamicSpecsForm({
             )}
 
             {field.helpText && (
-              <p className="text-[11px] text-gray-400 mt-1 pl-1">
+              <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-1 pl-1">
                 {field.helpText}
               </p>
             )}

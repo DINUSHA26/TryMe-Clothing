@@ -122,13 +122,13 @@ export function LocationPicker({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl w-[95vw] h-[80vh] md:h-[600px] p-0 overflow-hidden flex flex-col rounded-2xl border border-gray-100 shadow-2xl bg-white/95 backdrop-blur-xl">
-        <DialogHeader className="p-6 pb-4 border-b border-gray-100">
-          <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+      <DialogContent className="max-w-3xl w-[95vw] h-[80vh] md:h-[600px] p-0 overflow-hidden flex flex-col rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+        <DialogHeader className="p-6 pb-4 border-b border-gray-100 dark:border-slate-800">
+          <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <MapPin className="h-5 w-5 text-[#FF6600]" />
             <span>Select Location</span>
           </DialogTitle>
-          <DialogDescription className="text-gray-500 text-sm mt-1">
+          <DialogDescription className="text-gray-500 dark:text-slate-400 text-sm mt-1">
             Choose the district and local area where your item or service is located
           </DialogDescription>
 
@@ -140,14 +140,14 @@ export function LocationPicker({
               placeholder="Search district, city or division..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6600]/20 focus:border-[#FF6600] transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FF6600]/20 focus:border-[#FF6600] transition-all"
             />
           </div>
         </DialogHeader>
 
         <div className="flex-grow flex overflow-hidden">
           {/* Left Panel: Districts */}
-          <div className="w-[40%] md:w-[250px] border-r border-gray-100 flex flex-col bg-gray-50/50">
+          <div className="w-[40%] md:w-[250px] border-r border-gray-100 dark:border-slate-800 flex flex-col bg-gray-50/50 dark:bg-slate-900/60">
             <ScrollArea className="flex-1">
               <div className="p-2 space-y-1">
                 {showResetAndPostCount && (
@@ -171,8 +171,8 @@ export function LocationPicker({
                     className={cn(
                       "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left text-sm font-medium transition-all duration-200",
                       tempDistrict === d
-                        ? "bg-white text-[#FF6600] shadow-sm border border-gray-100 font-semibold"
-                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                        ? "bg-white dark:bg-slate-800 text-[#FF6600] shadow-sm border border-gray-100 dark:border-slate-700 font-semibold"
+                        : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"
                     )}
                   >
                     <span>{d}</span>
@@ -192,8 +192,8 @@ export function LocationPicker({
           </div>
 
           {/* Right Panel: Areas */}
-          <div className="flex-1 flex flex-col bg-white">
-            <div className="px-6 py-3 border-b border-gray-50 bg-gray-50/30">
+          <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
+            <div className="px-6 py-3 border-b border-gray-50 dark:border-slate-800 bg-gray-50/30 dark:bg-slate-900/40">
               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 {tempDistrict === "All of Sri Lanka" ? "Areas" : `${tempDistrict} Areas`}
               </span>
@@ -235,8 +235,8 @@ export function LocationPicker({
                               className={cn(
                                 "flex items-center justify-between px-4 py-2.5 rounded-xl text-left text-sm font-medium transition-colors border",
                                 tempLocalArea === area
-                                  ? "bg-orange-50/50 text-[#FF6600] font-semibold border-orange-100 shadow-sm"
-                                  : "text-gray-700 hover:bg-orange-50/30 hover:text-[#FF6600] border-dashed border-gray-100 hover:border-orange-100"
+                                  ? "bg-orange-50/50 dark:bg-orange-950/40 text-[#FF6600] font-semibold border-orange-100 dark:border-orange-500/30 shadow-sm"
+                                  : "text-gray-700 dark:text-slate-300 hover:bg-orange-50/30 dark:hover:bg-slate-800 hover:text-[#FF6600] border-dashed border-gray-100 dark:border-slate-800 hover:border-orange-100 dark:border-orange-500/30"
                               )}
                             >
                               {area}
@@ -261,7 +261,7 @@ export function LocationPicker({
                                 "flex items-center justify-between px-4 py-2.5 rounded-xl text-left text-sm font-medium transition-colors border border-transparent",
                                 tempLocalArea === area
                                   ? "bg-orange-50/50 text-[#FF6600] font-semibold border-orange-100 shadow-sm"
-                                  : "text-gray-700 hover:bg-gray-50 hover:text-[#FF6600]"
+                                  : "text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-[#FF6600]"
                               )}
                             >
                               {area}
@@ -284,7 +284,7 @@ export function LocationPicker({
         </div>
 
         {showResetAndPostCount && (
-          <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <div className="p-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-900/60">
             <button
               onClick={() => {
                 setTempDistrict("All of Sri Lanka");

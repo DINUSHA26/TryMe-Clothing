@@ -132,7 +132,7 @@ export function AdsSellerTable({ sellers, onSellerUpdated }: AdsSellerTableProps
                   <TableRow key={seller.id}>
                     <TableCell>
                       <div>
-                        <div className="font-semibold text-gray-900">
+                        <div className="font-semibold text-gray-900 dark:text-white">
                           {seller.businessName || "No Business Name"}
                         </div>
                         <div className="text-xs text-muted-foreground">Owner: {ownerName}</div>
@@ -141,11 +141,11 @@ export function AdsSellerTable({ sellers, onSellerUpdated }: AdsSellerTableProps
                     <TableCell className="text-sm">{seller.user.email}</TableCell>
                     <TableCell className="text-sm">{seller.phone}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="bg-gray-50 border-gray-200">
+                      <Badge variant="outline" className="bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-200 dark:border-slate-700">
                         {seller.primaryCategory}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm font-medium text-gray-700">{plan}</TableCell>
+                    <TableCell className="text-sm font-medium text-gray-700 dark:text-slate-300">{plan}</TableCell>
                     <TableCell>
                       {seller.status === "PENDING" && (
                         <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 animate-pulse">

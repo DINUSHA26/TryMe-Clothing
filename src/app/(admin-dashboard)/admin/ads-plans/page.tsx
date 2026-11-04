@@ -48,7 +48,7 @@ export default function AdminAdsPlansPage() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
             <CreditCard className="h-8 w-8 text-[#FF6600]" />
             <span>Ads Pricing Plans</span>
           </h1>
@@ -60,7 +60,7 @@ export default function AdminAdsPlansPage() {
           variant="outline"
           onClick={fetchPlans}
           disabled={isLoading}
-          className="rounded-xl flex items-center gap-2 border-gray-200 hover:bg-gray-50 bg-white"
+          className="rounded-xl flex items-center gap-2 border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-800 dark:text-white"
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           <span>Refresh Data</span>

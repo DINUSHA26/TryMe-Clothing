@@ -61,15 +61,15 @@ function SlipPreviewModal({ url, onClose }: { url: string; onClose: () => void }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden"
+        className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-bold text-gray-900 flex items-center gap-2">
+          <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <FileImage className="h-4 w-4 text-[#FF6600]" />
             Bank Transfer Slip
           </h3>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100">
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 dark:text-slate-300">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -77,7 +77,7 @@ function SlipPreviewModal({ url, onClose }: { url: string; onClose: () => void }
           {isPdf ? (
             <div className="text-center py-8">
               <FileImage className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 mb-3">PDF file — click below to open</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mb-3">PDF file — click below to open</p>
               <a
                 href={url}
                 target="_blank"
@@ -151,7 +151,7 @@ function RejectDialog({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Rejection reason (optional)..."
-          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-red-200"
+          className="w-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-red-200"
         />
         <div className="flex gap-3">
           <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl" disabled={isSubmitting}>
@@ -252,7 +252,7 @@ export default function AdminAdsPlanPaymentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
             <CreditCard className="h-8 w-8 text-[#FF6600]" />
             Plan Payment Approvals
           </h1>
@@ -262,7 +262,7 @@ export default function AdminAdsPlanPaymentsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPagination((p) => ({ ...p, page: 1 })); }}>
-            <SelectTrigger className="w-[180px] bg-white rounded-xl border-gray-200">
+            <SelectTrigger className="w-[180px] bg-white dark:bg-slate-800 rounded-xl border-gray-200 dark:border-slate-700 dark:text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -276,7 +276,7 @@ export default function AdminAdsPlanPaymentsPage() {
             variant="outline"
             onClick={fetchPayments}
             disabled={isLoading}
-            className="rounded-xl border-gray-200 hover:bg-gray-50 bg-white"
+            className="rounded-xl border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-800 dark:text-white"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           </Button>
@@ -286,12 +286,12 @@ export default function AdminAdsPlanPaymentsPage() {
       {/* Stats bar */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Pending Review", value: counts.pending, color: "text-amber-600", bg: "bg-amber-50" },
-          { label: "Approved", value: counts.approved, color: "text-green-600", bg: "bg-green-50" },
-          { label: "Rejected", value: counts.rejected, color: "text-red-600", bg: "bg-red-50" },
+          { label: "Pending Review", value: counts.pending, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/30" },
+          { label: "Approved", value: counts.approved, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/30" },
+          { label: "Rejected", value: counts.rejected, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/30" },
         ].map((s) => (
-          <div key={s.label} className={`${s.bg} rounded-2xl p-4 border border-gray-100`}>
-            <p className="text-xs font-semibold text-gray-500">{s.label}</p>
+          <div key={s.label} className={`${s.bg} rounded-2xl p-4 border border-gray-100 dark:border-slate-800`}>
+            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">{s.label}</p>
             <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
           </div>
         ))}
@@ -320,7 +320,7 @@ export default function AdminAdsPlanPaymentsPage() {
             return (
               <div
                 key={payment.id}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
               >
                 <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                   {/* Left: Seller + Plan info */}
@@ -331,7 +331,7 @@ export default function AdminAdsPlanPaymentsPage() {
                           <User className="h-4 w-4 text-[#FF6600]" />
                         </div>
                         <div>
-                          <p className="font-bold text-gray-900 text-sm">{sellerName}</p>
+                          <p className="font-bold text-gray-900 dark:text-white text-sm">{sellerName}</p>
                           {businessName && <p className="text-xs text-gray-400">{businessName}</p>}
                         </div>
                       </div>
@@ -341,30 +341,30 @@ export default function AdminAdsPlanPaymentsPage() {
                     <div className="flex flex-wrap gap-4 text-sm">
                       <div>
                         <span className="text-gray-400 text-xs font-medium block">Plan</span>
-                        <span className="font-bold text-gray-900">{payment.subscription.plan.name}</span>
+                        <span className="font-bold text-gray-900 dark:text-white">{payment.subscription.plan.name}</span>
                       </div>
                       <div>
                         <span className="text-gray-400 text-xs font-medium block">Amount</span>
-                        <span className="font-bold text-gray-900">
+                        <span className="font-bold text-gray-900 dark:text-white">
                           Rs. {parseFloat(payment.amount).toLocaleString("en-LK")}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-400 text-xs font-medium block">Billing</span>
-                        <span className="font-semibold text-gray-700 capitalize">
+                        <span className="font-semibold text-gray-700 dark:text-slate-300 capitalize">
                           {payment.subscription.plan.billingCycle.toLowerCase()}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-400 text-xs font-medium block">Method</span>
-                        <span className="font-semibold text-gray-700 flex items-center gap-1">
+                        <span className="font-semibold text-gray-700 dark:text-slate-300 flex items-center gap-1">
                           <Building2 className="h-3 w-3" />
                           {payment.paymentMethod?.replace("_", " ") || "Bank Transfer"}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-400 text-xs font-medium block">Submitted</span>
-                        <span className="font-semibold text-gray-700 flex items-center gap-1">
+                        <span className="font-semibold text-gray-700 dark:text-slate-300 flex items-center gap-1">
                           <CalendarDays className="h-3 w-3" />
                           {formatDistance(new Date(payment.createdAt), new Date(), { addSuffix: true })}
                         </span>
@@ -380,7 +380,7 @@ export default function AdminAdsPlanPaymentsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setSlipPreviewUrl(payment.bankSlipUrl!)}
-                        className="rounded-xl border-gray-200 text-xs font-semibold"
+                        className="rounded-xl border-gray-200 dark:border-slate-700 dark:hover:bg-slate-800 dark:text-slate-200 text-xs font-semibold"
                       >
                         <Eye className="h-3.5 w-3.5 mr-1" />
                         View Slip
@@ -433,7 +433,7 @@ export default function AdminAdsPlanPaymentsPage() {
 
       {/* Pagination */}
       {!isLoading && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-slate-800">
           <p className="text-sm text-gray-500">
             Page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} total)
           </p>
@@ -441,12 +441,12 @@ export default function AdminAdsPlanPaymentsPage() {
             <button
               onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
               disabled={pagination.page === 1}
-              className="px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 disabled:opacity-40 bg-white"
+              className="px-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 bg-white dark:bg-slate-800 dark:text-white"
             >Previous</button>
             <button
               onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
               disabled={pagination.page === pagination.totalPages}
-              className="px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 disabled:opacity-40 bg-white"
+              className="px-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 bg-white dark:bg-slate-800 dark:text-white"
             >Next</button>
           </div>
         </div>

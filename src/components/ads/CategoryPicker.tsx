@@ -366,12 +366,12 @@ export function CategoryPicker({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl w-[95vw] h-[80vh] md:h-[600px] p-0 overflow-hidden flex flex-col rounded-2xl border border-gray-100 shadow-2xl bg-white/95 backdrop-blur-xl">
-        <DialogHeader className="p-6 pb-4 border-b border-gray-100">
-          <DialogTitle className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
+      <DialogContent className="max-w-3xl w-[95vw] h-[80vh] md:h-[600px] p-0 overflow-hidden flex flex-col rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+        <DialogHeader className="p-6 pb-4 border-b border-gray-100 dark:border-slate-800">
+          <DialogTitle className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <span>{mobileView === "categories" ? "Select a Category" : "Select a subcategory"}</span>
           </DialogTitle>
-          <DialogDescription className="text-gray-500 text-sm mt-1">
+          <DialogDescription className="text-gray-500 dark:text-slate-400 text-sm mt-1">
             {onlyParentCategory
               ? "Choose the primary sector for your business"
               : "Choose a category and sub-category for your ad"}
@@ -385,7 +385,7 @@ export function CategoryPicker({
               placeholder="Search categories or sub-categories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6600]/20 focus:border-[#FF6600] transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FF6600]/20 focus:border-[#FF6600] transition-all"
             />
           </div>
         </DialogHeader>
@@ -404,7 +404,7 @@ export function CategoryPicker({
           <div className="flex-grow flex overflow-hidden">
             {/* Left Panel: Categories */}
             <div className={cn(
-              "border-r border-gray-150 flex flex-col bg-gray-50/50 w-full md:w-[40%]",
+              "border-r border-gray-150 flex flex-col bg-gray-50/50 dark:bg-slate-900/60 w-full md:w-[40%]",
               onlyParentCategory ? "w-full border-r-0" : "",
               !onlyParentCategory && mobileView === "subcategories" && "hidden md:flex"
             )}>
@@ -431,12 +431,12 @@ export function CategoryPicker({
                       className={cn(
                         "w-full flex items-center justify-between px-2 py-2.5 md:px-4 md:py-3 rounded-lg md:rounded-xl text-left text-xs md:text-sm font-medium transition-all duration-200",
                         selectedParentId === cat.id
-                          ? "bg-white text-[#FF6600] shadow-sm border border-gray-100 font-semibold"
-                          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                          ? "bg-white dark:bg-slate-800 text-[#FF6600] shadow-sm border border-gray-100 dark:border-slate-700 font-semibold"
+                          : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"
                       )}
                     >
                       <span className="flex items-center gap-1.5 md:gap-3 min-w-0">
-                        <span className="text-sm md:text-xl flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg bg-white shadow-sm border border-gray-50 flex-shrink-0 overflow-hidden">
+                        <span className="text-sm md:text-xl flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-gray-50 dark:border-slate-700 flex-shrink-0 overflow-hidden">
                           {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
                             <img src={cat.icon} alt={cat.name} className="w-5 h-5 md:w-7 md:h-7 object-contain" />
                           ) : (
@@ -465,7 +465,7 @@ export function CategoryPicker({
             {/* Right Panel: Sub-Categories */}
             {!onlyParentCategory && (
               <div className={cn(
-                "md:w-1/2 flex flex-col bg-white",
+                "md:w-1/2 flex flex-col bg-white dark:bg-slate-900",
                 mobileView === "categories" ? "hidden md:flex w-[60%]" : "w-full"
               )}>
                 {/* Back to all categories link (mobile only) */}
@@ -478,7 +478,7 @@ export function CategoryPicker({
                   <span>Back to all categories</span>
                 </button>
 
-                <div className="px-3 py-2.5 md:px-6 md:py-3 border-b border-gray-50 bg-gray-50/30">
+                <div className="px-3 py-2.5 md:px-6 md:py-3 border-b border-gray-50 dark:border-slate-800 bg-gray-50/30 dark:bg-slate-900/40">
                   <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider truncate block">
                     {selectedCategory ? `${selectedCategory.name} Subcategories` : "Subcategories"}
                   </span>
@@ -505,12 +505,12 @@ export function CategoryPicker({
                         className={cn(
                           "w-full flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 rounded-lg md:rounded-xl text-left text-xs md:text-sm font-medium transition-all duration-200 group",
                           selectedSubId === sub.id
-                            ? "bg-orange-50/50 text-[#FF6600] font-semibold border border-orange-100/50 shadow-sm"
-                            : "text-gray-700 hover:bg-gray-50 hover:text-[#FF6600]"
+                            ? "bg-orange-50/50 dark:bg-orange-950/40 text-[#FF6600] font-semibold border border-orange-100/50 dark:border-orange-500/30 shadow-sm"
+                            : "text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-[#FF6600]"
                         )}
                       >
                         <span className="flex items-center gap-1.5 md:gap-3 min-w-0">
-                          <span className="text-sm md:text-xl flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg bg-white shadow-sm border border-gray-50 flex-shrink-0">
+                          <span className="text-sm md:text-xl flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-gray-50 dark:border-slate-700 flex-shrink-0">
                             {(() => {
                               if (sub.icon) return sub.icon;
                               const IconComponent = SUBCATEGORY_ICONS[sub.slug];
@@ -543,7 +543,7 @@ export function CategoryPicker({
         )}
 
         {showResetAndPostCount && !loading && !error && (
-          <div className="p-4 border-t border-gray-150 flex items-center justify-between bg-gray-50/50">
+          <div className="p-4 border-t border-gray-150 flex items-center justify-between bg-gray-50/50 dark:bg-slate-900/60">
             <button
               onClick={() => {
                 setSelectedParentId(null);

@@ -173,10 +173,10 @@ export function AdsPlanEditor({ plans, onPlanUpdated }: AdsPlanEditorProps) {
           {plans.map((plan) => {
             const isEditing = editingId === plan.id;
             return (
-              <TableRow key={plan.id} className={isEditing ? "bg-orange-50/20" : ""}>
-                <TableCell className="font-semibold text-gray-900">{plan.name}</TableCell>
+              <TableRow key={plan.id} className={isEditing ? "bg-orange-50/20 dark:bg-orange-500/10" : ""}>
+                <TableCell className="font-semibold text-gray-900 dark:text-white">{plan.name}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="bg-gray-100 text-gray-800">
+                  <Badge variant="outline" className="bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-200 dark:border-slate-700">
                     {plan.type}
                   </Badge>
                 </TableCell>
@@ -186,7 +186,7 @@ export function AdsPlanEditor({ plans, onPlanUpdated }: AdsPlanEditorProps) {
                       type="number"
                       value={editMaxAds}
                       onChange={(e) => setEditMaxAds(e.target.value)}
-                      className="max-w-[120px] bg-white"
+                      className="max-w-[120px] bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                       min={1}
                     />
                   ) : (
@@ -196,12 +196,12 @@ export function AdsPlanEditor({ plans, onPlanUpdated }: AdsPlanEditorProps) {
                 <TableCell>
                   {isEditing ? (
                     <div className="relative max-w-[150px]">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rs.</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400 text-xs">Rs.</span>
                       <Input
                         type="number"
                         value={editPrice}
                         onChange={(e) => setEditPrice(e.target.value)}
-                        className="pl-8 bg-white"
+                        className="pl-8 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                         min={0}
                         step={100}
                       />
@@ -210,7 +210,7 @@ export function AdsPlanEditor({ plans, onPlanUpdated }: AdsPlanEditorProps) {
                     <span className="font-semibold text-[#FF6600]">{formatLKR(plan.price)}</span>
                   )}
                 </TableCell>
-                <TableCell className="text-sm font-medium text-gray-600">
+                <TableCell className="text-sm font-medium text-gray-600 dark:text-slate-300">
                   {plan.billingCycle}
                 </TableCell>
                 <TableCell>

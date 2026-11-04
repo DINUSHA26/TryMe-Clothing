@@ -60,47 +60,62 @@ export default function EditAdPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch ad data on mount
+  // Fetch initial ad details
   useEffect(() => {
     if (!adId) return;
-    
-    setIsLoadingAd(true);
-    fetch(`/api/ads/seller/ads/${adId}`)
-      .then((res) => res.json())
-      .then((result) => {
-        if (result.success) {
-          const ad = result.data;
-          setCategoryId(ad.categoryId);
-          setSubCategoryId(ad.subCategoryId);
-          // Set placeholders for names if they aren't populated here (or leave blank if it's fine)
-          setCategoryName("Selected Category");
-          setSubCategoryName("Selected Subcategory");
-          
-          setDistrict(ad.district);
-          setLocalArea(ad.localArea || "");
-          
-          setTitle(ad.title);
-          setDescription(ad.description);
-          setPrice(ad.price ? String(ad.price) : "");
-          setPriceNegotiable(ad.priceNegotiable || false);
-          setContactForPrice(!ad.price);
-          setImages(ad.images || []);
-          setSpecifications(ad.specifications || {});
-        } else {
+
+    const fetchAd = async () => {
+      try {
+        const response = await fetch(`/api/ads/seller/ads/${adId}`);
+        const result = await response.json();
+
+        if (!result.success) {
           toast({
             variant: "destructive",
-            title: "Error",
-            description: "Failed to load ad details.",
+            title: "Error Loading Ad",
+            description: result.error || "Failed to load ad details",
           });
           router.push("/ads-seller/my-ads");
+          return;
         }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch ad details", err);
-      })
-      .finally(() => {
+
+        const ad = result.data;
+        setCategoryId(ad.categoryId);
+        setSubCategoryId(ad.subCategoryId);
+        setCategoryName(ad.category?.name || "");
+        setSubCategoryName(ad.subCategory?.name || "");
+        setFieldDefinitions(ad.subCategory?.fieldDefinitions || []);
+        
+        setDistrict(ad.district);
+        setLocalArea(ad.localArea || "");
+        setTitle(ad.title);
+        setDescription(ad.description || "");
+        
+        if (ad.price !== null) {
+          setPrice(ad.price.toString());
+          setContactForPrice(false);
+        } else {
+          setPrice("");
+          setContactForPrice(true);
+        }
+        
+        setPriceNegotiable(ad.priceNegotiable);
+        setImages(ad.images || []);
+        setSpecifications(ad.specifications || {});
+      } catch (error) {
+        console.error("Error fetching ad for edit:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An unexpected error occurred while loading the ad",
+        });
+        router.push("/ads-seller/my-ads");
+      } finally {
         setIsLoadingAd(false);
-      });
+      }
+    };
+
+    fetchAd();
   }, [adId, router, toast]);
 
   // Set default category / location if user changes them
@@ -116,7 +131,6 @@ export default function EditAdPage() {
     setCategoryName(catName);
     setSubCategoryName(subName);
     setFieldDefinitions(fields);
-    setSpecifications({});
   };
 
   const handleLocationSelect = (selectedDistrict: string, selectedArea: string) => {
@@ -265,51 +279,51 @@ export default function EditAdPage() {
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Title */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Edit Classified Ad</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Edit Classified Ad</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Update the details of your classified ad.
         </p>
       </div>
 
       {/* Step Progress indicators */}
-      <div className="flex items-center justify-start md:justify-between bg-white px-6 py-4 rounded-2xl border border-gray-100 shadow-sm text-sm font-semibold overflow-x-auto whitespace-nowrap gap-4 md:gap-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <div className={`flex items-center gap-1.5 shrink-0 ${step >= 1 ? "text-[#FF6600]" : "text-gray-400"}`}>
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 1 ? "bg-[#FF6600] text-white" : "bg-gray-100 text-gray-400"}`}>1</span>
+      <div className="flex items-center justify-start md:justify-between bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm text-sm font-semibold overflow-x-auto whitespace-nowrap gap-4 md:gap-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className={`flex items-center gap-1.5 shrink-0 ${step >= 1 ? "text-[#FF6600]" : "text-gray-400 dark:text-slate-500"}`}>
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 1 ? "bg-[#FF6600] text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500"}`}>1</span>
           <span>Category</span>
         </div>
-        <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
-        <div className={`flex items-center gap-1.5 shrink-0 ${step >= 2 ? "text-[#FF6600]" : "text-gray-400"}`}>
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 2 ? "bg-[#FF6600] text-white" : "bg-gray-100 text-gray-400"}`}>2</span>
+        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-slate-600 shrink-0" />
+        <div className={`flex items-center gap-1.5 shrink-0 ${step >= 2 ? "text-[#FF6600]" : "text-gray-400 dark:text-slate-500"}`}>
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 2 ? "bg-[#FF6600] text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500"}`}>2</span>
           <span>Location</span>
         </div>
-        <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
-        <div className={`flex items-center gap-1.5 shrink-0 ${step >= 3 ? "text-[#FF6600]" : "text-gray-400"}`}>
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 3 ? "bg-[#FF6600] text-white" : "bg-gray-100 text-gray-400"}`}>3</span>
+        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-slate-600 shrink-0" />
+        <div className={`flex items-center gap-1.5 shrink-0 ${step >= 3 ? "text-[#FF6600]" : "text-gray-400 dark:text-slate-500"}`}>
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 3 ? "bg-[#FF6600] text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500"}`}>3</span>
           <span>Specifications</span>
         </div>
-        <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
-        <div className={`flex items-center gap-1.5 shrink-0 ${step >= 4 ? "text-[#FF6600]" : "text-gray-400"}`}>
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 4 ? "bg-[#FF6600] text-white" : "bg-gray-100 text-gray-400"}`}>4</span>
+        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-slate-600 shrink-0" />
+        <div className={`flex items-center gap-1.5 shrink-0 ${step >= 4 ? "text-[#FF6600]" : "text-gray-400 dark:text-slate-500"}`}>
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 4 ? "bg-[#FF6600] text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500"}`}>4</span>
           <span>Media & Price</span>
         </div>
       </div>
 
       {/* Step 1: Category Picker */}
       {step === 1 && (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm space-y-6">
           <div className="text-center py-6">
             <Megaphone className="h-12 w-12 text-[#FF6600] mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-gray-900">Choose Classified Category</h2>
-            <p className="text-gray-500 text-xs mt-1">Select the correct subcategory to get appropriate specification forms.</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Choose Classified Category</h2>
+            <p className="text-gray-500 dark:text-slate-400 text-xs mt-1">Select the correct subcategory to get appropriate specification forms.</p>
           </div>
 
           {subCategoryName ? (
-            <div className="flex items-center justify-between p-4 border border-orange-100 bg-orange-50/10 rounded-xl">
+            <div className="flex items-center justify-between p-4 border border-orange-100 dark:border-orange-500/20 bg-orange-50/10 dark:bg-orange-500/5 rounded-xl">
               <div>
-                <span className="text-xs text-gray-400 block font-semibold uppercase tracking-wider">Selected Category</span>
-                <span className="font-bold text-gray-900">{categoryName} &gt; {subCategoryName}</span>
+                <span className="text-xs text-gray-400 dark:text-slate-400 block font-semibold uppercase tracking-wider">Selected Category</span>
+                <span className="font-bold text-gray-900 dark:text-white">{categoryName} &gt; {subCategoryName}</span>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setIsCategoryOpen(true)} className="rounded-xl text-xs">
+              <Button variant="outline" size="sm" onClick={() => setIsCategoryOpen(true)} className="rounded-xl text-xs dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                 Change
               </Button>
             </div>
@@ -326,11 +340,11 @@ export default function EditAdPage() {
           )}
 
           {subCategoryName && (
-            <div className="flex justify-end pt-4 border-t border-gray-50">
+            <div className="flex justify-end pt-4 border-t border-gray-50 dark:border-slate-800">
               <Button
                 variant="default"
                 onClick={() => setStep(2)}
-                className="bg-black hover:bg-gray-900 text-white rounded-xl font-semibold"
+                className="bg-black dark:bg-[#FF6600] hover:bg-gray-900 dark:hover:bg-[#e65c00] text-white rounded-xl font-semibold"
               >
                 <span>Continue</span>
                 <ChevronRight className="h-4 w-4 ml-1" />
@@ -342,20 +356,20 @@ export default function EditAdPage() {
 
       {/* Step 2: Location Picker */}
       {step === 2 && (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm space-y-6">
           <div className="text-center py-6">
             <MapPin className="h-12 w-12 text-[#FF6600] mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-gray-900">Where is your item located?</h2>
-            <p className="text-gray-500 text-xs mt-1">Providing an accurate location helps local buyers discover your listing.</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Where is your item located?</h2>
+            <p className="text-gray-500 dark:text-slate-400 text-xs mt-1">Providing an accurate location helps local buyers discover your listing.</p>
           </div>
 
           {district ? (
-            <div className="flex items-center justify-between p-4 border border-orange-100 bg-orange-50/10 rounded-xl">
+            <div className="flex items-center justify-between p-4 border border-orange-100 dark:border-orange-500/20 bg-orange-50/10 dark:bg-orange-500/5 rounded-xl">
               <div>
-                <span className="text-xs text-gray-400 block font-semibold uppercase tracking-wider">Selected Location</span>
-                <span className="font-bold text-gray-900">{district} {localArea && `> ${localArea}`}</span>
+                <span className="text-xs text-gray-400 dark:text-slate-400 block font-semibold uppercase tracking-wider">Selected Location</span>
+                <span className="font-bold text-gray-900 dark:text-white">{district} {localArea && `> ${localArea}`}</span>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setIsLocationOpen(true)} className="rounded-xl text-xs">
+              <Button variant="outline" size="sm" onClick={() => setIsLocationOpen(true)} className="rounded-xl text-xs dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                 Change
               </Button>
             </div>
@@ -371,8 +385,8 @@ export default function EditAdPage() {
             </div>
           )}
 
-          <div className="flex justify-between pt-4 border-t border-gray-50">
-            <Button variant="ghost" onClick={() => setStep(1)} className="rounded-xl">
+          <div className="flex justify-between pt-4 border-t border-gray-50 dark:border-slate-800">
+            <Button variant="ghost" onClick={() => setStep(1)} className="rounded-xl dark:text-slate-300 dark:hover:bg-slate-800">
               <ArrowLeft className="h-4 w-4 mr-1" />
               <span>Back</span>
             </Button>
@@ -380,7 +394,7 @@ export default function EditAdPage() {
               <Button
                 variant="default"
                 onClick={() => setStep(3)}
-                className="bg-black hover:bg-gray-900 text-white rounded-xl font-semibold"
+                className="bg-black dark:bg-[#FF6600] hover:bg-gray-900 dark:hover:bg-[#e65c00] text-white rounded-xl font-semibold"
               >
                 <span>Continue</span>
                 <ChevronRight className="h-4 w-4 ml-1" />
@@ -392,9 +406,9 @@ export default function EditAdPage() {
 
       {/* Step 3: Specifications */}
       {step === 3 && (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm space-y-6">
           {/* Breadcrumb info */}
-          <div className="flex flex-wrap gap-2 text-xs font-semibold text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100 justify-between items-center">
+          <div className="flex flex-wrap gap-2 text-xs font-semibold text-gray-500 dark:text-slate-300 bg-gray-50 dark:bg-slate-800/60 p-3 rounded-xl border border-gray-100 dark:border-slate-800 justify-between items-center">
             <div className="flex items-center gap-1">
               <span>{categoryName} &gt; {subCategoryName}</span>
               <button onClick={() => setStep(1)} className="text-[#FF6600] hover:underline ml-1">Edit</button>
@@ -406,8 +420,8 @@ export default function EditAdPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="border-b border-gray-50 pb-2">
-              <h2 className="text-base font-bold text-gray-900 flex items-center gap-1.5">
+            <div className="border-b border-gray-50 dark:border-slate-800 pb-2">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                 <FileText className="h-4 w-4 text-[#FF6600]" />
                 <span>Specify Item Details</span>
               </h2>
@@ -421,10 +435,10 @@ export default function EditAdPage() {
             />
 
             {/* Title & Description */}
-            <div className="space-y-4 pt-4 border-t border-gray-100">
+            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-slate-800">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
-                  <Label htmlFor="ad-title" className="text-sm font-semibold text-gray-800">Ad Title *</Label>
+                  <Label htmlFor="ad-title" className="text-sm font-semibold text-gray-800 dark:text-slate-200">Ad Title *</Label>
                 </div>
                 <Input
                   id="ad-title"
@@ -432,26 +446,26 @@ export default function EditAdPage() {
                   placeholder="e.g. Brand New iPhone 15 Pro Max 256GB"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="rounded-xl border-gray-200"
+                  className="rounded-xl border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
                 />
-                <p className="text-[10px] text-gray-400">Keep it short, clear, and descriptive.</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-400">Keep it short, clear, and descriptive.</p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="ad-description" className="text-sm font-semibold text-gray-800">Description *</Label>
+                <Label htmlFor="ad-description" className="text-sm font-semibold text-gray-800 dark:text-slate-200">Description *</Label>
                 <Textarea
                   id="ad-description"
                   placeholder="Write a detailed description of your item, specifying conditions, usage history, features, accessories included, etc."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[150px] rounded-xl border-gray-200"
+                  className="min-h-[150px] rounded-xl border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex justify-between pt-4 border-t border-gray-50">
-            <Button variant="ghost" onClick={() => setStep(2)} className="rounded-xl">
+          <div className="flex justify-between pt-4 border-t border-gray-50 dark:border-slate-800">
+            <Button variant="ghost" onClick={() => setStep(2)} className="rounded-xl dark:text-slate-300 dark:hover:bg-slate-800">
               <ArrowLeft className="h-4 w-4 mr-1" />
               <span>Back</span>
             </Button>
@@ -468,7 +482,7 @@ export default function EditAdPage() {
                 }
                 setStep(4);
               }}
-              className="bg-black hover:bg-gray-900 text-white rounded-xl font-semibold"
+              className="bg-black dark:bg-[#FF6600] hover:bg-gray-900 dark:hover:bg-[#e65c00] text-white rounded-xl font-semibold"
             >
               <span>Continue</span>
               <ChevronRight className="h-4 w-4 ml-1" />
@@ -479,20 +493,20 @@ export default function EditAdPage() {
 
       {/* Step 4: Images & Pricing */}
       {step === 4 && (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm space-y-6">
           <div className="space-y-5">
             {/* Price section */}
             <div className="space-y-4">
-              <h2 className="text-base font-bold text-gray-900 flex items-center gap-1.5 border-b border-gray-50 pb-2">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5 border-b border-gray-50 dark:border-slate-800 pb-2">
                 <DollarSign className="h-4 w-4 text-[#FF6600]" />
                 <span>Price details</span>
               </h2>
 
               <div className="space-y-3.5">
-                <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-xl border border-gray-100">
+                <div className="flex items-center justify-between bg-gray-50 dark:bg-slate-800/60 px-4 py-3 rounded-xl border border-gray-100 dark:border-slate-800">
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-gray-800">Contact for Price</span>
-                    <span className="text-[10px] text-gray-400 font-medium">Hide the price and request buyers to call you</span>
+                    <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">Contact for Price</span>
+                    <span className="text-[10px] text-gray-400 dark:text-slate-400 font-medium">Hide the price and request buyers to call you</span>
                   </div>
                   <Switch
                     checked={contactForPrice}
@@ -507,16 +521,16 @@ export default function EditAdPage() {
                 {!contactForPrice && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="ad-price" className="text-xs font-bold text-gray-500 uppercase tracking-wide">Price (LKR) *</Label>
+                      <Label htmlFor="ad-price" className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Price (LKR) *</Label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">Rs.</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400 text-sm font-semibold">Rs.</span>
                         <Input
                           id="ad-price"
                           type="number"
                           placeholder="Enter price"
                           value={price}
                           onChange={(e) => setPrice(e.target.value)}
-                          className="pl-9 rounded-xl border-gray-200"
+                          className="pl-9 rounded-xl border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
                         />
                       </div>
                     </div>
@@ -527,9 +541,9 @@ export default function EditAdPage() {
                         type="checkbox"
                         checked={priceNegotiable}
                         onChange={(e) => setPriceNegotiable(e.target.checked)}
-                        className="rounded border-gray-300 text-[#FF6600] focus:ring-[#FF6600] h-4 w-4"
+                        className="rounded border-gray-300 dark:border-slate-600 text-[#FF6600] focus:ring-[#FF6600] h-4 w-4 dark:bg-slate-800"
                       />
-                      <Label htmlFor="ad-negotiable" className="text-sm font-semibold text-gray-700 cursor-pointer select-none">
+                      <Label htmlFor="ad-negotiable" className="text-sm font-semibold text-gray-700 dark:text-slate-300 cursor-pointer select-none">
                         Price is negotiable
                       </Label>
                     </div>
@@ -539,8 +553,8 @@ export default function EditAdPage() {
             </div>
 
             {/* Image uploads */}
-            <div className="space-y-4 pt-4 border-t border-gray-100">
-              <h2 className="text-base font-bold text-gray-900 flex items-center gap-1.5">
+            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-slate-800">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                 <UploadCloud className="h-4.5 w-4.5 text-[#FF6600]" />
                 <span>Upload Photos (Up to 6) *</span>
               </h2>
@@ -548,7 +562,7 @@ export default function EditAdPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {/* Upload Button */}
                 {images.length < 6 && (
-                  <label className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer hover:border-orange-100 hover:bg-orange-50/10 min-h-[110px] transition-colors relative">
+                  <label className="border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer hover:border-orange-100 dark:hover:border-orange-500/30 hover:bg-orange-50/10 dark:hover:bg-orange-500/5 min-h-[110px] transition-colors relative">
                     <input
                       type="file"
                       accept="image/*"
@@ -561,8 +575,8 @@ export default function EditAdPage() {
                       <Loader2 className="h-6 w-6 animate-spin text-[#FF6600]" />
                     ) : (
                       <>
-                        <UploadCloud className="h-6 w-6 text-gray-400 mb-1" />
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Add Photo</span>
+                        <UploadCloud className="h-6 w-6 text-gray-400 dark:text-slate-400 mb-1" />
+                        <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Add Photo</span>
                       </>
                     )}
                   </label>
@@ -570,7 +584,7 @@ export default function EditAdPage() {
 
                 {/* Thumbnails */}
                 {images.map((url, index) => (
-                  <div key={url} className="border border-gray-100 rounded-2xl overflow-hidden min-h-[110px] relative group bg-gray-50">
+                  <div key={url} className="border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden min-h-[110px] relative group bg-gray-50 dark:bg-slate-800">
                     <img src={url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
@@ -585,12 +599,12 @@ export default function EditAdPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-gray-400">Supported formats: JPG, PNG. Max file size: 5MB. Upload high-quality, real photos of your items.</p>
+              <p className="text-[10px] text-gray-400 dark:text-slate-400">Supported formats: JPG, PNG. Max file size: 5MB. Upload high-quality, real photos of your items.</p>
             </div>
           </div>
 
-          <div className="flex justify-between pt-6 border-t border-gray-50">
-            <Button variant="ghost" onClick={() => setStep(3)} className="rounded-xl">
+          <div className="flex justify-between pt-6 border-t border-gray-50 dark:border-slate-800">
+            <Button variant="ghost" onClick={() => setStep(3)} className="rounded-xl dark:text-slate-300 dark:hover:bg-slate-800">
               <ArrowLeft className="h-4 w-4 mr-1" />
               <span>Back</span>
             </Button>

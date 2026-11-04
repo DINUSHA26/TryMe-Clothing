@@ -156,9 +156,9 @@ export function MarketplaceAdsTable({ ads, onAdUpdated }: MarketplaceAdsTablePro
                 return (
                   <TableRow key={ad.id}>
                     {/* Title + Thumbnail */}
-                    <TableCell className="font-semibold text-gray-900 max-w-[240px]">
+                    <TableCell className="font-semibold text-gray-900 dark:text-white max-w-[240px]">
                       <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0 border border-gray-100">
+                        <div className="relative w-12 h-12 bg-gray-100 dark:bg-slate-800 rounded-lg overflow-hidden shrink-0 border border-gray-100 dark:border-slate-700">
                           {ad.images?.[0] ? (
                             <img
                               src={ad.images[0]}
@@ -166,11 +166,11 @@ export function MarketplaceAdsTable({ ads, onAdUpdated }: MarketplaceAdsTablePro
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="flex items-center justify-center w-full h-full text-xs text-gray-400">No Image</span>
+                            <span className="flex items-center justify-center w-full h-full text-xs text-gray-400 dark:text-slate-500">No Image</span>
                           )}
                         </div>
                         <div className="truncate">
-                          <div className="truncate font-medium text-sm text-gray-950 flex items-center gap-1.5">
+                          <div className="truncate font-medium text-sm text-gray-950 dark:text-white flex items-center gap-1.5">
                             {ad.title}
                             {ad.isTopAd && (
                               <Badge className="bg-amber-500 text-white hover:bg-amber-600 px-1 py-0 h-4 text-[9px] flex items-center gap-0.5 border-none">
@@ -186,7 +186,7 @@ export function MarketplaceAdsTable({ ads, onAdUpdated }: MarketplaceAdsTablePro
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">
-                      <div className="flex items-center gap-1.5 font-medium text-gray-800">
+                      <div className="flex items-center gap-1.5 font-medium text-gray-800 dark:text-slate-200">
                         {ad.category.icon && (ad.category.icon.startsWith("/") || ad.category.icon.startsWith("http")) ? (
                           <img src={ad.category.icon} alt="" className="w-5 h-5 object-contain shrink-0" />
                         ) : (
@@ -197,21 +197,21 @@ export function MarketplaceAdsTable({ ads, onAdUpdated }: MarketplaceAdsTablePro
                       <div className="text-xs text-muted-foreground">{ad.subCategory.name}</div>
                     </TableCell>
                     <TableCell className="text-sm">
-                      <div className="font-medium text-gray-800">{sellerName}</div>
+                      <div className="font-medium text-gray-800 dark:text-slate-200">{sellerName}</div>
                       <div className="text-xs text-muted-foreground">{ad.seller.phone}</div>
                     </TableCell>
                     <TableCell className="text-sm">
-                      <div className="font-medium text-gray-800">{ad.district}</div>
+                      <div className="font-medium text-gray-800 dark:text-slate-200">{ad.district}</div>
                       <div className="text-xs text-muted-foreground">{ad.localArea || "Entire District"}</div>
                     </TableCell>
-                    <TableCell className="text-sm font-semibold text-gray-800">
+                    <TableCell className="text-sm font-semibold text-gray-800 dark:text-slate-200">
                       {ad.price ? (
                         <>
                           Rs. {Number(ad.price).toLocaleString("en-LK")}
-                          {ad.priceNegotiable && <span className="text-[10px] text-gray-400 font-normal block">Negotiable</span>}
+                          {ad.priceNegotiable && <span className="text-[10px] text-gray-400 dark:text-slate-400 font-normal block">Negotiable</span>}
                         </>
                       ) : (
-                        <span className="text-gray-400 font-medium">Contact for price</span>
+                        <span className="text-gray-400 dark:text-slate-400 font-medium">Contact for price</span>
                       )}
                     </TableCell>
                     <TableCell>

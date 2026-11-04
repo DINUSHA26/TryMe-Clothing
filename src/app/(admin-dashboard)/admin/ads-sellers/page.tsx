@@ -85,13 +85,13 @@ export default function AdminAdsSellersPage() {
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400 h-4 w-4" />
           <Input
             type="text"
             placeholder="Search business name, owner name or email..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9 bg-white"
+            className="pl-9 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
           />
         </div>
 
@@ -104,7 +104,7 @@ export default function AdminAdsSellersPage() {
               setPagination({ ...pagination, page: 1 });
             }}
           >
-            <SelectTrigger className="bg-white">
+            <SelectTrigger className="bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white">
               <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
             <SelectContent>
