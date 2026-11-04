@@ -2115,18 +2115,99 @@ export default function WebsiteBuilderPage() {
                   </div>
                 </div>
 
-                <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Header Button CTA Text</Label>
-                  <Input
-                    value={config.headerSection?.buttonText || "Book via WhatsApp"}
-                    onChange={(e) =>
-                      setConfig((prev: any) => ({
-                        ...prev,
-                        headerSection: { ...(prev.headerSection || {}), buttonText: e.target.value },
-                      }))
-                    }
-                    className="mt-1 font-semibold rounded-xl"
-                  />
+                {/* HEADER & BRAND IDENTITY CUSTOMIZER */}
+                <div className="p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <LayoutTemplate className="w-4 h-4 text-blue-600" />
+                      <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Header Brand Tagline &amp; Top Action Button
+                      </Label>
+                    </div>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">
+                      {currentTier === "ONE_PAGE" ? "1-Page Storefront" : `${tierMeta.name} Store`}
+                    </span>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">
+                      Store Header Tagline / Subtitle
+                    </Label>
+                    <Input
+                      value={config.headerSection?.subtitle || ""}
+                      onChange={(e) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          headerSection: { ...(prev.headerSection || {}), subtitle: e.target.value },
+                        }))
+                      }
+                      placeholder={currentTier === "ONE_PAGE" ? "e.g. Direct Inquiry Storefront (or custom tagline)" : "e.g. Official Online Store (or custom tagline)"}
+                      className="mt-1 font-medium rounded-xl text-xs"
+                    />
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Text displayed directly beneath your store name in the top navigation header. Leave empty to use tier default.
+                    </span>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Show Top Header Action Button
+                        </Label>
+                        <span className="text-[10px] text-slate-400 block">
+                          Display quick action button on top right header
+                        </span>
+                      </div>
+                      <Switch
+                        checked={config.headerSection?.showButton !== false}
+                        onCheckedChange={(c) =>
+                          setConfig((prev: any) => ({
+                            ...prev,
+                            headerSection: { ...(prev.headerSection || {}), showButton: c },
+                          }))
+                        }
+                      />
+                    </div>
+
+                    {config.headerSection?.showButton !== false && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <Label className="text-[11px] font-semibold text-slate-500">Button Label / Text</Label>
+                          <Input
+                            value={config.headerSection?.buttonText || (currentTier === "ONE_PAGE" ? "WhatsApp / Inquire" : "Order via WhatsApp")}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                headerSection: { ...(prev.headerSection || {}), buttonText: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. WhatsApp / Inquire"
+                            className="mt-1 font-semibold rounded-xl text-xs h-9"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-[11px] font-semibold text-slate-500">Button Icon</Label>
+                          <select
+                            value={config.headerSection?.buttonIcon || "whatsapp"}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                headerSection: { ...(prev.headerSection || {}), buttonIcon: e.target.value },
+                              }))
+                            }
+                            className="w-full h-9 px-3 mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
+                          >
+                            <option value="whatsapp">💬 WhatsApp / Message</option>
+                            <option value="phone">📞 Phone / Call</option>
+                            <option value="bag">🛍️ Shopping Bag</option>
+                            <option value="none">None (Text Only)</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -2538,9 +2619,9 @@ export default function WebsiteBuilderPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Badge / Kicker Pill</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="sm:col-span-2">
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Badge / Kicker Pill Text</Label>
                           <Input
                             value={config.heroSection?.badgeText || ""}
                             onChange={(e) =>
@@ -2552,6 +2633,26 @@ export default function WebsiteBuilderPage() {
                             placeholder="e.g. PREMIUM SELECTION or PURITY YOU CAN VERIFY"
                             className="rounded-xl mt-1 text-xs uppercase font-semibold"
                           />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Badge Icon</Label>
+                          <select
+                            value={config.heroSection?.badgeIcon || "sparkles"}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, badgeIcon: e.target.value },
+                              }))
+                            }
+                            className="w-full h-9 px-3 mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
+                          >
+                            <option value="sparkles">✨ Sparkles</option>
+                            <option value="star">⭐️ Star</option>
+                            <option value="flame">🔥 Flame / Hot</option>
+                            <option value="shield">🛡️ Shield</option>
+                            <option value="tag">🏷️ Tag</option>
+                            <option value="none">None (Text Only)</option>
+                          </select>
                         </div>
 
                         {(config.heroSection?.style === "promo_sale") && (
@@ -2613,69 +2714,134 @@ export default function WebsiteBuilderPage() {
                     <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 space-y-4">
                       <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                         <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Action Buttons</span>
+                        <span>Action Buttons &amp; Icons</span>
                       </h4>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Primary Button Text</Label>
-                          <Input
-                            value={config.heroSection?.buttonText || ""}
-                            onChange={(e) =>
-                              setConfig((prev: any) => ({
-                                ...prev,
-                                heroSection: { ...prev.heroSection, buttonText: e.target.value },
-                              }))
-                            }
-                            placeholder="e.g. Shop Online Now or Order via WhatsApp"
-                            className="rounded-xl mt-1 text-xs font-bold"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Primary Button Link (URL or #section)</Label>
-                          <Input
-                            value={config.heroSection?.buttonLink || ""}
-                            onChange={(e) =>
-                              setConfig((prev: any) => ({
-                                ...prev,
-                                heroSection: { ...prev.heroSection, buttonLink: e.target.value },
-                              }))
-                            }
-                            placeholder="e.g. #products or /products or #contact"
-                            className="rounded-xl mt-1 text-xs font-mono"
-                          />
+                      {/* Primary Button */}
+                      <div className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Primary Action Button</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <Label className="text-[11px] font-semibold text-slate-500">Button Text</Label>
+                            <Input
+                              value={config.heroSection?.buttonText || ""}
+                              onChange={(e) =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  heroSection: { ...prev.heroSection, buttonText: e.target.value },
+                                }))
+                              }
+                              placeholder="e.g. Shop Online or Book via WhatsApp"
+                              className="rounded-xl mt-1 text-xs font-bold h-9"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[11px] font-semibold text-slate-500">Button Link</Label>
+                            <Input
+                              value={config.heroSection?.buttonLink || ""}
+                              onChange={(e) =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  heroSection: { ...prev.heroSection, buttonLink: e.target.value },
+                                }))
+                              }
+                              placeholder="e.g. #products or #contact"
+                              className="rounded-xl mt-1 text-xs font-mono h-9"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[11px] font-semibold text-slate-500">Button Icon</Label>
+                            <select
+                              value={config.heroSection?.buttonIcon || "bag"}
+                              onChange={(e) =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  heroSection: { ...prev.heroSection, buttonIcon: e.target.value },
+                                }))
+                              }
+                              className="w-full h-9 px-3 mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
+                            >
+                              <option value="bag">🛍️ Shopping Bag</option>
+                              <option value="whatsapp">💬 WhatsApp</option>
+                              <option value="phone">📞 Phone / Call</option>
+                              <option value="zap">⚡ Fast Zap</option>
+                              <option value="arrow">➡️ Arrow Right</option>
+                              <option value="none">None (Text Only)</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Secondary Button Text</Label>
-                          <Input
-                            value={config.heroSection?.secondaryButtonText || ""}
-                            onChange={(e) =>
+                      {/* Secondary Button */}
+                      <div className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Secondary Action Button</span>
+                            <span className="text-[10px] text-slate-400">Show or hide the secondary outline button</span>
+                          </div>
+                          <Switch
+                            checked={config.heroSection?.showSecondaryButton !== false}
+                            onCheckedChange={(c) =>
                               setConfig((prev: any) => ({
                                 ...prev,
-                                heroSection: { ...prev.heroSection, secondaryButtonText: e.target.value },
+                                heroSection: { ...prev.heroSection, showSecondaryButton: c },
                               }))
                             }
-                            placeholder="e.g. Direct Inquiry or Chat on WhatsApp"
-                            className="rounded-xl mt-1 text-xs font-medium"
                           />
                         </div>
-                        <div>
-                          <Label className="text-xs text-slate-600 dark:text-slate-300 font-bold">Secondary Button Link (URL or #section)</Label>
-                          <Input
-                            value={config.heroSection?.secondaryButtonLink || ""}
-                            onChange={(e) =>
-                              setConfig((prev: any) => ({
-                                ...prev,
-                                heroSection: { ...prev.heroSection, secondaryButtonLink: e.target.value },
-                              }))
-                            }
-                            placeholder="e.g. #contact or #about"
-                            className="rounded-xl mt-1 text-xs font-mono"
-                          />
-                        </div>
+
+                        {config.heroSection?.showSecondaryButton !== false && (
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t">
+                            <div>
+                              <Label className="text-[11px] font-semibold text-slate-500">Button Text</Label>
+                              <Input
+                                value={config.heroSection?.secondaryButtonText || ""}
+                                onChange={(e) =>
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    heroSection: { ...prev.heroSection, secondaryButtonText: e.target.value },
+                                  }))
+                                }
+                                placeholder="e.g. Direct Inquiry or Chat on WhatsApp"
+                                className="rounded-xl mt-1 text-xs font-medium h-9"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[11px] font-semibold text-slate-500">Button Link</Label>
+                              <Input
+                                value={config.heroSection?.secondaryButtonLink || ""}
+                                onChange={(e) =>
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    heroSection: { ...prev.heroSection, secondaryButtonLink: e.target.value },
+                                  }))
+                                }
+                                placeholder="e.g. #contact or #about"
+                                className="rounded-xl mt-1 text-xs font-mono h-9"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[11px] font-semibold text-slate-500">Button Icon</Label>
+                              <select
+                                value={config.heroSection?.secondaryButtonIcon || "message"}
+                                onChange={(e) =>
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    heroSection: { ...prev.heroSection, secondaryButtonIcon: e.target.value },
+                                  }))
+                                }
+                                className="w-full h-9 px-3 mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
+                              >
+                                <option value="message">💬 Message / Chat</option>
+                                <option value="whatsapp">💬 WhatsApp</option>
+                                <option value="phone">📞 Phone / Call</option>
+                                <option value="bag">🛍️ Shopping Bag</option>
+                                <option value="eye">👁️ View Details</option>
+                                <option value="none">None (Text Only)</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -5059,6 +5225,46 @@ export default function WebsiteBuilderPage() {
                           }))
                         }
                       />
+                    </div>
+
+                    {/* Powered By Branding Customization */}
+                    <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                            Show "Powered by" Footer Badge
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            Display platform credit or your own custom footer credit
+                          </span>
+                        </div>
+                        <Switch
+                          checked={config.footerSection?.showPoweredBy !== false}
+                          onCheckedChange={(c) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              footerSection: { ...(prev.footerSection || {}), showPoweredBy: c },
+                            }))
+                          }
+                        />
+                      </div>
+
+                      {config.footerSection?.showPoweredBy !== false && (
+                        <div>
+                          <Label className="text-[10px] font-semibold text-slate-500">Custom "Powered By" Text (Optional)</Label>
+                          <Input
+                            value={config.footerSection?.poweredByText || ""}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                footerSection: { ...(prev.footerSection || {}), poweredByText: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. Powered by TryMe Stores or Powered by Fashion Dora"
+                            className="h-8 text-xs mt-1 w-full"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

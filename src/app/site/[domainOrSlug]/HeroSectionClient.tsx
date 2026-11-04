@@ -5,6 +5,9 @@ import Image from "next/image";
 import {
   ShoppingBag,
   MessageCircle,
+  MessageSquare,
+  Phone,
+  Eye,
   Mail,
   ArrowRight,
   Sparkles,
@@ -71,6 +74,42 @@ export default function HeroSectionClient({
   const activeTrustBadges = (
     hero.trustBadges && hero.trustBadges.length > 0 ? hero.trustBadges : defaultTrustBadges
   ).filter((b) => b.enabled !== false && b.text.trim().length > 0);
+
+  const renderHeroBadgeIcon = (iconName?: string) => {
+    if (iconName === "none") return null;
+    if (iconName === "star") return <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400 shrink-0" />;
+    if (iconName === "flame") return <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-400 shrink-0" />;
+    if (iconName === "shield") return <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />;
+    if (iconName === "tag") return <Tag className="w-3.5 h-3.5 text-indigo-500 shrink-0" />;
+    return <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400 shrink-0" />;
+  };
+
+  const renderPrimaryButtonIcon = (iconName?: string, text?: string) => {
+    if (iconName === "none") return null;
+    if (iconName === "whatsapp" || (!iconName && text?.toLowerCase().includes("whatsapp"))) {
+      return <MessageCircle className="w-4 h-4 shrink-0" />;
+    }
+    if (iconName === "phone" || (!iconName && (text?.toLowerCase().includes("call") || text?.toLowerCase().includes("phone")))) {
+      return <Phone className="w-4 h-4 shrink-0" />;
+    }
+    if (iconName === "message") return <MessageSquare className="w-4 h-4 shrink-0" />;
+    if (iconName === "zap") return <Zap className="w-4 h-4 shrink-0" />;
+    if (iconName === "arrow") return <ArrowRight className="w-4 h-4 shrink-0" />;
+    return <ShoppingBag className="w-4 h-4 shrink-0" />;
+  };
+
+  const renderSecondaryButtonIcon = (iconName?: string, text?: string) => {
+    if (iconName === "none") return null;
+    if (iconName === "whatsapp" || (!iconName && text?.toLowerCase().includes("whatsapp"))) {
+      return <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />;
+    }
+    if (iconName === "phone" || (!iconName && (text?.toLowerCase().includes("call") || text?.toLowerCase().includes("phone")))) {
+      return <Phone className="w-4 h-4 text-blue-600 shrink-0" />;
+    }
+    if (iconName === "bag") return <ShoppingBag className="w-4 h-4 text-slate-700 shrink-0" />;
+    if (iconName === "eye") return <Eye className="w-4 h-4 text-indigo-600 shrink-0" />;
+    return <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />;
+  };
 
   const renderBadgeIcon = (iconName?: string) => {
     switch (iconName) {
@@ -165,7 +204,7 @@ export default function HeroSectionClient({
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-white shadow-sm"
                 style={{ backgroundColor: primaryColor }}
               >
-                <Sparkles className="w-3 h-3" />
+                {renderHeroBadgeIcon(hero.badgeIcon)}
                 <span className="truncate">{badgeText}</span>
               </div>
             )}
@@ -185,34 +224,32 @@ export default function HeroSectionClient({
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 sm:py-4 rounded-full text-white font-black text-xs sm:text-sm shadow-xl hover:opacity-95 transition-all"
                 style={{ backgroundColor: primaryColor }}
               >
-                <ShoppingBag className="w-4 h-4 shrink-0" />
+                {renderPrimaryButtonIcon(hero.buttonIcon, buttonText)}
                 <span>{buttonText}</span>
               </button>
-              <button
-                type="button"
-                onClick={handleSecondaryClick}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-4 rounded-full bg-white border border-slate-200 text-slate-800 font-bold text-xs sm:text-sm shadow-sm hover:bg-slate-100 transition-all"
-              >
-                <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>{secondaryButtonText}</span>
-              </button>
+              {hero.showSecondaryButton !== false && Boolean(secondaryButtonText) && (
+                <button
+                  type="button"
+                  onClick={handleSecondaryClick}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-4 rounded-full bg-white border border-slate-200 text-slate-800 font-bold text-xs sm:text-sm shadow-sm hover:bg-slate-100 transition-all"
+                >
+                  {renderSecondaryButtonIcon(hero.secondaryButtonIcon, secondaryButtonText)}
+                  <span>{secondaryButtonText}</span>
+                </button>
+              )}
             </div>
 
-            {/* Quick Guarantees */}
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-200/60 max-w-lg">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>100% Genuine</span>
+            {/* Quick Guarantees (Fully Dynamic from Vendor Configuration) */}
+            {showTrustBadges && activeTrustBadges.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-4 border-t border-slate-200/60 max-w-lg">
+                {activeTrustBadges.slice(0, 3).map((b, idx) => (
+                  <div key={b.id || idx} className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600">
+                    {renderBadgeIcon(b.icon)}
+                    <span className="truncate">{b.text}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600">
-                <Truck className="w-4 h-4 text-blue-600 shrink-0" />
-                <span>Fast Delivery</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600">
-                <Star className="w-4 h-4 text-amber-500 fill-amber-400 shrink-0" />
-                <span>Top Rated</span>
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="relative">
@@ -226,16 +263,18 @@ export default function HeroSectionClient({
                 </div>
               )}
             </div>
-            {/* Floating Trust Card */}
-            <div className="absolute -bottom-4 -left-4 sm:bottom-4 sm:-left-6 bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-5 h-5" />
+            {/* Floating Guarantee Card (Configurable) */}
+            {showFloatingCard && (
+              <div className="absolute -bottom-4 -left-4 sm:bottom-4 sm:-left-6 bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-slate-900">{floatingCardTitle}</p>
+                  <p className="text-[10px] text-slate-500 font-medium">{floatingCardSubtitle}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-black text-slate-900">Verified Seller</p>
-                <p className="text-[10px] text-slate-500 font-medium">Islandwide Delivery &amp; Support</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -369,18 +408,22 @@ export default function HeroSectionClient({
               )}
             </div>
 
-            {/* Floating Mobile/App Mockup Card */}
-            <div className="absolute -bottom-6 -right-2 sm:-right-6 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 max-w-[210px] space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[11px] font-black text-slate-900 dark:text-white">Live Verified Store</span>
+            {/* Floating Guarantee Card (Configurable) */}
+            {showFloatingCard && (
+              <div className="absolute -bottom-6 -right-2 sm:-right-6 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 max-w-[220px] space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[11px] font-black text-slate-900 dark:text-white">{floatingCardTitle}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{floatingCardSubtitle}</p>
+                {activeTrustBadges.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-black pt-1 border-t">
+                    {renderBadgeIcon(activeTrustBadges[0]?.icon)}
+                    <span className="truncate">{activeTrustBadges[0]?.text}</span>
+                  </div>
+                )}
               </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Instant order processing &amp; inquiry care</p>
-              <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-black pt-1 border-t">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>100% Genuine Care</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -562,20 +605,16 @@ export default function HeroSectionClient({
           </div>
 
           {/* Floating Trust Bar */}
-          <div className="pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs font-bold text-slate-500">
-            <div className="flex items-center gap-1.5">
-              <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
-              <span>4.9/5 Rating</span>
+          {showTrustBadges && activeTrustBadges.length > 0 && (
+            <div className="pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs font-bold text-slate-500">
+              {activeTrustBadges.map((b, idx) => (
+                <div key={b.id || idx} className="flex items-center gap-1.5">
+                  {renderBadgeIcon(b.icon)}
+                  <span>{b.text}</span>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center gap-1.5">
-              <Truck className="w-4 h-4 text-blue-500" />
-              <span>Fast Islandwide Dispatch</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span>100% Genuine Care</span>
-            </div>
-          </div>
+          )}
         </div>
       </section>
     );

@@ -390,9 +390,17 @@ export default function FooterSectionClient({
           </p>
 
           <div className="flex items-center gap-6">
-            <span className="text-[11px] text-slate-600">
-              Powered by <strong className="text-slate-400 font-bold">TryMe Stores</strong>
-            </span>
+            {footer?.showPoweredBy !== false && (
+              <span className="text-[11px] text-slate-600">
+                {footer?.poweredByText ? (
+                  <span>{footer.poweredByText}</span>
+                ) : (
+                  <>
+                    Powered by <strong className="text-slate-400 font-bold">TryMe Stores</strong>
+                  </>
+                )}
+              </span>
+            )}
             <button
               onClick={scrollToTop}
               className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"

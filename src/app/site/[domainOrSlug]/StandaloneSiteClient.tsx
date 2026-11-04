@@ -948,7 +948,14 @@ export default function StandaloneSiteClient({
     config?.productsSection?.title ||
     (entityType === "ADS_SELLER" ? "My Ads & Listings" : "Store Products");
 
-  // Reusable Product / Ad Card Renderer (Fully Customizable via Website Builder)
+  const renderHeaderButtonIcon = (icon?: string) => {
+    if (icon === "none") return null;
+    if (icon === "phone") return <Phone className="w-4 h-4 shrink-0" />;
+    if (icon === "bag") return <ShoppingBag className="w-4 h-4 shrink-0" />;
+    return <MessageCircle className="w-4 h-4 shrink-0" />;
+  };
+
+    // Reusable Product / Ad Card Renderer (Fully Customizable via Website Builder)
   const renderProductCard = (p: any, idx: number) => {
     const pCfg = config?.productsSection || {};
     const cardLayout = pCfg.cardLayout || "standard";
@@ -1327,7 +1334,7 @@ export default function StandaloneSiteClient({
                 {vendor?.businessName || "Store"}
               </span>
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-slate-400 block truncate mt-0.5">
-                {isMultiPage ? "Official Online Store" : "Direct Inquiry Storefront"}
+                {config?.headerSection?.subtitle || config?.headerSubtitle || (isMultiPage ? "Official Online Store" : "Direct Inquiry Storefront")}
               </span>
             </div>
           </button>

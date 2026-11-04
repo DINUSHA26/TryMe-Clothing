@@ -22,6 +22,13 @@ export type HeroDesignStyle =
   | "video_motion"
   | "store_catalog";
 
+export interface HeaderSectionConfig {
+  subtitle?: string;
+  buttonText?: string;
+  buttonIcon?: "whatsapp" | "message" | "phone" | "bag" | "none";
+  showButton?: boolean;
+}
+
 export interface HeroTrustBadge {
   id: string;
   text: string;
@@ -37,15 +44,19 @@ export interface HeroSectionConfig {
   subtitle: string;
   buttonText: string;
   buttonLink: string;
+  buttonIcon?: "bag" | "whatsapp" | "message" | "phone" | "zap" | "none";
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
+  secondaryButtonIcon?: "message" | "whatsapp" | "phone" | "bag" | "eye" | "none";
+  showSecondaryButton?: boolean;
   bgImage?: string;
   secondaryImage?: string;
   videoUrl?: string;
   badgeText?: string;
+  badgeIcon?: "sparkles" | "star" | "flame" | "shield" | "tag" | "none";
   discountTag?: string;
   tickerItems?: string[];
   faviconUrl?: string;
-  secondaryButtonText?: string;
-  secondaryButtonLink?: string;
   // Trust Badges & Floating Guarantee Card
   showTrustBadges?: boolean;
   trustBadges?: HeroTrustBadge[];
@@ -178,11 +189,15 @@ export interface FooterSectionConfig {
     linkedin?: string;
   };
   showQuickLinks?: boolean;
+  quickLinksTitle?: string;
   showPagesLinks?: boolean;
   showContactInfo?: boolean;
   showNewsletter?: boolean;
   newsletterTitle?: string;
   newsletterSubtitle?: string;
+  newsletterButtonText?: string;
+  showPoweredBy?: boolean;
+  poweredByText?: string;
   customLinks?: Array<{ label: string; url: string }>;
 }
 
@@ -268,6 +283,7 @@ export interface VendorWebsiteConfigData {
   fontFamily: string;
   navItemsJson?: any;
   headerStyle: string;
+  headerSection?: HeaderSectionConfig;
   productsSection?: ProductsSectionConfig;
   heroSection: HeroSectionConfig;
   aboutSection: AboutSectionConfig;
