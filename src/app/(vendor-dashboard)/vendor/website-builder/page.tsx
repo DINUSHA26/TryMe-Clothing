@@ -218,6 +218,15 @@ export default function WebsiteBuilderPage() {
 
   // Builder Active Tab & Custom Page Designer State
   const [builderTab, setBuilderTab] = useState<string>("branding");
+
+  // Section Accordion State: all sections collapsed by default, click arrow or header to expand
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const toggleSectionOpen = (secKey: string) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [secKey]: !prev[secKey],
+    }));
+  };
   const [editingPage, setEditingPage] = useState<any | null>(null);
   const [addSectionModalOpen, setAddSectionModalOpen] = useState(false);
   const [addSectionForPage, setAddSectionForPage] = useState(false);
@@ -2372,7 +2381,10 @@ export default function WebsiteBuilderPage() {
                 }`}
               >
                 {/* Header & Toggle */}
-                <div className="flex items-center justify-between pb-1">
+                <div
+                  className="flex items-center justify-between pb-1 cursor-pointer select-none"
+                  onClick={() => toggleSectionOpen("hero")}
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
@@ -2388,24 +2400,34 @@ export default function WebsiteBuilderPage() {
                       <p className="text-[11px] text-slate-500 font-medium">Main welcome headline, design layout, CTA buttons &amp; hero media</p>
                     </div>
                   </div>
-                  <Switch
-                    checked={config.heroSection?.enabled !== false}
-                    onCheckedChange={(c) =>
-                      setConfig((prev: any) => ({
-                        ...prev,
-                        heroSection: { ...prev.heroSection, enabled: c },
-                      }))
-                    }
-                  />
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={config.heroSection?.enabled !== false}
+                      onCheckedChange={(c) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          heroSection: { ...prev.heroSection, enabled: c },
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionOpen("hero")}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                      title={openSections["hero"] ? "Collapse section" : "Expand section details"}
+                    >
+                      {openSections["hero"] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
-                {config.heroSection?.enabled === false && (
+                {openSections["hero"] && config.heroSection?.enabled === false && (
                   <p className="text-[11px] font-bold text-slate-400 italic pt-1">
                     This section is currently disabled and hidden from your website.
                   </p>
                 )}
 
-                {config.heroSection?.enabled !== false && (
+                {openSections["hero"] && config.heroSection?.enabled !== false && (
                   <div className="space-y-6 pt-2">
                     {/* VISUAL HERO STYLE SELECTOR (10 DISTINCT PRESETS) */}
                     <div className="space-y-2.5">
@@ -2947,7 +2969,10 @@ export default function WebsiteBuilderPage() {
                     : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
                 }`}
               >
-                <div className="flex items-center justify-between pb-1">
+                <div
+                  className="flex items-center justify-between pb-1 cursor-pointer select-none"
+                  onClick={() => toggleSectionOpen("products")}
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
@@ -2968,428 +2993,448 @@ export default function WebsiteBuilderPage() {
                       <p className="text-[11px] text-slate-500 font-medium">Automatic catalog items live synced from TryMe</p>
                     </div>
                   </div>
-                  <Switch
-                    checked={config.productsSection?.enabled !== false}
-                    onCheckedChange={(c) =>
-                      setConfig((prev: any) => ({
-                        ...prev,
-                        productsSection: { ...(prev.productsSection || {}), enabled: c },
-                      }))
-                    }
-                  />
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={config.productsSection?.enabled !== false}
+                      onCheckedChange={(c) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          productsSection: { ...(prev.productsSection || {}), enabled: c },
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionOpen("products")}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                      title={openSections["products"] ? "Collapse section" : "Expand section details"}
+                    >
+                      {openSections["products"] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
-                {config.productsSection?.enabled === false && (
+                {openSections["products"] && config.productsSection?.enabled === false && (
                   <p className="text-[11px] font-bold text-slate-400 italic pt-1">
                     This section is currently disabled and hidden from your website.
                   </p>
                 )}
 
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>
-                      {entityType === "ADS_SELLER" ? "My Ads Synced:" : "TryMe Products Synced:"} {products.length} Active Items
-                    </span>
-                  </div>
-                  <a
-                    href={entityType === "ADS_SELLER" ? "/ads-seller/my-ads" : "/vendor/products"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 underline hover:opacity-80"
-                  >
-                    <span>Manage in TryMe</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-
-                {config.productsSection?.enabled !== false && (
-                  <div className="space-y-3 pt-1">
-                    <div>
-                      <Label className="text-xs text-slate-500 font-semibold">Section Heading</Label>
-                      <Input
-                        value={config.productsSection?.title || (entityType === "ADS_SELLER" ? "Active Ads & Services" : "Direct From Our Store")}
-                        onChange={(e) =>
-                          setConfig((prev: any) => ({
-                            ...prev,
-                            productsSection: { ...(prev.productsSection || {}), title: e.target.value },
-                          }))
-                        }
-                        className="rounded-xl mt-1 text-sm font-medium"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-500 font-semibold">Section Subtitle</Label>
-                      <Input
-                        value={config.productsSection?.subtitle || "Browse verified catalog items and order directly via WhatsApp or visit our physical store."}
-                        onChange={(e) =>
-                          setConfig((prev: any) => ({
-                            ...prev,
-                            productsSection: { ...(prev.productsSection || {}), subtitle: e.target.value },
-                          }))
-                        }
-                        className="rounded-xl mt-1 text-xs"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
-                      <div>
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
-                        <span className="text-[10px] text-slate-500 block">Show or hide the link in the top navigation bar while keeping the section on the page</span>
-                      </div>
-                      <Switch
-                        checked={getEffectiveNavItems().find((it: any) => it.id === "products")?.visible !== false}
-                        onCheckedChange={(c) => handleUpdateNavItem("products", { visible: c })}
-                      />
-
-                    {/* PRODUCT CARD DESIGN & ACTION BUTTONS CUSTOMIZATION */}
-                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Sliders className="w-4 h-4 text-emerald-600" />
-                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                            Product Card Layout &amp; Action Buttons
-                          </Label>
-                        </div>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                          currentTier === "ONE_PAGE"
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
-                            : "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
-                        }`}>
-                          {currentTier === "ONE_PAGE" ? "1-Page Mode (Inquiry/WhatsApp)" : "Multi-Page Mode (E-Commerce/Cart)"}
+                {openSections["products"] && (
+                  <div className="space-y-4 pt-1">
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>
+                          {entityType === "ADS_SELLER" ? "My Ads Synced:" : "TryMe Products Synced:"} {products.length} Active Items
                         </span>
                       </div>
+                      <a
+                        href={entityType === "ADS_SELLER" ? "/ads-seller/my-ads" : "/vendor/products"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 underline hover:opacity-80"
+                      >
+                        <span>Manage in TryMe</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
 
-                      {/* Tier Notice */}
-                      {currentTier === "ONE_PAGE" ? (
-                        <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300 leading-relaxed">
-                          <strong>1-Page Website:</strong> Your website uses direct inquiry actions. Since 1-Page sites do not have dedicated cart/checkout sub-pages, cards trigger WhatsApp orders or quick inquiries directly.
-                        </div>
-                      ) : (
-                        <div className="p-3 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/60 rounded-xl text-[11px] text-blue-800 dark:text-blue-300 leading-relaxed">
-                          <strong>{tierMeta.name}:</strong> Your multi-page site includes dedicated product detail pages, shopping cart, and full checkout with COD &amp; Bank Deposit.
-                        </div>
-                      )}
-
-                      {/* Card Layout Selector */}
-                      <div className="space-y-1.5">
-                        <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Card Layout Style</Label>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                          {[
-                            { id: "standard", name: "Standard", desc: "Clean & balanced" },
-                            { id: "modern", name: "Modern", desc: "Soft rounded" },
-                            { id: "compact", name: "Compact", desc: "Space-saving" },
-                            { id: "bordered", name: "Bordered", desc: "Bold outline" },
-                          ].map((layout) => {
-                            const isSelected = (config.productsSection?.cardLayout || "standard") === layout.id;
-                            return (
-                              <button
-                                key={layout.id}
-                                type="button"
-                                onClick={() =>
-                                  setConfig((prev: any) => ({
-                                    ...prev,
-                                    productsSection: { ...(prev.productsSection || {}), cardLayout: layout.id },
-                                  }))
-                                }
-                                className={`p-2.5 rounded-xl border text-left transition-all ${
-                                  isSelected
-                                    ? "border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-100 ring-2 ring-emerald-500/30"
-                                    : "border-slate-200 hover:border-slate-300 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                                }`}
-                              >
-                                <span className="block font-bold text-xs">{layout.name}</span>
-                                <span className="block text-[10px] text-slate-400">{layout.desc}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Visual Content Toggles */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                          <div>
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Price</span>
-                            <span className="text-[10px] text-slate-400 block">Display price and discounts</span>
-                          </div>
-                          <Switch
-                            checked={config.productsSection?.showPrice !== false}
-                            onCheckedChange={(c) =>
+                    {config.productsSection?.enabled !== false && (
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-xs text-slate-500 font-semibold">Section Heading</Label>
+                          <Input
+                            value={config.productsSection?.title || (entityType === "ADS_SELLER" ? "Active Ads & Services" : "Direct From Our Store")}
+                            onChange={(e) =>
                               setConfig((prev: any) => ({
                                 ...prev,
-                                productsSection: { ...(prev.productsSection || {}), showPrice: c },
+                                productsSection: { ...(prev.productsSection || {}), title: e.target.value },
                               }))
                             }
+                            className="rounded-xl mt-1 text-sm font-medium"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-slate-500 font-semibold">Section Subtitle</Label>
+                          <Input
+                            value={config.productsSection?.subtitle || "Browse verified catalog items and order directly via WhatsApp or visit our physical store."}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                productsSection: { ...(prev.productsSection || {}), subtitle: e.target.value },
+                              }))
+                            }
+                            className="rounded-xl mt-1 text-xs"
                           />
                         </div>
 
-                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                        {/* Top Navbar Link Toggle */}
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                           <div>
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Badges</span>
-                            <span className="text-[10px] text-slate-400 block">In Stock / % OFF / Verified</span>
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
+                            <span className="text-[10px] text-slate-500 block">Show or hide the link in the top navigation bar while keeping the section on the page</span>
                           </div>
                           <Switch
-                            checked={config.productsSection?.showBadge !== false}
-                            onCheckedChange={(c) =>
-                              setConfig((prev: any) => ({
-                                ...prev,
-                                productsSection: { ...(prev.productsSection || {}), showBadge: c },
-                              }))
-                            }
+                            checked={getEffectiveNavItems().find((it: any) => it.id === "products")?.visible !== false}
+                            onCheckedChange={(c) => handleUpdateNavItem("products", { visible: c })}
                           />
                         </div>
 
-                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                          <div>
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Description</span>
-                            <span className="text-[10px] text-slate-400 block">Display short item snippet</span>
-                          </div>
-                          <Switch
-                            checked={config.productsSection?.showDescription !== false}
-                            onCheckedChange={(c) =>
-                              setConfig((prev: any) => ({
-                                ...prev,
-                                productsSection: { ...(prev.productsSection || {}), showDescription: c },
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                          <div>
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Image Display Mode</span>
-                            <span className="text-[10px] text-slate-400 block">
-                              {config.productsSection?.imageFit === "cover" ? "Fill Area (Cover)" : "Fit inside (Contain)"}
+                        {/* PRODUCT CARD DESIGN & ACTION BUTTONS CUSTOMIZATION (FULL WIDTH, CLEAN RESPONSIVE) */}
+                        <div className="p-4 bg-slate-50/80 dark:bg-slate-900/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Sliders className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                Product Card Layout &amp; Action Buttons
+                              </Label>
+                            </div>
+                            <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full w-fit ${
+                              currentTier === "ONE_PAGE"
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                : "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
+                            }`}>
+                              {currentTier === "ONE_PAGE" ? "1-Page Mode (Inquiry/WhatsApp)" : "Multi-Page Mode (E-Commerce/Cart)"}
                             </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setConfig((prev: any) => ({
-                                ...prev,
-                                productsSection: {
-                                  ...(prev.productsSection || {}),
-                                  imageFit: prev.productsSection?.imageFit === "cover" ? "contain" : "cover",
-                                },
-                              }))
-                            }
-                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-xs"
-                          >
-                            {config.productsSection?.imageFit === "cover" ? "Cover" : "Contain"}
-                          </button>
-                        </div>
-                      </div>
 
-                      {/* Action Button Controls (Adaptive based on 1-Page vs Multi-Page) */}
-                      <div className="space-y-3 pt-2">
-                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                          Card Action Buttons &amp; Custom Labels
-                        </Label>
-
-                        {currentTier === "ONE_PAGE" ? (
-                          /* 1-PAGE BUTTON CONFIGURATION */
-                          <div className="space-y-2.5">
-                            {/* WhatsApp Button */}
-                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <MessageCircle className="w-4 h-4 text-emerald-600" />
-                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">WhatsApp Button</span>
-                                </div>
-                                <Switch
-                                  checked={config.productsSection?.showWhatsApp !== false}
-                                  onCheckedChange={(c) =>
-                                    setConfig((prev: any) => ({
-                                      ...prev,
-                                      productsSection: { ...(prev.productsSection || {}), showWhatsApp: c },
-                                    }))
-                                  }
-                                />
-                              </div>
-                              {config.productsSection?.showWhatsApp !== false && (
-                                <div>
-                                  <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
-                                  <Input
-                                    value={config.productsSection?.whatsappButtonText || "WhatsApp"}
-                                    onChange={(e) =>
-                                      setConfig((prev: any) => ({
-                                        ...prev,
-                                        productsSection: { ...(prev.productsSection || {}), whatsappButtonText: e.target.value },
-                                      }))
-                                    }
-                                    placeholder="e.g. Order on WhatsApp"
-                                    className="h-8 text-xs mt-1"
-                                  />
-                                </div>
-                              )}
+                          {/* Tier Notice */}
+                          {currentTier === "ONE_PAGE" ? (
+                            <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                              <strong>1-Page Website:</strong> Your website uses direct inquiry actions. Since 1-Page sites do not have dedicated cart/checkout sub-pages, cards trigger WhatsApp orders or quick inquiries directly.
                             </div>
+                          ) : (
+                            <div className="p-3 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/60 rounded-xl text-[11px] text-blue-800 dark:text-blue-300 leading-relaxed">
+                              <strong>{tierMeta.name}:</strong> Your multi-page site includes dedicated product detail pages, shopping cart, and full checkout with COD &amp; Bank Deposit.
+                            </div>
+                          )}
 
-                            {/* Inquiry Form Button */}
-                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Mail className="w-4 h-4 text-orange-600" />
-                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Instant Inquiry Form Button</span>
-                                </div>
-                                <Switch
-                                  checked={config.productsSection?.showInquiry !== false}
-                                  onCheckedChange={(c) =>
+                          {/* Card Layout Selector */}
+                          <div className="space-y-1.5">
+                            <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Card Layout Style</Label>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              {[
+                                { id: "standard", name: "Standard", desc: "Clean & balanced" },
+                                { id: "modern", name: "Modern", desc: "Soft rounded" },
+                                { id: "compact", name: "Compact", desc: "Space-saving" },
+                                { id: "bordered", name: "Bordered", desc: "Bold outline" },
+                              ].map((l) => (
+                                <button
+                                  key={l.id}
+                                  type="button"
+                                  onClick={() =>
                                     setConfig((prev: any) => ({
                                       ...prev,
-                                      productsSection: { ...(prev.productsSection || {}), showInquiry: c },
+                                      productsSection: { ...(prev.productsSection || {}), cardLayout: l.id },
                                     }))
                                   }
-                                />
-                              </div>
-                              {config.productsSection?.showInquiry !== false && (
-                                <div>
-                                  <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
-                                  <Input
-                                    value={config.productsSection?.inquiryButtonText || "Inquire"}
-                                    onChange={(e) =>
-                                      setConfig((prev: any) => ({
-                                        ...prev,
-                                        productsSection: { ...(prev.productsSection || {}), inquiryButtonText: e.target.value },
-                                      }))
-                                    }
-                                    placeholder="e.g. Quick Inquiry"
-                                    className="h-8 text-xs mt-1"
-                                  />
-                                </div>
-                              )}
+                                  className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between gap-1 w-full min-h-[66px] ${
+                                    (config.productsSection?.cardLayout || "standard") === l.id
+                                      ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-950 dark:text-emerald-200 shadow-xs ring-1 ring-emerald-500/30"
+                                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 text-slate-700 dark:text-slate-300"
+                                  }`}
+                                >
+                                  <div className="font-bold text-xs leading-snug">{l.name}</div>
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">{l.desc}</div>
+                                </button>
+                              ))}
                             </div>
                           </div>
-                        ) : (
-                          /* MULTI-PAGE BUTTON CONFIGURATION */
-                          <div className="space-y-2.5">
-                            {/* Add to Cart */}
-                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <ShoppingCart className="w-4 h-4 text-blue-600" />
-                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Add to Cart Button</span>
-                                </div>
-                                <Switch
-                                  checked={config.productsSection?.showAddToCart !== false}
-                                  onCheckedChange={(c) =>
-                                    setConfig((prev: any) => ({
-                                      ...prev,
-                                      productsSection: { ...(prev.productsSection || {}), showAddToCart: c },
-                                    }))
-                                  }
-                                />
-                              </div>
-                              {config.productsSection?.showAddToCart !== false && (
-                                <div>
-                                  <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
-                                  <Input
-                                    value={config.productsSection?.cartButtonText || "Add to Cart"}
-                                    onChange={(e) =>
-                                      setConfig((prev: any) => ({
-                                        ...prev,
-                                        productsSection: { ...(prev.productsSection || {}), cartButtonText: e.target.value },
-                                      }))
-                                    }
-                                    placeholder="e.g. Add to Cart"
-                                    className="h-8 text-xs mt-1"
-                                  />
-                                </div>
-                              )}
-                            </div>
 
-                            {/* Buy Now */}
-                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Flame className="w-4 h-4 text-rose-600" />
-                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Buy Now Button</span>
-                                </div>
-                                <Switch
-                                  checked={config.productsSection?.showBuyNow !== false}
-                                  onCheckedChange={(c) =>
-                                    setConfig((prev: any) => ({
-                                      ...prev,
-                                      productsSection: { ...(prev.productsSection || {}), showBuyNow: c },
-                                    }))
-                                  }
-                                />
-                              </div>
-                              {config.productsSection?.showBuyNow !== false && (
-                                <div>
-                                  <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
-                                  <Input
-                                    value={config.productsSection?.buyNowButtonText || "Buy Now"}
-                                    onChange={(e) =>
-                                      setConfig((prev: any) => ({
-                                        ...prev,
-                                        productsSection: { ...(prev.productsSection || {}), buyNowButtonText: e.target.value },
-                                      }))
-                                    }
-                                    placeholder="e.g. Instant Buy"
-                                    className="h-8 text-xs mt-1"
-                                  />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* View Details */}
-                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Eye className="w-4 h-4 text-indigo-600" />
-                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">View Details Link/Button</span>
-                                </div>
-                                <Switch
-                                  checked={config.productsSection?.showViewDetails !== false}
-                                  onCheckedChange={(c) =>
-                                    setConfig((prev: any) => ({
-                                      ...prev,
-                                      productsSection: { ...(prev.productsSection || {}), showViewDetails: c },
-                                    }))
-                                  }
-                                />
-                              </div>
-                              {config.productsSection?.showViewDetails !== false && (
-                                <div>
-                                  <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
-                                  <Input
-                                    value={config.productsSection?.detailsButtonText || "View Details"}
-                                    onChange={(e) =>
-                                      setConfig((prev: any) => ({
-                                        ...prev,
-                                        productsSection: { ...(prev.productsSection || {}), detailsButtonText: e.target.value },
-                                      }))
-                                    }
-                                    placeholder="e.g. View Details"
-                                    className="h-8 text-xs mt-1"
-                                  />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Optional Direct WhatsApp in Multi-page */}
-                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                              <div>
-                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Direct WhatsApp Button on Cards</span>
-                                <span className="text-[10px] text-slate-400 block">Allow customers to also message via WhatsApp directly from the product card</span>
+                          {/* Visual Elements Toggles */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                              <div className="min-w-0 pr-1">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Price</span>
+                                <span className="text-[10px] text-slate-500 block">Display price and discounts</span>
                               </div>
                               <Switch
-                                checked={Boolean(config.productsSection?.showMultiPageWhatsApp)}
+                                className="shrink-0"
+                                checked={config.productsSection?.showPrice !== false}
                                 onCheckedChange={(c) =>
                                   setConfig((prev: any) => ({
                                     ...prev,
-                                    productsSection: { ...(prev.productsSection || {}), showMultiPageWhatsApp: c },
+                                    productsSection: { ...(prev.productsSection || {}), showPrice: c },
                                   }))
                                 }
                               />
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
 
-                    </div>
+                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                              <div className="min-w-0 pr-1">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Badges</span>
+                                <span className="text-[10px] text-slate-500 block">In Stock / % OFF / Verified</span>
+                              </div>
+                              <Switch
+                                className="shrink-0"
+                                checked={config.productsSection?.showBadge !== false}
+                                onCheckedChange={(c) =>
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    productsSection: { ...(prev.productsSection || {}), showBadge: c },
+                                  }))
+                                }
+                              />
+                            </div>
+
+                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                              <div className="min-w-0 pr-1">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Description</span>
+                                <span className="text-[10px] text-slate-500 block">Display short item snippet</span>
+                              </div>
+                              <Switch
+                                className="shrink-0"
+                                checked={config.productsSection?.showDescription !== false}
+                                onCheckedChange={(c) =>
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    productsSection: { ...(prev.productsSection || {}), showDescription: c },
+                                  }))
+                                }
+                              />
+                            </div>
+
+                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                              <div className="min-w-0 pr-1">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Image Display Mode</span>
+                                <span className="text-[10px] text-slate-500 block">
+                                  {(config.productsSection?.imageFit || "contain") === "contain" ? "Fit inside (Contain)" : "Fill container (Cover)"}
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  setConfig((prev: any) => ({
+                                    ...prev,
+                                    productsSection: {
+                                      ...(prev.productsSection || {}),
+                                      imageFit: (prev.productsSection?.imageFit || "contain") === "contain" ? "cover" : "contain",
+                                    },
+                                  }))
+                                }
+                                className="h-7 text-xs font-bold shrink-0"
+                              >
+                                {(config.productsSection?.imageFit || "contain") === "contain" ? "Contain" : "Cover"}
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons Section */}
+                          <div className="space-y-2 pt-1">
+                            <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                              Card Action Buttons &amp; Custom Labels
+                            </Label>
+
+                            {currentTier === "ONE_PAGE" ? (
+                              <div className="space-y-2.5">
+                                {/* WhatsApp Button */}
+                                <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">WhatsApp Order Button</span>
+                                    </div>
+                                    <Switch
+                                      className="shrink-0"
+                                      checked={config.productsSection?.showWhatsApp !== false}
+                                      onCheckedChange={(c) =>
+                                        setConfig((prev: any) => ({
+                                          ...prev,
+                                          productsSection: { ...(prev.productsSection || {}), showWhatsApp: c },
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                  {config.productsSection?.showWhatsApp !== false && (
+                                    <div>
+                                      <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
+                                      <Input
+                                        value={config.productsSection?.whatsappButtonText || "WhatsApp"}
+                                        onChange={(e) =>
+                                          setConfig((prev: any) => ({
+                                            ...prev,
+                                            productsSection: { ...(prev.productsSection || {}), whatsappButtonText: e.target.value },
+                                          }))
+                                        }
+                                        placeholder="e.g. Order via WhatsApp"
+                                        className="h-8 text-xs mt-1 w-full"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Inquiry Form Button */}
+                                <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
+                                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Instant Inquiry / Quote Button</span>
+                                    </div>
+                                    <Switch
+                                      className="shrink-0"
+                                      checked={config.productsSection?.showInquiry !== false}
+                                      onCheckedChange={(c) =>
+                                        setConfig((prev: any) => ({
+                                          ...prev,
+                                          productsSection: { ...(prev.productsSection || {}), showInquiry: c },
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                  {config.productsSection?.showInquiry !== false && (
+                                    <div>
+                                      <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
+                                      <Input
+                                        value={config.productsSection?.inquiryButtonText || "Inquire"}
+                                        onChange={(e) =>
+                                          setConfig((prev: any) => ({
+                                            ...prev,
+                                            productsSection: { ...(prev.productsSection || {}), inquiryButtonText: e.target.value },
+                                          }))
+                                        }
+                                        placeholder="e.g. Send Inquiry"
+                                        className="h-8 text-xs mt-1 w-full"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-2.5">
+                                {/* Add to Cart Button */}
+                                <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <ShoppingCart className="w-4 h-4 text-emerald-600 shrink-0" />
+                                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Add to Cart Button</span>
+                                    </div>
+                                    <Switch
+                                      className="shrink-0"
+                                      checked={config.productsSection?.showAddToCart !== false}
+                                      onCheckedChange={(c) =>
+                                        setConfig((prev: any) => ({
+                                          ...prev,
+                                          productsSection: { ...(prev.productsSection || {}), showAddToCart: c },
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                  {config.productsSection?.showAddToCart !== false && (
+                                    <div>
+                                      <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
+                                      <Input
+                                        value={config.productsSection?.cartButtonText || "Add to Cart"}
+                                        onChange={(e) =>
+                                          setConfig((prev: any) => ({
+                                            ...prev,
+                                            productsSection: { ...(prev.productsSection || {}), cartButtonText: e.target.value },
+                                          }))
+                                        }
+                                        placeholder="e.g. Add to Cart"
+                                        className="h-8 text-xs mt-1 w-full"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Buy Now Button */}
+                                <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Flame className="w-4 h-4 text-orange-500 shrink-0" />
+                                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Buy Now Button</span>
+                                    </div>
+                                    <Switch
+                                      className="shrink-0"
+                                      checked={config.productsSection?.showBuyNow !== false}
+                                      onCheckedChange={(c) =>
+                                        setConfig((prev: any) => ({
+                                          ...prev,
+                                          productsSection: { ...(prev.productsSection || {}), showBuyNow: c },
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                  {config.productsSection?.showBuyNow !== false && (
+                                    <div>
+                                      <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
+                                      <Input
+                                        value={config.productsSection?.buyNowButtonText || "Buy Now"}
+                                        onChange={(e) =>
+                                          setConfig((prev: any) => ({
+                                            ...prev,
+                                            productsSection: { ...(prev.productsSection || {}), buyNowButtonText: e.target.value },
+                                          }))
+                                        }
+                                        placeholder="e.g. Buy Now"
+                                        className="h-8 text-xs mt-1 w-full"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* View Details Link */}
+                                <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Eye className="w-4 h-4 text-blue-600 shrink-0" />
+                                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">View Details Button</span>
+                                    </div>
+                                    <Switch
+                                      className="shrink-0"
+                                      checked={config.productsSection?.showViewDetails !== false}
+                                      onCheckedChange={(c) =>
+                                        setConfig((prev: any) => ({
+                                          ...prev,
+                                          productsSection: { ...(prev.productsSection || {}), showViewDetails: c },
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                  {config.productsSection?.showViewDetails !== false && (
+                                    <div>
+                                      <Label className="text-[10px] font-semibold text-slate-500">Button Label / Text</Label>
+                                      <Input
+                                        value={config.productsSection?.detailsButtonText || "View Details"}
+                                        onChange={(e) =>
+                                          setConfig((prev: any) => ({
+                                            ...prev,
+                                            productsSection: { ...(prev.productsSection || {}), detailsButtonText: e.target.value },
+                                          }))
+                                        }
+                                        placeholder="e.g. View Details"
+                                        className="h-8 text-xs mt-1 w-full"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Optional Direct WhatsApp in Multi-page */}
+                                <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                                  <div className="min-w-0 pr-1">
+                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Direct WhatsApp Button on Cards</span>
+                                    <span className="text-[10px] text-slate-400 block">Allow customers to also message via WhatsApp directly from the product card</span>
+                                  </div>
+                                  <Switch
+                                    className="shrink-0"
+                                    checked={Boolean(config.productsSection?.showMultiPageWhatsApp)}
+                                    onCheckedChange={(c) =>
+                                      setConfig((prev: any) => ({
+                                        ...prev,
+                                        productsSection: { ...(prev.productsSection || {}), showMultiPageWhatsApp: c },
+                                      }))
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -3402,7 +3447,10 @@ export default function WebsiteBuilderPage() {
                     : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
                 }`}
               >
-                <div className="flex items-center justify-between pb-1">
+                <div
+                  className="flex items-center justify-between pb-1 cursor-pointer select-none"
+                  onClick={() => toggleSectionOpen("services")}
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
@@ -3423,25 +3471,35 @@ export default function WebsiteBuilderPage() {
                       <p className="text-[11px] text-slate-500 font-medium">Custom services, tailoring, repairs &amp; packages</p>
                     </div>
                   </div>
-                  <Switch
-                    checked={config.servicesSection?.enabled !== false}
-                    onCheckedChange={(c) =>
-                      setConfig((prev: any) => ({
-                        ...prev,
-                        servicesSection: { ...prev.servicesSection, enabled: c },
-                      }))
-                    }
-                  />
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={config.servicesSection?.enabled !== false}
+                      onCheckedChange={(c) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          servicesSection: { ...prev.servicesSection, enabled: c },
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionOpen("services")}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                      title={openSections["services"] ? "Collapse section" : "Expand section details"}
+                    >
+                      {openSections["services"] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
-                {config.servicesSection?.enabled === false && (
+                {openSections["services"] && config.servicesSection?.enabled === false && (
                   <p className="text-[11px] font-bold text-slate-400 italic pt-1">
                     This section is currently disabled and hidden from your website.
                   </p>
                 )}
 
-                {config.servicesSection?.enabled !== false && (
-                  <div className="space-y-3 pt-2">
+                {openSections["services"] && config.servicesSection?.enabled !== false && (
+                  <div className="space-y-4 pt-1">
                     <div>
                       <Label className="text-xs text-slate-500 font-semibold">Section Title</Label>
                       <Input
@@ -3456,31 +3514,36 @@ export default function WebsiteBuilderPage() {
                       />
                     </div>
 
+                    {/* Services Items List */}
                     <div className="pt-2 border-t space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label className="text-xs font-bold text-slate-700">Custom Service Cards</Label>
+                        <Label className="text-xs font-bold text-slate-700 dark:text-slate-200">Custom Service Cards</Label>
                         <Button
                           type="button"
-                          size="sm"
                           variant="outline"
+                          size="sm"
                           onClick={() => {
-                            const currentItems = config.servicesSection?.items || [];
+                            const items = [...(config.servicesSection?.items || [])];
+                            items.push({
+                              id: "srv-" + Date.now(),
+                              name: "New Service",
+                              price: "Rs. 1,500",
+                              description: "Service description and details...",
+                            });
                             setConfig((prev: any) => ({
                               ...prev,
-                              servicesSection: {
-                                ...(prev.servicesSection || {}),
-                                items: [...currentItems, { name: "New Service", price: "Rs. 2,500", description: "", imageUrl: "" }],
-                              },
+                              servicesSection: { ...(prev.servicesSection || {}), items },
                             }));
                           }}
-                          className="h-7 text-[11px] font-bold rounded-lg px-2"
+                          className="h-7 text-xs font-bold"
                         >
-                          + Add Service
+                          <Plus className="w-3.5 h-3.5 mr-1" />
+                          Add Service
                         </Button>
                       </div>
 
                       {(config.servicesSection?.items || []).map((srv: any, idx: number) => (
-                        <div key={idx} className="p-3 bg-white dark:bg-slate-800 rounded-xl border space-y-2">
+                        <div key={idx} className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold">Service #{idx + 1}</span>
                             <button
@@ -3519,20 +3582,22 @@ export default function WebsiteBuilderPage() {
                               className="text-xs h-8"
                             />
                           </div>
-                          <Input
-                            placeholder="Short description"
+                          <Textarea
+                            placeholder="Service Description"
                             value={srv.description || ""}
                             onChange={(e) => {
                               const items = [...(config.servicesSection?.items || [])];
                               items[idx] = { ...items[idx], description: e.target.value };
                               setConfig((prev: any) => ({ ...prev, servicesSection: { ...prev.servicesSection, items } }));
                             }}
-                            className="text-xs h-8"
+                            rows={2}
+                            className="text-xs"
                           />
                         </div>
                       ))}
                     </div>
 
+                    {/* Top Navbar Link Toggle */}
                     <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                       <div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Link in Top Navbar</span>
@@ -3542,17 +3607,18 @@ export default function WebsiteBuilderPage() {
                         checked={getEffectiveNavItems().find((it: any) => it.id === "services")?.visible !== false}
                         onCheckedChange={(c) => handleUpdateNavItem("services", { visible: c })}
                       />
+                    </div>
 
-                    {/* SERVICES CARD DESIGN & ACTION BUTTONS CUSTOMIZATION */}
-                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-4">
-                      <div className="flex items-center justify-between">
+                    {/* SERVICES CARD DESIGN & ACTION BUTTONS CUSTOMIZATION (FULL WIDTH, CLEAN RESPONSIVE) */}
+                    <div className="p-4 bg-slate-50/80 dark:bg-slate-900/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <Sliders className="w-4 h-4 text-amber-600" />
+                          <Sliders className="w-4 h-4 text-amber-600 shrink-0" />
                           <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
                             Service Card Layout &amp; Action Buttons
                           </Label>
                         </div>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full w-fit ${
                           currentTier === "ONE_PAGE"
                             ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
                             : "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
@@ -3570,40 +3636,38 @@ export default function WebsiteBuilderPage() {
                             { id: "modern", name: "Modern", desc: "Soft rounded" },
                             { id: "compact", name: "Compact", desc: "Space-saving" },
                             { id: "bordered", name: "Bordered", desc: "Bold outline" },
-                          ].map((layout) => {
-                            const isSelected = (config.servicesSection?.cardLayout || "standard") === layout.id;
-                            return (
-                              <button
-                                key={layout.id}
-                                type="button"
-                                onClick={() =>
-                                  setConfig((prev: any) => ({
-                                    ...prev,
-                                    servicesSection: { ...(prev.servicesSection || {}), cardLayout: layout.id },
-                                  }))
-                                }
-                                className={`p-2.5 rounded-xl border text-left transition-all ${
-                                  isSelected
-                                    ? "border-amber-500 bg-amber-50/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-100 ring-2 ring-amber-500/30"
-                                    : "border-slate-200 hover:border-slate-300 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                                }`}
-                              >
-                                <span className="block font-bold text-xs">{layout.name}</span>
-                                <span className="block text-[10px] text-slate-400">{layout.desc}</span>
-                              </button>
-                            );
-                          })}
+                          ].map((l) => (
+                            <button
+                              key={l.id}
+                              type="button"
+                              onClick={() =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  servicesSection: { ...(prev.servicesSection || {}), cardLayout: l.id },
+                                }))
+                              }
+                              className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between gap-1 w-full min-h-[66px] ${
+                                (config.servicesSection?.cardLayout || "standard") === l.id
+                                  ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-950 dark:text-amber-200 shadow-xs ring-1 ring-amber-500/30"
+                                  : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 text-slate-700 dark:text-slate-300"
+                              }`}
+                            >
+                              <div className="font-bold text-xs leading-snug">{l.name}</div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">{l.desc}</div>
+                            </button>
+                          ))}
                         </div>
                       </div>
 
-                      {/* Visual Content Toggles */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                          <div>
+                      {/* Visual Elements Toggles */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                          <div className="min-w-0 pr-1">
                             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Price</span>
-                            <span className="text-[10px] text-slate-400 block">Display package rate</span>
+                            <span className="text-[10px] text-slate-500 block">Display package rate</span>
                           </div>
                           <Switch
+                            className="shrink-0"
                             checked={config.servicesSection?.showPrice !== false}
                             onCheckedChange={(c) =>
                               setConfig((prev: any) => ({
@@ -3614,12 +3678,13 @@ export default function WebsiteBuilderPage() {
                           />
                         </div>
 
-                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                          <div>
+                        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                          <div className="min-w-0 pr-1">
                             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Description</span>
-                            <span className="text-[10px] text-slate-400 block">Display details snippet</span>
+                            <span className="text-[10px] text-slate-500 block">Display details snippet</span>
                           </div>
                           <Switch
+                            className="shrink-0"
                             checked={config.servicesSection?.showDescription !== false}
                             onCheckedChange={(c) =>
                               setConfig((prev: any) => ({
@@ -3630,34 +3695,36 @@ export default function WebsiteBuilderPage() {
                           />
                         </div>
 
-                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                          <div>
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Image Mode</span>
-                            <span className="text-[10px] text-slate-400 block">
-                              {config.servicesSection?.imageFit === "cover" ? "Fill Area (Cover)" : "Fit inside (Contain)"}
+                        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 sm:col-span-2">
+                          <div className="min-w-0 pr-1">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Image Display Mode</span>
+                            <span className="text-[10px] text-slate-500 block">
+                              {(config.servicesSection?.imageFit || "contain") === "contain" ? "Fit inside (Contain)" : "Fill container (Cover)"}
                             </span>
                           </div>
-                          <button
+                          <Button
                             type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() =>
                               setConfig((prev: any) => ({
                                 ...prev,
                                 servicesSection: {
                                   ...(prev.servicesSection || {}),
-                                  imageFit: prev.servicesSection?.imageFit === "cover" ? "contain" : "cover",
+                                  imageFit: (prev.servicesSection?.imageFit || "contain") === "contain" ? "cover" : "contain",
                                 },
                               }))
                             }
-                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-xs"
+                            className="h-7 text-xs font-bold shrink-0"
                           >
-                            {config.servicesSection?.imageFit === "cover" ? "Cover" : "Contain"}
-                          </button>
+                            {(config.servicesSection?.imageFit || "contain") === "contain" ? "Contain" : "Cover"}
+                          </Button>
                         </div>
                       </div>
 
-                      {/* Action Button Controls */}
-                      <div className="space-y-3 pt-2">
-                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                      {/* Action Buttons Section */}
+                      <div className="space-y-2 pt-1">
+                        <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
                           Service Card Action Buttons &amp; Custom Labels
                         </Label>
 
@@ -3665,12 +3732,13 @@ export default function WebsiteBuilderPage() {
                           <div className="space-y-2.5">
                             {/* WhatsApp Button */}
                             <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <MessageCircle className="w-4 h-4 text-emerald-600" />
-                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">WhatsApp Booking Button</span>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">WhatsApp Booking Button</span>
                                 </div>
                                 <Switch
+                                  className="shrink-0"
                                   checked={config.servicesSection?.showWhatsApp !== false}
                                   onCheckedChange={(c) =>
                                     setConfig((prev: any) => ({
@@ -3692,7 +3760,7 @@ export default function WebsiteBuilderPage() {
                                       }))
                                     }
                                     placeholder="e.g. Book via WhatsApp"
-                                    className="h-8 text-xs mt-1"
+                                    className="h-8 text-xs mt-1 w-full"
                                   />
                                 </div>
                               )}
@@ -3700,12 +3768,13 @@ export default function WebsiteBuilderPage() {
 
                             {/* Inquiry Form Button */}
                             <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Mail className="w-4 h-4 text-amber-600" />
-                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Inquiry / Booking Form Button</span>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <Mail className="w-4 h-4 text-amber-600 shrink-0" />
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Inquiry / Booking Form Button</span>
                                 </div>
                                 <Switch
+                                  className="shrink-0"
                                   checked={config.servicesSection?.showInquiry !== false}
                                   onCheckedChange={(c) =>
                                     setConfig((prev: any) => ({
@@ -3727,7 +3796,7 @@ export default function WebsiteBuilderPage() {
                                       }))
                                     }
                                     placeholder="e.g. Inquire / Book"
-                                    className="h-8 text-xs mt-1"
+                                    className="h-8 text-xs mt-1 w-full"
                                   />
                                 </div>
                               )}
@@ -3737,12 +3806,13 @@ export default function WebsiteBuilderPage() {
                           <div className="space-y-2.5">
                             {/* Book Now Button */}
                             <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Briefcase className="w-4 h-4 text-amber-600" />
-                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Book / Order Button</span>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <Briefcase className="w-4 h-4 text-amber-600 shrink-0" />
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Book / Order Button</span>
                                 </div>
                                 <Switch
+                                  className="shrink-0"
                                   checked={config.servicesSection?.showBookNow !== false}
                                   onCheckedChange={(c) =>
                                     setConfig((prev: any) => ({
@@ -3764,7 +3834,7 @@ export default function WebsiteBuilderPage() {
                                       }))
                                     }
                                     placeholder="e.g. Book Service"
-                                    className="h-8 text-xs mt-1"
+                                    className="h-8 text-xs mt-1 w-full"
                                   />
                                 </div>
                               )}
@@ -3772,12 +3842,13 @@ export default function WebsiteBuilderPage() {
 
                             {/* View Details Link */}
                             <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Eye className="w-4 h-4 text-indigo-600" />
-                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">View Details Button</span>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <Eye className="w-4 h-4 text-indigo-600 shrink-0" />
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">View Details Button</span>
                                 </div>
                                 <Switch
+                                  className="shrink-0"
                                   checked={config.servicesSection?.showViewDetails !== false}
                                   onCheckedChange={(c) =>
                                     setConfig((prev: any) => ({
@@ -3799,7 +3870,7 @@ export default function WebsiteBuilderPage() {
                                       }))
                                     }
                                     placeholder="e.g. View Details"
-                                    className="h-8 text-xs mt-1"
+                                    className="h-8 text-xs mt-1 w-full"
                                   />
                                 </div>
                               )}
@@ -3807,8 +3878,6 @@ export default function WebsiteBuilderPage() {
                           </div>
                         )}
                       </div>
-                    </div>
-
                     </div>
                   </div>
                 )}
@@ -3822,7 +3891,10 @@ export default function WebsiteBuilderPage() {
                     : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
                 }`}
               >
-                <div className="flex items-center justify-between pb-1">
+                <div
+                  className="flex items-center justify-between pb-1 cursor-pointer select-none"
+                  onClick={() => toggleSectionOpen("about")}
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
@@ -3843,24 +3915,34 @@ export default function WebsiteBuilderPage() {
                       <p className="text-[11px] text-slate-500 font-medium">Brand story, mission, photos and why customers choose you</p>
                     </div>
                   </div>
-                  <Switch
-                    checked={config.aboutSection?.enabled !== false}
-                    onCheckedChange={(c) =>
-                      setConfig((prev: any) => ({
-                        ...prev,
-                        aboutSection: { ...(prev.aboutSection || {}), enabled: c },
-                      }))
-                    }
-                  />
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={config.aboutSection?.enabled !== false}
+                      onCheckedChange={(c) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          aboutSection: { ...(prev.aboutSection || {}), enabled: c },
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionOpen("about")}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                      title={openSections["about"] ? "Collapse section" : "Expand section details"}
+                    >
+                      {openSections["about"] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
-                {config.aboutSection?.enabled === false && (
+                {openSections["about"] && config.aboutSection?.enabled === false && (
                   <p className="text-[11px] font-bold text-slate-400 italic pt-1">
                     This section is currently disabled and hidden from your website.
                   </p>
                 )}
 
-                {config.aboutSection?.enabled !== false && (
+                {openSections["about"] && config.aboutSection?.enabled !== false && (
                   <div className="space-y-4 pt-2">
                     {/* Badge */}
                     <div>
@@ -4089,7 +4171,10 @@ export default function WebsiteBuilderPage() {
                     : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
                 }`}
               >
-                <div className="flex items-center justify-between pb-1">
+                <div
+                  className="flex items-center justify-between pb-1 cursor-pointer select-none"
+                  onClick={() => toggleSectionOpen("gallery")}
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
@@ -4110,24 +4195,34 @@ export default function WebsiteBuilderPage() {
                       <p className="text-[11px] text-slate-500 font-medium">Showcase store photos, work samples and product collections</p>
                     </div>
                   </div>
-                  <Switch
-                    checked={Boolean(config.gallerySection?.enabled)}
-                    onCheckedChange={(c) =>
-                      setConfig((prev: any) => ({
-                        ...prev,
-                        gallerySection: { ...(prev.gallerySection || {}), enabled: c },
-                      }))
-                    }
-                  />
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={Boolean(config.gallerySection?.enabled)}
+                      onCheckedChange={(c) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          gallerySection: { ...(prev.gallerySection || {}), enabled: c },
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionOpen("gallery")}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                      title={openSections["gallery"] ? "Collapse section" : "Expand section details"}
+                    >
+                      {openSections["gallery"] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
-                {!Boolean(config.gallerySection?.enabled) && (
+                {openSections["gallery"] && !Boolean(config.gallerySection?.enabled) && (
                   <p className="text-[11px] font-bold text-slate-400 italic pt-1">
                     This section is currently disabled and hidden from your website.
                   </p>
                 )}
 
-                {Boolean(config.gallerySection?.enabled) && (
+                {openSections["gallery"] && Boolean(config.gallerySection?.enabled) && (
                   <div className="space-y-4 pt-2">
                     <div>
                       <Label className="text-xs text-slate-500 font-semibold">Gallery Title</Label>
@@ -4210,7 +4305,10 @@ export default function WebsiteBuilderPage() {
                     : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
                 }`}
               >
-                <div className="flex items-center justify-between pb-1">
+                <div
+                  className="flex items-center justify-between pb-1 cursor-pointer select-none"
+                  onClick={() => toggleSectionOpen("reviews")}
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
@@ -4231,24 +4329,34 @@ export default function WebsiteBuilderPage() {
                       <p className="text-[11px] text-slate-500 font-medium">Customer ratings, feedback &amp; trust testimonials</p>
                     </div>
                   </div>
-                  <Switch
-                    checked={Boolean(config.reviewsSection?.enabled)}
-                    onCheckedChange={(c) =>
-                      setConfig((prev: any) => ({
-                        ...prev,
-                        reviewsSection: { ...(prev.reviewsSection || {}), enabled: c },
-                      }))
-                    }
-                  />
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={Boolean(config.reviewsSection?.enabled)}
+                      onCheckedChange={(c) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          reviewsSection: { ...(prev.reviewsSection || {}), enabled: c },
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionOpen("reviews")}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                      title={openSections["reviews"] ? "Collapse section" : "Expand section details"}
+                    >
+                      {openSections["reviews"] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
-                {!Boolean(config.reviewsSection?.enabled) && (
+                {openSections["reviews"] && !Boolean(config.reviewsSection?.enabled) && (
                   <p className="text-[11px] font-bold text-slate-400 italic pt-1">
                     This section is currently disabled and hidden from your website.
                   </p>
                 )}
 
-                {Boolean(config.reviewsSection?.enabled) && (
+                {openSections["reviews"] && Boolean(config.reviewsSection?.enabled) && (
                   <div className="space-y-4 pt-2">
                     <div>
                       <Label className="text-xs text-slate-500 font-semibold">Section Title</Label>
@@ -4363,7 +4471,10 @@ export default function WebsiteBuilderPage() {
                     : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
                 }`}
               >
-                <div className="flex items-center justify-between pb-1">
+                <div
+                  className="flex items-center justify-between pb-1 cursor-pointer select-none"
+                  onClick={() => toggleSectionOpen("contact")}
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
@@ -4384,19 +4495,30 @@ export default function WebsiteBuilderPage() {
                       <p className="text-[11px] text-slate-500 font-medium">Physical address, phone, email, Google Maps &amp; opening hours</p>
                     </div>
                   </div>
-                  <Switch
-                    checked={config.contactSection?.enabled !== false}
-                    onCheckedChange={(c) => handleUpdateContactSection({ enabled: c })}
-                  />
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={config.contactSection?.enabled !== false}
+                      onCheckedChange={(c) => handleUpdateContactSection({ enabled: c })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionOpen("contact")}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                      title={openSections["contact"] ? "Collapse section" : "Expand section details"}
+                    >
+                      {openSections["contact"] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
-                {config.contactSection?.enabled === false && (
+                {openSections["contact"] && config.contactSection?.enabled === false && (
                   <p className="text-[11px] font-bold text-slate-400 italic pt-1">
                     This section is currently disabled and hidden from your website.
                   </p>
                 )}
 
-                <div className="space-y-3">
+                {openSections["contact"] && config.contactSection?.enabled !== false && (
+                  <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs text-slate-500 font-semibold">Section Heading</Label>
@@ -4619,6 +4741,7 @@ export default function WebsiteBuilderPage() {
                     />
                   </div>
                 </div>
+                )}
               </div>
 
               {/* RICH CUSTOMIZABLE FOOTER */}
@@ -4629,7 +4752,10 @@ export default function WebsiteBuilderPage() {
                     : "border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/50 opacity-75"
                 }`}
               >
-                <div className="flex items-center justify-between pb-1">
+                <div
+                  className="flex items-center justify-between pb-1 cursor-pointer select-none"
+                  onClick={() => toggleSectionOpen("footer")}
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
@@ -4650,24 +4776,35 @@ export default function WebsiteBuilderPage() {
                       <p className="text-[11px] text-slate-500 font-medium">Store bio, navigation links, copyright notice &amp; payment badges</p>
                     </div>
                   </div>
-                  <Switch
-                    checked={config.footerSection?.enabled !== false}
-                    onCheckedChange={(c) =>
-                      setConfig((prev: any) => ({
-                        ...prev,
-                        footerSection: { ...(prev.footerSection || {}), enabled: c },
-                      }))
-                    }
-                  />
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={config.footerSection?.enabled !== false}
+                      onCheckedChange={(c) =>
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          footerSection: { ...(prev.footerSection || {}), enabled: c },
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionOpen("footer")}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                      title={openSections["footer"] ? "Collapse section" : "Expand section details"}
+                    >
+                      {openSections["footer"] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
-                {config.footerSection?.enabled === false && (
+                {openSections["footer"] && config.footerSection?.enabled === false && (
                   <p className="text-[11px] font-bold text-slate-400 italic pt-1">
                     This section is currently disabled and hidden from your website.
                   </p>
                 )}
 
-                <div className="space-y-4">
+                {openSections["footer"] && config.footerSection?.enabled !== false && (
+                  <div className="space-y-4">
                   <div>
                     <Label className="text-xs text-slate-500 font-semibold">Store Bio / Description (Footer Column 1)</Label>
                     <Textarea
@@ -4925,6 +5062,7 @@ export default function WebsiteBuilderPage() {
                     </div>
                   </div>
                 </div>
+                )}
               </div>
             </TabsContent>
 

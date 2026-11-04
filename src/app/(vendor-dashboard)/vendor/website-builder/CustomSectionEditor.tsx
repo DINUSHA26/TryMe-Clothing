@@ -64,7 +64,7 @@ export default function CustomSectionEditor({
   canMoveUp = false,
   canMoveDown = false,
 }: Props) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
 
   const handleUpload = async (file: File, callback: (url: string) => void) => {
@@ -340,6 +340,16 @@ export default function CustomSectionEditor({
             onCheckedChange={(val) => onUpdate({ ...section, enabled: val })}
           />
 
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsOpen(!isOpen)}
+            title={isOpen ? "Collapse section" : "Expand section details"}
+            className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+          >
+            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </Button>
           <Button
             type="button"
             variant="ghost"
