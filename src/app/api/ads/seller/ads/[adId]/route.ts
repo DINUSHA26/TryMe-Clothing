@@ -157,6 +157,76 @@ export async function PUT(
  * DELETE /api/ads/seller/ads/[adId]
  * Delete a classified ad posted by the authenticated seller
  */
+/**
+ * PATCH /api/ads/seller/ads/[adId]
+ * Partially update classified ad (e.g. toggle showOnWebsite / showOnMarketplace)
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ adId: string }> }
+) {
+  try {
+    const user = requireAdsSeller(request);
+    const { adId } = await params;
+    const body = await request.json();
+
+    const seller = await prisma.adsSeller.findUnique({
+      where: { userId: user.userId },
+    });
+
+    if (!seller) {
+      return NextResponse.json(
+        { success: false, error: "Seller profile not found" },
+        { status: 404 }
+      );
+    }
+
+    const existingAd = await prisma.classifiedAd.findUnique({
+      where: { id: adId },
+    });
+
+    if (!existingAd) {
+      return NextResponse.json(
+        { success: false, error: "Ad not found" },
+        { status: 404 }
+      );
+    }
+
+    if (existingAd.sellerId !== seller.id) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: You do not own this ad" },
+        { status: 403 }
+      );
+    }
+
+    const updateData: any = {};
+    if (body.showOnWebsite !== undefined) updateData.showOnWebsite = Boolean(body.showOnWebsite);
+    if (body.showOnMarketplace !== undefined) updateData.showOnMarketplace = Boolean(body.showOnMarketplace);
+    if (body.status !== undefined && ["ACTIVE", "PAUSED"].includes(body.status) && existingAd.status !== "PENDING" && existingAd.status !== "REJECTED") {
+      updateData.status = body.status;
+    }
+
+    const updatedAd = await prisma.classifiedAd.update({
+      where: { id: adId },
+      data: updateData,
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: updatedAd,
+      message: "Ad channel visibility updated successfully",
+    });
+  } catch (error) {
+    console.error("Error patching seller ad:", error);
+    const authError = handleAuthError(error);
+    if (authError) return authError;
+    return NextResponse.json(
+      { success: false, error: "An error occurred while updating the ad" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ adId: string }> }

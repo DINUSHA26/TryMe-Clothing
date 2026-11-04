@@ -121,9 +121,15 @@ export default function MyAdsPage() {
         body: JSON.stringify({ [field]: nextVal }),
       });
 
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || "Failed to update channel");
+      let result: any = null;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(`Failed to update channel (Status ${response.status})`);
+      }
+
+      if (!response.ok || !result.success) {
+        throw new Error(result?.error || "Failed to update channel");
       }
 
       toast({
