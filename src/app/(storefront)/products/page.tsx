@@ -49,7 +49,7 @@ function ProductsPageContent() {
   const [viewAs, setViewAs] = useState<number>(4);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 12,
+    limit: 20,
     total: 0,
     totalPages: 0,
   });
@@ -144,7 +144,7 @@ function ProductsPageContent() {
       try {
         const params = new URLSearchParams({
           page: page.toString(),
-          limit: "12",
+          limit: "20",
           ...(search && { search }),
           ...(categoryId && { categoryId }),
           ...(!categoryId && categorySlug && { category: categorySlug }),
@@ -408,7 +408,7 @@ function ProductsPageContent() {
           {/* Products Grid */}
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 12 }).map((_, i) => (
+              {Array.from({ length: 20 }).map((_, i) => (
                 <div key={i} className="space-y-3">
                   <Skeleton className="aspect-[3/4] w-full bg-gray-100" />
                   <Skeleton className="h-4 w-3/4" />
@@ -449,7 +449,7 @@ function ProductsPageSkeleton() {
         <div className="flex-1">
           <Skeleton className="h-10 w-full mb-6" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: 20 }).map((_, i) => (
               <div key={i} className="space-y-3">
                 <Skeleton className="aspect-[3/4] w-full" />
                 <Skeleton className="h-4 w-3/4" />
