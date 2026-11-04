@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Download, Share2, PlusSquare, Smartphone, Check, Sparkles, X } from "lucide-react";
+import { Download, Share2, PlusSquare, Smartphone, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function PwaInstallCard() {
@@ -58,10 +58,7 @@ export function PwaInstallCard() {
         setIsInstalled(true);
       }
       setDeferredPrompt(null);
-    } else if (isIOS) {
-      setShowIosGuide(true);
     } else {
-      // Fallback for browsers that don't emit beforeinstallprompt
       setShowIosGuide(true);
     }
   };
@@ -74,31 +71,28 @@ export function PwaInstallCard() {
         {/* Left icon & text */}
         <div className="flex items-center gap-4 text-center md:text-left">
           <div className="relative flex-shrink-0">
-            <div className="h-16 w-16 overflow-hidden rounded-2xl shadow-md border border-orange-300 dark:border-orange-600 bg-white p-1">
+            <div className="h-16 w-16 overflow-hidden rounded-2xl shadow-md border border-orange-200 dark:border-orange-600/40 bg-orange-600">
               <Image
-                src="/icons/icon-192x192.png"
+                src="/icons/apple-touch-icon.png"
                 alt="TryMe App Icon"
                 width={64}
                 height={64}
-                className="h-full w-full object-contain rounded-xl"
+                className="h-full w-full object-cover"
               />
             </div>
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-600 text-white text-[10px] font-bold shadow">
-              <Sparkles className="h-3 w-3" />
-            </span>
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center justify-center md:justify-start gap-2">
               <h3 className="font-bold text-base md:text-lg text-neutral-900 dark:text-neutral-100">
-                TryMe App එක Install කරගන්න
+                Install TryMe App
               </h3>
               <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-semibold text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
-                PWA Web App
+                Official App
               </span>
             </div>
             <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-400 max-w-xl">
-              Web browser එකකින් නැතුව Phone එකේ Home Screen එකෙන්ම App එකක් ලෙස භාවිතා කරන්න. Offline සහාය, අකුණු වේගය සහ ක්ෂණික Live Updates!
+              Shop faster and smoother directly from your home screen. Enjoy instant loading, offline access, and real-time updates.
             </p>
           </div>
         </div>
@@ -116,7 +110,7 @@ export function PwaInstallCard() {
               className="bg-orange-600 hover:bg-orange-700 text-white font-semibold shadow-md shadow-orange-500/25 px-5 py-2.5 rounded-xl h-auto flex items-center gap-2 group transition-all"
             >
               <Download className="h-4 w-4 transition-transform group-hover:translate-y-0.5" />
-              <span>{isIOS ? "How to Install on iPhone" : "Install App (නොමිලේ)"}</span>
+              <span>{isIOS ? "Install on iPhone" : "Install App"}</span>
             </Button>
           )}
         </div>
@@ -140,9 +134,9 @@ export function PwaInstallCard() {
               </div>
               <div>
                 <h4 className="font-bold text-neutral-900 dark:text-white">
-                  Phone එකට App එක Install කරගන්නේ කෙසේද?
+                  How to Install TryMe App
                 </h4>
-                <p className="text-xs text-neutral-500">පහසු පියවර 2 කින් Phone එකට දමාගන්න</p>
+                <p className="text-xs text-neutral-500">Quick steps to add TryMe to your home screen</p>
               </div>
             </div>
 
@@ -154,8 +148,8 @@ export function PwaInstallCard() {
                       <Share2 className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-neutral-900 dark:text-white">1. Share Icon එක ඔබන්න</p>
-                      <p className="text-xs text-neutral-500">Safari browser එකේ පහළ ඇති Share icon එක click කරන්න.</p>
+                      <p className="font-semibold text-neutral-900 dark:text-white">1. Tap the Share Button</p>
+                      <p className="text-xs text-neutral-500">Tap the Share icon at the bottom of your Safari browser.</p>
                     </div>
                   </div>
 
@@ -164,18 +158,18 @@ export function PwaInstallCard() {
                       <PlusSquare className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-neutral-900 dark:text-white">2. &quot;Add to Home Screen&quot; තෝරන්න</p>
-                      <p className="text-xs text-neutral-500">පහළට scroll කර &apos;Add to Home Screen&apos; තෝරා ඉහළින් &apos;Add&apos; ඔබන්න.</p>
+                      <p className="font-semibold text-neutral-900 dark:text-white">2. Select &quot;Add to Home Screen&quot;</p>
+                      <p className="text-xs text-neutral-500">Scroll down and tap &quot;Add to Home Screen&quot;, then tap &quot;Add&quot; in the top right.</p>
                     </div>
                   </div>
                 </>
               ) : (
                 <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700 space-y-2">
                   <p className="font-medium text-neutral-900 dark:text-white">
-                    Chrome / Edge Browser එකෙන්:
+                    On Chrome, Edge, or Android:
                   </p>
                   <p className="text-xs text-neutral-500">
-                    ඉහළ දකුණු කෙළවරේ තිත් 3 (Menu) ඔබා <strong>&quot;Install TryMe&quot;</strong> හෝ <strong>&quot;Add to Home Screen&quot;</strong> click කරන්න.
+                    Tap the browser menu (three dots) in the top-right corner and tap <strong>&quot;Install App&quot;</strong> or <strong>&quot;Add to Home Screen&quot;</strong>.
                   </p>
                 </div>
               )}
@@ -185,7 +179,7 @@ export function PwaInstallCard() {
               onClick={() => setShowIosGuide(false)}
               className="w-full mt-6 bg-orange-600 hover:bg-orange-700 text-white rounded-xl"
             >
-              තේරුණා (Got it)
+              Got it
             </Button>
           </div>
         </div>
@@ -193,4 +187,3 @@ export function PwaInstallCard() {
     </div>
   );
 }
-
