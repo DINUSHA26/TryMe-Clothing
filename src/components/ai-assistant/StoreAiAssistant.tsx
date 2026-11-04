@@ -188,7 +188,7 @@ export default function StoreAiAssistant({
     <>
       {/* ── Floating AI Trigger Button (Top Right Corner) ── */}
       {!isOpen && (
-        <div className="fixed top-20 right-4 sm:top-20 sm:right-6 z-[9999] flex items-center gap-2.5 pointer-events-auto">
+        <div style={{ position: "fixed", top: "80px", right: "20px", zIndex: 99999 }} className="flex items-center gap-2.5 pointer-events-auto">
           {/* Welcome Tooltip / Chip when closed */}
           {hasUnreadNotice && (
             <div
@@ -210,7 +210,7 @@ export default function StoreAiAssistant({
             type="button"
             onClick={() => setIsOpen(true)}
             aria-label="Open Store AI Assistant"
-            className="relative group flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-2xl hover:scale-105 hover:shadow-orange-500/50 ring-4 ring-orange-500/25 transition-all duration-300 cursor-pointer"
+            className="relative group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-2xl hover:scale-105 hover:shadow-orange-500/50 ring-4 ring-orange-500/25 transition-all duration-300 cursor-pointer"
           >
             <div className="absolute inset-0 rounded-full bg-orange-500 animate-ping opacity-25" />
             <Bot className="w-7 h-7 relative z-10" />
@@ -224,7 +224,7 @@ export default function StoreAiAssistant({
 
       {/* ── Slide-down Interactive Chat Dialog Window (Top Right Corner) ── */}
       {isOpen && (
-        <div className="fixed top-20 right-3 sm:top-20 sm:right-6 w-[calc(100vw-24px)] sm:w-[420px] max-h-[calc(100vh-96px)] h-[82vh] sm:h-[600px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl z-[9999] flex flex-col overflow-hidden font-sans animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto">
+        <div style={{ position: "fixed", top: "80px", right: "16px", zIndex: 99999 }} className="w-[calc(100vw-32px)] sm:w-[420px] max-h-[calc(100vh-100px)] h-[82vh] sm:h-[600px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden font-sans animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto">
           {/* Header */}
           <div className="px-4 py-3.5 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white flex items-center justify-between shrink-0 shadow-sm">
             <div className="flex items-center gap-2.5 min-w-0">

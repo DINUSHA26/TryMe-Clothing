@@ -3749,7 +3749,7 @@ export default function StandaloneSiteClient({
       {/* Store AI Assistant */}
       <StoreAiAssistant
         contextType="STANDALONE_SITE"
-        contextId={siteData?.domain || siteData?.slug || ""}
+        contextId={siteData?.domain || siteData?.slug || domainOrSlug || vendor?.slug || "store"}
         storeName={vendor?.businessName || siteData?.entity?.businessName || "Store"}
       />
 
