@@ -1,6 +1,7 @@
 "use client";
 
 import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
+import { useDraggableFloating } from "@/hooks/useDraggableFloating";
 
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
@@ -79,6 +80,12 @@ export default function StandaloneSiteClient({
   onPreviewPageSelect,
 }: StandaloneSiteClientProps) {
   const router = useRouter();
+  const { position: whatsappPos, bind: whatsappBind, dragStyle: whatsappDragStyle } = useDraggableFloating({
+    defaultCorner: "bottom-left",
+    width: 56,
+    height: 56,
+    storageKey: "tryme_whatsapp_button_pos",
+  });
   const searchParams = useSearchParams();
 
   const { vendor, config, products = [], subscription } = siteData;

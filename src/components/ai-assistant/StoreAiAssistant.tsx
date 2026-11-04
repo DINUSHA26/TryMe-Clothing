@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
+import { useDraggableFloating } from "@/hooks/useDraggableFloating";
 import {
   MessageSquare,
   X,
@@ -54,6 +55,13 @@ export default function StoreAiAssistant({
   const [hasUnreadNotice, setHasUnreadNotice] = useState(true);
   const [sessionId, setSessionId] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { position: aiPos, bind: aiBind, dragStyle: aiDragStyle } = useDraggableFloating({
+    defaultCorner: "bottom-right",
+    width: 60,
+    height: 60,
+    storageKey: "tryme_ai_button_pos",
+  });
 
   const storageKey = `tryme_ai_msgs_${contextType}_${contextId}`;
   const sessionKey = `tryme_ai_sess_${contextType}_${contextId}`;
@@ -234,18 +242,29 @@ export default function StoreAiAssistant({
     <>
       {/* ── Floating AI Trigger Button (Bottom Right Corner) ── */}
       {!isOpen && (
-        <div style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 99999 }} className="flex items-end gap-2.5 pointer-events-auto">
+        <div
+          {...aiBind}
+          style={{
+            position: "fixed",
+            left: aiPos ? `${aiPos.x}px` : undefined,
+            right: aiPos ? undefined : "24px",
+            top: aiPos ? `${aiPos.y}px` : undefined,
+            bottom: aiPos ? undefined : "24px",
+            zIndex: 99999,
+            ...aiDragStyle,
+          }}
+          className="flex items-center gap-2.5 pointer-events-auto select-none touch-none"
+        >
           {/* Welcome Tooltip / Chip when closed */}
           {hasUnreadNotice && (
             <div
               onClick={() => setIsOpen(true)}
-              className="hidden sm:flex items-center gap-2 bg-white dark:bg-slate-900 border border-orange-500/40 hover:border-orange-500 text-slate-800 dark:text-slate-100 px-3.5 py-2 rounded-2xl shadow-xl cursor-pointer hover:shadow-2xl transition-all"
+              className="hidden sm:flex items-center gap-2 bg-white dark:bg-slate-900 border border-orange-500/40 hover:border-orange-500 text-slate-800 dark:text-slate-100 px-3 py-1.5 rounded-2xl shadow-xl cursor-pointer hover:shadow-2xl transition-all"
             >
-              <Sparkles className="w-4 h-4 text-orange-500 shrink-0 animate-pulse" />
               <div className="text-xs font-bold leading-tight">
                 <span className="text-orange-600 dark:text-orange-400">Ask Store AI</span>
                 <span className="block text-[10px] text-slate-400 font-normal">
-                  සිංහල • Singlish • English
+                  සිංහල • English • தமிழ்
                 </span>
               </div>
             </div>
@@ -256,11 +275,11 @@ export default function StoreAiAssistant({
             type="button"
             onClick={() => setIsOpen(true)}
             aria-label="Open Store AI Assistant"
-            className="relative group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-2xl hover:scale-105 hover:shadow-orange-500/50 ring-4 ring-orange-500/25 transition-all duration-300 cursor-pointer"
+            className="relative group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-2xl hover:scale-105 hover:shadow-orange-500/50 ring-4 ring-orange-500/25 transition-all duration-300 cursor-grab active:cursor-grabbing"
           >
-            <div className="absolute inset-0 rounded-full bg-orange-500 animate-ping opacity-25" />
-            <Bot className="w-7 h-7 relative z-10" />
-            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+            <div className="absolute inset-0 rounded-full bg-orange-500 animate-ping opacity-25 pointer-events-none" />
+            <Bot className="w-7 h-7 relative z-10 pointer-events-none" />
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 pointer-events-none">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
             </span>
@@ -316,12 +335,11 @@ export default function StoreAiAssistant({
           {/* Multilingual Support Banner */}
           <div className="px-3.5 py-1.5 bg-orange-50 dark:bg-slate-800/80 border-b border-orange-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
             <div className="flex items-center gap-1.5 truncate">
-              <Sparkles className="w-3.5 h-3.5 text-orange-500 shrink-0" />
               <span className="font-semibold text-slate-700 dark:text-slate-200">
                 Supports:
               </span>
               <span className="truncate text-orange-600 dark:text-orange-400 font-bold">
-                සිංහල • Singlish • English • தமிழ்
+                සිංහල • English • தமிழ்
               </span>
             </div>
           </div>
@@ -471,7 +489,7 @@ export default function StoreAiAssistant({
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Ask in Sinhala, Singlish, English, or Tamil..."
+                placeholder="Ask in Sinhala, English, or Tamil..."
                 disabled={isLoading}
                 className="flex-1 px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-orange-500 focus:bg-white dark:focus:bg-slate-900 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none transition-all"
               />
