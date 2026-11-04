@@ -24,6 +24,7 @@ import {
   Globe,
   Briefcase,
   ScanBarcode,
+  Bot,
 } from "lucide-react";
 
 export interface NavItem {
@@ -89,6 +90,11 @@ export const adminNavItems: NavItem[] = [
     label: "Chat Oversight",
     href: "/admin/chat",
     icon: MessageSquare,
+  },
+  {
+    label: "AI Conversations",
+    href: "/admin/ai-assistant",
+    icon: Bot,
   },
   {
     label: "Social Moderation",
@@ -189,6 +195,11 @@ export const vendorNavItems: NavItem[] = [
     icon: ScanBarcode,
   },
   {
+    label: "AI Inquiries",
+    href: "/vendor/ai-inquiries",
+    icon: Bot,
+  },
+  {
     label: "Coupons",
     href: "/vendor/coupons",
     icon: Tag,
@@ -255,6 +266,11 @@ export const adsSellerNavItems: NavItem[] = [
     label: "POS System",
     href: "/ads-seller/pos",
     icon: ScanBarcode,
+  },
+  {
+    label: "AI Inquiries",
+    href: "/ads-seller/ai-inquiries",
+    icon: Bot,
   },
   {
     label: "Coupons",

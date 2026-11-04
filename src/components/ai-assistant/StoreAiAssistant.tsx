@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useAuthStore } from "@/stores/authStore";
 import {
   MessageSquare,
   X,
@@ -44,17 +45,48 @@ export default function StoreAiAssistant({
   storeName = "Store",
   productTitle,
 }: StoreAiAssistantProps) {
+  const { user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnreadNotice, setHasUnreadNotice] = useState(true);
+  const [sessionId, setSessionId] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const storageKey = `tryme_ai_msgs_${contextType}_${contextId}`;
+  const sessionKey = `tryme_ai_sess_${contextType}_${contextId}`;
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (typeof window !== "undefined") {
+      let sess = localStorage.getItem(sessionKey);
+      if (!sess) {
+        sess = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem(sessionKey, sess);
+      }
+      setSessionId(sess);
+
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages(parsed);
+          }
+        }
+      } catch {}
+    }
+  }, [contextType, contextId, sessionKey, storageKey]);
+
+  useEffect(() => {
+    if (mounted && messages.length > 0 && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(messages));
+      } catch {}
+    }
+  }, [messages, mounted, storageKey]);
 
   useEffect(() => {
     const handleToggle = () => setIsOpen((prev) => !prev);
@@ -126,6 +158,12 @@ export default function StoreAiAssistant({
           contextType,
           contextId,
           chatHistory: historyForApi.slice(-6),
+          sessionId,
+          customerInfo: user ? {
+            name: user.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user.email,
+            phone: user.phone || "",
+            email: user.email || "",
+          } : null,
         }),
       });
 
@@ -167,6 +205,14 @@ export default function StoreAiAssistant({
   };
 
   const handleResetChat = () => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(storageKey);
+        const newSess = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem(sessionKey, newSess);
+        setSessionId(newSess);
+      } catch {}
+    }
     setMessages([
       {
         id: "welcome-reset",

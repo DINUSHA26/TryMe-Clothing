@@ -212,6 +212,7 @@ model Vendor {
   customDomain         VendorCustomDomain?
   websiteSubscriptions VendorWebsiteSubscription[]
   services             WebsiteService[]
+  aiConversations      StoreAiConversation[]
 
   @@index([slug])
   @@index([status, isShopOpen])
@@ -228,6 +229,7 @@ model Customer {
   shippingAddresses ShippingAddress[]
   orders            Order[]
   cart              Cart?
+  aiConversations   StoreAiConversation[]
   disputes          Dispute[]
   chatRooms         ChatRoom[]
   couponUsages      CouponUsage[]
@@ -951,6 +953,7 @@ model AdsSeller {
   customDomain         VendorCustomDomain?
   websiteSubscriptions VendorWebsiteSubscription[]
   services             WebsiteService[]
+  aiConversations      StoreAiConversation[]
 }
 
 // Mini-website custom service pages
@@ -1352,4 +1355,37 @@ model WebsiteService {
   @@index([adsSellerId])
   @@index([categoryId])
   @@index([subCategoryId])
+}
+
+
+// ==================== STORE AI CONVERSATIONS ====================
+
+model StoreAiConversation {
+  id              String      @id @default(cuid())
+  sessionId       String      @unique
+  contextType     String      // "VENDOR" | "ADS_SELLER" | "PRODUCT" | "AD" | "STANDALONE_SITE"
+  contextId       String
+  storeName       String?
+  vendorId        String?
+  vendor          Vendor?     @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  adsSellerId     String?
+  adsSeller       AdsSeller?  @relation(fields: [adsSellerId], references: [id], onDelete: SetNull)
+  customerId      String?
+  customer        Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName    String?
+  customerPhone   String?
+  customerEmail   String?
+  messages        Json        // [{ id, role, content, actions, timestamp }]
+  lastMessage     String?     @db.Text
+  lastRole        String?     // "user" | "model"
+  messageCount    Int         @default(0)
+  unreadByStore   Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([vendorId])
+  @@index([adsSellerId])
+  @@index([customerId])
+  @@index([sessionId])
+  @@index([updatedAt])
 }

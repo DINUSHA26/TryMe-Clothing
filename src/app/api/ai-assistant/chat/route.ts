@@ -38,7 +38,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { message, contextType, contextId, chatHistory } = body;
+    const { message, contextType, contextId, chatHistory, sessionId, customerInfo } = body;
+    const activeSessionId = sessionId || `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    let resolvedVendorId: string | null = null;
+    let resolvedAdsSellerId: string | null = null;
 
     if (!message || typeof message !== "string" || !message.trim()) {
       return NextResponse.json(
@@ -121,6 +124,7 @@ export async function POST(request: NextRequest) {
         "";
       storeAddress = vendor.businessAddress || "";
       storeSlug = vendor.slug;
+      resolvedVendorId = vendor.id;
 
       const productList = (vendor.products || []).map((p: any) => {
         const variantsStr =
@@ -203,6 +207,7 @@ ${serviceList.join("\n") || "No services currently listed."}
       storePhone = seller.phone || "";
       storeWhatsApp = seller.phone || "";
       storeSlug = seller.slug;
+      resolvedAdsSellerId = seller.id;
 
       const adList = (seller.ads || []).map(
         (a: any) =>
@@ -272,6 +277,7 @@ ${serviceList.join("\n") || "No services currently active."}
       storePhone = product.vendor?.businessPhone || "";
       storeWhatsApp = product.vendor?.businessPhone || "";
       storeSlug = product.vendor?.slug || "";
+      resolvedVendorId = product.vendorId || product.vendor?.id || null;
       currentFocusItem = {
         type: "PRODUCT",
         id: product.id,
@@ -345,6 +351,7 @@ ${otherProducts.join("\n") || "No other products listed."}
       storePhone = ad.seller?.phone || "";
       storeWhatsApp = ad.seller?.phone || "";
       storeSlug = ad.seller?.slug || "";
+      resolvedAdsSellerId = ad.sellerId || ad.seller?.id || null;
       currentFocusItem = {
         type: "AD",
         id: ad.id,
@@ -423,6 +430,8 @@ ${otherAds.join("\n") || "No other active listings."}
         entity.phone ||
         "";
       storeSlug = entity.slug;
+      if (vendor) resolvedVendorId = vendor.id;
+      if (adsSeller) resolvedAdsSellerId = adsSeller.id;
 
       const items = (vendor ? vendor.products : adsSeller?.ads || []).map((it: any) =>
         `- Item: "${it.name || it.title}" | Price: LKR ${it.price} | Slug/ID: ${it.slug || it.id}`
@@ -522,8 +531,69 @@ ${knowledgeContext}
     // Clean action tags out of the readable reply text
     const cleanReply = rawReply.replace(actionRegex, "").trim();
 
+    // Persist conversation into Database for Vendor, Seller, and Admin Oversight
+    try {
+      const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const userMsgObj = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: message.trim(),
+        timestamp: nowStr,
+      };
+      const modelMsgObj = {
+        id: `model-${Date.now()}`,
+        role: "model",
+        content: cleanReply,
+        actions,
+        timestamp: nowStr,
+      };
+
+      const existing = await (prisma as any).storeAiConversation.findUnique({
+        where: { sessionId: activeSessionId },
+      });
+
+      const prevList = Array.isArray(existing?.messages) ? existing.messages : [];
+      const updatedMessages = [...prevList, userMsgObj, modelMsgObj];
+
+      await (prisma as any).storeAiConversation.upsert({
+        where: { sessionId: activeSessionId },
+        create: {
+          sessionId: activeSessionId,
+          contextType: String(contextType),
+          contextId: String(contextId),
+          storeName,
+          vendorId: resolvedVendorId,
+          adsSellerId: resolvedAdsSellerId,
+          customerName: customerInfo?.name || null,
+          customerPhone: customerInfo?.phone || null,
+          customerEmail: customerInfo?.email || null,
+          messages: updatedMessages,
+          lastMessage: cleanReply.slice(0, 500),
+          lastRole: "model",
+          messageCount: updatedMessages.length,
+          unreadByStore: true,
+        },
+        update: {
+          storeName,
+          vendorId: resolvedVendorId || undefined,
+          adsSellerId: resolvedAdsSellerId || undefined,
+          customerName: customerInfo?.name || undefined,
+          customerPhone: customerInfo?.phone || undefined,
+          customerEmail: customerInfo?.email || undefined,
+          messages: updatedMessages,
+          lastMessage: cleanReply.slice(0, 500),
+          lastRole: "model",
+          messageCount: updatedMessages.length,
+          unreadByStore: true,
+        },
+      });
+    } catch (dbErr) {
+      console.error("Failed to persist StoreAiConversation to DB:", dbErr);
+    }
+
     return NextResponse.json({
       success: true,
+      sessionId: activeSessionId,
       reply: cleanReply,
       actions,
       storeInfo: {
