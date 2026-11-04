@@ -11,6 +11,8 @@ import { getVendorOrderDetail } from "@/lib/services/vendor-order-service";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderItemCard } from "@/components/orders/OrderItemCard";
 import { UpdateOrderItemStatusForm } from "@/components/vendor/orders/UpdateOrderItemStatusForm";
+import { UpdateEntireOrderStatusCard } from "@/components/vendor/orders/UpdateEntireOrderStatusCard";
+import { IndividualItemStatusAccordion } from "@/components/vendor/orders/IndividualItemStatusAccordion";
 import { format } from "date-fns";
 import {
   ArrowLeft,
@@ -256,6 +258,17 @@ export default async function VendorOrderDetailsPage({
               <Package className="w-5 h-5" />
               Ordered Items &amp; Status Management
             </h2>
+
+            {/* Whole Order Status Quick Updater (All Items At Once) */}
+            <UpdateEntireOrderStatusCard
+              orderId={order.id}
+              orderNumber={order.orderNumber}
+              currentStatus={order.status}
+              totalItemsCount={vendorItems.length}
+              isWebsiteOrder={isWebsiteOrder}
+              apiEndpoint={`/api/vendor/orders/${order.id}/status`}
+            />
+
             <div className="space-y-6">
               {vendorItems.map((item: any) => (
                 <div key={item.id} className="border rounded-2xl p-5 bg-card space-y-4 shadow-xs">
@@ -302,23 +315,17 @@ export default async function VendorOrderDetailsPage({
                     </div>
                   )}
 
-                  {/* Update Status Form */}
+                  {/* Individual Item Status Override (Collapsible) */}
                   {(isWebsiteOrder ||
                     item.status === "PAYMENT_CONFIRMED" ||
                     item.status === "PROCESSING") && (
-                    <div className="pt-4 border-t">
-                      <h3 className="text-sm font-bold mb-3">
-                        {isWebsiteOrder
-                          ? "Manage Website Order Status (Full Control)"
-                          : "Update Item Status"}
-                      </h3>
-                      <UpdateOrderItemStatusForm
-                        orderItemId={item.id}
-                        currentStatus={item.status}
-                        productName={item.productSnapshot.name}
-                        isWebsiteOrder={isWebsiteOrder}
-                      />
-                    </div>
+                    <IndividualItemStatusAccordion
+                      orderItemId={item.id}
+                      currentStatus={item.status}
+                      productName={item.productSnapshot.name}
+                      isWebsiteOrder={isWebsiteOrder}
+                      apiEndpointPrefix="/api/vendor/orders/items"
+                    />
                   )}
                 </div>
               ))}
