@@ -1,19 +1,33 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { NotificationToast, OneSignalInitializer } from "@/components/notifications";
 import { Toaster } from "@/components/ui/toaster";
+import PwaRegister from "@/components/pwa/PwaRegister";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const viewport: Viewport = {
+  themeColor: "#FF6600",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "Try Me | Sri Lanka's Premier Multi-Vendor Marketplace",
   description: "tryme.lk Fast & Free Delivery — Explore tryme.lk for premium online shopping in Sri Lanka. Shop now! Shop smarter with tryme.lk! Your premium online shopping destination for fashion, electronics, and daily essentials. 100% Authentic Products. Trusted Brands.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TryMe",
+  },
   icons: {
-    icon: "/icon.png",
+    icon: "/icons/icon-192x192.png",
     shortcut: "/icon.png",
-    apple: "/icon.png",
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 
@@ -47,8 +61,8 @@ export default function RootLayout({
         <Toaster />
         <NotificationToast />
         <OneSignalInitializer />
+        <PwaRegister />
       </body>
     </html>
   );
 }
-

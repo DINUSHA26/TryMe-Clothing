@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { PwaInstallCard } from "@/components/pwa/PwaInstallCard";
 
 export function StorefrontFooter() {
   const currentYear = new Date().getFullYear();
@@ -213,6 +214,10 @@ export function StorefrontFooter() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-10">
+          <PwaInstallCard />
         </div>
 
         <Separator className="my-8" />
