@@ -2,33 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TIER_LIMITS, WebsiteTier } from "@/types/website-builder";
 import { getAuthUser } from "@/lib/auth-helpers";
-
-async function getVendorConfig(userId: string) {
-  const vendor = await prisma.vendor.findUnique({
-    where: { userId },
-    select: { id: true },
-  });
-  const whereClause = vendor ? { vendorId: vendor.id } : null;
-
-  if (!whereClause) {
-    const adsSeller = await (prisma as any).adsSeller.findUnique({
-      where: { userId },
-      select: { id: true },
-    });
-    if (!adsSeller) return null;
-    return {
-      type: "ADS_SELLER",
-      id: adsSeller.id,
-      whereClause: { adsSellerId: adsSeller.id },
-    };
-  }
-
-  return {
-    type: "VENDOR",
-    id: vendor!.id,
-    whereClause,
-  };
-}
+import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,11 +13,11 @@ export async function GET(request: NextRequest) {
     }
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const target = await getVendorConfig(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
 
     const config = await (prisma as any).vendorWebsiteConfig.findFirst({
-      where: target.whereClause,
+      where: target.flexibleWhere,
       include: {
         pages: {
           orderBy: { sortOrder: "asc" },
@@ -70,13 +44,13 @@ export async function POST(request: NextRequest) {
     }
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const target = await getVendorConfig(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
 
-    // Check active subscription
+    // Check active subscription (supports both seller and vendor linked records)
     const activeSub = await (prisma as any).vendorWebsiteSubscription.findFirst({
       where: {
-        ...target.whereClause,
+        ...target.flexibleWhere,
         status: "ACTIVE",
         OR: [
           { expiresAt: null },
@@ -97,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Get config & count existing pages
     const config = await (prisma as any).vendorWebsiteConfig.findFirst({
-      where: target.whereClause,
+      where: target.flexibleWhere,
       include: {
         _count: {
           select: { pages: true },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helpers";
+import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -12,17 +13,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
-    const adsSeller = !vendor
-      ? await (prisma as any).adsSeller.findUnique({ where: { userId } })
-      : null;
-
-    if (!vendor && !adsSeller) {
-      return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
+    const target = await resolveWebsiteEntity(userId);
+    if (!target) {
+      return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
     }
 
-    const whereClause = vendor ? { vendorId: vendor.id } : { adsSellerId: adsSeller.id };
-    const config = await (prisma as any).vendorWebsiteConfig.findFirst({ where: whereClause });
+    const config = await (prisma as any).vendorWebsiteConfig.findFirst({
+      where: target.flexibleWhere,
+    });
     if (!config) {
       return NextResponse.json({ success: false, error: "Website config not found" }, { status: 404 });
     }
@@ -44,7 +42,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    await (prisma as any).vendorWebsiteConfig.update({
+    const updated = await (prisma as any).vendorWebsiteConfig.update({
       where: { id: config.id },
       data: {
         contactSection: {
@@ -54,15 +52,8 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: { inquiries: updatedInquiries },
-    });
+    return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to update inquiry" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
-

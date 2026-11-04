@@ -2,24 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, handleAuthError } from "@/lib/auth-helpers";
 import { generateSlug, generateUniqueSlug } from "@/lib/utils/slug";
-
-async function getVendorOrSeller(userId: string) {
-  const vendor = await prisma.vendor.findUnique({
-    where: { userId },
-    select: { id: true, businessName: true, slug: true },
-  });
-  if (vendor) {
-    return { type: "VENDOR" as const, entity: vendor };
-  }
-  const adsSeller = await (prisma as any).adsSeller.findUnique({
-    where: { userId },
-    select: { id: true, businessName: true, slug: true },
-  });
-  if (adsSeller) {
-    return { type: "ADS_SELLER" as const, entity: adsSeller };
-  }
-  return null;
-}
+import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
 
 export async function GET(
   request: NextRequest,
@@ -36,7 +19,7 @@ export async function GET(
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) {
       return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
     }
@@ -55,9 +38,8 @@ export async function GET(
     }
 
     const isOwner =
-      target.type === "VENDOR"
-        ? service.vendorId === target.entity.id
-        : service.adsSellerId === target.entity.id;
+      (target.vendorId && service.vendorId === target.vendorId) ||
+      (target.adsSellerId && service.adsSellerId === target.adsSellerId);
 
     if (!isOwner) {
       return NextResponse.json({ success: false, error: "Forbidden: Not your service" }, { status: 403 });
@@ -87,7 +69,7 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) {
       return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
     }
@@ -102,9 +84,8 @@ export async function PATCH(
     }
 
     const isOwner =
-      target.type === "VENDOR"
-        ? existing.vendorId === target.entity.id
-        : existing.adsSellerId === target.entity.id;
+      (target.vendorId && existing.vendorId === target.vendorId) ||
+      (target.adsSellerId && existing.adsSellerId === target.adsSellerId);
 
     if (!isOwner) {
       return NextResponse.json({ success: false, error: "Forbidden: Not your service" }, { status: 403 });
@@ -117,52 +98,93 @@ export async function PATCH(
       updateData.name = body.name.trim();
       const baseSlug = generateSlug(body.name.trim());
       updateData.slug = await generateUniqueSlug(baseSlug, async (testSlug) => {
-        const condition =
-          target.type === "VENDOR"
-            ? { vendorId: target.entity.id, slug: testSlug }
-            : { adsSellerId: target.entity.id, slug: testSlug };
         const match = await (prisma as any).websiteService.findFirst({
-          where: condition,
+          where: {
+            slug: testSlug,
+            ...target.flexibleWhere,
+          },
         });
         return match && match.id !== id;
       });
     }
 
-    const targetCategoryId = body.categoryId !== undefined ? body.categoryId : existing.categoryId;
     if (body.categoryId !== undefined) {
+      const category = await (prisma as any).serviceCategory.findUnique({
+        where: { id: body.categoryId, isActive: true },
+      });
+      if (!category) {
+        return NextResponse.json(
+          { success: false, error: "Selected category not found or inactive" },
+          { status: 400 }
+        );
+      }
       updateData.categoryId = body.categoryId;
     }
 
     if (body.subCategoryId !== undefined) {
-      if (body.subCategoryId) {
-        const subCat = await (prisma as any).serviceSubCategory.findFirst({
-          where: { id: body.subCategoryId, categoryId: targetCategoryId },
+      if (body.subCategoryId === null || body.subCategoryId === "") {
+        updateData.subCategoryId = null;
+      } else {
+        const catId = body.categoryId || existing.categoryId;
+        const subCategory = await (prisma as any).serviceSubCategory.findUnique({
+          where: { id: body.subCategoryId, categoryId: catId, isActive: true },
         });
-        if (!subCat) {
+        if (!subCategory) {
           return NextResponse.json(
-            { success: false, error: "Selected subcategory does not belong to the category" },
+            { success: false, error: "Selected subcategory does not belong to this category" },
             { status: 400 }
           );
         }
         updateData.subCategoryId = body.subCategoryId;
-      } else {
-        updateData.subCategoryId = null;
       }
     }
 
-    if (body.description !== undefined) updateData.description = body.description.trim();
-    if (body.shortDesc !== undefined) updateData.shortDesc = body.shortDesc ? String(body.shortDesc).trim() : null;
-    if (body.priceType !== undefined) updateData.priceType = body.priceType;
-    if (body.price !== undefined) {
-      updateData.price =
-        body.price !== null && body.price !== "" ? parseFloat(body.price.toString()) : null;
+    if (body.description !== undefined) {
+      updateData.description = body.description.trim();
     }
-    if (body.duration !== undefined) updateData.duration = body.duration ? String(body.duration).trim() : null;
-    if (body.images !== undefined) updateData.images = Array.isArray(body.images) ? body.images : [];
-    if (body.features !== undefined) updateData.features = Array.isArray(body.features) ? body.features : [];
-    if (body.isActive !== undefined) updateData.isActive = !!body.isActive;
-    if (body.isFeatured !== undefined) updateData.isFeatured = !!body.isFeatured;
-    if (body.sortOrder !== undefined) updateData.sortOrder = Number(body.sortOrder) || 0;
+
+    if (body.shortDesc !== undefined) {
+      updateData.shortDesc = body.shortDesc ? String(body.shortDesc).trim() : null;
+    }
+
+    if (body.price !== undefined) {
+      if (body.price === null || body.price === "") {
+        updateData.price = null;
+      } else {
+        const num = Number(body.price);
+        if (isNaN(num) || num < 0) {
+          return NextResponse.json(
+            { success: false, error: "Price must be a valid non-negative number" },
+            { status: 400 }
+          );
+        }
+        updateData.price = num;
+      }
+    }
+
+    if (body.priceType !== undefined) {
+      updateData.priceType = body.priceType;
+    }
+
+    if (body.duration !== undefined) {
+      updateData.duration = body.duration ? String(body.duration).trim() : null;
+    }
+
+    if (body.features !== undefined && Array.isArray(body.features)) {
+      updateData.features = body.features.map((f: any) => String(f).trim()).filter(Boolean);
+    }
+
+    if (body.images !== undefined && Array.isArray(body.images)) {
+      updateData.images = body.images.map((img: any) => String(img).trim()).filter(Boolean);
+    }
+
+    if (body.isActive !== undefined) {
+      updateData.isActive = Boolean(body.isActive);
+    }
+
+    if (body.isFeatured !== undefined) {
+      updateData.isFeatured = Boolean(body.isFeatured);
+    }
 
     const updated = await (prisma as any).websiteService.update({
       where: { id },
@@ -201,7 +223,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) {
       return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
     }
@@ -216,9 +238,8 @@ export async function DELETE(
     }
 
     const isOwner =
-      target.type === "VENDOR"
-        ? existing.vendorId === target.entity.id
-        : existing.adsSellerId === target.entity.id;
+      (target.vendorId && existing.vendorId === target.vendorId) ||
+      (target.adsSellerId && existing.adsSellerId === target.adsSellerId);
 
     if (!isOwner) {
       return NextResponse.json({ success: false, error: "Forbidden: Not your service" }, { status: 403 });

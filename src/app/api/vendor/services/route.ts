@@ -2,24 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, handleAuthError } from "@/lib/auth-helpers";
 import { generateSlug, generateUniqueSlug } from "@/lib/utils/slug";
-
-async function getVendorOrSeller(userId: string) {
-  const vendor = await prisma.vendor.findUnique({
-    where: { userId },
-    select: { id: true, businessName: true, slug: true },
-  });
-  if (vendor) {
-    return { type: "VENDOR" as const, entity: vendor };
-  }
-  const adsSeller = await (prisma as any).adsSeller.findUnique({
-    where: { userId },
-    select: { id: true, businessName: true, slug: true },
-  });
-  if (adsSeller) {
-    return { type: "ADS_SELLER" as const, entity: adsSeller };
-  }
-  return null;
-}
+import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
 
 /**
  * GET /api/vendor/services
@@ -37,7 +20,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
 
     if (!target) {
       return NextResponse.json(
@@ -46,11 +29,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const whereClause =
-      target.type === "VENDOR" ? { vendorId: target.entity.id } : { adsSellerId: target.entity.id };
-
     const services = await (prisma as any).websiteService.findMany({
-      where: whereClause,
+      where: target.flexibleWhere,
       include: {
         category: {
           select: { id: true, name: true, slug: true, icon: true },
@@ -68,10 +48,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error fetching vendor services:", error);
-    const authError = handleAuthError(error);
-    if (authError) return authError;
     return NextResponse.json(
-      { success: false, error: error?.message || "Failed to fetch services" },
+      { success: false, error: error.message || "Failed to fetch services" },
       { status: 500 }
     );
   }
@@ -79,7 +57,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/vendor/services
- * Creates a new service for current Vendor or AdsSeller
+ * Creates a new service for the current Vendor or AdsSeller
  */
 export async function POST(request: NextRequest) {
   try {
@@ -93,7 +71,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
 
     if (!target) {
       return NextResponse.json(
@@ -104,9 +82,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
+      name,
       categoryId,
       subCategoryId,
-      name,
       description,
       shortDesc,
       price,
@@ -117,6 +95,7 @@ export async function POST(request: NextRequest) {
       isFeatured,
     } = body;
 
+    // Validation
     if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
         { success: false, error: "Service name is required" },
@@ -124,9 +103,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!categoryId) {
+    if (!categoryId || typeof categoryId !== "string") {
       return NextResponse.json(
-        { success: false, error: "Service category is required" },
+        { success: false, error: "Valid service category is required" },
         { status: 400 }
       );
     }
@@ -140,50 +119,50 @@ export async function POST(request: NextRequest) {
 
     // Verify category exists
     const category = await (prisma as any).serviceCategory.findUnique({
-      where: { id: categoryId },
+      where: { id: categoryId, isActive: true },
     });
     if (!category) {
       return NextResponse.json(
-        { success: false, error: "Selected service category does not exist" },
+        { success: false, error: "Selected category not found or inactive" },
         { status: 400 }
       );
     }
 
     // Verify subcategory if provided
     if (subCategoryId) {
-      const subCategory = await (prisma as any).serviceSubCategory.findFirst({
-        where: { id: subCategoryId, categoryId },
+      const subCategory = await (prisma as any).serviceSubCategory.findUnique({
+        where: { id: subCategoryId, categoryId, isActive: true },
       });
       if (!subCategory) {
         return NextResponse.json(
-          { success: false, error: "Selected subcategory does not belong to the chosen category" },
+          { success: false, error: "Selected subcategory does not belong to this category" },
           { status: 400 }
         );
       }
     }
 
-    // Generate slug
+    // Generate unique slug
     const baseSlug = generateSlug(name.trim());
-    const slug = await generateUniqueSlug(baseSlug, async (testSlug) => {
-      const condition =
-        target.type === "VENDOR"
-          ? { vendorId: target.entity.id, slug: testSlug }
-          : { adsSellerId: target.entity.id, slug: testSlug };
-      const match = await (prisma as any).websiteService.findFirst({
-        where: condition,
+    const slug = await generateUniqueSlug(baseSlug, async (s) => {
+      const existing = await (prisma as any).websiteService.findFirst({
+        where: {
+          slug: s,
+          ...target.flexibleWhere,
+        },
       });
-      return !!match;
+      return !existing;
     });
 
-    let parsedPrice = null;
-    if (price !== undefined && price !== null && price !== "" && priceType !== "CONTACT_FOR_PRICE") {
-      parsedPrice = parseFloat(price.toString());
-      if (isNaN(parsedPrice) || parsedPrice < 0) {
+    let parsedPrice: number | null = null;
+    if (price !== undefined && price !== null && price !== "") {
+      const num = Number(price);
+      if (isNaN(num) || num < 0) {
         return NextResponse.json(
-          { success: false, error: "Invalid service price" },
+          { success: false, error: "Price must be a valid non-negative number" },
           { status: 400 }
         );
       }
+      parsedPrice = num;
     }
 
     const cleanFeatures = Array.isArray(features)
@@ -221,14 +200,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: service,
-      message: "Service created successfully for your website",
+      message: "Service created successfully",
     });
   } catch (error: any) {
     console.error("Error creating vendor service:", error);
-    const authError = handleAuthError(error);
-    if (authError) return authError;
     return NextResponse.json(
-      { success: false, error: error?.message || "Failed to create service" },
+      { success: false, error: error.message || "Failed to create service" },
       { status: 500 }
     );
   }

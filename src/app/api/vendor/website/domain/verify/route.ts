@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getDomainConfig, verifyDomainOnVercel } from "@/lib/vercel-domains";
 import { getAuthUser } from "@/lib/auth-helpers";
+import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,28 +13,11 @@ export async function POST(request: NextRequest) {
     }
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId },
-      select: { id: true },
-    });
-
-    const whereClause = vendor
-      ? { vendorId: vendor.id }
-      : {
-          adsSellerId: (
-            await (prisma as any).adsSeller.findUnique({
-              where: { userId },
-              select: { id: true },
-            })
-          )?.id,
-        };
-
-    if (!whereClause.vendorId && !whereClause.adsSellerId) {
-      return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
-    }
+    const target = await resolveWebsiteEntity(userId);
+    if (!target) return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
 
     const domainRecord = await (prisma as any).vendorCustomDomain.findFirst({
-      where: whereClause,
+      where: target.flexibleWhere,
     });
 
     if (!domainRecord) {

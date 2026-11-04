@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helpers";
 import { evaluateAndEnforceSubscriptionLifecycle } from "@/lib/website-subscription-guard";
+import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
 
 export async function PUT(
   request: NextRequest,
@@ -15,15 +16,9 @@ export async function PUT(
     }
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    // Check subscription expiry before allowing page updates
-    const vendor = await prisma.vendor.findUnique({ where: { userId }, select: { id: true } });
-    const adsSeller = !vendor
-      ? await (prisma as any).adsSeller.findUnique({ where: { userId }, select: { id: true } })
-      : null;
-
-    if (vendor || adsSeller) {
-      const whereClause = vendor ? { vendorId: vendor.id } : { adsSellerId: adsSeller.id };
-      const lifecycle = await evaluateAndEnforceSubscriptionLifecycle(whereClause);
+    const target = await resolveWebsiteEntity(userId);
+    if (target) {
+      const lifecycle = await evaluateAndEnforceSubscriptionLifecycle(target.flexibleWhere);
       if (
         lifecycle.state === "EXPIRED_GRACE_PERIOD" ||
         lifecycle.state === "EXPIRED_DISCONNECTED"

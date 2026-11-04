@@ -2,31 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helpers";
 import { evaluateAndEnforceSubscriptionLifecycle } from "@/lib/website-subscription-guard";
-
-async function getVendorOrSeller(userId: string) {
-  const vendor = await prisma.vendor.findUnique({
-    where: { userId },
-    select: {
-      id: true,
-      businessName: true,
-      slug: true,
-      logo: true,
-      banner: true,
-      businessPhone: true,
-      businessEmail: true,
-      businessAddress: true,
-    },
-  });
-  if (vendor) return { type: "VENDOR" as const, entity: vendor };
-
-  const adsSeller = await (prisma as any).adsSeller.findUnique({
-    where: { userId },
-    select: { id: true, businessName: true, slug: true, phone: true, contactInfo: true },
-  });
-  if (adsSeller) return { type: "ADS_SELLER" as const, entity: adsSeller };
-
-  return null;
-}
+import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,20 +16,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) {
       return NextResponse.json({ success: false, error: "Vendor or seller account not found" }, { status: 404 });
     }
 
-    const whereClause =
-      target.type === "VENDOR" ? { vendorId: target.entity.id } : { adsSellerId: target.entity.id };
-
-    // 1. Evaluate and enforce 1-month subscription + 14-day grace period rules first
-    const lifecycle = await evaluateAndEnforceSubscriptionLifecycle(whereClause);
+    // 1. Evaluate and enforce 1-month subscription + 14-day grace period rules first (using flexible matching so both seller & vendor links match)
+    const lifecycle = await evaluateAndEnforceSubscriptionLifecycle(target.flexibleWhere);
 
     // 2. Fetch config and pages
     let config = await (prisma as any).vendorWebsiteConfig.findFirst({
-      where: whereClause,
+      where: target.flexibleWhere,
       include: {
         pages: {
           orderBy: { sortOrder: "asc" },
@@ -99,7 +72,7 @@ export async function GET(request: NextRequest) {
 
       config = await (prisma as any).vendorWebsiteConfig.create({
         data: {
-          ...whereClause,
+          ...target.primaryWhere,
           themeTemplate: "modern-clean",
           primaryColor: "#5c2336",
           secondaryColor: "#111827",
@@ -125,7 +98,7 @@ export async function GET(request: NextRequest) {
 
     // 3. Fetch custom domain (will be null if auto-disconnected after 14 days post-expiry)
     const customDomain = await (prisma as any).vendorCustomDomain.findFirst({
-      where: whereClause,
+      where: target.flexibleWhere,
     });
 
     // 4. Fetch and sync products (for Vendor) or ads (for AdsSeller)
@@ -158,32 +131,34 @@ export async function GET(request: NextRequest) {
     const products = rawItems.map((item: any) => {
       const isVendorProduct = target.type === "VENDOR";
       const title = isVendorProduct ? item.name : item.title;
-      const images: string[] = isVendorProduct
-        ? (item.images || []).map((img: any) => img.url).filter(Boolean)
-        : (item.images || []).filter(Boolean);
-      const primaryImage = images[0] || null;
-      const priceNum = item.price ? Number(item.price) : null;
+      const price = isVendorProduct ? Number(item.price) : Number(item.price || 0);
+      const salePrice = isVendorProduct && item.salePrice ? Number(item.salePrice) : null;
+      const images = isVendorProduct
+        ? item.images?.map((img: any) => img.url) || []
+        : Array.isArray(item.images)
+        ? item.images
+        : [];
+      const image = images[0] || "/placeholder-product.png";
 
       return {
         id: item.id,
         title,
-        name: title,
-        slug: isVendorProduct ? item.slug : item.id,
-        price: priceNum,
-        compareAtPrice: item.compareAtPrice ? Number(item.compareAtPrice) : null,
-        description: item.description || "",
-        image: primaryImage,
+        price,
+        salePrice,
+        image,
         images,
-        type: isVendorProduct ? ("PRODUCT" as const) : ("AD" as const),
-        url: isVendorProduct ? `/products/${item.slug}` : `/ads/${item.id}`,
+        description: item.description || "",
+        inStock: isVendorProduct ? (item.stockQuantity ?? 1) > 0 : true,
+        slug: item.slug || item.id,
+        type: isVendorProduct ? "PRODUCT" : "AD",
       };
     });
 
+    // 5. Fetch Services added by this vendor or ads seller
     const services = await (prisma as any).websiteService.findMany({
       where: {
-        ...(target.type === "VENDOR" ? { vendorId: target.entity.id } : { adsSellerId: target.entity.id }),
+        ...target.flexibleWhere,
         isActive: true,
-        isDisabledByAdmin: false,
       },
       include: {
         category: true,
@@ -233,17 +208,15 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) {
       return NextResponse.json({ success: false, error: "Vendor or seller account not found" }, { status: 404 });
     }
 
-    const whereClause =
-      target.type === "VENDOR" ? { vendorId: target.entity.id } : { adsSellerId: target.entity.id };
     const body = await request.json();
 
     // Enforce subscription expiry rules before allowing updates or publishing
-    const lifecycle = await evaluateAndEnforceSubscriptionLifecycle(whereClause);
+    const lifecycle = await evaluateAndEnforceSubscriptionLifecycle(target.flexibleWhere);
 
     if (
       lifecycle.state === "EXPIRED_GRACE_PERIOD" ||
@@ -279,61 +252,75 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const updatedConfig = await (prisma as any).vendorWebsiteConfig.upsert({
-      where: whereClause,
-      create: {
-        ...whereClause,
-        themeTemplate: body.themeTemplate || "modern-clean",
-        primaryColor: body.primaryColor || "#E91E63",
-        secondaryColor: body.secondaryColor || "#111827",
-        fontFamily: body.fontFamily || "Inter",
-        headerStyle: body.headerStyle || "sticky",
-        navItemsJson: body.navItemsJson || null,
-        heroSection: body.heroSection || null,
-        aboutSection: body.aboutSection || null,
-        servicesSection: body.servicesSection || null,
-        gallerySection: body.gallerySection || null,
-        reviewsSection: body.reviewsSection || null,
-        contactSection: body.contactSection || null,
-        footerSection: body.footerSection || null,
-        customSections: body.customSections !== undefined ? body.customSections : null,
-        sectionsOrder: body.sectionsOrder !== undefined ? body.sectionsOrder : null,
-        metaTitle: body.metaTitle || null,
-        metaDescription: body.metaDescription || null,
-        ogImage: body.ogImage || null,
-        googleAnalyticsId: body.googleAnalyticsId || null,
-        facebookPixelId: body.facebookPixelId || null,
-        isPublished: Boolean(body.isPublished),
-        publishedAt: body.isPublished ? new Date() : null,
-      },
-      update: {
-        themeTemplate: body.themeTemplate,
-        primaryColor: body.primaryColor,
-        secondaryColor: body.secondaryColor,
-        fontFamily: body.fontFamily,
-        headerStyle: body.headerStyle,
-        navItemsJson: body.navItemsJson,
-        heroSection: body.heroSection,
-        aboutSection: body.aboutSection,
-        servicesSection: body.servicesSection,
-        gallerySection: body.gallerySection,
-        reviewsSection: body.reviewsSection,
-        contactSection: body.contactSection,
-        footerSection: body.footerSection,
-        customSections: body.customSections !== undefined ? body.customSections : undefined,
-        sectionsOrder: body.sectionsOrder !== undefined ? body.sectionsOrder : undefined,
-        metaTitle: body.metaTitle,
-        metaDescription: body.metaDescription,
-        ogImage: body.ogImage,
-        googleAnalyticsId: body.googleAnalyticsId,
-        facebookPixelId: body.facebookPixelId,
-        isPublished: Boolean(body.isPublished),
-        publishedAt: body.isPublished ? new Date() : undefined,
-      },
-      include: {
-        pages: true,
-      },
+    // Check if configuration already exists under either ID
+    const existingConfig = await (prisma as any).vendorWebsiteConfig.findFirst({
+      where: target.flexibleWhere,
     });
+
+    let updatedConfig;
+    if (existingConfig) {
+      updatedConfig = await (prisma as any).vendorWebsiteConfig.update({
+        where: { id: existingConfig.id },
+        data: {
+          themeTemplate: body.themeTemplate,
+          primaryColor: body.primaryColor,
+          secondaryColor: body.secondaryColor,
+          fontFamily: body.fontFamily,
+          headerStyle: body.headerStyle,
+          navItemsJson: body.navItemsJson,
+          heroSection: body.heroSection,
+          aboutSection: body.aboutSection,
+          servicesSection: body.servicesSection,
+          gallerySection: body.gallerySection,
+          reviewsSection: body.reviewsSection,
+          contactSection: body.contactSection,
+          footerSection: body.footerSection,
+          customSections: body.customSections !== undefined ? body.customSections : undefined,
+          sectionsOrder: body.sectionsOrder !== undefined ? body.sectionsOrder : undefined,
+          metaTitle: body.metaTitle,
+          metaDescription: body.metaDescription,
+          ogImage: body.ogImage,
+          googleAnalyticsId: body.googleAnalyticsId,
+          facebookPixelId: body.facebookPixelId,
+          isPublished: Boolean(body.isPublished),
+          publishedAt: body.isPublished ? new Date() : undefined,
+        },
+        include: {
+          pages: true,
+        },
+      });
+    } else {
+      updatedConfig = await (prisma as any).vendorWebsiteConfig.create({
+        data: {
+          ...target.primaryWhere,
+          themeTemplate: body.themeTemplate || "modern-clean",
+          primaryColor: body.primaryColor || "#E91E63",
+          secondaryColor: body.secondaryColor || "#111827",
+          fontFamily: body.fontFamily || "Inter",
+          headerStyle: body.headerStyle || "sticky",
+          navItemsJson: body.navItemsJson || null,
+          heroSection: body.heroSection || null,
+          aboutSection: body.aboutSection || null,
+          servicesSection: body.servicesSection || null,
+          gallerySection: body.gallerySection || null,
+          reviewsSection: body.reviewsSection || null,
+          contactSection: body.contactSection || null,
+          footerSection: body.footerSection || null,
+          customSections: body.customSections !== undefined ? body.customSections : null,
+          sectionsOrder: body.sectionsOrder !== undefined ? body.sectionsOrder : null,
+          metaTitle: body.metaTitle || null,
+          metaDescription: body.metaDescription || null,
+          ogImage: body.ogImage || null,
+          googleAnalyticsId: body.googleAnalyticsId || null,
+          facebookPixelId: body.facebookPixelId || null,
+          isPublished: Boolean(body.isPublished),
+          publishedAt: body.isPublished ? new Date() : null,
+        },
+        include: {
+          pages: true,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

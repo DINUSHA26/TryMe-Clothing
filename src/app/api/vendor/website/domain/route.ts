@@ -1,23 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { addDomainToVercel, cleanDomain, getDomainConfig, removeDomainFromVercel } from "@/lib/vercel-domains";
+import { addDomainToVercel, cleanDomain, removeDomainFromVercel } from "@/lib/vercel-domains";
 import { getAuthUser } from "@/lib/auth-helpers";
-
-async function getVendorOrSeller(userId: string) {
-  const vendor = await prisma.vendor.findUnique({
-    where: { userId },
-    select: { id: true, businessName: true, slug: true },
-  });
-  if (vendor) return { type: "VENDOR" as const, entity: vendor, whereClause: { vendorId: vendor.id } };
-
-  const adsSeller = await (prisma as any).adsSeller.findUnique({
-    where: { userId },
-    select: { id: true, businessName: true, slug: true },
-  });
-  if (adsSeller) return { type: "ADS_SELLER" as const, entity: adsSeller, whereClause: { adsSellerId: adsSeller.id } };
-
-  return null;
-}
+import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,11 +13,11 @@ export async function GET(request: NextRequest) {
     }
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
 
     const domainRecord = await (prisma as any).vendorCustomDomain.findFirst({
-      where: target.whereClause,
+      where: target.flexibleWhere,
     });
 
     return NextResponse.json({
@@ -67,13 +52,13 @@ export async function POST(request: NextRequest) {
     }
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
 
-    // Verify active subscription
+    // Verify active subscription (using flexible matching so both seller & vendor links match)
     const activeSub = await (prisma as any).vendorWebsiteSubscription.findFirst({
       where: {
-        ...target.whereClause,
+        ...target.flexibleWhere,
         status: "ACTIVE",
         OR: [
           { expiresAt: null },
@@ -107,7 +92,11 @@ export async function POST(request: NextRequest) {
       where: { domain },
     });
 
-    if (existing && ((target.type === "VENDOR" && existing.vendorId !== target.entity.id) || (target.type === "ADS_SELLER" && existing.adsSellerId !== target.entity.id))) {
+    if (
+      existing &&
+      ((target.vendorId && existing.vendorId && existing.vendorId !== target.vendorId) ||
+       (target.adsSellerId && existing.adsSellerId && existing.adsSellerId !== target.adsSellerId))
+    ) {
       return NextResponse.json({ success: false, error: "This domain is already connected to another store." }, { status: 409 });
     }
 
@@ -117,21 +106,31 @@ export async function POST(request: NextRequest) {
       console.warn("Vercel domain addition warning:", vercelRes.error);
     }
 
-    // Save to database
-    const savedDomain = await (prisma as any).vendorCustomDomain.upsert({
-      where: target.whereClause,
-      create: {
-        ...target.whereClause,
-        domain,
-        dnsStatus: "PENDING_VERIFICATION",
-        sslActive: false,
-      },
-      update: {
-        domain,
-        dnsStatus: "PENDING_VERIFICATION",
-        sslActive: false,
-      },
+    // Check existing record for this store
+    const storeDomain = await (prisma as any).vendorCustomDomain.findFirst({
+      where: target.flexibleWhere,
     });
+
+    let savedDomain;
+    if (storeDomain) {
+      savedDomain = await (prisma as any).vendorCustomDomain.update({
+        where: { id: storeDomain.id },
+        data: {
+          domain,
+          dnsStatus: "PENDING_VERIFICATION",
+          sslActive: false,
+        },
+      });
+    } else {
+      savedDomain = await (prisma as any).vendorCustomDomain.create({
+        data: {
+          ...target.primaryWhere,
+          domain,
+          dnsStatus: "PENDING_VERIFICATION",
+          sslActive: false,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -155,11 +154,11 @@ export async function DELETE(request: NextRequest) {
     }
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const target = await getVendorOrSeller(userId);
+    const target = await resolveWebsiteEntity(userId);
     if (!target) return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
 
     const existing = await (prisma as any).vendorCustomDomain.findFirst({
-      where: target.whereClause,
+      where: target.flexibleWhere,
     });
 
     if (existing) {

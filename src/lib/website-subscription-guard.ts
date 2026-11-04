@@ -34,15 +34,30 @@ export interface SubscriptionLifecycleStatus {
 export async function evaluateAndEnforceSubscriptionLifecycle(whereClause: {
   vendorId?: string;
   adsSellerId?: string;
+  OR?: Array<{ vendorId?: string; adsSellerId?: string }>;
 }): Promise<SubscriptionLifecycleStatus> {
   const now = new Date();
 
+  let subscriptionWhere: any = {
+    status: { in: ["ACTIVE", "EXPIRED"] },
+  };
+
+  if (whereClause.OR && whereClause.OR.length > 0) {
+    subscriptionWhere.OR = whereClause.OR;
+  } else if (whereClause.vendorId && whereClause.adsSellerId) {
+    subscriptionWhere.OR = [
+      { vendorId: whereClause.vendorId },
+      { adsSellerId: whereClause.adsSellerId },
+    ];
+  } else if (whereClause.vendorId) {
+    subscriptionWhere.vendorId = whereClause.vendorId;
+  } else if (whereClause.adsSellerId) {
+    subscriptionWhere.adsSellerId = whereClause.adsSellerId;
+  }
+
   // Fetch latest approved/active/expired subscription (ignore PENDING_PAYMENT / REJECTED / PENDING_APPROVAL for active check)
   const latestSub = await (prisma as any).vendorWebsiteSubscription.findFirst({
-    where: {
-      ...whereClause,
-      status: { in: ["ACTIVE", "EXPIRED"] },
-    },
+    where: subscriptionWhere,
     orderBy: { createdAt: "desc" },
   });
 
@@ -138,8 +153,22 @@ export async function evaluateAndEnforceSubscriptionLifecycle(whereClause: {
   // Automatically disconnect live custom domain and unpublish website so live site has no access!
   let disconnectedDomainName: string | null = null;
   try {
+    let domainWhere: any = {};
+    if (whereClause.OR && whereClause.OR.length > 0) {
+      domainWhere.OR = whereClause.OR;
+    } else if (whereClause.vendorId && whereClause.adsSellerId) {
+      domainWhere.OR = [
+        { vendorId: whereClause.vendorId },
+        { adsSellerId: whereClause.adsSellerId },
+      ];
+    } else if (whereClause.vendorId) {
+      domainWhere.vendorId = whereClause.vendorId;
+    } else if (whereClause.adsSellerId) {
+      domainWhere.adsSellerId = whereClause.adsSellerId;
+    }
+
     const existingDomain = await (prisma as any).vendorCustomDomain.findFirst({
-      where: whereClause,
+      where: domainWhere,
     });
 
     if (existingDomain) {
@@ -157,7 +186,7 @@ export async function evaluateAndEnforceSubscriptionLifecycle(whereClause: {
     // Also unpublish the website config so the live site is inaccessible
     await (prisma as any).vendorWebsiteConfig.updateMany({
       where: {
-        ...whereClause,
+        ...domainWhere,
         isPublished: true,
       },
       data: {
@@ -181,4 +210,3 @@ export async function evaluateAndEnforceSubscriptionLifecycle(whereClause: {
     autoDisconnectedDomain: disconnectedDomainName,
   };
 }
-

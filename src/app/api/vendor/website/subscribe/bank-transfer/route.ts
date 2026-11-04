@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { uploadFile, uploadImage } from "@/lib/cloudinary";
 import { TIER_LIMITS, WebsiteTier } from "@/types/website-builder";
+import { uploadImage, uploadFile } from "@/lib/cloudinary";
 import { getAuthUser } from "@/lib/auth-helpers";
+import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,29 +17,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    let vendorId: string | null = null;
-    let adsSellerId: string | null = null;
-
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId },
-      select: { id: true, businessName: true },
-    });
-
-    if (vendor) {
-      vendorId = vendor.id;
-    } else {
-      const adsSeller = await (prisma as any).adsSeller.findUnique({
-        where: { userId },
-        select: { id: true, businessName: true },
-      });
-      if (adsSeller) {
-        adsSellerId = adsSeller.id;
-      }
-    }
-
-    if (!vendorId && !adsSellerId) {
+    const target = await resolveWebsiteEntity(userId);
+    if (!target) {
       return NextResponse.json({ success: false, error: "Vendor or Ads Seller account not found" }, { status: 404 });
     }
+
+    const vendorId = target.type === "VENDOR" ? target.entity.id : null;
+    const adsSellerId = target.type === "ADS_SELLER" ? target.entity.id : null;
 
     const formData = await request.formData();
     const tier = formData.get("tier") as WebsiteTier;

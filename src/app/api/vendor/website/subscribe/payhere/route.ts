@@ -37,7 +37,12 @@ export async function POST(request: NextRequest) {
     }
 
     const tierInfo = TIER_LIMITS[tier];
-    const targetWhere = user.vendor ? { vendorId: user.vendor.id } : { adsSellerId: user.adsSeller!.id };
+    const isAdsSeller = user.role === "ADS_SELLER" && Boolean(user.adsSeller);
+    const targetWhere = isAdsSeller
+      ? { adsSellerId: user.adsSeller!.id }
+      : user.vendor
+      ? { vendorId: user.vendor.id }
+      : { adsSellerId: user.adsSeller!.id };
 
     // Create a pending subscription
     const subscription = await (prisma as any).vendorWebsiteSubscription.create({
@@ -54,7 +59,7 @@ export async function POST(request: NextRequest) {
     const host = request.headers.get("host") || "";
     const protocol = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
     const requestAppUrl = host ? `${protocol}://${host}` : getAppUrl();
-    const returnBasePath = user.vendor ? "/vendor/website-builder" : "/ads-seller/website-builder";
+    const returnBasePath = isAdsSeller ? "/ads-seller/website-builder" : "/vendor/website-builder";
 
     const orderId = `WEB-SUB-${subscription.id}`;
 
@@ -63,7 +68,9 @@ export async function POST(request: NextRequest) {
     const formattedAmount = tierInfo.price.toFixed(2);
     const hash = generatePaymentHash(merchantId, orderId, formattedAmount, "LKR", merchantSecret);
 
-    const storeName = user.vendor?.businessName || user.adsSeller?.businessName || "TryMe Store";
+    const storeName = isAdsSeller
+      ? user.adsSeller?.businessName || "TryMe Store"
+      : user.vendor?.businessName || user.adsSeller?.businessName || "TryMe Store";
 
     const payhereData = {
       merchant_id: merchantId,

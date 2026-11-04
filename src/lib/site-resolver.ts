@@ -141,7 +141,41 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
     }
 
     const entity = vendor || adsSeller;
-    const whereClause = vendor ? { vendorId: vendor.id } : { adsSellerId: adsSeller.id };
+    let linkedVendorId = vendor ? vendor.id : null;
+    let linkedAdsSellerId = adsSeller ? adsSeller.id : null;
+
+    if (entity?.userId) {
+      if (!linkedVendorId) {
+        const v = await prisma.vendor.findUnique({
+          where: { userId: entity.userId },
+          select: { id: true },
+        });
+        if (v) linkedVendorId = v.id;
+      }
+      if (!linkedAdsSellerId) {
+        const s = await (prisma as any).adsSeller.findUnique({
+          where: { userId: entity.userId },
+          select: { id: true },
+        });
+        if (s) linkedAdsSellerId = s.id;
+      }
+    }
+
+    const whereClause: {
+      vendorId?: string;
+      adsSellerId?: string;
+      OR?: Array<{ vendorId?: string; adsSellerId?: string }>;
+    } = {
+      ...(vendor ? { vendorId: vendor.id } : { adsSellerId: adsSeller.id }),
+      ...(linkedVendorId && linkedAdsSellerId
+        ? {
+            OR: [
+              { vendorId: linkedVendorId },
+              { adsSellerId: linkedAdsSellerId },
+            ],
+          }
+        : {}),
+    };
 
     // 3. Evaluate & enforce 1-month subscription + 14-day grace period
     const lifecycle = await evaluateAndEnforceSubscriptionLifecycle(whereClause);
