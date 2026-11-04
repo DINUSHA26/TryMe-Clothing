@@ -92,9 +92,10 @@ export function CategoryCircleHierarchy({
         {/* Scrollable Container */}
         <div
           ref={row1Ref}
-          className="flex items-start gap-4 sm:gap-6 overflow-x-auto scrollbar-none py-2 px-1 scroll-smooth"
+          className="overflow-x-auto scrollbar-none py-2 px-1 scroll-smooth"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
+          <div className="flex items-start gap-4 sm:gap-6 min-w-max mx-auto justify-start md:justify-center">
           {/* "All Products" Circle */}
           <button
             type="button"
@@ -171,6 +172,7 @@ export function CategoryCircleHierarchy({
               </button>
             );
           })}
+          </div>
         </div>
 
         {/* Scroll Right Button */}
@@ -187,7 +189,7 @@ export function CategoryCircleHierarchy({
       {/* ROW 2: Subcategories (Noticeably Smaller Circles) */}
       {hasSubcategories && activeMainCategory && (
         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 relative group/row2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between mb-2 px-1">
+          <div className="flex items-center justify-between mb-2 px-1 md:justify-center">
             <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
               <span>{activeMainCategory.name}</span>
               <span className="text-slate-300 dark:text-slate-600">/</span>
@@ -208,9 +210,10 @@ export function CategoryCircleHierarchy({
           {/* Scrollable Subcategories Container */}
           <div
             ref={row2Ref}
-            className="flex items-start gap-3 sm:gap-5 overflow-x-auto scrollbar-none py-1.5 px-1 scroll-smooth"
+            className="overflow-x-auto scrollbar-none py-1.5 px-1 scroll-smooth"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
+            <div className="flex items-start gap-3 sm:gap-5 min-w-max mx-auto justify-start md:justify-center">
             {/* "All [Main Category]" Option */}
             <button
               type="button"
@@ -291,6 +294,7 @@ export function CategoryCircleHierarchy({
                 </button>
               );
             })}
+            </div>
           </div>
 
           {/* Scroll Right Button */}

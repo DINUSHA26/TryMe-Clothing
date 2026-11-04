@@ -307,13 +307,6 @@ export default function StaffRegisterPage() {
             </Link>
             <span className="text-gray-300">·</span>
             <Link
-              href="/vendor/login"
-              className="text-[#FF6600] hover:text-orange-700 hover:underline flex items-center gap-1"
-            >
-              <span>Vendor Login</span>
-            </Link>
-            <span className="text-gray-300">·</span>
-            <Link
               href="/login"
               className="text-gray-600 hover:text-gray-900 hover:underline"
             >

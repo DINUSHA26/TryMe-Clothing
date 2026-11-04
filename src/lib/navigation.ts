@@ -169,11 +169,6 @@ export const vendorNavItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    label: "POS System",
-    href: "/vendor/pos",
-    icon: ScanBarcode,
-  },
-  {
     label: "Products",
     href: "/vendor/products",
     icon: Package,
@@ -187,6 +182,11 @@ export const vendorNavItems: NavItem[] = [
     label: "Orders",
     href: "/vendor/orders",
     icon: ShoppingCart,
+  },
+  {
+    label: "POS System",
+    href: "/vendor/pos",
+    icon: ScanBarcode,
   },
   {
     label: "Coupons",
@@ -227,24 +227,9 @@ export const adsSellerNavItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    label: "POS System",
-    href: "/ads-seller/pos",
-    icon: ScanBarcode,
-  },
-  {
-    label: "Products",
-    href: "/ads-seller/products",
-    icon: Package,
-  },
-  {
     label: "My Ads",
     href: "/ads-seller/my-ads",
     icon: LayoutGrid,
-  },
-  {
-    label: "My Services",
-    href: "/ads-seller/services",
-    icon: Briefcase,
   },
   {
     label: "Post an Ad",
@@ -255,6 +240,21 @@ export const adsSellerNavItems: NavItem[] = [
     label: "Orders",
     href: "/ads-seller/orders",
     icon: ShoppingCart,
+  },
+  {
+    label: "Products",
+    href: "/ads-seller/products",
+    icon: Package,
+  },
+  {
+    label: "My Services",
+    href: "/ads-seller/services",
+    icon: Briefcase,
+  },
+  {
+    label: "POS System",
+    href: "/ads-seller/pos",
+    icon: ScanBarcode,
   },
   {
     label: "Coupons",
@@ -310,11 +310,6 @@ export const storefrontNavItems: NavItem[] = [
     icon: LayoutGrid,
   },
   {
-    label: "Social",
-    href: "/social",
-    icon: MessageSquare,
-  },
-  {
     label: "Vendors",
     href: "/vendors",
     icon: Store,
@@ -323,6 +318,11 @@ export const storefrontNavItems: NavItem[] = [
     label: "Deals",
     href: "/deals",
     icon: Percent,
+  },
+  {
+    label: "Social",
+    href: "/social",
+    icon: MessageSquare,
   },
 ];
 
