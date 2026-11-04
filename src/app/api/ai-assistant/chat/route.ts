@@ -168,9 +168,9 @@ ${serviceList.join("\n") || "No services currently listed."}
               id: true,
               title: true,
               price: true,
-              condition: true,
+              specifications: true,
               district: true,
-              city: true,
+              localArea: true,
               description: true,
               subCategory: { select: { name: true } },
             },
@@ -206,7 +206,7 @@ ${serviceList.join("\n") || "No services currently listed."}
 
       const adList = (seller.ads || []).map(
         (a: any) =>
-          `- Ad: "${a.title}" | Price: LKR ${a.price} | Condition: ${a.condition || "Used"} | Location: ${a.city || ""}, ${a.district || ""} | Category: ${a.subCategory?.name || "Classifieds"} | Ad ID: ${a.id} | Desc: ${a.description?.slice(0, 160) || ""}`
+          `- Ad: "${a.title}" | Price: LKR ${a.price} | Condition: ${a.condition || "Used"} | Location: ${a.localArea ? `${a.localArea}, ` : ""}${a.district || ""} | Category: ${a.subCategory?.name || "Classifieds"} | Ad ID: ${a.id} | Desc: ${a.description?.slice(0, 160) || ""}`
       );
 
       const serviceList = (seller.services || []).map(
@@ -325,7 +325,7 @@ ${otherProducts.join("\n") || "No other products listed."}
                   id: { not: contextId },
                 },
                 take: 15,
-                select: { id: true, title: true, price: true, city: true },
+                select: { id: true, title: true, price: true, district: true, localArea: true },
               },
             },
           },
@@ -342,8 +342,8 @@ ${otherProducts.join("\n") || "No other products listed."}
       }
 
       storeName = ad.seller?.businessName || "TryMe Classifieds Seller";
-      storePhone = ad.phone || ad.seller?.phone || "";
-      storeWhatsApp = ad.phone || ad.seller?.phone || "";
+      storePhone = ad.seller?.phone || "";
+      storeWhatsApp = ad.seller?.phone || "";
       storeSlug = ad.seller?.slug || "";
       currentFocusItem = {
         type: "AD",
@@ -353,7 +353,7 @@ ${otherProducts.join("\n") || "No other products listed."}
       };
 
       const otherAds = (ad.seller?.ads || []).map(
-        (a: any) => `- "${a.title}" (LKR ${a.price}, ${a.city || ""}) | Ad ID: ${a.id}`
+        (a: any) => `- "${a.title}" (LKR ${a.price}, ${a.localArea ? `${a.localArea}, ` : ""}${a.district || ""}) | Ad ID: ${a.id}`
       );
 
       knowledgeContext = `
@@ -361,8 +361,8 @@ CURRENT CLASSIFIED AD IN VIEW:
 - Title: "${ad.title}"
 - Ad ID: ${ad.id}
 - Listed Price: LKR ${ad.price}
-- Condition: ${ad.condition || "Used / Second-hand"}
-- Location: ${ad.city || ""}, ${ad.district || "Sri Lanka"}
+- Specifications: ${JSON.stringify(ad.specifications || {})}
+- Location: ${ad.localArea ? `${ad.localArea}, ` : ""}${ad.district || "Sri Lanka"}
 - Category: ${ad.category?.name || ""} > ${ad.subCategory?.name || ""}
 - Contact Phone: ${storePhone}
 - WhatsApp: ${storeWhatsApp}
@@ -540,8 +540,7 @@ ${knowledgeContext}
       {
         success: false,
         error:
-          error.message ||
-          "Sorry, the Store AI Assistant is momentarily unavailable. Please try again or contact the seller directly.",
+          "Sorry, I am having trouble fetching the details right now. Please ask again or contact the store directly.",
       },
       { status: 500 }
     );

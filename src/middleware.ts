@@ -174,6 +174,15 @@ export async function middleware(request: NextRequest) {
       cleanUrl.pathname = remainder;
       return NextResponse.redirect(cleanUrl, 308);
     }
+    // If request on custom domain is for /products/<slug>, redirect to /?page=product&item=<slug>
+    if (pathname.startsWith("/products/")) {
+      const productSlug = pathname.replace(/^\/products\//, "");
+      const cleanUrl = request.nextUrl.clone();
+      cleanUrl.pathname = "/";
+      cleanUrl.searchParams.set("page", "product");
+      cleanUrl.searchParams.set("item", productSlug);
+      return NextResponse.redirect(cleanUrl, 307);
+    }
     if (!pathname.startsWith("/site") && !pathname.startsWith("/api")) {
       const url = request.nextUrl.clone();
       url.pathname = `/site/${cleanHost}${pathname === "/" ? "" : pathname}`;

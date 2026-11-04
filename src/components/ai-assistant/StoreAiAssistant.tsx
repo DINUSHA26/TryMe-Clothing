@@ -303,10 +303,23 @@ export default function StoreAiAssistant({
                       <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/60 flex flex-col gap-1.5">
                         {msg.actions.map((act, idx) => {
                           if (act.type === "VIEW_PRODUCT" && act.slug) {
+                            const getProductHref = () => {
+                              if (contextType === "STANDALONE_SITE") {
+                                if (typeof window !== "undefined") {
+                                  const path = window.location.pathname;
+                                  if (path.startsWith("/site/")) {
+                                    return `${path}?page=product&item=${encodeURIComponent(act.slug!)}`;
+                                  }
+                                }
+                                return `?page=product&item=${encodeURIComponent(act.slug!)}`;
+                              }
+                              return `/products/${act.slug}`;
+                            };
+
                             return (
                               <Link
                                 key={idx}
-                                href={`/products/${act.slug}`}
+                                href={getProductHref()}
                                 className="inline-flex items-center justify-between gap-2 px-3 py-1.5 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-900/40 text-orange-700 dark:text-orange-300 font-bold text-xs rounded-xl border border-orange-200 dark:border-orange-800/60 transition-all"
                               >
                                 <span className="truncate">
