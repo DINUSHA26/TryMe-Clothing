@@ -72,11 +72,51 @@ export interface ServiceItem {
   bookingUrl?: string;
 }
 
+export type ProductCardLayout = "standard" | "modern" | "compact" | "bordered";
+
+export interface ProductsSectionConfig {
+  enabled?: boolean;
+  title?: string;
+  subtitle?: string;
+  cardLayout?: ProductCardLayout;
+  showPrice?: boolean;
+  showBadge?: boolean;
+  showDescription?: boolean;
+  imageFit?: "contain" | "cover";
+  // 1-Page options
+  whatsappButtonText?: string;
+  inquiryButtonText?: string;
+  showWhatsApp?: boolean;
+  showInquiry?: boolean;
+  // Multi-Page options
+  cartButtonText?: string;
+  buyNowButtonText?: string;
+  detailsButtonText?: string;
+  showAddToCart?: boolean;
+  showBuyNow?: boolean;
+  showViewDetails?: boolean;
+  showMultiPageWhatsApp?: boolean;
+}
+
 export interface ServicesSectionConfig {
   enabled: boolean;
   title: string;
   subtitle?: string;
   items: ServiceItem[];
+  cardLayout?: ProductCardLayout;
+  showPrice?: boolean;
+  showDescription?: boolean;
+  imageFit?: "contain" | "cover";
+  // 1-Page options
+  whatsappButtonText?: string;
+  inquiryButtonText?: string;
+  showWhatsApp?: boolean;
+  showInquiry?: boolean;
+  // Multi-Page options
+  bookButtonText?: string;
+  detailsButtonText?: string;
+  showBookNow?: boolean;
+  showViewDetails?: boolean;
 }
 
 export interface GallerySectionConfig {
@@ -228,6 +268,7 @@ export interface VendorWebsiteConfigData {
   fontFamily: string;
   navItemsJson?: any;
   headerStyle: string;
+  productsSection?: ProductsSectionConfig;
   heroSection: HeroSectionConfig;
   aboutSection: AboutSectionConfig;
   servicesSection: ServicesSectionConfig;

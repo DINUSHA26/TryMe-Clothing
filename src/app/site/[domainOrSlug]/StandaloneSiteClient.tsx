@@ -948,8 +948,30 @@ export default function StandaloneSiteClient({
     config?.productsSection?.title ||
     (entityType === "ADS_SELLER" ? "My Ads & Listings" : "Store Products");
 
-  // Reusable Product / Ad Card Renderer
+  // Reusable Product / Ad Card Renderer (Fully Customizable via Website Builder)
   const renderProductCard = (p: any, idx: number) => {
+    const pCfg = config?.productsSection || {};
+    const cardLayout = pCfg.cardLayout || "standard";
+    const showPrice = pCfg.showPrice !== false;
+    const showBadge = pCfg.showBadge !== false;
+    const showDescription = pCfg.showDescription !== false;
+    const imageFit = pCfg.imageFit === "cover" ? "object-cover" : "object-contain";
+
+    // 1-Page Website options:
+    const showWhatsApp1Page = pCfg.showWhatsApp !== false;
+    const showInquiry1Page = pCfg.showInquiry !== false;
+    const whatsappLabel1Page = pCfg.whatsappButtonText?.trim() || "WhatsApp";
+    const inquiryLabel1Page = pCfg.inquiryButtonText?.trim() || "Inquire";
+
+    // Multi-Page Website options:
+    const showCartMulti = pCfg.showAddToCart !== false;
+    const showBuyNowMulti = pCfg.showBuyNow !== false;
+    const showDetailsMulti = pCfg.showViewDetails !== false;
+    const showWhatsAppMulti = Boolean(pCfg.showMultiPageWhatsApp);
+    const cartLabel = pCfg.cartButtonText?.trim() || "Add to Cart";
+    const buyNowLabel = pCfg.buyNowButtonText?.trim() || "Buy Now";
+    const detailsLabel = pCfg.detailsButtonText?.trim() || "View Details";
+
     const title = p.title || p.name || `Item #${idx + 1}`;
     const numericPrice = p.price != null && p.price !== "" ? Number(p.price) : null;
     const priceLabel =
@@ -965,11 +987,18 @@ export default function StandaloneSiteClient({
       (typeof p.images?.[0] === "string" ? p.images[0] : null);
     const isAd = p.type === "AD" || entityType === "ADS_SELLER";
 
+    // Card Layout Styles:
+    let containerClass = "bg-white rounded-2xl border border-slate-200/80 p-3.5 hover:shadow-xl transition-all duration-300 group flex flex-col justify-between";
+    if (cardLayout === "modern") {
+      containerClass = "bg-white/95 dark:bg-slate-900/90 rounded-3xl border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between p-4";
+    } else if (cardLayout === "compact") {
+      containerClass = "bg-white rounded-xl border border-slate-200 p-2.5 hover:shadow-md transition-all duration-200 group flex flex-col justify-between text-xs";
+    } else if (cardLayout === "bordered") {
+      containerClass = "bg-white rounded-2xl border-2 border-slate-800/10 hover:border-orange-500/80 p-3.5 transition-all duration-300 group flex flex-col justify-between shadow-xs";
+    }
+
     return (
-      <div
-        key={p.id || idx}
-        className="bg-white rounded-2xl border border-slate-200/80 p-3.5 hover:shadow-xl transition-all duration-300 group flex flex-col justify-between"
-      >
+      <div key={p.id || idx} className={containerClass}>
         <div
           onClick={() => handleItemCardClick(p, isAd ? "AD" : "PRODUCT")}
           className="cursor-pointer"
@@ -980,78 +1009,100 @@ export default function StandaloneSiteClient({
                 src={img}
                 alt={title}
                 fill
-                className="object-contain object-center p-2 group-hover:scale-105 transition-transform duration-300"
+                className={`${imageFit} object-center p-2 group-hover:scale-105 transition-transform duration-300`}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-slate-300">
                 <ShoppingBag className="w-10 h-10" />
               </div>
             )}
-            <div className="absolute top-2 left-2 flex flex-wrap gap-1 z-10">
-              <span className="bg-black/70 backdrop-blur-md text-[9px] uppercase font-black text-white px-2.5 py-0.5 rounded-full">
-                {isAd ? "Verified Ad" : p.stock === 0 ? "Out of Stock" : "In Stock"}
-              </span>
-              {compareAt && numericPrice && compareAt > numericPrice && (
-                <span className="bg-rose-600 text-[9px] uppercase font-black text-white px-2 py-0.5 rounded-full">
-                  {Math.round(((compareAt - numericPrice) / compareAt) * 100)}% OFF
+            {showBadge && (
+              <div className="absolute top-2 left-2 flex flex-wrap gap-1 z-10">
+                <span className="bg-black/70 backdrop-blur-md text-[9px] uppercase font-black text-white px-2.5 py-0.5 rounded-full">
+                  {isAd ? "Verified Ad" : p.stock === 0 ? "Out of Stock" : "In Stock"}
                 </span>
-              )}
-            </div>
+                {compareAt && numericPrice && compareAt > numericPrice && (
+                  <span className="bg-rose-600 text-[9px] uppercase font-black text-white px-2 py-0.5 rounded-full">
+                    {Math.round(((compareAt - numericPrice) / compareAt) * 100)}% OFF
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <h4 className="font-bold text-sm text-slate-900 line-clamp-2 group-hover:underline">
             {title}
           </h4>
-          {p.description && (
+          {showDescription && p.description && (
             <p className="text-xs text-slate-500 mt-1 line-clamp-2">{p.description}</p>
           )}
         </div>
 
         <div className="mt-3 pt-3 border-t space-y-2.5">
-          <div className="flex items-baseline justify-between">
-            <div>
-              <span className="text-sm font-black text-slate-900">{priceLabel}</span>
-              {compareAt && numericPrice && compareAt > numericPrice && (
-                <span className="text-[11px] text-slate-400 line-through ml-1.5">
-                  Rs. {compareAt.toLocaleString()}
-                </span>
+          {showPrice && (
+            <div className="flex items-baseline justify-between">
+              <div>
+                <span className="text-sm font-black text-slate-900">{priceLabel}</span>
+                {compareAt && numericPrice && compareAt > numericPrice && (
+                  <span className="text-[11px] text-slate-400 line-through ml-1.5">
+                    Rs. {compareAt.toLocaleString()}
+                  </span>
+                )}
+              </div>
+              {isMultiPage && showDetailsMulti && (
+                <button
+                  type="button"
+                  onClick={() => handleItemCardClick(p, isAd ? "AD" : "PRODUCT")}
+                  className="text-[11px] font-bold hover:underline flex items-center gap-0.5"
+                  style={{ color: primaryColor }}
+                >
+                  <span>{detailsLabel}</span>
+                  <ChevronRight className="w-3 h-3" />
+                </button>
               )}
             </div>
-            {isMultiPage && (
-              <button
-                type="button"
-                onClick={() => handleItemCardClick(p, isAd ? "AD" : "PRODUCT")}
-                className="text-[11px] font-bold hover:underline flex items-center gap-0.5"
-                style={{ color: primaryColor }}
-              >
-                <span>View Details</span>
-                <ChevronRight className="w-3 h-3" />
-              </button>
-            )}
-          </div>
+          )}
 
           {isMultiPage ? (
             !isAd && numericPrice != null ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  disabled={p.stock === 0}
-                  onClick={() => addToCart(p, 1, null, "PRODUCT")}
-                  className="py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold text-[11px] inline-flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
-                >
-                  <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">Add to Cart</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={p.stock === 0}
-                  onClick={() => handleBuyNow(p, 1, null, "PRODUCT")}
-                  className="py-2 px-2.5 rounded-xl text-white font-bold text-[11px] shadow-sm hover:opacity-90 inline-flex items-center justify-center gap-1 transition-opacity disabled:opacity-50"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  <Zap className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">Buy Now</span>
-                </button>
+              <div className="flex flex-col gap-1.5">
+                {(showCartMulti || showBuyNowMulti) && (
+                  <div className={`grid ${showCartMulti && showBuyNowMulti ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"} gap-1.5`}>
+                    {showCartMulti && (
+                      <button
+                        type="button"
+                        disabled={p.stock === 0}
+                        onClick={() => addToCart(p, 1, null, "PRODUCT")}
+                        className="py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold text-[11px] inline-flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
+                      >
+                        <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{cartLabel}</span>
+                      </button>
+                    )}
+                    {showBuyNowMulti && (
+                      <button
+                        type="button"
+                        disabled={p.stock === 0}
+                        onClick={() => handleBuyNow(p, 1, null, "PRODUCT")}
+                        className="py-2 px-2.5 rounded-xl text-white font-bold text-[11px] shadow-sm hover:opacity-90 inline-flex items-center justify-center gap-1 transition-opacity disabled:opacity-50"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        <Zap className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{buyNowLabel}</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+                {showWhatsAppMulti && (
+                  <button
+                    type="button"
+                    onClick={() => handleInquiryViaWhatsApp(p)}
+                    className="w-full py-1.5 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] inline-flex items-center justify-center gap-1 border border-emerald-200 transition-colors"
+                  >
+                    <MessageCircle className="w-3 h-3 shrink-0 text-emerald-600" />
+                    <span className="truncate">Ask on WhatsApp</span>
+                  </button>
+                )}
               </div>
             ) : (
               <button
@@ -1061,29 +1112,33 @@ export default function StandaloneSiteClient({
                 style={{ backgroundColor: primaryColor }}
               >
                 <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">View Details &amp; Order</span>
+                <span className="truncate">{detailsLabel} &amp; Order</span>
               </button>
             )
           ) : (
-            /* 1-Page Website Mode: Order / Buy via WhatsApp, Email, or Inquiry */
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleInquiryViaWhatsApp(p)}
-                className="py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] inline-flex items-center justify-center gap-1 shadow-xs transition-colors"
-              >
-                <MessageCircle className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">WhatsApp</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => openInquiryModal(p, isAd ? "AD" : "PRODUCT")}
-                className="py-2 px-2.5 rounded-xl text-white font-bold text-[11px] inline-flex items-center justify-center gap-1 shadow-xs hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <Mail className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Inquire</span>
-              </button>
+            /* 1-Page Website Mode: Order / Inquire via WhatsApp or Instant Form */
+            <div className={`grid ${showWhatsApp1Page && showInquiry1Page ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"} gap-1.5`}>
+              {showWhatsApp1Page && (
+                <button
+                  type="button"
+                  onClick={() => handleInquiryViaWhatsApp(p)}
+                  className="py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] inline-flex items-center justify-center gap-1 shadow-xs transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{whatsappLabel1Page}</span>
+                </button>
+              )}
+              {showInquiry1Page && (
+                <button
+                  type="button"
+                  onClick={() => openInquiryModal(p, isAd ? "AD" : "PRODUCT")}
+                  className="py-2 px-2.5 rounded-xl text-white font-bold text-[11px] inline-flex items-center justify-center gap-1 shadow-xs hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <Mail className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{inquiryLabel1Page}</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -1091,13 +1146,37 @@ export default function StandaloneSiteClient({
     );
   };
 
-  // Reusable Service Card Renderer
+  // Reusable Service Card Renderer (Fully Customizable via Website Builder)
   const renderServiceCard = (s: any, idx: number) => {
+    const sCfg = config?.servicesSection || {};
+    const cardLayout = sCfg.cardLayout || "standard";
+    const showPrice = sCfg.showPrice !== false;
+    const showDescription = sCfg.showDescription !== false;
+    const imageFit = sCfg.imageFit === "cover" ? "object-cover" : "object-contain";
+
+    // 1-Page options:
+    const showWhatsApp1Page = sCfg.showWhatsApp !== false;
+    const showInquiry1Page = sCfg.showInquiry !== false;
+    const whatsappLabel1Page = sCfg.whatsappButtonText?.trim() || "WhatsApp";
+    const inquiryLabel1Page = sCfg.inquiryButtonText?.trim() || "Inquire";
+
+    // Multi-Page options:
+    const showBookMulti = sCfg.showBookNow !== false;
+    const showDetailsMulti = sCfg.showViewDetails !== false;
+    const bookLabel = sCfg.bookButtonText?.trim() || "Book / Order";
+    const detailsLabel = sCfg.detailsButtonText?.trim() || "View Details";
+
+    let containerClass = "bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group";
+    if (cardLayout === "modern") {
+      containerClass = "bg-white/95 dark:bg-slate-900/90 rounded-3xl border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group p-4";
+    } else if (cardLayout === "compact") {
+      containerClass = "bg-white rounded-xl border border-slate-200 p-2.5 hover:shadow-md transition-all duration-200 flex flex-col justify-between group text-xs";
+    } else if (cardLayout === "bordered") {
+      containerClass = "bg-white rounded-2xl border-2 border-slate-800/10 hover:border-amber-500/80 p-3.5 transition-all duration-300 flex flex-col justify-between shadow-xs group";
+    }
+
     return (
-      <div
-        key={s.id || idx}
-        className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
-      >
+      <div key={s.id || idx} className={containerClass}>
         <div
           onClick={() => handleItemCardClick(s, "SERVICE")}
           className="cursor-pointer"
@@ -1108,7 +1187,7 @@ export default function StandaloneSiteClient({
                 src={s.imageUrl}
                 alt={s.name}
                 fill
-                className="object-contain object-center p-2 group-hover:scale-105 transition-transform duration-300"
+                className={`${imageFit} object-center p-2 group-hover:scale-105 transition-transform duration-300`}
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-400 p-4 text-center">
@@ -1135,54 +1214,64 @@ export default function StandaloneSiteClient({
             <h3 className="font-extrabold text-sm sm:text-base text-slate-900 group-hover:underline line-clamp-2">
               {s.name}
             </h3>
-            {s.description && (
+            {showDescription && s.description && (
               <p className="text-xs text-slate-500 mt-1 line-clamp-2">{s.description}</p>
             )}
-            <p className="text-sm font-black mt-2" style={{ color: primaryColor }}>
-              {s.price}
-            </p>
+            {showPrice && (
+              <p className="text-sm font-black mt-2" style={{ color: primaryColor }}>
+                {s.price}
+              </p>
+            )}
           </div>
         </div>
 
         <div className="mt-3 pt-3 border-t">
           {isMultiPage ? (
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleItemCardClick(s, "SERVICE")}
-                className="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold inline-flex items-center justify-center gap-1"
-              >
-                <span>View Details</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => openInquiryModal(s, "SERVICE")}
-                className="py-2.5 px-3 rounded-xl text-white text-xs font-black shadow-sm hover:opacity-90 inline-flex items-center justify-center gap-1"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <MessageCircle className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Book / Order</span>
-              </button>
+            <div className={`grid ${showDetailsMulti && showBookMulti ? "grid-cols-2" : "grid-cols-1"} gap-2`}>
+              {showDetailsMulti && (
+                <button
+                  type="button"
+                  onClick={() => handleItemCardClick(s, "SERVICE")}
+                  className="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold inline-flex items-center justify-center gap-1"
+                >
+                  <span>{detailsLabel}</span>
+                </button>
+              )}
+              {showBookMulti && (
+                <button
+                  type="button"
+                  onClick={() => openInquiryModal(s, "SERVICE")}
+                  className="py-2.5 px-3 rounded-xl text-white text-xs font-black shadow-sm hover:opacity-90 inline-flex items-center justify-center gap-1"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{bookLabel}</span>
+                </button>
+              )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleInquiryViaWhatsApp(s)}
-                className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1"
-              >
-                <MessageCircle className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">WhatsApp</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => openInquiryModal(s, "SERVICE")}
-                className="py-2.5 px-3 rounded-xl text-white text-xs font-bold inline-flex items-center justify-center gap-1 hover:opacity-90"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <Mail className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Inquire</span>
-              </button>
+            <div className={`grid ${showWhatsApp1Page && showInquiry1Page ? "grid-cols-2" : "grid-cols-1"} gap-1.5`}>
+              {showWhatsApp1Page && (
+                <button
+                  type="button"
+                  onClick={() => handleInquiryViaWhatsApp(s)}
+                  className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{whatsappLabel1Page}</span>
+                </button>
+              )}
+              {showInquiry1Page && (
+                <button
+                  type="button"
+                  onClick={() => openInquiryModal(s, "SERVICE")}
+                  className="py-2.5 px-3 rounded-xl text-white text-xs font-bold shadow-xs hover:opacity-90 inline-flex items-center justify-center gap-1"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <Mail className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{inquiryLabel1Page}</span>
+                </button>
+              )}
             </div>
           )}
         </div>
