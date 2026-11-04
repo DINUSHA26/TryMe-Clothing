@@ -11,9 +11,7 @@ import {
   RotateCcw,
   ExternalLink,
   PhoneCall,
-  CheckCircle2,
   Minimize2,
-  ChevronRight,
 } from "lucide-react";
 
 interface ActionItem {
@@ -46,6 +44,7 @@ export default function StoreAiAssistant({
   storeName = "Store",
   productTitle,
 }: StoreAiAssistantProps) {
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -53,13 +52,16 @@ export default function StoreAiAssistant({
   const [hasUnreadNotice, setHasUnreadNotice] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const initialGreeting = productTitle
     ? `Hello! 👋 I'm your AI Shopping Assistant for **${storeName}**.\n\nYou're viewing **"${productTitle}"**. You can ask me anything about its price, specifications, stock, or delivery in English, සිංහල, Singlish, or தமிழ்!`
     : `Hello! 👋 Welcome to **${storeName}**.\n\nI'm your official AI Store Assistant. Ask me anything about our products, prices, stock availability, or location in English, සිංහල, Singlish, or தமிழ்!`;
 
   useEffect(() => {
-    // Initialize welcome message
-    if (messages.length === 0) {
+    if (mounted && messages.length === 0) {
       setMessages([
         {
           id: "welcome",
@@ -69,7 +71,7 @@ export default function StoreAiAssistant({
         },
       ]);
     }
-  }, [storeName, productTitle]);
+  }, [mounted, storeName, productTitle]);
 
   useEffect(() => {
     if (isOpen) {
@@ -77,6 +79,8 @@ export default function StoreAiAssistant({
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [isOpen, messages, isLoading]);
+
+  if (!mounted) return null;
 
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputMessage).trim();
@@ -96,7 +100,6 @@ export default function StoreAiAssistant({
     setIsLoading(true);
 
     try {
-      // Send chat history for context continuity
       const historyForApi = newMessages
         .filter((m) => m.id !== "welcome")
         .map((m) => ({
@@ -173,14 +176,14 @@ export default function StoreAiAssistant({
   return (
     <>
       {/* ── Floating AI Trigger Button (Bottom Right) ── */}
-      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-end gap-2.5">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] flex items-end gap-2.5 pointer-events-auto">
         {/* Subtle Welcome Tooltip / Chip when closed */}
         {!isOpen && hasUnreadNotice && (
           <div
             onClick={() => setIsOpen(true)}
-            className="hidden sm:flex items-center gap-2 bg-white dark:bg-slate-900 border border-orange-500/30 text-slate-800 dark:text-slate-100 px-3.5 py-2 rounded-2xl shadow-xl cursor-pointer hover:border-orange-500 transition-all animate-bounce"
+            className="hidden sm:flex items-center gap-2 bg-white dark:bg-slate-900 border border-orange-500/40 text-slate-800 dark:text-slate-100 px-3.5 py-2 rounded-2xl shadow-2xl cursor-pointer hover:border-orange-500 transition-all animate-bounce"
           >
-            <Sparkles className="w-4 h-4 text-orange-500" />
+            <Sparkles className="w-4 h-4 text-orange-500 shrink-0" />
             <div className="text-xs font-bold leading-tight">
               <span>Ask Store AI</span>
               <span className="block text-[10px] text-slate-400 font-normal">
@@ -195,10 +198,10 @@ export default function StoreAiAssistant({
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle Store AI Assistant"
-          className={`relative group flex items-center justify-center rounded-full shadow-2xl transition-all duration-300 ${
+          className={`relative group flex items-center justify-center rounded-full shadow-2xl transition-all duration-300 cursor-pointer ${
             isOpen
               ? "w-12 h-12 bg-slate-800 text-white hover:bg-slate-900"
-              : "w-14 h-14 bg-gradient-to-tr from-orange-600 to-amber-500 text-white hover:scale-105 hover:shadow-orange-500/40"
+              : "w-14 h-14 bg-gradient-to-tr from-orange-600 to-amber-500 text-white hover:scale-105 hover:shadow-orange-500/50 ring-4 ring-orange-500/20"
           }`}
         >
           {isOpen ? (
@@ -218,7 +221,7 @@ export default function StoreAiAssistant({
 
       {/* ── Slide-up Interactive Chat Dialog Window ── */}
       {isOpen && (
-        <div className="fixed bottom-20 right-3 sm:right-6 w-[calc(100vw-24px)] sm:w-[420px] max-h-[620px] h-[82vh] sm:h-[580px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl z-50 flex flex-col overflow-hidden font-sans animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-20 right-3 sm:right-6 w-[calc(100vw-24px)] sm:w-[420px] max-h-[620px] h-[82vh] sm:h-[580px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl z-[9999] flex flex-col overflow-hidden font-sans animate-in fade-in slide-in-from-bottom-5 duration-200 pointer-events-auto">
           {/* Header */}
           <div className="px-4 py-3.5 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white flex items-center justify-between shrink-0 shadow-sm">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -246,7 +249,7 @@ export default function StoreAiAssistant({
                 type="button"
                 onClick={handleResetChat}
                 title="Clear and restart chat"
-                className="p-1.5 rounded-xl hover:bg-white/20 text-white/90 hover:text-white transition-colors"
+                className="p-1.5 rounded-xl hover:bg-white/20 text-white/90 hover:text-white transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
@@ -254,7 +257,7 @@ export default function StoreAiAssistant({
                 type="button"
                 onClick={() => setIsOpen(false)}
                 title="Minimize chat"
-                className="p-1.5 rounded-xl hover:bg-white/20 text-white/90 hover:text-white transition-colors"
+                className="p-1.5 rounded-xl hover:bg-white/20 text-white/90 hover:text-white transition-colors cursor-pointer"
               >
                 <Minimize2 className="w-4 h-4" />
               </button>
@@ -377,7 +380,7 @@ export default function StoreAiAssistant({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Suggestion Chips (when user hasn't typed many questions yet) */}
+          {/* Quick Suggestion Chips */}
           {messages.length <= 3 && !isLoading && (
             <div className="px-3.5 py-2 bg-slate-100/70 dark:bg-slate-900/70 border-t border-slate-200/60 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
               {quickQuestions.map((q, i) => (
@@ -385,7 +388,7 @@ export default function StoreAiAssistant({
                   key={i}
                   type="button"
                   onClick={() => handleSendMessage(q)}
-                  className="whitespace-nowrap px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-orange-50 hover:border-orange-300 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors shadow-xs"
+                  className="whitespace-nowrap px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-orange-50 hover:border-orange-300 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors shadow-xs cursor-pointer"
                 >
                   {q}
                 </button>
@@ -413,7 +416,7 @@ export default function StoreAiAssistant({
               <button
                 type="submit"
                 disabled={!inputMessage.trim() || isLoading}
-                className="w-10 h-10 rounded-2xl bg-orange-600 hover:bg-orange-700 disabled:opacity-40 text-white flex items-center justify-center transition-all shrink-0 shadow-md shadow-orange-600/30"
+                className="w-10 h-10 rounded-2xl bg-orange-600 hover:bg-orange-700 disabled:opacity-40 text-white flex items-center justify-center transition-all shrink-0 shadow-md shadow-orange-600/30 cursor-pointer"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -427,4 +430,3 @@ export default function StoreAiAssistant({
     </>
   );
 }
-
