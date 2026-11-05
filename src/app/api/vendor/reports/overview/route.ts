@@ -4,22 +4,35 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireAuth, handleAuthError, AuthError } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { UserRole } from "@prisma/client";
+import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
 import { adminOverviewFiltersSchema } from "@/lib/validations/report";
 import { startOfMonth } from "date-fns";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = requireVendor(request);
+    const user = requireAuth(request);
+    let vendorId: string;
 
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
-    if (!vendorRecord) {
-      return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
+    if (user.role === UserRole.VENDOR) {
+      const vendorRecord = await prisma.vendor.findUnique({
+        where: { userId: user.userId },
+      });
+      if (!vendorRecord) {
+        return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
+      }
+      vendorId = vendorRecord.id;
+    } else if (user.role === UserRole.ADS_SELLER) {
+      const sellerVendor = await getOrCreateAdsSellerVendor(user.userId);
+      if (!sellerVendor) {
+        return NextResponse.json({ success: false, error: "Ads seller profile not found" }, { status: 404 });
+      }
+      vendorId = sellerVendor.vendor.id;
+    } else {
+      throw new AuthError("Forbidden: Vendor or Ads Seller access required", 403);
     }
-    const vendorId = vendorRecord.id;
 
     const searchParams = request.nextUrl.searchParams;
     const queryParams = {

@@ -64,11 +64,13 @@ interface OverviewStats {
 interface VendorOverviewStatsProps {
   dateFrom?: string;
   dateTo?: string;
+  basePath?: string;
 }
 
 export function VendorOverviewStats({
   dateFrom,
   dateTo,
+  basePath = "/vendor",
 }: VendorOverviewStatsProps) {
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -411,25 +413,25 @@ export function VendorOverviewStats({
               </p>
             </div>
             <div className="flex flex-wrap gap-2 shrink-0">
-              <Link href="/vendor/orders?source=website">
+              <Link href={`${basePath}/orders?source=website`}>
                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5">
                   <ShoppingCart className="w-3.5 h-3.5" />
                   Website Orders ({web?.totalOrders || 0})
                 </Button>
               </Link>
-              <Link href="/vendor/orders?source=inquiries">
+              <Link href={`${basePath}/orders?source=inquiries`}>
                 <Button size="sm" variant="outline" className="gap-1.5">
                   <MessageSquare className="w-3.5 h-3.5" />
                   Inquiries ({web?.inquiriesCount || 0})
                 </Button>
               </Link>
-              <Link href="/vendor/reviews">
+              <Link href={`${basePath}/reviews`}>
                 <Button size="sm" variant="outline" className="gap-1.5">
                   <Star className="w-3.5 h-3.5" />
                   Website Reviews ({web?.reviewsCount || 0})
                 </Button>
               </Link>
-              <Link href="/vendor/website-builder">
+              <Link href={`${basePath}/website-builder`}>
                 <Button size="sm" variant="outline" className="gap-1.5">
                   <Globe className="w-3.5 h-3.5" />
                   Website Builder
@@ -499,13 +501,13 @@ export function VendorOverviewStats({
               </p>
             </div>
             <div className="flex flex-wrap gap-2 shrink-0">
-              <Link href="/vendor/pos">
+              <Link href={`${basePath}/pos`}>
                 <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
                   <MonitorDot className="w-3.5 h-3.5" />
                   Open POS Terminal
                 </Button>
               </Link>
-              <Link href="/vendor/orders?source=pos">
+              <Link href={`${basePath}/orders?source=pos`}>
                 <Button size="sm" variant="outline" className="gap-1.5">
                   <Receipt className="w-3.5 h-3.5" />
                   POS Receipts ({pos?.totalOrders || 0})

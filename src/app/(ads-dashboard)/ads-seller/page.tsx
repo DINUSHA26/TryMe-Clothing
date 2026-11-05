@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
 import { formatDistance } from "date-fns";
+import { VendorOverviewStats } from "@/components/vendor/reports/VendorOverviewStats";
+import { Globe, ShoppingCart, Package, Wallet, Tag, MonitorDot, Receipt, Sparkles } from "lucide-react";
 export default function AdsSellerDashboardHome() {
   const { user } = useAuthStore();
   const { toast } = useToast();
@@ -81,28 +83,178 @@ export default function AdsSellerDashboardHome() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Welcome Banner */}
-      <div className="bg-card dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-6 md:p-8 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
-        <div className="absolute right-0 bottom-0 top-0 opacity-5 pointer-events-none translate-x-12 translate-y-6 text-[#FF6600]">
-          <Megaphone className="h-64 w-64 rotate-12" />
-        </div>
-        <div className="space-y-1.5 relative z-10">
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
-            Welcome back, {sellerName}!
-          </h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm max-w-xl leading-relaxed">
-            Manage your classified listings, track views, and update your mini-website storefront profile from here.
+      {/* Welcome Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome back, {sellerName} — manage your TryMe.lk store, classified ads, POS, and standalone website
           </p>
         </div>
-        <Button
-          asChild
-          className="bg-[#FF6600] hover:bg-[#e65c00] text-white font-bold rounded-xl flex items-center gap-2 shadow-lg relative z-10 transition-transform active:scale-95"
-        >
-          <Link href="/ads-seller/post-ad">
-            <PlusCircle className="h-4.5 w-4.5" />
-            <span>Post an Ad</span>
+        <div className="flex items-center gap-2">
+          <Link href="/ads-seller/website-builder">
+            <Button variant="outline" className="gap-2">
+              <Globe className="h-4 w-4 text-emerald-600" />
+              Website Builder
+            </Button>
           </Link>
-        </Button>
+          <Link href="/ads-seller/post-ad">
+            <Button className="bg-[#FF6600] hover:bg-[#e65c00] text-white gap-2 font-bold shadow-sm">
+              <PlusCircle className="h-4 w-4" />
+              Post an Ad
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Omnichannel Overview Statistics (TryMe.lk Marketplace vs My Website Direct vs POS Retail Counter) */}
+      <VendorOverviewStats basePath="/ads-seller" />
+
+      {/* Omnichannel Quick Navigation Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* TryMe.lk Marketplace Stream */}
+        <div className="bg-card rounded-xl border p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
+                <Store className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold">TryMe Marketplace</h3>
+                <p className="text-[11px] text-muted-foreground">Catalog &amp; escrow wallet</p>
+              </div>
+            </div>
+            <Badge className="bg-blue-500/10 text-blue-700 text-[10px]">Escrow</Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Link href="/ads-seller/orders?source=tryme">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <ShoppingCart className="h-3.5 w-3.5 text-blue-600" />
+                Orders
+              </Button>
+            </Link>
+            <Link href="/ads-seller/products">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <Package className="h-3.5 w-3.5 text-blue-600" />
+                Products
+              </Button>
+            </Link>
+            <Link href="/ads-seller/wallet">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <Wallet className="h-3.5 w-3.5 text-blue-600" />
+                Wallet
+              </Button>
+            </Link>
+            <Link href="/ads-seller/coupons">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <Tag className="h-3.5 w-3.5 text-blue-600" />
+                Coupons
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Standalone Website Stream */}
+        <div className="bg-card rounded-xl border border-emerald-500/20 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
+                <Globe className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold">My Personal Website</h3>
+                <p className="text-[11px] text-muted-foreground">Direct COD &amp; Bank sales</p>
+              </div>
+            </div>
+            <Badge className="bg-emerald-500/10 text-emerald-700 text-[10px]">Direct</Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Link href="/ads-seller/orders?source=website">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <ShoppingCart className="h-3.5 w-3.5 text-emerald-600" />
+                Orders
+              </Button>
+            </Link>
+            <Link href="/ads-seller/services">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                Services
+              </Button>
+            </Link>
+            <Link href="/ads-seller/orders?source=inquiries">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <Globe className="h-3.5 w-3.5 text-emerald-600" />
+                Inquiries
+              </Button>
+            </Link>
+            <Link href="/ads-seller/website-builder">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <Store className="h-3.5 w-3.5 text-emerald-600" />
+                Builder
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* POS Counter Stream */}
+        <div className="bg-card rounded-xl border border-amber-500/20 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+                <MonitorDot className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold">POS Retail Counter</h3>
+                <p className="text-[11px] text-muted-foreground">In-store cash register</p>
+              </div>
+            </div>
+            <Badge className="bg-amber-500/10 text-amber-700 text-[10px]">Walk-in</Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Link href="/ads-seller/pos">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <MonitorDot className="h-3.5 w-3.5 text-amber-600" />
+                Open POS
+              </Button>
+            </Link>
+            <Link href="/ads-seller/orders?source=pos">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <Receipt className="h-3.5 w-3.5 text-amber-600" />
+                Receipts
+              </Button>
+            </Link>
+            <Link href="/ads-seller/products">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <Package className="h-3.5 w-3.5 text-amber-600" />
+                Stock Sync
+              </Button>
+            </Link>
+            <Link href="/ads-seller/reviews">
+              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                <Store className="h-3.5 w-3.5 text-amber-600" />
+                Reviews
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Classifieds Listings & Moderation Hub */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Megaphone className="w-5 h-5 text-[#FF6600]" />
+              Classified Ads &amp; Membership
+            </h2>
+            <p className="text-xs text-muted-foreground">Manage your marketplace classified listings, slot usage, and ad promotions</p>
+          </div>
+          <Link href="/ads-seller/my-ads">
+            <Button variant="ghost" size="sm" className="text-xs text-[#FF6600]">
+              All Classified Ads &rarr;
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Grid Stats */}

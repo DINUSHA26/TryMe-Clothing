@@ -10,7 +10,7 @@ import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
 import { getVendorOrders as getVendorOrdersDirect } from "@/lib/services/vendor-order-service";
 import { VendorOrdersTable } from "@/components/vendor/orders/VendorOrdersTable";
 import { WebsiteInquiriesManager } from "@/components/vendor/orders/WebsiteInquiriesManager";
-import { Package, Store, Globe, Inbox } from "lucide-react";
+import { Package, Store, Globe, Inbox, Receipt } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ import { OrderStatus } from "@prisma/client";
 interface SearchParams {
   page?: string;
   status?: OrderStatus;
-  source?: "tryme" | "website" | "inquiries" | "all";
+  source?: "tryme" | "website" | "pos" | "inquiries" | "all";
 }
 
 async function getAdsSellerOrders(searchParams: SearchParams) {
@@ -89,7 +89,7 @@ export default async function AdsSellerOrdersPage({
   const {
     orders,
     websiteInquiries = [],
-    channelCounts = { tryme: 0, website: 0, inquiries: 0 },
+    channelCounts = { tryme: 0, website: 0, pos: 0, inquiries: 0 },
     pagination,
     stats,
   } = result;
@@ -120,7 +120,8 @@ export default async function AdsSellerOrdersPage({
       </div>
 
       {/* Channel Switcher Tabs */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-muted/40 p-2 rounded-2xl border">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 bg-muted/40 p-2 rounded-2xl border">
+        {/* TryMe Marketplace Tab */}
         <Link href="/ads-seller/orders?source=tryme">
           <div
             className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
@@ -144,6 +145,7 @@ export default async function AdsSellerOrdersPage({
           </div>
         </Link>
 
+        {/* Website Direct Orders Tab */}
         <Link href="/ads-seller/orders?source=website">
           <div
             className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
@@ -173,6 +175,37 @@ export default async function AdsSellerOrdersPage({
           </div>
         </Link>
 
+        {/* POS In-Store Receipts Tab */}
+        <Link href="/ads-seller/orders?source=pos">
+          <div
+            className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+              currentSource === "pos"
+                ? "bg-card shadow-sm border-amber-500/40 ring-1 ring-amber-500/20"
+                : "bg-transparent border-transparent hover:bg-card/60"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                <Receipt className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-bold text-xs sm:text-sm">POS Receipts</p>
+                <p className="text-[11px] text-muted-foreground">In-Store Walk-ins</p>
+              </div>
+            </div>
+            <Badge
+              className={
+                currentSource === "pos"
+                  ? "bg-amber-600 text-white font-bold"
+                  : "bg-amber-500/10 text-amber-700 font-bold"
+              }
+            >
+              {channelCounts.pos || 0}
+            </Badge>
+          </div>
+        </Link>
+
+        {/* Website Inquiries Tab */}
         <Link href="/ads-seller/orders?source=inquiries">
           <div
             className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
@@ -202,6 +235,7 @@ export default async function AdsSellerOrdersPage({
           </div>
         </Link>
 
+        {/* All Combined Tab */}
         <Link href="/ads-seller/orders?source=all">
           <div
             className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
@@ -220,7 +254,7 @@ export default async function AdsSellerOrdersPage({
               </div>
             </div>
             <Badge variant="outline" className="font-bold">
-              {channelCounts.tryme + channelCounts.website}
+              {channelCounts.tryme + channelCounts.website + (channelCounts.pos || 0)}
             </Badge>
           </div>
         </Link>
@@ -248,9 +282,11 @@ export default async function AdsSellerOrdersPage({
               <p className="text-xs text-muted-foreground mb-1 font-medium">
                 {currentSource === "website"
                   ? "Total Website Orders"
-                  : currentSource === "tryme"
-                  ? "Total TryMe Orders"
-                  : "Total Orders"}
+                  : currentSource === "pos"
+                  ? "Total POS Receipts"
+                  : currentSource === "all"
+                  ? "Total Combined"
+                  : "Total TryMe Orders"}
               </p>
               <p className="text-2xl font-bold">{stats.total}</p>
             </div>
