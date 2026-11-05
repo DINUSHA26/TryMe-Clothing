@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
-  serverExternalPackages: ["jose"],
+  serverExternalPackages: ["jose", "@prisma/client", "prisma"],
 };
 
 export default nextConfig;
