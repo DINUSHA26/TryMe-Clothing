@@ -24,10 +24,10 @@ export function NewsletterPopup() {
       }
     }
 
-    // Set a timer to show the popup after 20 seconds (20000ms)
+    // Set a timer to show the popup after 50 seconds (50000ms)
     const timer = setTimeout(() => {
       setIsOpen(true);
-    }, 20000);
+    }, 50000);
 
     return () => clearTimeout(timer);
   }, []);

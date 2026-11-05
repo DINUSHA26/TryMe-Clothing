@@ -153,19 +153,21 @@ function SitePreviewContent() {
   };
 
   return (
-    <StandaloneSiteClient
-      domainOrSlug={rawPayload.entityInfo?.slug || "preview-store"}
-      siteData={mappedSiteData}
-      initialPageSlug={activeTab}
-      isPreview={true}
-      previewDevice={previewDevice}
-      onPreviewPageSelect={(slug) => {
-        setActiveTab(slug);
-        try {
-          window.parent.postMessage({ type: "PAGE_SELECTED_IN_PREVIEW", pageSlug: slug }, "*");
-        } catch {}
-      }}
-    />
+    <div className="w-full h-screen overflow-y-auto overflow-x-hidden scroll-smooth">
+      <StandaloneSiteClient
+        domainOrSlug={rawPayload.entityInfo?.slug || "preview-store"}
+        siteData={mappedSiteData}
+        initialPageSlug={activeTab}
+        isPreview={true}
+        previewDevice={previewDevice}
+        onPreviewPageSelect={(slug) => {
+          setActiveTab(slug);
+          try {
+            window.parent.postMessage({ type: "PAGE_SELECTED_IN_PREVIEW", pageSlug: slug }, "*");
+          } catch {}
+        }}
+      />
+    </div>
   );
 }
 

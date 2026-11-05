@@ -128,7 +128,7 @@ export default function Home() {
         const adsCatResponse = await fetch("/api/ads/public/categories");
         const adsCatData = await adsCatResponse.json();
         if (adsCatData.success) {
-          const slicedAds = adsCatData.data.slice(0, 5);
+          const slicedAds = adsCatData.data.slice(0, 10);
           setAdsCategories(slicedAds); // First 5 categories
           localStorage.setItem("swr_ads_categories", JSON.stringify(slicedAds));
         }
@@ -260,7 +260,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Ads Categories Section */}
+      {/* Ads Categories Section (10 Categories in 2 Rows) */}
       <section className="py-10 md:py-16">
         <div className="container px-4 md:px-6">
           <div className="flex items-center justify-between gap-2 mb-6 md:mb-8">
@@ -273,29 +273,23 @@ export default function Home() {
             </Button>
           </div>
           {adsCategoriesLoading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-              {Array.from({ length: 5 }).map((_, i) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {Array.from({ length: 10 }).map((_, i) => (
                 <Skeleton
                   key={i}
-                  className={cn(
-                    "w-full min-h-[170px] rounded-[1.5rem]",
-                    i === 4 && "hidden lg:flex"
-                  )}
+                  className="w-full min-h-[160px] rounded-[1.5rem]"
                 />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-              {adsCategories.map((cat, index) => {
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {adsCategories.slice(0, 10).map((cat) => {
                 const adCount = getCategoryCount(cat);
                 return (
                   <Link
                     key={cat.id}
                     href={`/marketplace?category=${cat.slug}`}
-                    className={cn(
-                      "group relative flex flex-col items-center justify-center min-h-[170px] overflow-hidden rounded-[1.5rem] border border-gray-150 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 duration-300",
-                      index === 4 && "hidden lg:flex"
-                    )}
+                    className="group relative flex flex-col items-center justify-center min-h-[160px] overflow-hidden rounded-[1.5rem] border border-gray-150 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 duration-300"
                   >
                     {/* Background Image / Fallback */}
                     {cat.icon && (cat.icon.startsWith("/") || cat.icon.startsWith("http")) ? (
@@ -322,72 +316,6 @@ export default function Home() {
                       <span className="text-[10px] sm:text-xs text-orange-200 font-extrabold mt-1.5 text-center px-2.5 py-0.5 bg-black/45 backdrop-blur-sm rounded-full border border-white/10 shadow-sm">
                         {adCount.toLocaleString()} ads
                       </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Latest Stories Section */}
-      <section className="py-10 md:py-16 bg-muted/30">
-        <div className="container px-4 md:px-6">
-          <div className="flex items-center justify-between gap-2 mb-6 md:mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold leading-none">Latest Stories</h2>
-            <Button variant="ghost" asChild>
-              <Link href="/social">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-          {storiesLoading ? (
-            <div className="flex overflow-x-auto gap-4 pb-4 md:grid md:grid-cols-4 lg:grid-cols-5 md:gap-6 md:overflow-x-visible md:pb-0 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent snap-x">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="aspect-[3/4] w-[140px] sm:w-[160px] md:w-auto rounded-2xl shrink-0 snap-start" />
-              ))}
-            </div>
-          ) : homeStories.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground text-sm font-medium italic bg-white dark:bg-slate-900 border rounded-2xl">
-              No active stories at the moment.
-            </div>
-          ) : (
-            <div className="flex overflow-x-auto gap-4 pb-4 md:grid md:grid-cols-4 lg:grid-cols-5 md:gap-6 md:overflow-x-visible md:pb-0 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent snap-x">
-              {homeStories.map((group) => {
-                const latestStory = group.stories[0];
-                if (!latestStory) return null;
-
-                return (
-                  <Link
-                    key={group.userId}
-                    href="/social"
-                    className="relative aspect-[3/4] w-[140px] sm:w-[160px] md:w-auto rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 block group border shrink-0 snap-start"
-                  >
-                    <Image
-                      src={latestStory.imageUrl}
-                      alt={group.displayName}
-                      fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/75" />
-
-                    {/* Profile ring */}
-                    <div className="absolute top-3 left-3 h-8 w-8 sm:h-9 sm:w-9 rounded-full border-2 border-primary bg-white dark:bg-slate-900 shadow-md overflow-hidden flex items-center justify-center">
-                      {group.logoUrl ? (
-                        <img src={optimizeImageUrl(group.logoUrl, 64)} alt={group.displayName} className="w-full h-full object-cover" loading="lazy" />
-                      ) : (
-                        <span className="text-xs font-bold text-primary">{group.displayName.substring(0, 2).toUpperCase()}</span>
-                      )}
-                    </div>
-
-                    {/* Name overlay */}
-                    <div className="absolute bottom-3 left-3 right-3 text-center">
-                      <p className="text-xs sm:text-sm font-extrabold text-white leading-tight line-clamp-2 drop-shadow">
-                        {group.displayName}
-                      </p>
                     </div>
                   </Link>
                 );

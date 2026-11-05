@@ -1715,9 +1715,9 @@ export default function WebsiteBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
+    <div className="-m-4 md:-m-6 h-[calc(100vh-4rem)] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 font-sans">
       {/* ── Builder Top Toolbar ── */}
-      <header className="h-auto md:h-16 py-3 md:py-0 px-3.5 md:px-6 border-b bg-white dark:bg-slate-900 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-0 relative md:sticky md:top-0 z-40">
+      <header className="shrink-0 h-auto md:h-16 py-3 md:py-0 px-3.5 md:px-6 border-b bg-white dark:bg-slate-900 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-0 relative z-40">
         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 w-full md:w-auto">
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-primary shrink-0" />
@@ -1974,12 +1974,12 @@ export default function WebsiteBuilderPage() {
       )}
 
       {/* ── Main Split View ── */}
-      <div className="flex-1 flex md:overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* ── Left Editor Sidebar ── */}
         <div
           className={`${
             mobilePreviewOpen ? "hidden md:block" : "block"
-          } w-full lg:w-[480px] border-r bg-white dark:bg-slate-900 md:overflow-y-auto p-3.5 md:p-6 space-y-5 md:space-y-6`}
+          } w-full lg:w-[480px] h-full border-r bg-white dark:bg-slate-900 overflow-y-auto p-3.5 md:p-6 space-y-5 md:space-y-6 shrink-0`}
         >
           <Tabs value={builderTab} onValueChange={setBuilderTab} className="w-full">
             <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full h-auto bg-slate-100 dark:bg-slate-800 p-1 gap-1 md:gap-0 rounded-xl">
@@ -6575,7 +6575,7 @@ export default function WebsiteBuilderPage() {
         <div
           className={`${
             mobilePreviewOpen ? "flex" : "hidden md:flex"
-          } flex-1 bg-slate-200/70 dark:bg-slate-950 flex-col items-center justify-center p-2.5 md:p-4 overflow-hidden`}
+          } flex-1 h-full min-h-0 bg-slate-200/70 dark:bg-slate-950 flex-col items-center justify-center p-2.5 md:p-4 overflow-hidden`}
         >
           {/* Mobile-only Preview Top Bar */}
           <div className="md:hidden w-full flex items-center justify-between gap-2 mb-2 px-1">
@@ -6625,9 +6625,9 @@ export default function WebsiteBuilderPage() {
           </div>
 
           <div
-            className={`transition-all duration-300 h-[calc(100vh-190px)] md:h-full w-full bg-white rounded-2xl shadow-2xl border overflow-hidden flex flex-col ${
+            className={`transition-all duration-300 h-full w-full bg-white rounded-2xl shadow-2xl border overflow-hidden flex flex-col ${
               deviceView === "mobile"
-                ? "md:max-w-[375px] md:max-h-[780px] md:rounded-[40px] md:border-[12px] md:border-slate-900 shadow-2xl"
+                ? "max-w-[375px] max-h-[820px] rounded-[40px] border-[12px] border-slate-900 shadow-2xl"
                 : deviceView === "tablet"
                 ? "max-w-[768px] max-h-[920px] rounded-[28px] border-[8px] border-slate-900 shadow-2xl"
                 : "max-w-full"

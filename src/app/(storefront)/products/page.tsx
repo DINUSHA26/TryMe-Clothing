@@ -67,16 +67,12 @@ function ProductsPageContent() {
   const vendorIds = searchParams.getAll("vendorId");
   const sizes = searchParams.getAll("size");
 
-  // Fetch categories and vendors
+  // Fetch parent categories tree
   useEffect(() => {
-    const fetchFiltersData = async () => {
+    const fetchCategoriesData = async () => {
       try {
-        const [categoriesRes, vendorsRes] = await Promise.all([
-          fetch("/api/categories?parentId=null"),
-          fetch("/api/vendors"),
-        ]);
+        const categoriesRes = await fetch("/api/categories?parentId=null");
         const categoriesData = await categoriesRes.json();
-        const vendorsData = await vendorsRes.json();
 
         if (categoriesData.success && Array.isArray(categoriesData.data?.categories)) {
           const treeCategories: MainCategory[] = categoriesData.data.categories.map((cat: any) => ({
@@ -97,21 +93,11 @@ function ProductsPageContent() {
           }));
           setCategories(treeCategories);
         }
-
-        if (vendorsData.success && Array.isArray(vendorsData.data)) {
-          setVendors(
-            vendorsData.data.map((v: any) => ({
-              id: v.id,
-              businessName: v.businessName,
-              slug: v.slug,
-            }))
-          );
-        }
       } catch (error) {
-        console.error("Error fetching filter data:", error);
+        console.error("Error fetching categories data:", error);
       }
     };
-    fetchFiltersData();
+    fetchCategoriesData();
   }, []);
 
   // Resolve category ID from slug if categoryId wasn't passed directly
@@ -136,6 +122,36 @@ function ProductsPageContent() {
     }
     return "Shop by Category";
   }, [categoryId, categories]);
+
+  // Fetch vendors filtered dynamically by selected category
+  useEffect(() => {
+    const fetchVendorsForCategory = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (categoryId) {
+          params.set("categoryId", categoryId);
+        } else if (categorySlug) {
+          params.set("category", categorySlug);
+        }
+        const res = await fetch(`/api/vendors?${params.toString()}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setVendors(
+            data.data.map((v: any) => ({
+              id: v.id,
+              businessName: v.businessName,
+              slug: v.slug,
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Error fetching vendors for category:", err);
+      }
+    };
+    fetchVendorsForCategory();
+  }, [categoryId, categorySlug]);
+
+
 
   // Fetch products
   useEffect(() => {

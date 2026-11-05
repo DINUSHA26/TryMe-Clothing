@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const category = searchParams.get("category");
+    const categoryId = searchParams.get("categoryId");
     const search = searchParams.get("search");
 
     // Fetch active business categories with icons for circular filter strip
@@ -31,18 +32,59 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    if (category && category !== "all") {
-      vendorWhere.OR = [
-        { primaryCategory: { equals: category, mode: "insensitive" } },
-        {
-          products: {
-            some: {
-              category: {
-                name: { equals: category, mode: "insensitive" },
-              },
-            },
-          },
+    const effectiveCategory = category && category !== "all" ? category : null;
+    const effectiveCategoryId = categoryId && categoryId !== "all" ? categoryId : null;
+
+    if (effectiveCategoryId || effectiveCategory) {
+      // Find category in database to get its ID and all children IDs
+      const matchedCat = await prisma.category.findFirst({
+        where: {
+          OR: [
+            ...(effectiveCategoryId ? [{ id: effectiveCategoryId }] : []),
+            ...(effectiveCategory ? [{ slug: effectiveCategory }, { name: { equals: effectiveCategory, mode: "insensitive" as const } }] : []),
+          ],
         },
+        include: { children: { select: { id: true, name: true, slug: true } } },
+      });
+
+      const matchedCategoryIds: string[] = matchedCat
+        ? [matchedCat.id, ...(matchedCat.children?.map((c) => c.id) || [])]
+        : effectiveCategoryId
+        ? [effectiveCategoryId]
+        : [];
+
+      const categoryNameForPrimary = matchedCat?.name || effectiveCategory || "";
+
+      vendorWhere.OR = [
+        ...(categoryNameForPrimary ? [{ primaryCategory: { equals: categoryNameForPrimary, mode: "insensitive" as const } }] : []),
+        ...(matchedCategoryIds.length > 0
+          ? [
+              {
+                products: {
+                  some: {
+                    categoryId: { in: matchedCategoryIds },
+                    isActive: true,
+                    isDisabledByAdmin: false,
+                  },
+                },
+              },
+            ]
+          : [
+              {
+                products: {
+                  some: {
+                    category: {
+                      OR: [
+                        { name: { equals: effectiveCategory!, mode: "insensitive" as const } },
+                        { slug: effectiveCategory! },
+                      ],
+                    },
+                    isActive: true,
+                    isDisabledByAdmin: false,
+                  },
+                },
+              },
+            ]),
       ];
     }
 
