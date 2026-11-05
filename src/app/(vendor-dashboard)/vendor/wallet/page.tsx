@@ -6,6 +6,7 @@ import { WalletData, WalletTransactionsResponse, PayoutsResponse } from "@/types
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WalletBalanceCard } from "@/components/vendor/wallet/WalletBalanceCard";
 import { WalletStats } from "@/components/vendor/wallet/WalletStats";
+import { OmnichannelRevenueCard } from "@/components/vendor/wallet/OmnichannelRevenueCard";
 import { TransactionHistoryTable } from "@/components/vendor/wallet/TransactionHistoryTable";
 import { PayoutRequestForm } from "@/components/vendor/wallet/PayoutRequestForm";
 import { PayoutHistoryTable } from "@/components/vendor/wallet/PayoutHistoryTable";
@@ -168,6 +169,12 @@ export default function VendorWalletPage() {
       <WalletStats
         stats={walletData?.stats || null}
         availableBalance={availableBalance}
+        isLoading={isLoadingWallet}
+      />
+
+      {/* Omnichannel Revenue & Earnings Breakdown */}
+      <OmnichannelRevenueCard
+        channels={walletData?.channels}
         isLoading={isLoadingWallet}
       />
 

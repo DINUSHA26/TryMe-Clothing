@@ -88,6 +88,48 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Query Omnichannel Earnings (TryMe Marketplace, Website Direct, POS In-Store)
+    const channelStats = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT 
+        -- TryMe Marketplace (Platform Escrow)
+        COALESCE(SUM(CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN') THEN i."totalPrice" ELSE 0 END), 0)::float as "trymeSales",
+        COUNT(DISTINCT CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN') THEN o."id" END)::int as "trymeOrders",
+        
+        -- Standalone Website Direct Sales (COD & Bank Deposit)
+        COALESCE(SUM(CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN i."totalPrice" ELSE 0 END), 0)::float as "websiteSales",
+        COUNT(DISTINCT CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN o."id" END)::int as "websiteOrders",
+        
+        -- POS In-Store Walk-in Sales (Direct Cash/Card)
+        COALESCE(SUM(CASE WHEN o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN') THEN i."totalPrice" ELSE 0 END), 0)::float as "posSales",
+        COUNT(DISTINCT CASE WHEN o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN') THEN o."id" END)::int as "posOrders"
+       FROM "OrderItem" i
+       JOIN "Order" o ON i."orderId" = o."id"
+       WHERE i."vendorId" = $1 AND o."status" IN ('PAYMENT_CONFIRMED'::"OrderStatus", 'PROCESSING'::"OrderStatus", 'SHIPPED'::"OrderStatus", 'DELIVERED'::"OrderStatus", 'COMPLETED'::"OrderStatus")`,
+      vendorId
+    );
+
+    const channelsData = channelStats[0] || {
+      trymeSales: 0,
+      trymeOrders: 0,
+      websiteSales: 0,
+      websiteOrders: 0,
+      posSales: 0,
+      posOrders: 0,
+    };
+
+    const channels = {
+      trymeSales: Number(channelsData.trymeSales) || 0,
+      trymeOrders: Number(channelsData.trymeOrders) || 0,
+      websiteSales: Number(channelsData.websiteSales) || 0,
+      websiteOrders: Number(channelsData.websiteOrders) || 0,
+      posSales: Number(channelsData.posSales) || 0,
+      posOrders: Number(channelsData.posOrders) || 0,
+      totalAllChannelsRevenue:
+        (Number(channelsData.trymeSales) || 0) +
+        (Number(channelsData.websiteSales) || 0) +
+        (Number(channelsData.posSales) || 0),
+    };
+
     // Format response
     return NextResponse.json({
       success: true,
@@ -107,6 +149,7 @@ export async function GET(request: NextRequest) {
           pendingPayouts,
           completedPayouts,
         },
+        channels,
       },
     });
   } catch (error) {

@@ -20,11 +20,25 @@ export interface WalletStats {
 }
 
 /**
- * Complete wallet data with balance and stats
+ * Omnichannel sales breakdown across TryMe Marketplace, Standalone Website, and In-Store POS
+ */
+export interface OmnichannelEarnings {
+  trymeSales: number;
+  trymeOrders: number;
+  websiteSales: number;
+  websiteOrders: number;
+  posSales: number;
+  posOrders: number;
+  totalAllChannelsRevenue: number;
+}
+
+/**
+ * Complete wallet data with balance, stats and omnichannel breakdown
  */
 export interface WalletData {
   balance: WalletBalance;
   stats: WalletStats;
+  channels?: OmnichannelEarnings;
 }
 
 /**

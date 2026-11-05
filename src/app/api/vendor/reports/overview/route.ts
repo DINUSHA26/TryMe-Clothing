@@ -78,23 +78,23 @@ export async function GET(request: NextRequest) {
     );
     const { totalSales, totalOrders, averageOrderValue } = salesResult[0];
 
-    // 2. TryMe.lk Marketplace Sales (orderNumber NOT LIKE 'WEB-%')
+    // 2. TryMe.lk Marketplace Sales (orderNumber NOT LIKE 'WEB-%' AND NOT LIKE 'POS-%')
     const trymeResult = await prisma.$queryRawUnsafe<any[]>(
       `SELECT 
         COALESCE(SUM(i."totalPrice"), 0)::float as "totalSales",
-        COUNT(*)::int as "totalOrders",
+        COUNT(DISTINCT o."id")::int as "totalOrders",
         COALESCE(AVG(i."totalPrice"), 0)::float as "averageOrderValue"
        FROM "OrderItem" i
        JOIN "Order" o ON i."orderId" = o."id"
-       ${revenueWhere} AND o."orderNumber" NOT LIKE 'WEB-%'`,
+       ${revenueWhere} AND o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN')`,
       ...queryParamsRaw
     );
 
-    // 3. Direct Website Sales (orderNumber LIKE 'WEB-%') - includes PENDING_PAYMENT (e.g. Bank Deposit awaiting confirmation) in totalOrders count
+    // 3. Direct Website Sales (orderNumber LIKE 'WEB-%')
     const websiteRevenueResult = await prisma.$queryRawUnsafe<any[]>(
       `SELECT 
         COALESCE(SUM(i."totalPrice"), 0)::float as "totalSales",
-        COUNT(*)::int as "confirmedOrders",
+        COUNT(DISTINCT o."id")::int as "confirmedOrders",
         COALESCE(AVG(i."totalPrice"), 0)::float as "averageOrderValue"
        FROM "OrderItem" i
        JOIN "Order" o ON i."orderId" = o."id"
@@ -104,32 +104,45 @@ export async function GET(request: NextRequest) {
 
     const websiteAllOrdersResult = await prisma.$queryRawUnsafe<any[]>(
       `SELECT 
-        COUNT(*)::int as "allWebsiteOrders",
+        COUNT(DISTINCT o."id")::int as "allWebsiteOrders",
         COALESCE(SUM(CASE WHEN o."status" = 'PENDING_PAYMENT'::"OrderStatus" THEN i."totalPrice" ELSE 0 END), 0)::float as "pendingVerificationSales",
-        COUNT(CASE WHEN o."status" = 'PENDING_PAYMENT'::"OrderStatus" OR i."status" IN ('PENDING'::"OrderItemStatus", 'PROCESSING'::"OrderItemStatus") THEN 1 END)::int as "pendingActionOrders"
+        COUNT(DISTINCT CASE WHEN o."status" = 'PENDING_PAYMENT'::"OrderStatus" OR i."status" IN ('PENDING'::"OrderItemStatus", 'PROCESSING'::"OrderItemStatus") THEN o."id" END)::int as "pendingActionOrders"
        FROM "OrderItem" i
        JOIN "Order" o ON i."orderId" = o."id"
        ${baseWhere} AND o."orderNumber" LIKE 'WEB-%' AND o."status" != 'CANCELLED'::"OrderStatus"`,
       ...queryParamsRaw
     );
 
-    // This Month Sales (Combined, TryMe, Website)
+    // 4. In-Store POS Retail Counter Sales (orderNumber LIKE 'POS-%' OR orderSource = 'POS_WALK_IN')
+    const posRevenueResult = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT 
+        COALESCE(SUM(i."totalPrice"), 0)::float as "totalSales",
+        COUNT(DISTINCT o."id")::int as "totalOrders",
+        COALESCE(AVG(i."totalPrice"), 0)::float as "averageOrderValue"
+       FROM "OrderItem" i
+       JOIN "Order" o ON i."orderId" = o."id"
+       ${revenueWhere} AND (o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN'))`,
+      ...queryParamsRaw
+    );
+
+    // This Month Sales (Combined, TryMe, Website, POS)
     const thisMonthStart = startOfMonth(new Date());
     const monthParams = [...queryParamsRaw, thisMonthStart];
-    const monthWhere = revenueWhere + ` AND o."createdAt" >= $${monthParams.length}`;
+    const monthWhere = revenueWhere + ` AND o."createdAt" >= ${monthParams.length}`;
 
     const thisMonthResult = await prisma.$queryRawUnsafe<any[]>(
       `SELECT 
         COALESCE(SUM(i."totalPrice"), 0)::float as "thisMonthSales",
-        COALESCE(SUM(CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' THEN i."totalPrice" ELSE 0 END), 0)::float as "trymeMonthSales",
-        COALESCE(SUM(CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN i."totalPrice" ELSE 0 END), 0)::float as "websiteMonthSales"
+        COALESCE(SUM(CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN') THEN i."totalPrice" ELSE 0 END), 0)::float as "trymeMonthSales",
+        COALESCE(SUM(CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN i."totalPrice" ELSE 0 END), 0)::float as "websiteMonthSales",
+        COALESCE(SUM(CASE WHEN o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN') THEN i."totalPrice" ELSE 0 END), 0)::float as "posMonthSales"
        FROM "OrderItem" i
        JOIN "Order" o ON i."orderId" = o."id"
        ${monthWhere}`,
       ...monthParams
     );
 
-    const { thisMonthSales, trymeMonthSales, websiteMonthSales } = thisMonthResult[0];
+    const { thisMonthSales, trymeMonthSales, websiteMonthSales, posMonthSales } = thisMonthResult[0];
 
     // Wallet Balance
     const wallet = await prisma.wallet.findUnique({
@@ -203,6 +216,12 @@ export async function GET(request: NextRequest) {
           inquiriesCount: websiteInquiriesCount,
           newInquiriesCount,
           reviewsCount: websiteReviewsCount,
+        },
+        posStats: {
+          totalSales: posRevenueResult[0].totalSales,
+          thisMonthSales: posMonthSales,
+          totalOrders: posRevenueResult[0].totalOrders,
+          averageOrderValue: posRevenueResult[0].averageOrderValue,
         },
       },
     });
