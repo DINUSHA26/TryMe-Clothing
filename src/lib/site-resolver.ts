@@ -279,6 +279,8 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
       tier: activeTier,
       vendor: {
         id: entity.id,
+        userId: (entity as any).userId,
+        linkedVendorId: linkedVendorId || (vendor ? vendor.id : null),
         businessName: entity.businessName,
         slug: entity.slug,
         logo: (entity as any).logo || (entity as any).contactInfo?.logo,

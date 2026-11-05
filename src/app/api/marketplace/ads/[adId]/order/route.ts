@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { getOrCreateAdsSellerVendor, getOrCreateVendorProduct } from "@/lib/ads-seller-vendor";
 
 async function generateMarketplaceOrderNumber(tx: any): Promise<string> {
   const now = new Date();
@@ -196,11 +197,12 @@ export async function POST(
       };
 
       // 5. Create Order
+      const initialStatus = paymentMethod === "BANK_TRANSFER" ? "PENDING_VERIFICATION" : "PROCESSING";
       const newOrder = await tx.order.create({
         data: {
           orderNumber,
           customerId,
-          status: paymentMethod === "BANK_TRANSFER" ? "PENDING_VERIFICATION" : "PROCESSING",
+          status: initialStatus,
           subtotal: new Prisma.Decimal(subtotal),
           discountAmount: new Prisma.Decimal(0),
           shippingAmount: new Prisma.Decimal(shippingFee),
@@ -209,6 +211,48 @@ export async function POST(
           notes: `[TryMe Marketplace Order] Ad: "${ad.title}" (Qty: ${orderQty}). ${notes}`.trim(),
         },
       });
+
+      // 6. Create OrderItem linked to Seller's Vendor record
+      const sellerUserId = ad.seller?.user?.id;
+      let vendorId: string | null = null;
+      if (sellerUserId) {
+        const sellerVendor = await getOrCreateAdsSellerVendor(sellerUserId);
+        if (sellerVendor) {
+          vendorId = sellerVendor.vendor.id;
+        }
+      }
+
+      if (vendorId) {
+        const fallbackProduct = await getOrCreateVendorProduct(vendorId, tx);
+        await tx.orderItem.create({
+          data: {
+            orderId: newOrder.id,
+            productId: fallbackProduct.id,
+            vendorId,
+            quantity: orderQty,
+            unitPrice: new Prisma.Decimal(unitPrice),
+            totalPrice: new Prisma.Decimal(subtotal),
+            status: initialStatus,
+            productSnapshot: {
+              id: ad.id,
+              name: ad.title,
+              image: ad.images?.[0] || null,
+              price: unitPrice,
+              adId: ad.id,
+              sellerName: ad.seller.businessName,
+              itemType: "MARKETPLACE_AD",
+            },
+          },
+        });
+
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: newOrder.id,
+            status: initialStatus,
+            note: `Online marketplace order placed on TryMe.lk via ${paymentMethod === "BANK_TRANSFER" ? "Bank Transfer" : "Cash on Delivery"}`,
+          },
+        });
+      }
 
       return {
         orderId: newOrder.id,

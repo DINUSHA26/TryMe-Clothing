@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getStandaloneSiteData } from "@/lib/site-resolver";
+import { getOrCreateAdsSellerVendor, getOrCreateVendorProduct } from "@/lib/ads-seller-vendor";
 
 async function generateWebsiteOrderNumber(tx: any): Promise<string> {
   const now = new Date();
@@ -145,10 +146,21 @@ export async function POST(
     const shippingFeeSetting = Number(ecommerceConfig.shippingFee ?? 350);
     const freeShippingThreshold = Number(ecommerceConfig.freeShippingThreshold ?? 0);
 
-    // If this is a VENDOR store, create real Order + OrderItems in Prisma
+    // Resolve vendorId for both VENDOR and ADS_SELLER site types
+    let vendorId: string;
     if (siteData.type === "VENDOR") {
-      const vendorId = siteData.vendor.id;
+      vendorId = siteData.vendor.id;
+    } else {
+      const sellerVendor = await getOrCreateAdsSellerVendor(
+        (siteData.vendor as any).userId || (siteData.vendor as any).linkedVendorId || siteData.vendor.id
+      );
+      if (!sellerVendor) {
+        return NextResponse.json({ success: false, error: "Seller store profile not found" }, { status: 404 });
+      }
+      vendorId = sellerVendor.vendor.id;
+    }
 
+    if (vendorId) {
       // Fetch real products for the items
       const productIds = items.map((i: any) => i.productId || i.id).filter(Boolean);
       const dbProducts = await prisma.product.findMany({
@@ -162,7 +174,7 @@ export async function POST(
         },
       });
 
-      // Fallback product if ordering a custom service item from a Vendor website
+      // Fallback product if ordering an ad item, service, or custom item
       let fallbackProduct: (typeof dbProducts)[0] | null = dbProducts[0] || null;
       if (!fallbackProduct) {
         fallbackProduct = await prisma.product.findFirst({
@@ -172,6 +184,9 @@ export async function POST(
             variants: true,
           },
         });
+      }
+      if (!fallbackProduct) {
+        fallbackProduct = (await getOrCreateVendorProduct(vendorId, prisma)) as any;
       }
 
       let subtotal = 0;
@@ -416,6 +431,24 @@ export async function POST(
                 where: { id: pItem.productId },
                 data: { stock: { decrement: pItem.quantity } },
               });
+            } else if (pItem.productSnapshot?.id) {
+              try {
+                const ad = await (tx as any).classifiedAd.findUnique({
+                  where: { id: pItem.productSnapshot.id },
+                  select: { id: true, specifications: true },
+                });
+                if (ad) {
+                  const specs = typeof ad.specifications === "object" && ad.specifications ? { ...ad.specifications } : {};
+                  const curStock = specs.stock !== undefined ? Number(specs.stock) : 10;
+                  specs.stock = Math.max(0, curStock - pItem.quantity);
+                  await (tx as any).classifiedAd.update({
+                    where: { id: ad.id },
+                    data: { specifications: specs },
+                  });
+                }
+              } catch (adStockErr) {
+                console.warn("Failed to deduct ad stock:", adStockErr);
+              }
             }
           }
 
@@ -458,6 +491,42 @@ export async function POST(
                 orderId: order.id,
               },
             });
+          }
+
+          // Also mirror into websiteDirectOrders array if config exists
+          try {
+            if (siteData.config?.id) {
+              const existingFooter = (siteData.config.footerSection as any) || {};
+              const existingDirectOrders = Array.isArray(existingFooter.websiteDirectOrders)
+                ? existingFooter.websiteDirectOrders
+                : [];
+              const mirroredOrder = {
+                id: order.id,
+                orderNumber: order.orderNumber,
+                status: order.status,
+                paymentMethod: normalizedMethod,
+                paymentSlipUrl: paymentSlipUrl || null,
+                bankReference: bankReference || null,
+                subtotal,
+                shippingAmount,
+                totalAmount,
+                items,
+                shippingAddress,
+                notes: notes || "",
+                createdAt: order.createdAt.toISOString(),
+              };
+              await (tx as any).vendorWebsiteConfig.update({
+                where: { id: siteData.config.id },
+                data: {
+                  footerSection: {
+                    ...existingFooter,
+                    websiteDirectOrders: [mirroredOrder, ...existingDirectOrders.filter((o: any) => o.orderNumber !== order.orderNumber)],
+                  },
+                },
+              });
+            }
+          } catch (cfgErr) {
+            console.warn("Failed to mirror order to config:", cfgErr);
           }
 
           return order;

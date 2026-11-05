@@ -53,3 +53,52 @@ export async function getOrCreateAdsSellerVendor(userId: string) {
   return { vendor, wallet };
 }
 
+/**
+ * Ensures a vendor has at least one general Product record so that
+ * custom services, classified ad orders, and POS walk-in items can be
+ * linked to OrderItem (which has a strict foreign key constraint to Product).
+ */
+export async function getOrCreateVendorProduct(vendorId: string, tx: any = prisma) {
+  let product = await tx.product.findFirst({
+    where: { vendorId },
+  });
+
+  if (!product) {
+    let category = await tx.category.findFirst({
+      where: { isActive: true },
+    });
+    if (!category) {
+      category = await tx.category.findFirst();
+    }
+
+    if (!category) {
+      category = await tx.category.create({
+        data: {
+          name: "General",
+          slug: `general-${Date.now().toString(36)}`,
+          description: "General Category",
+          isActive: true,
+        },
+      });
+    }
+
+    const uniqueSlug = `store-item-${vendorId.slice(-6)}-${Date.now().toString(36)}`;
+
+    product = await tx.product.create({
+      data: {
+        vendorId,
+        categoryId: category.id,
+        name: "Store Catalog Item",
+        slug: uniqueSlug,
+        description: "Store Catalog Item for direct, marketplace, and POS orders",
+        price: 0,
+        stock: 99999,
+        isActive: true,
+        showOnWebsite: true,
+        showOnMarketplace: true,
+      },
+    });
+  }
+
+  return product;
+}
