@@ -6,8 +6,6 @@ import {
   ChevronRight,
   LogOut,
   Megaphone,
-  ShoppingBag,
-  AlertTriangle,
   Settings,
   Store as StoreIcon,
   LayoutGrid,
@@ -38,28 +36,19 @@ export function AdsSellerSidebar({
   const { user, logout } = useAuthStore();
   const router = useRouter();
 
-  const [subData, setSubData] = useState<{
-    planName: string;
-    maxAds: number;
-    adsUsed: number;
-  } | null>(null);
-
-  const businessName = user?.adsSeller?.businessName || `${user?.firstName}'s Store`;
-  const primaryCategory = user?.adsSeller?.primaryCategory || "Classifieds";
+  const [availableBalance, setAvailableBalance] = useState<number | null>(null);
+  const sellerName = (user as any)?.adsSeller?.sellerName || "My Store";
+  const isShopOpen = (user as any)?.adsSeller?.isShopOpen ?? false;
 
   useEffect(() => {
-    fetch("/api/ads/seller/subscription")
+    fetch("/api/ads-seller/wallet")
       .then((res) => res.json())
       .then((result) => {
         if (result.success) {
-          setSubData({
-            planName: result.data.planName,
-            maxAds: result.data.maxAds,
-            adsUsed: result.data.adsUsed,
-          });
+          setAvailableBalance(result.data.balance.availableBalance);
         }
       })
-      .catch(() => {});
+      .catch(() => {/* silently ignore */ });
   }, []);
 
   const handleLogout = () => {
@@ -118,34 +107,21 @@ export function AdsSellerSidebar({
 
       <Separator />
 
-      {/* Subscription/Plan Status */}
+      {/* Seller Status */}
       {!isCollapsed && (
-        <div className="px-4 py-3 bg-[#FF6600]/5 border-b border-border">
+        <div className="px-4 py-3 bg-muted/50">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#FF6600] uppercase tracking-wider">
-              {subData?.planName || "Free Plan"}
-            </span>
-            <Badge variant="outline" className="text-[10px] text-gray-500 bg-white">
-              Seller
+            <div className="flex items-center gap-2">
+              <Megaphone className="w-4 h-4 text-[#FF6600]" />
+              <span className="text-sm font-medium truncate">{sellerName}</span>
+            </div>
+            <Badge variant={isShopOpen ? "default" : "secondary"} className="text-xs bg-[#FF6600]">
+              {isShopOpen ? "Active" : "Paused"}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-1.5 truncate">
-            {businessName}
+          <p className="text-xs text-muted-foreground mt-1">
+            Available: {availableBalance === null ? "..." : `Rs. ${availableBalance.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           </p>
-          {subData && (
-            <div className="mt-2">
-              <div className="flex justify-between text-[10px] text-gray-400 mb-0.5">
-                <span>Ads Posted</span>
-                <span>{subData.adsUsed} / {subData.maxAds}</span>
-              </div>
-              <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#FF6600]"
-                  style={{ width: `${Math.min((subData.adsUsed / subData.maxAds) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -158,24 +134,6 @@ export function AdsSellerSidebar({
             {/* Ads Seller Main Nav Items */}
             {adsSellerNavItems.map((item) => {
               const isItemActive = isActive(item.href, item.href === "/ads-seller");
-              return renderNavLink(item, isItemActive);
-            })}
-
-            <div className="pt-4 pb-2 px-3">
-              {!isCollapsed && (
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                  My Shopping
-                </span>
-              )}
-              <Separator className="mt-2 opacity-50" />
-            </div>
-
-            {/* Shopping sections */}
-            {[
-              { label: "My Orders", href: "/orders", icon: ShoppingBag },
-              { label: "My Disputes", href: "/my-disputes", icon: AlertTriangle },
-            ].map((item) => {
-              const isItemActive = isActive(item.href);
               return renderNavLink(item, isItemActive);
             })}
           </nav>

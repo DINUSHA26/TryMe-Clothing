@@ -6,8 +6,6 @@ import {
   ChevronRight,
   LogOut,
   Store as StoreIcon,
-  ShoppingBag,
-  AlertTriangle,
   Settings,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -141,28 +139,6 @@ export function VendorSidebar({
             {/* Vendor Management Sections */}
             {vendorNavItems.map((item) => {
               const isItemActive = isActive(item.href, item.href === "/vendor");
-              return renderNavLink(item, isItemActive);
-            })}
-
-            <div className="pt-4 pb-2 px-3">
-              {!isCollapsed && (
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                  My Shopping
-                </span>
-              )}
-              <Separator className="mt-2 opacity-50" />
-            </div>
-
-            {/* Personal Sections for Vendor as a Customer */}
-            {[
-              { label: "My Orders", href: "/orders", icon: ShoppingBag },
-              {
-                label: "My Disputes",
-                href: "/my-disputes",
-                icon: AlertTriangle,
-              },
-            ].map((item) => {
-              const isItemActive = isActive(item.href);
               return renderNavLink(item, isItemActive);
             })}
           </nav>

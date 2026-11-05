@@ -1,10 +1,11 @@
 "use client";
 
 import { useCartStore } from "@/stores/cartStore";
+import { useAuthStore } from "@/stores/authStore";
 import { formatPrice } from "@/lib/utils/cart";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingBag, Sparkles } from "lucide-react";
+import { ShoppingBag, Sparkles, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 interface CartSummaryProps {
@@ -17,8 +18,13 @@ export function CartSummary({
   onCheckout,
 }: CartSummaryProps) {
   const { items, promoCode } = useCartStore();
+  const { user, isAuthenticated } = useAuthStore();
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0);
+
+  const isBusinessAccount =
+    isAuthenticated &&
+    (user?.role === "ADMIN" || user?.role === "VENDOR" || user?.role === "ADS_SELLER");
 
   const hasStockIssues = items.some(
     (item) => item.stock === 0 || item.quantity > item.stock
@@ -71,16 +77,31 @@ export function CartSummary({
         </div>
       )}
 
+      {/* Business Account Warning */}
+      {isBusinessAccount && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start gap-2.5">
+          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-800">
+            Logged in as <strong>{user?.role === "ADMIN" ? "Admin" : user?.role === "VENDOR" ? "Vendor" : "Ads Seller"}</strong>. Business accounts cannot place marketplace orders. Please log in with a Customer account to checkout.
+          </p>
+        </div>
+      )}
+
       {/* Checkout Button */}
       {showCheckoutButton && (
         <Button
           size="lg"
           className="w-full bg-[#FF6600] hover:bg-[#E65C00] text-white border-none transition-colors duration-200"
-          disabled={itemCount === 0 || hasStockIssues}
+          disabled={itemCount === 0 || hasStockIssues || isBusinessAccount}
           onClick={onCheckout}
-          asChild={!onCheckout}
+          asChild={!onCheckout && !isBusinessAccount}
         >
-          {onCheckout ? (
+          {isBusinessAccount ? (
+            <span>
+              <ShoppingBag className="mr-2 h-4 w-4" />
+              Customer Login Required
+            </span>
+          ) : onCheckout ? (
             <span>
               <ShoppingBag className="mr-2 h-4 w-4" />
               Proceed to Checkout

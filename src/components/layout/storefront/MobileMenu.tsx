@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, LogOut, LogIn, User, MessageCircle } from "lucide-react";
+import { X, LogOut, LogIn, User, MessageCircle, Bell } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -44,18 +44,28 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
     onClose();
   };
 
-  // Show customer nav items for all authenticated users (so staff see customer features too)
-  const showCustomerNav = isAuthenticated;
-  let navItems = showCustomerNav
-    ? [...storefrontNavItems, ...customerNavItems]
-    : [...storefrontNavItems];
+  const isStaffOrVendor =
+    isAuthenticated &&
+    (user?.role === "ADMIN" || user?.role === "VENDOR" || user?.role === "ADS_SELLER");
 
-  if (isAuthenticated && user?.role === "ADMIN") {
-    navItems.push({ href: "/admin", label: "Admin Dashboard", icon: User });
-  } else if (isAuthenticated && user?.role === "VENDOR") {
-    navItems.push({ href: "/vendor", label: "Vendor Dashboard", icon: User });
-  } else if (isAuthenticated && user?.role === "ADS_SELLER") {
-    navItems.push({ href: "/ads-seller", label: "Ads Seller Dashboard", icon: User });
+  let navItems = [...storefrontNavItems];
+
+  if (isAuthenticated) {
+    if (isStaffOrVendor) {
+      // Staff & Vendors only see Notifications and their Dashboard (no personal shopping orders/disputes)
+      navItems.push({ href: "/notifications", label: "Notifications", icon: Bell });
+
+      if (user?.role === "ADMIN") {
+        navItems.push({ href: "/admin", label: "Admin Dashboard", icon: User });
+      } else if (user?.role === "VENDOR") {
+        navItems.push({ href: "/vendor", label: "Vendor Dashboard", icon: User });
+      } else if (user?.role === "ADS_SELLER") {
+        navItems.push({ href: "/ads-seller", label: "Ads Seller Dashboard", icon: User });
+      }
+    } else {
+      // Regular customers see personal items (My Orders, My Disputes, Notifications)
+      navItems = [...navItems, ...customerNavItems];
+    }
   }
 
   return (

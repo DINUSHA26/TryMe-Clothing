@@ -48,6 +48,17 @@ async function requireCustomer(request: NextRequest): Promise<string | null> {
  */
 export async function POST(request: NextRequest) {
   try {
+    const userRole = request.headers.get("X-User-Role");
+    if (userRole === "ADMIN" || userRole === "VENDOR" || userRole === "ADS_SELLER") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Business and staff accounts (Admin, Vendor, Ads Seller) cannot place marketplace orders. Please log in with a regular Customer account to shop.",
+        },
+        { status: 403 }
+      );
+    }
+
     const customerId = await requireCustomer(request);
 
     if (!customerId) {

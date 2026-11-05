@@ -7,6 +7,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/stores/cartStore";
+import { useAuthStore } from "@/stores/authStore";
 import { Address } from "@/types/address";
 import { CouponValidation } from "@/types/coupon";
 import { AddressSelector } from "@/components/checkout/AddressSelector";
@@ -35,6 +36,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { toast } = useToast();
   const cartStore = useCartStore();
+  const { user } = useAuthStore();
 
   // State
   const [currentStep, setCurrentStep] = useState(1);
@@ -247,6 +249,40 @@ export default function CheckoutPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  // Prevent staff and business accounts (Admin, Vendor, Ads Seller) from placing customer shopping orders
+  if (user && (user.role === "ADMIN" || user.role === "VENDOR" || user.role === "ADS_SELLER")) {
+    const roleLabel =
+      user.role === "ADMIN" ? "Platform Admin" : user.role === "VENDOR" ? "Store Vendor" : "Ads Seller";
+    const dashboardHref =
+      user.role === "ADMIN" ? "/admin" : user.role === "VENDOR" ? "/vendor" : "/ads-seller";
+
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-xl text-center">
+        <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl p-8 space-y-4">
+          <AlertCircle className="w-12 h-12 text-amber-600 mx-auto" />
+          <h2 className="text-xl font-bold text-foreground">Staff &amp; Business Account Notice</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            You are currently logged in as a <strong>{roleLabel}</strong>. To maintain clear separation between business operations and customer purchases, business accounts cannot place customer shopping orders.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Please log out and sign in with a standard Customer account to place an order.
+          </p>
+          <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+            <Button variant="outline" onClick={() => router.push(dashboardHref)}>
+              Go to Dashboard
+            </Button>
+            <Button
+              className="bg-[#FF6600] hover:bg-[#E65C00] text-white"
+              onClick={() => router.push("/login")}
+            >
+              Log in as Customer
+            </Button>
+          </div>
         </div>
       </div>
     );

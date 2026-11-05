@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogOut, Store as StoreIcon, ShoppingBag, AlertTriangle, Settings } from "lucide-react";
+import { LogOut, Store as StoreIcon, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -39,13 +39,12 @@ export function VendorMobileNav({ isOpen, onClose }: VendorMobileNavProps) {
   const handleLogout = () => {
     logout();
     router.push("/staff/login");
-    onClose();
   };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-[85vw] max-w-[280px] p-0 flex flex-col h-full bg-white">
-        <SheetHeader className="p-4 text-left">
+      <SheetContent side="left" className="w-72 p-0 flex flex-col h-full">
+        <SheetHeader className="p-4 flex flex-row items-center justify-between space-y-0">
           <SheetTitle>
             <Logo variant="icon" href="/vendor" />
           </SheetTitle>
@@ -60,7 +59,7 @@ export function VendorMobileNav({ isOpen, onClose }: VendorMobileNavProps) {
               <StoreIcon className="w-4 h-4" />
               <span className="text-sm font-medium truncate">{mockShopName}</span>
             </div>
-            <Badge variant={mockShopStatus === "Open" ? "default" : "secondary"} className="text-xs">
+            <Badge variant="default" className="text-xs">
               {mockShopStatus}
             </Badge>
           </div>
@@ -71,8 +70,10 @@ export function VendorMobileNav({ isOpen, onClose }: VendorMobileNavProps) {
 
         <Separator />
 
+        {/* Navigation */}
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="space-y-1">
+            {/* Vendor Management Sections */}
             {vendorNavItems.map((item) => {
               const isItemActive = isActive(item.href, item.href === "/vendor");
 
@@ -94,41 +95,6 @@ export function VendorMobileNav({ isOpen, onClose }: VendorMobileNavProps) {
                       {item.badge}
                     </span>
                   )}
-                </Link>
-              );
-            })}
-
-            {/* My Shopping Section */}
-            <div className="pt-4 pb-2 px-3">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                My Shopping
-              </span>
-              <Separator className="mt-2 opacity-50" />
-            </div>
-
-            {[
-              { label: "My Orders", href: "/orders", icon: ShoppingBag },
-              {
-                label: "My Disputes",
-                href: "/my-disputes",
-                icon: AlertTriangle,
-              },
-            ].map((item) => {
-              const isItemActive = isActive(item.href);
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                    isItemActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
-                >
-                  <item.icon className="w-5 h-5 shrink-0" />
-                  <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               );
             })}
