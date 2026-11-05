@@ -57,6 +57,10 @@ export async function getOrCreateAdsSellerVendor(userId: string) {
  * Ensures a vendor has at least one general Product record so that
  * custom services, classified ad orders, and POS walk-in items can be
  * linked to OrderItem (which has a strict foreign key constraint to Product).
+ *
+ * NOTE: This internal placeholder is strictly hidden from public listings
+ * (isActive: false, isDraft: true, showOnMarketplace: false, showOnWebsite: false)
+ * so it will NEVER appear on the home page, search, or storefront catalogs!
  */
 export async function getOrCreateVendorProduct(vendorId: string, tx: any = prisma) {
   let product = await tx.product.findFirst({
@@ -82,20 +86,21 @@ export async function getOrCreateVendorProduct(vendorId: string, tx: any = prism
       });
     }
 
-    const uniqueSlug = `store-item-${vendorId.slice(-6)}-${Date.now().toString(36)}`;
+    const uniqueSlug = `internal-catalog-${vendorId.slice(-6)}-${Date.now().toString(36)}`;
 
     product = await tx.product.create({
       data: {
         vendorId,
         categoryId: category.id,
-        name: "Store Catalog Item",
+        name: "Store Internal Catalog Item",
         slug: uniqueSlug,
-        description: "Store Catalog Item for direct, marketplace, and POS orders",
+        description: "Internal record for direct, marketplace, and POS order persistence",
         price: 0,
         stock: 99999,
-        isActive: true,
-        showOnWebsite: true,
-        showOnMarketplace: true,
+        isActive: false,
+        isDraft: true,
+        showOnWebsite: false,
+        showOnMarketplace: false,
       },
     });
   }

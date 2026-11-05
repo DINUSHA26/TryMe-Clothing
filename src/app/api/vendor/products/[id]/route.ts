@@ -168,15 +168,19 @@ export async function PATCH(
       }
     }
 
-    // If name is being changed, generate new slug
+    // If name is being changed, generate new slug with vendor qualification
     let slug = existingProduct.slug;
     if (data.name && data.name !== existingProduct.name) {
       const baseSlug = generateSlug(data.name);
-      slug = await generateUniqueSlug(baseSlug, async (slug) => {
-        if (slug === existingProduct.slug) return false; // Same slug is okay
-        const existing = await prisma.product.findUnique({ where: { slug } });
-        return !!existing;
-      });
+      slug = await generateUniqueSlug(
+        baseSlug,
+        async (slug) => {
+          if (slug === existingProduct.slug) return false; // Same slug is okay
+          const existing = await prisma.product.findUnique({ where: { slug } });
+          return !!existing;
+        },
+        vendorRecord.slug
+      );
     }
 
     // Update product and variants in a transaction

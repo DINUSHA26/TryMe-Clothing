@@ -58,12 +58,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique slug
+    // Generate unique slug with vendor qualification when colliding
     const baseSlug = data.slug || generateSlug(data.name);
-    const slug = await generateUniqueSlug(baseSlug, async (slug) => {
-      const existing = await prisma.product.findUnique({ where: { slug } });
-      return !!existing;
-    });
+    const slug = await generateUniqueSlug(
+      baseSlug,
+      async (slug) => {
+        const existing = await prisma.product.findUnique({ where: { slug } });
+        return !!existing;
+      },
+      vendorRecord.slug
+    );
 
     // Create product with images and variants in transaction
     const result = await prisma.$transaction(async (tx) => {
