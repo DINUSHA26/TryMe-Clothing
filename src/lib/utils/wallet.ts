@@ -83,11 +83,14 @@ export function calculateVendorEarnings(
       totalAmount = totalAmount.sub(discountAmount);
     }
 
-    // Calculate commission amount
-    const commissionAmount = totalAmount.mul(group.commissionRate).div(100);
+    // Calculate commission amount (rounded to 2 decimal places)
+    const commissionAmount = totalAmount
+      .mul(group.commissionRate)
+      .div(100)
+      .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
 
     // Calculate net amount (after commission deduction)
-    const netAmount = totalAmount.sub(commissionAmount);
+    const netAmount = totalAmount.sub(commissionAmount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
 
     vendorEarnings.push({
       vendorId: group.vendorId,
@@ -288,11 +291,23 @@ export async function releaseVendorFunds(
     }
 
     const commissionRate = items[0].vendor.commissionRate;
-    const commissionAmount = grossAmount.mul(commissionRate).div(100);
-    const netAmount = grossAmount.sub(commissionAmount);
+    const commissionAmount = grossAmount
+      .mul(commissionRate)
+      .div(100)
+      .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+    let netAmount = grossAmount.sub(commissionAmount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
 
     const currentPendingBalance = wallet.pendingBalance;
     const currentAvailableBalance = wallet.availableBalance;
+
+    // Guard against micro-cent rounding variances between DB storage and calculation:
+    // If pending balance is within 0.05 of netAmount, clamp netAmount to currentPendingBalance
+    if (
+      netAmount.greaterThan(currentPendingBalance) &&
+      netAmount.sub(currentPendingBalance).lessThanOrEqualTo(new Decimal(0.05))
+    ) {
+      netAmount = currentPendingBalance;
+    }
 
     // Verify sufficient pending balance
     if (currentPendingBalance.lessThan(netAmount)) {

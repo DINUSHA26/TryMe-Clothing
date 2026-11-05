@@ -25,10 +25,17 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
       .filter(Boolean)
       .map((segment, index, array) => {
         const href = `/${array.slice(0, index + 1).join("/")}`;
-        const label = segment
-          .split("-")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ");
+        let label = segment;
+        if (/^(PW|WEB|POS)-/i.test(segment)) {
+          label = `#${segment.toUpperCase()}`;
+        } else if (/^c[a-z0-9]{20,}$/i.test(segment)) {
+          label = "Order Details";
+        } else {
+          label = segment
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+        }
         return { label, href };
       });
 

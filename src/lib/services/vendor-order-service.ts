@@ -277,7 +277,7 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
   };
 }
 
-export async function getVendorOrderDetail(vendorId: string, orderId: string) {
+export async function getVendorOrderDetail(vendorId: string, orderIdOrNumber: string) {
   const orderResults = await prisma.$queryRawUnsafe<any[]>(
     `SELECT o.*, u."email" as "customerEmail",
      (
@@ -294,8 +294,8 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
      FROM "Order" o
      JOIN "Customer" c ON o."customerId" = c."id"
      JOIN "User" u ON c."userId" = u."id"
-     WHERE o."id" = $1`,
-    orderId
+     WHERE o."id" = $1 OR o."orderNumber" = $1`,
+    orderIdOrNumber
   );
 
   const order = orderResults[0];
@@ -310,7 +310,7 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
      LEFT JOIN "ChatRoom" cr ON i."id" = cr."orderItemId"
      WHERE i."orderId" = $1 AND i."vendorId" = $2
      ORDER BY i."createdAt" ASC`,
-    orderId,
+    order.id,
     vendorId
   );
 
@@ -320,7 +320,7 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
 
   const allItems = await prisma.$queryRawUnsafe<any[]>(
     'SELECT "id", "vendorId", "totalPrice", "status"::text FROM "OrderItem" WHERE "orderId" = $1',
-    orderId
+    order.id
   );
 
   let couponScopeVendorId: string | null = null;

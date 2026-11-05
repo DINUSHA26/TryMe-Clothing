@@ -62,12 +62,13 @@ export function VendorOrdersTable({ orders, linkPrefix = "/vendor/orders" }: Ven
               const isWebsite =
                 order.orderSource === "VENDOR_WEBSITE" ||
                 order.orderNumber.startsWith("WEB-");
+              const targetOrderParam = order.orderNumber || order.id;
 
               return (
                 <tr key={order.id} className="hover:bg-muted/40 transition-colors">
                   <td className="px-4 py-3.5">
                     <Link
-                      href={`${linkPrefix}/${order.id}`}
+                      href={`${linkPrefix}/${targetOrderParam}`}
                       className="font-bold text-sm hover:underline text-primary"
                     >
                       {order.orderNumber}
@@ -146,7 +147,7 @@ export function VendorOrdersTable({ orders, linkPrefix = "/vendor/orders" }: Ven
                     <OrderStatusBadge status={order.status} items={order.vendorItems} />
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <Link href={`${linkPrefix}/${order.id}`}>
+                    <Link href={`${linkPrefix}/${targetOrderParam}`}>
                       <Button variant="outline" size="sm" className="h-8 text-xs font-bold">
                         <Eye className="w-3.5 h-3.5 mr-1.5" />
                         Manage
