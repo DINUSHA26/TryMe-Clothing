@@ -5,7 +5,7 @@ export interface VendorOrderFilters {
   page?: string;
   pageSize?: string;
   status?: string;
-  source?: "all" | "tryme" | "website" | "inquiries";
+  source?: "all" | "tryme" | "website" | "pos" | "inquiries";
   search?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -34,11 +34,13 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
   let whereClause = `WHERE o."id" IN (SELECT DISTINCT "orderId" FROM "OrderItem" WHERE "vendorId" = $1)`;
   const queryParamsRaw: any[] = [vendorId];
 
-  // Channel filter: TryMe Marketplace vs Direct Vendor Website
+  // Channel filter: TryMe Marketplace vs Direct Vendor Website vs POS
   if (source === "website") {
     whereClause += ` AND o."orderNumber" LIKE 'WEB-%'`;
+  } else if (source === "pos") {
+    whereClause += ` AND (o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN'))`;
   } else if (source === "tryme") {
-    whereClause += ` AND o."orderNumber" NOT LIKE 'WEB-%'`;
+    whereClause += ` AND o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN')`;
   }
 
   if (status) {
@@ -56,7 +58,7 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     }
   } else {
     // For TryMe marketplace orders, exclude unpaid/cancelled by default;
-    // For Website Direct orders, show all orders including PENDING_VERIFICATION (Bank Deposit) & CANCELLED
+    // For Website Direct and POS orders, show all relevant orders
     if (source === "tryme") {
       whereClause += ` AND o."status" NOT IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus", 'CANCELLED'::"OrderStatus")`;
     }
@@ -132,11 +134,12 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     ...fetchParams
   );
 
-  // Get channel counts (TryMe vs Website)
+  // Get channel counts (TryMe vs Website vs POS)
   const channelCountsRaw = await prisma.$queryRawUnsafe<any[]>(
     `SELECT
-       COUNT(*) FILTER (WHERE o."orderNumber" NOT LIKE 'WEB-%' AND o."status" NOT IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus", 'CANCELLED'::"OrderStatus"))::int AS "trymeCount",
-       COUNT(*) FILTER (WHERE o."orderNumber" LIKE 'WEB-%')::int AS "websiteCount"
+       COUNT(*) FILTER (WHERE o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN') AND o."status" NOT IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus", 'CANCELLED'::"OrderStatus"))::int AS "trymeCount",
+       COUNT(*) FILTER (WHERE o."orderNumber" LIKE 'WEB-%')::int AS "websiteCount",
+       COUNT(*) FILTER (WHERE o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN'))::int AS "posCount"
      FROM "Order" o
      WHERE o."id" IN (SELECT DISTINCT "orderId" FROM "OrderItem" WHERE "vendorId" = $1)`,
     vendorId
@@ -146,8 +149,10 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
   const sourceCondition =
     source === "website"
       ? `AND o."orderNumber" LIKE 'WEB-%'`
+      : source === "pos"
+      ? `AND (o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN'))`
       : source === "tryme"
-      ? `AND o."orderNumber" NOT LIKE 'WEB-%'`
+      ? `AND o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN')`
       : "";
 
   const statusCountsRaw = await prisma.$queryRawUnsafe<any[]>(
@@ -198,6 +203,9 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     const vendorTotal = items.reduce((sum: number, item: any) => {
       return sum + Number(item.totalPrice);
     }, 0);
+    const isPosOrder =
+      String(order.orderNumber).startsWith("POS-") ||
+      order.shippingAddressJson?.orderSource === "POS_WALK_IN";
     const isWebsiteOrder =
       String(order.orderNumber).startsWith("WEB-") ||
       order.shippingAddressJson?.orderSource === "VENDOR_WEBSITE";
@@ -205,7 +213,7 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     const paymentMethod =
       order.payment_info?.paymentMethod ||
       order.shippingAddressJson?.paymentMethod ||
-      (isWebsiteOrder ? "COD" : "ONLINE");
+      (isPosOrder ? "CASH" : isWebsiteOrder ? "COD" : "ONLINE");
 
     const paymentSlipUrl =
       order.payment_info?.paymentSlipUrl ||
@@ -214,14 +222,16 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
 
     const displayEmail =
       order.shippingAddressJson?.email ||
-      (order.customer_user?.email?.endsWith("@website.tryme.lk")
+      (isPosOrder
+        ? "POS Walk-In Customer"
+        : order.customer_user?.email?.endsWith("@website.tryme.lk")
         ? order.shippingAddressJson?.phone || "Guest Customer"
         : order.customer_user?.email);
 
     return {
       id: order.id,
       orderNumber: order.orderNumber,
-      orderSource: isWebsiteOrder ? "VENDOR_WEBSITE" : "TRYME_MARKETPLACE",
+      orderSource: isPosOrder ? "POS_WALK_IN" : isWebsiteOrder ? "VENDOR_WEBSITE" : "TRYME_MARKETPLACE",
       paymentMethod,
       paymentSlipUrl,
       status: order.status,
@@ -235,7 +245,7 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
           [order.customer_user?.firstName, order.customer_user?.lastName]
             .filter(Boolean)
             .join(" ") ||
-          "Customer",
+          (isPosOrder ? "Walk-In Counter Customer" : "Customer"),
         phone: order.shippingAddressJson?.phone || "",
       },
       vendorItems: items.map((item: any) => ({
@@ -254,6 +264,7 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     channelCounts: {
       tryme: channelCountsRaw[0]?.trymeCount || 0,
       website: channelCountsRaw[0]?.websiteCount || 0,
+      pos: channelCountsRaw[0]?.posCount || 0,
       inquiries: websiteInquiries.length,
     },
     pagination: {
@@ -360,6 +371,9 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
     };
   });
 
+  const isPosOrder =
+    String(order.orderNumber).startsWith("POS-") ||
+    order.shippingAddressJson?.orderSource === "POS_WALK_IN";
   const isWebsiteOrder =
     String(order.orderNumber).startsWith("WEB-") ||
     order.shippingAddressJson?.orderSource === "VENDOR_WEBSITE";
@@ -367,7 +381,7 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
   const paymentMethod =
     order.paymentInfo?.paymentMethod ||
     order.shippingAddressJson?.paymentMethod ||
-    (isWebsiteOrder ? "COD" : "ONLINE");
+    (isPosOrder ? "CASH" : isWebsiteOrder ? "COD" : "ONLINE");
 
   const paymentSlipUrl =
     order.paymentInfo?.paymentSlipUrl ||
@@ -381,7 +395,9 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
 
   const displayEmail =
     order.shippingAddressJson?.email ||
-    (order.customerEmail?.endsWith("@website.tryme.lk")
+    (isPosOrder
+      ? "POS Walk-In Customer"
+      : order.customerEmail?.endsWith("@website.tryme.lk")
       ? order.shippingAddressJson?.phone || "Guest Customer"
       : order.customerEmail);
 
@@ -389,7 +405,7 @@ export async function getVendorOrderDetail(vendorId: string, orderId: string) {
     order: {
       id: order.id,
       orderNumber: order.orderNumber,
-      orderSource: isWebsiteOrder ? "VENDOR_WEBSITE" : "TRYME_MARKETPLACE",
+      orderSource: isPosOrder ? "POS_WALK_IN" : isWebsiteOrder ? "VENDOR_WEBSITE" : "TRYME_MARKETPLACE",
       paymentMethod,
       paymentSlipUrl,
       bankReference,

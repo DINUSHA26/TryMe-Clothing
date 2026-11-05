@@ -1,6 +1,6 @@
 /**
  * Vendor Orders Page
- * Separates TryMe.lk Marketplace Orders, Direct Website Orders (COD / Bank Deposit), and Website Inquiries
+ * Separates TryMe.lk Marketplace Orders, Direct Website Orders (COD / Bank Deposit), In-Store POS Receipts, and Website Inquiries
  */
 
 import { redirect } from "next/navigation";
@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { getVendorOrders as getVendorOrdersDirect } from "@/lib/services/vendor-order-service";
 import { VendorOrdersTable } from "@/components/vendor/orders/VendorOrdersTable";
 import { WebsiteInquiriesManager } from "@/components/vendor/orders/WebsiteInquiriesManager";
-import { Package, Store, Globe, Inbox } from "lucide-react";
+import { Package, Store, Globe, Inbox, Receipt } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ import { OrderStatus } from "@prisma/client";
 interface SearchParams {
   page?: string;
   status?: OrderStatus;
-  source?: "tryme" | "website" | "inquiries" | "all";
+  source?: "tryme" | "website" | "pos" | "inquiries" | "all";
 }
 
 async function getVendorOrders(searchParams: SearchParams) {
@@ -91,7 +91,7 @@ export default async function VendorOrdersPage({
   const {
     orders,
     websiteInquiries = [],
-    channelCounts = { tryme: 0, website: 0, inquiries: 0 },
+    channelCounts = { tryme: 0, website: 0, pos: 0, inquiries: 0 },
     pagination,
     stats,
   } = result;
@@ -110,7 +110,7 @@ export default async function VendorOrdersPage({
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Order Management</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage orders from TryMe.lk Marketplace and direct orders &amp; inquiries from your standalone website
+            Manage orders from TryMe.lk Marketplace, direct orders from your website, and in-store POS receipts
           </p>
         </div>
         <Link href="/vendor/website-builder">
@@ -121,8 +121,9 @@ export default async function VendorOrdersPage({
         </Link>
       </div>
 
-      {/* ── Channel Switcher Tabs: TryMe.lk Orders vs My Website Direct Orders vs Website Inquiries ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-muted/40 p-2 rounded-2xl border">
+      {/* ── Channel Switcher Tabs: TryMe vs Website vs POS vs Inquiries vs All ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 bg-muted/40 p-2 rounded-2xl border">
+        {/* TryMe Marketplace Tab */}
         <Link href="/vendor/orders?source=tryme">
           <div
             className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
@@ -146,6 +147,7 @@ export default async function VendorOrdersPage({
           </div>
         </Link>
 
+        {/* Website Direct Orders Tab */}
         <Link href="/vendor/orders?source=website">
           <div
             className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
@@ -175,6 +177,37 @@ export default async function VendorOrdersPage({
           </div>
         </Link>
 
+        {/* POS In-Store Receipts Tab */}
+        <Link href="/vendor/orders?source=pos">
+          <div
+            className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+              currentSource === "pos"
+                ? "bg-card shadow-sm border-amber-500/40 ring-1 ring-amber-500/20"
+                : "bg-transparent border-transparent hover:bg-card/60"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                <Receipt className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-bold text-xs sm:text-sm">POS Receipts</p>
+                <p className="text-[11px] text-muted-foreground">In-Store Walk-ins</p>
+              </div>
+            </div>
+            <Badge
+              className={
+                currentSource === "pos"
+                  ? "bg-amber-600 text-white font-bold"
+                  : "bg-amber-500/10 text-amber-700 font-bold"
+              }
+            >
+              {channelCounts.pos || 0}
+            </Badge>
+          </div>
+        </Link>
+
+        {/* Website Inquiries Tab */}
         <Link href="/vendor/orders?source=inquiries">
           <div
             className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
@@ -204,6 +237,7 @@ export default async function VendorOrdersPage({
           </div>
         </Link>
 
+        {/* All Combined Tab */}
         <Link href="/vendor/orders?source=all">
           <div
             className={`p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
@@ -222,7 +256,7 @@ export default async function VendorOrdersPage({
               </div>
             </div>
             <Badge variant="outline" className="font-bold">
-              {channelCounts.tryme + channelCounts.website}
+              {channelCounts.tryme + channelCounts.website + (channelCounts.pos || 0)}
             </Badge>
           </div>
         </Link>
@@ -242,7 +276,7 @@ export default async function VendorOrdersPage({
           <WebsiteInquiriesManager initialInquiries={websiteInquiries} />
         </div>
       ) : (
-        /* ── ORDERS VIEW (TRYME OR WEBSITE DIRECT OR ALL) ── */
+        /* ── ORDERS VIEW (TRYME OR WEBSITE DIRECT OR POS OR ALL) ── */
         <>
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -250,13 +284,15 @@ export default async function VendorOrdersPage({
               <p className="text-xs text-muted-foreground mb-1 font-medium">
                 {currentSource === "website"
                   ? "Total Website Orders"
+                  : currentSource === "pos"
+                  ? "Total POS Receipts"
                   : currentSource === "tryme"
                   ? "Total TryMe Orders"
                   : "Total Orders"}
               </p>
               <p className="text-2xl font-bold">{stats.total}</p>
             </div>
-            {currentSource !== "tryme" && (
+            {currentSource !== "tryme" && currentSource !== "pos" && (
               <div className="border rounded-xl p-4 bg-card">
                 <p className="text-xs text-muted-foreground mb-1 font-medium">
                   Awaiting Bank Verification
@@ -268,7 +304,7 @@ export default async function VendorOrdersPage({
             )}
             <div className="border rounded-xl p-4 bg-card">
               <p className="text-xs text-muted-foreground mb-1 font-medium">
-                Payment Confirmed / COD
+                {currentSource === "pos" ? "Cash / Card Paid" : "Payment Confirmed / COD"}
               </p>
               <p className="text-2xl font-bold">{stats.paymentConfirmed}</p>
             </div>
@@ -278,7 +314,7 @@ export default async function VendorOrdersPage({
             </div>
             <div className="border rounded-xl p-4 bg-card">
               <p className="text-xs text-muted-foreground mb-1 font-medium">
-                Shipped / Delivered
+                {currentSource === "pos" ? "Completed Sales" : "Shipped / Delivered"}
               </p>
               <p className="text-2xl font-bold text-emerald-600">
                 {(stats.shipped || 0) + (stats.delivered || 0)}
@@ -290,10 +326,10 @@ export default async function VendorOrdersPage({
           <div className="flex flex-wrap gap-2">
             <Link href={buildFilterHref()}>
               <Button variant={!currentStatus ? "default" : "outline"} size="sm">
-                All Orders
+                {currentSource === "pos" ? "All POS Receipts" : "All Orders"}
               </Button>
             </Link>
-            {currentSource !== "tryme" && (
+            {currentSource !== "tryme" && currentSource !== "pos" && (
               <Link href={buildFilterHref("PENDING_VERIFICATION")}>
                 <Button
                   variant={
@@ -362,15 +398,19 @@ export default async function VendorOrdersPage({
             <div className="text-center py-16 border rounded-xl bg-muted/10">
               <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">
-                {currentSource === "website"
+                {currentSource === "pos"
+                  ? "No POS Counter Receipts Found"
+                  : currentSource === "website"
                   ? "No Direct Website Orders Found"
                   : "No TryMe.lk Marketplace Orders Found"}
               </h3>
               <p className="text-muted-foreground text-sm">
                 {currentStatus
                   ? `No ${currentStatus.toLowerCase().replace("_", " ")} orders in this channel.`
+                  : currentSource === "pos"
+                  ? "In-store walk-in sales completed at your POS counter will appear here."
                   : currentSource === "website"
-                  ? "Orders placed by customers on your 6-Page or 12-Page standalone website (COD or Bank Deposit) will appear here."
+                  ? "Orders placed by customers on your standalone website (COD or Bank Deposit) will appear here."
                   : "Orders placed on TryMe.lk containing your products will appear here."}
               </p>
             </div>

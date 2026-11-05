@@ -100,7 +100,7 @@ export const orderFiltersSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   status: z.string().optional(),
-  source: z.enum(["all", "tryme", "website", "inquiries"]).optional(),
+  source: z.enum(["all", "tryme", "website", "pos", "inquiries"]).optional(),
   search: z.string().max(100).trim().optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),

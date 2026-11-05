@@ -1,6 +1,6 @@
 /**
  * Vendor Overview Report API
- * GET /api/vendor/reports/overview - Vendor dashboard statistics (TryMe.lk vs My Website)
+ * GET /api/vendor/reports/overview - Vendor dashboard statistics (TryMe.lk vs My Website vs POS)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -69,14 +69,16 @@ export async function GET(request: NextRequest) {
     const salesResult = await prisma.$queryRawUnsafe<any[]>(
       `SELECT 
         COALESCE(SUM(i."totalPrice"), 0)::float as "totalSales",
-        COUNT(*)::int as "totalOrders",
+        COUNT(DISTINCT o."id")::int as "totalOrders",
         COALESCE(AVG(i."totalPrice"), 0)::float as "averageOrderValue"
        FROM "OrderItem" i
        JOIN "Order" o ON i."orderId" = o."id"
        ${revenueWhere}`,
       ...queryParamsRaw
     );
-    const { totalSales, totalOrders, averageOrderValue } = salesResult[0];
+    const totalSales = Number(salesResult[0]?.totalSales) || 0;
+    const totalOrders = Number(salesResult[0]?.totalOrders) || 0;
+    const averageOrderValue = Number(salesResult[0]?.averageOrderValue) || 0;
 
     // 2. TryMe.lk Marketplace Sales (orderNumber NOT LIKE 'WEB-%' AND NOT LIKE 'POS-%')
     const trymeResult = await prisma.$queryRawUnsafe<any[]>(
@@ -89,6 +91,7 @@ export async function GET(request: NextRequest) {
        ${revenueWhere} AND o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN')`,
       ...queryParamsRaw
     );
+    const trymeData = trymeResult[0] || {};
 
     // 3. Direct Website Sales (orderNumber LIKE 'WEB-%')
     const websiteRevenueResult = await prisma.$queryRawUnsafe<any[]>(
@@ -101,17 +104,19 @@ export async function GET(request: NextRequest) {
        ${revenueWhere} AND o."orderNumber" LIKE 'WEB-%'`,
       ...queryParamsRaw
     );
+    const websiteRevenueData = websiteRevenueResult[0] || {};
 
     const websiteAllOrdersResult = await prisma.$queryRawUnsafe<any[]>(
       `SELECT 
         COUNT(DISTINCT o."id")::int as "allWebsiteOrders",
         COALESCE(SUM(CASE WHEN o."status" = 'PENDING_PAYMENT'::"OrderStatus" THEN i."totalPrice" ELSE 0 END), 0)::float as "pendingVerificationSales",
-        COUNT(DISTINCT CASE WHEN o."status" = 'PENDING_PAYMENT'::"OrderStatus" OR i."status" IN ('PENDING'::"OrderItemStatus", 'PROCESSING'::"OrderItemStatus") THEN o."id" END)::int as "pendingActionOrders"
+        COUNT(DISTINCT CASE WHEN o."status" = 'PENDING_PAYMENT'::"OrderStatus" OR i."status" IN ('PENDING_PAYMENT'::"OrderStatus", 'PROCESSING'::"OrderStatus") THEN o."id" END)::int as "pendingActionOrders"
        FROM "OrderItem" i
        JOIN "Order" o ON i."orderId" = o."id"
        ${baseWhere} AND o."orderNumber" LIKE 'WEB-%' AND o."status" != 'CANCELLED'::"OrderStatus"`,
       ...queryParamsRaw
     );
+    const websiteAllData = websiteAllOrdersResult[0] || {};
 
     // 4. In-Store POS Retail Counter Sales (orderNumber LIKE 'POS-%' OR orderSource = 'POS_WALK_IN')
     const posRevenueResult = await prisma.$queryRawUnsafe<any[]>(
@@ -124,11 +129,12 @@ export async function GET(request: NextRequest) {
        ${revenueWhere} AND (o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN'))`,
       ...queryParamsRaw
     );
+    const posData = posRevenueResult[0] || {};
 
     // This Month Sales (Combined, TryMe, Website, POS)
     const thisMonthStart = startOfMonth(new Date());
     const monthParams = [...queryParamsRaw, thisMonthStart];
-    const monthWhere = revenueWhere + ` AND o."createdAt" >= ${monthParams.length}`;
+    const monthWhere = revenueWhere + ` AND o."createdAt" >= $${monthParams.length}`;
 
     const thisMonthResult = await prisma.$queryRawUnsafe<any[]>(
       `SELECT 
@@ -141,8 +147,7 @@ export async function GET(request: NextRequest) {
        ${monthWhere}`,
       ...monthParams
     );
-
-    const { thisMonthSales, trymeMonthSales, websiteMonthSales, posMonthSales } = thisMonthResult[0];
+    const monthData = thisMonthResult[0] || {};
 
     // Wallet Balance
     const wallet = await prisma.wallet.findUnique({
@@ -191,42 +196,42 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         totalSales,
-        thisMonthSales,
+        thisMonthSales: Number(monthData.thisMonthSales) || 0,
         pendingBalance,
         availableBalance,
         totalOrders,
         averageOrderValue,
         trymeStats: {
-          totalSales: trymeResult[0].totalSales,
-          thisMonthSales: trymeMonthSales,
-          totalOrders: trymeResult[0].totalOrders,
-          averageOrderValue: trymeResult[0].averageOrderValue,
+          totalSales: Number(trymeData.totalSales) || 0,
+          thisMonthSales: Number(monthData.trymeMonthSales) || 0,
+          totalOrders: Number(trymeData.totalOrders) || 0,
+          averageOrderValue: Number(trymeData.averageOrderValue) || 0,
           pendingBalance,
           availableBalance,
           reviewsCount: trymeReviewsCount,
         },
         websiteStats: {
-          totalSales: websiteRevenueResult[0].totalSales,
-          thisMonthSales: websiteMonthSales,
-          totalOrders: websiteAllOrdersResult[0].allWebsiteOrders,
-          confirmedOrders: websiteRevenueResult[0].confirmedOrders,
-          pendingVerificationSales: websiteAllOrdersResult[0].pendingVerificationSales,
-          pendingActionOrders: websiteAllOrdersResult[0].pendingActionOrders,
-          averageOrderValue: websiteRevenueResult[0].averageOrderValue,
+          totalSales: Number(websiteRevenueData.totalSales) || 0,
+          thisMonthSales: Number(monthData.websiteMonthSales) || 0,
+          totalOrders: Number(websiteAllData.allWebsiteOrders) || 0,
+          confirmedOrders: Number(websiteRevenueData.confirmedOrders) || 0,
+          pendingVerificationSales: Number(websiteAllData.pendingVerificationSales) || 0,
+          pendingActionOrders: Number(websiteAllData.pendingActionOrders) || 0,
+          averageOrderValue: Number(websiteRevenueData.averageOrderValue) || 0,
           inquiriesCount: websiteInquiriesCount,
           newInquiriesCount,
           reviewsCount: websiteReviewsCount,
         },
         posStats: {
-          totalSales: posRevenueResult[0].totalSales,
-          thisMonthSales: posMonthSales,
-          totalOrders: posRevenueResult[0].totalOrders,
-          averageOrderValue: posRevenueResult[0].averageOrderValue,
+          totalSales: Number(posData.totalSales) || 0,
+          thisMonthSales: Number(monthData.posMonthSales) || 0,
+          totalOrders: Number(posData.totalOrders) || 0,
+          averageOrderValue: Number(posData.averageOrderValue) || 0,
         },
       },
     });
-  } catch (error) {
-    console.error("Failed to fetch vendor overview stats:", error);
+  } catch (error: any) {
+    console.error("Failed to fetch vendor overview stats:", error?.message || error);
     const authError = handleAuthError(error);
     if (authError) return authError;
 
