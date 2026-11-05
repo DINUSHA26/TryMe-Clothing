@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
           ...target.flexibleWhere,
         },
       });
-      return !existing;
+      return !!existing;
     });
 
     let parsedPrice: number | null = null;

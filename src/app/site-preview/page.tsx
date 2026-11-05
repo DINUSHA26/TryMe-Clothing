@@ -149,6 +149,7 @@ function SitePreviewContent() {
     },
     subscription: rawPayload.activeSubscription || null,
     products: rawPayload.products || [],
+    services: rawPayload.services || [],
     websiteReviews: rawPayload.config?.reviewsSection?.websiteReviews || [],
   };
 

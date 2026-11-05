@@ -294,6 +294,9 @@ export async function middleware(request: NextRequest) {
   const requiredRoles = protectedRoutes[protectedRoute];
   if (!requiredRoles.includes(payload.role)) {
     const url = request.nextUrl.clone();
+    if (pathname.startsWith("/api")) {
+      return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
+    }
     url.pathname = "/403";
     return NextResponse.redirect(url);
   }

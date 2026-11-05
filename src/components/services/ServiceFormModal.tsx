@@ -203,7 +203,14 @@ export function ServiceFormModal({
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
+      let data: any;
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        await res.text();
+        throw new Error(res.statusText || "Server returned an unexpected response.");
+      }
       if (!data.success) {
         throw new Error(data.error || "Failed to save service");
       }
