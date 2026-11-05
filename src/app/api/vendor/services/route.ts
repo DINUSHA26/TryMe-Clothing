@@ -93,6 +93,8 @@ export async function POST(request: NextRequest) {
       images,
       features,
       isFeatured,
+      showOnMarketplace,
+      showOnWebsite,
     } = body;
 
     // Validation
@@ -190,6 +192,8 @@ export async function POST(request: NextRequest) {
         features: cleanFeatures,
         isActive: true,
         isFeatured: !!isFeatured,
+        showOnMarketplace: showOnMarketplace !== undefined ? Boolean(showOnMarketplace) : true,
+        showOnWebsite: showOnWebsite !== undefined ? Boolean(showOnWebsite) : true,
       },
       include: {
         category: true,

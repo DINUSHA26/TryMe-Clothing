@@ -42,6 +42,7 @@ export async function PATCH(
 
     if (body.description !== undefined) updateData.description = body.description?.trim() || null;
     if (body.icon !== undefined) updateData.icon = body.icon?.trim() || null;
+    if (body.image !== undefined) updateData.image = body.image?.trim() || null;
     if (body.sortOrder !== undefined) updateData.sortOrder = Number(body.sortOrder) || 0;
     if (body.isActive !== undefined) updateData.isActive = !!body.isActive;
 

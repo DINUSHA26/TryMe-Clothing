@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     requireAdmin(request);
 
     const body = await request.json();
-    const { categoryId, name, description, icon, sortOrder } = body;
+    const { categoryId, name, description, icon, image, sortOrder } = body;
 
     if (!categoryId) {
       return NextResponse.json(
@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
         slug,
         description: description?.trim() || null,
         icon: icon?.trim() || null,
+        image: image?.trim() || null,
         sortOrder: typeof sortOrder === "number" ? sortOrder : 0,
         isActive: true,
       },

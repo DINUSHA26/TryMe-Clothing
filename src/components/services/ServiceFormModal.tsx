@@ -45,6 +45,8 @@ export function ServiceFormModal({
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [showOnMarketplace, setShowOnMarketplace] = useState(true);
+  const [showOnWebsite, setShowOnWebsite] = useState(true);
 
   // Load categories
   useEffect(() => {
@@ -76,6 +78,8 @@ export function ServiceFormModal({
       setImages(Array.isArray(service.images) ? service.images : []);
       setFeatures(Array.isArray(service.features) ? service.features : []);
       setIsFeatured(Boolean(service.isFeatured));
+      setShowOnMarketplace(service.showOnMarketplace !== undefined ? Boolean(service.showOnMarketplace) : true);
+      setShowOnWebsite(service.showOnWebsite !== undefined ? Boolean(service.showOnWebsite) : true);
     } else {
       setName("");
       setCategoryId("");
@@ -88,6 +92,8 @@ export function ServiceFormModal({
       setImages([]);
       setFeatures([]);
       setIsFeatured(false);
+      setShowOnMarketplace(true);
+      setShowOnWebsite(true);
     }
   }, [service, isOpen]);
 
@@ -203,6 +209,8 @@ export function ServiceFormModal({
         images,
         features,
         isFeatured,
+        showOnMarketplace,
+        showOnWebsite,
       };
 
       const url = service ? `/api/vendor/services/${service.id}` : "/api/vendor/services";
@@ -262,7 +270,7 @@ export function ServiceFormModal({
             {service ? "Edit Service" : "Add New Service"}
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-gray-500">
-            This service will display exclusively on your personal website (not on TryMe public marketplace).
+            Manage service details, pricing, gallery, and visibility on TryMe Marketplace and your personal website.
           </DialogDescription>
         </DialogHeader>
 
@@ -510,6 +518,27 @@ export function ServiceFormModal({
             </div>
           </div>
 
+          {/* Channel Visibility */}
+          <div className="space-y-3 p-3.5 rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50/60 dark:bg-neutral-900/60">
+            <Label className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+              Channel Visibility
+            </Label>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-gray-800 dark:text-gray-200 block">🛒 TryMe Marketplace</span>
+                <span className="text-[10px] text-gray-500 block">List in the public TryMe.lk Services directory.</span>
+              </div>
+              <Switch checked={showOnMarketplace} onCheckedChange={setShowOnMarketplace} />
+            </div>
+            <div className="flex items-center justify-between pt-2.5 border-t border-gray-200 dark:border-neutral-800">
+              <div>
+                <span className="text-xs font-bold text-gray-800 dark:text-gray-200 block">🌐 Personal Website</span>
+                <span className="text-[10px] text-gray-500 block">Display on your standalone online store/profile.</span>
+              </div>
+              <Switch checked={showOnWebsite} onCheckedChange={setShowOnWebsite} />
+            </div>
+          </div>
+
           {/* Featured on Home Page Toggle */}
           <div className="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 bg-gray-50/50">
             <div>
@@ -540,7 +569,7 @@ export function ServiceFormModal({
                   Saving...
                 </>
               ) : (
-                <span>{service ? "Update Service" : "Publish to My Website"}</span>
+                <span>{service ? "Update Service" : "Publish Service"}</span>
               )}
             </Button>
           </DialogFooter>

@@ -182,6 +182,14 @@ export async function PATCH(
       updateData.isActive = Boolean(body.isActive);
     }
 
+    if (body.showOnMarketplace !== undefined) {
+      updateData.showOnMarketplace = Boolean(body.showOnMarketplace);
+    }
+
+    if (body.showOnWebsite !== undefined) {
+      updateData.showOnWebsite = Boolean(body.showOnWebsite);
+    }
+
     if (body.isFeatured !== undefined) {
       updateData.isFeatured = Boolean(body.isFeatured);
     }

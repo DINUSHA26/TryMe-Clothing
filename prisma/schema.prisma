@@ -212,6 +212,7 @@ model Vendor {
   customDomain         VendorCustomDomain?
   websiteSubscriptions VendorWebsiteSubscription[]
   services             WebsiteService[]
+  serviceInquiries     ServiceInquiry[]
   aiConversations      StoreAiConversation[]
 
   @@index([slug])
@@ -953,6 +954,7 @@ model AdsSeller {
   customDomain         VendorCustomDomain?
   websiteSubscriptions VendorWebsiteSubscription[]
   services             WebsiteService[]
+  serviceInquiries     ServiceInquiry[]
   aiConversations      StoreAiConversation[]
 }
 
@@ -1307,6 +1309,7 @@ model ServiceSubCategory {
   slug        String
   description String?
   icon        String?
+  image       String?
   isActive    Boolean          @default(true)
   sortOrder   Int              @default(0)
   createdAt   DateTime         @default(now())
@@ -1344,9 +1347,13 @@ model WebsiteService {
   isActive           Boolean          @default(true)
   isFeatured         Boolean          @default(false)
   sortOrder          Int              @default(0)
+  showOnMarketplace  Boolean          @default(true)
+  showOnWebsite      Boolean          @default(true)
 
   isDisabledByAdmin  Boolean          @default(false)
   adminNote          String?
+
+  inquiries          ServiceInquiry[]
 
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
@@ -1355,6 +1362,30 @@ model WebsiteService {
   @@index([adsSellerId])
   @@index([categoryId])
   @@index([subCategoryId])
+}
+
+model ServiceInquiry {
+  id               String          @id @default(cuid())
+  serviceId        String?
+  service          WebsiteService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  vendorId         String?
+  vendor           Vendor?         @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  adsSellerId      String?
+  adsSeller        AdsSeller?      @relation(fields: [adsSellerId], references: [id], onDelete: Cascade)
+  customerName     String
+  customerPhone    String?
+  customerEmail    String?
+  message          String          @db.Text
+  preferredChannel String          @default("WHATSAPP")
+  source           String          @default("TRYME_MARKETPLACE") // "TRYME_MARKETPLACE" | "VENDOR_WEBSITE"
+  status           String          @default("NEW") // "NEW" | "CONTACTED" | "COMPLETED"
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([vendorId])
+  @@index([adsSellerId])
+  @@index([serviceId])
+  @@index([createdAt])
 }
 
 

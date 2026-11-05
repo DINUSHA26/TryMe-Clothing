@@ -326,6 +326,11 @@ export const storefrontNavItems: NavItem[] = [
     icon: LayoutGrid,
   },
   {
+    label: "Services",
+    href: "/services",
+    icon: Briefcase,
+  },
+  {
     label: "Vendors",
     href: "/vendors",
     icon: Store,
