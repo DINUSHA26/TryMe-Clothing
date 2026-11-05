@@ -132,6 +132,8 @@ const publicRoutes = [
   "/site",
   "/site-preview",
   "/api/site",
+  "/services",
+  "/api/services",
   "/api/vendor/website/subscribe/payhere-webhook",
 ];
 
