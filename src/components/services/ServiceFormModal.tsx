@@ -134,22 +134,33 @@ export function ServiceFormModal({
         const compressed = await compressImage(file);
         const formData = new FormData();
         formData.append("file", compressed);
+        formData.append("folder", "services");
 
         const res = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         });
         const json = await res.json();
-        if (json.success && (json.url || json.secure_url)) {
-          uploadedUrls.push(json.url || json.secure_url);
+        const uploadedUrl = json.data?.url || json.data?.secure_url || json.url || json.secure_url;
+
+        if (json.success && uploadedUrl) {
+          uploadedUrls.push(uploadedUrl);
+        } else {
+          toast({
+            variant: "destructive",
+            title: `Upload Failed: ${file.name}`,
+            description: json.error || "Failed to upload image",
+          });
         }
       }
 
-      setImages((prev) => [...prev, ...uploadedUrls]);
-      toast({
-        title: "Images Uploaded",
-        description: `Successfully uploaded ${uploadedUrls.length} image(s).`,
-      });
+      if (uploadedUrls.length > 0) {
+        setImages((prev) => [...prev, ...uploadedUrls]);
+        toast({
+          title: "Images Uploaded",
+          description: `Successfully uploaded ${uploadedUrls.length} image(s).`,
+        });
+      }
     } catch (err: any) {
       toast({
         variant: "destructive",
