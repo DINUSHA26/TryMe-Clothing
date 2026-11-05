@@ -18,6 +18,11 @@ export async function GET(
             lastName: true,
             email: true,
             createdAt: true,
+            vendor: {
+              select: {
+                isShopOpen: true,
+              },
+            },
           },
         },
         servicePages: {
@@ -78,11 +83,15 @@ export async function GET(
       console.error("Error fetching seller follower stats:", err);
     }
 
+    const contactInfo = (seller.contactInfo as any) || {};
+    const isShopOpen = seller.user?.vendor?.isShopOpen ?? contactInfo.isShopOpen ?? true;
+
     return NextResponse.json({
       success: true,
       data: {
         seller: {
           ...seller,
+          isShopOpen,
           followerCount,
           isFollowing,
         },

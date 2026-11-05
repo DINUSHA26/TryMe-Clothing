@@ -7,6 +7,7 @@ import StoreAiAssistant from "@/components/ai-assistant/StoreAiAssistant";
 
 import { AdCard } from "@/components/ads/AdCard";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { optimizeImageUrl } from "@/lib/imageLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -191,6 +192,11 @@ export default function PublicSellerStorefrontPage() {
                 <span className="bg-orange-50 text-[#FF6600] px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[9px]">
                   {seller.primaryCategory}
                 </span>
+                {seller.isShopOpen === false && (
+                  <Badge variant="destructive" className="font-bold uppercase tracking-wider text-[9px] px-2 py-0.5">
+                    Temporarily Closed
+                  </Badge>
+                )}
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
                   Member since {format(new Date(seller.createdAt), "yyyy")}

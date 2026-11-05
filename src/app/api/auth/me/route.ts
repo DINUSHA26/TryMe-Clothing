@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
             isShopOpen: true,
           },
         },
+        adsSeller: true,
         customer: {
           select: {
             id: true,
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
           mustChangePassword: user.mustChangePassword,
           isActive: user.isActive,
           vendor: user.vendor,
+          adsSeller: (user as any).adsSeller,
           customer: user.customer,
           createdAt: user.createdAt,
         },

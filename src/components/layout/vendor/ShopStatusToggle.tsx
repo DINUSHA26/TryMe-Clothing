@@ -19,14 +19,16 @@ export function ShopStatusToggle() {
   const { user, setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
 
-  const isOpen = user?.vendor?.isShopOpen ?? false;
+  const isAdsSeller = user?.role === "ADS_SELLER";
+  const isOpen = isAdsSeller
+    ? ((user?.vendor?.isShopOpen ?? (user as any)?.adsSeller?.isShopOpen) ?? true)
+    : (user?.vendor?.isShopOpen ?? false);
 
   const handleToggle = async (newStatus: boolean) => {
-    if (!user?.vendor) return;
-    
     setIsLoading(true);
     try {
-      const response = await fetch("/api/vendor/profile", {
+      const endpoint = isAdsSeller ? "/api/ads-seller/shop-status" : "/api/vendor/profile";
+      const response = await fetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isShopOpen: newStatus }),
@@ -38,10 +40,8 @@ export function ShopStatusToggle() {
         // Update local auth store
         setUser({
           ...user,
-          vendor: {
-            ...user.vendor,
-            isShopOpen: newStatus,
-          },
+          vendor: user?.vendor ? { ...user.vendor, isShopOpen: newStatus } : ({ isShopOpen: newStatus } as any),
+          adsSeller: user?.adsSeller ? { ...user.adsSeller, isShopOpen: newStatus } : undefined,
         } as any);
         toast.success(`Shop is now ${newStatus ? "Open" : "Closed"}`);
       } else {

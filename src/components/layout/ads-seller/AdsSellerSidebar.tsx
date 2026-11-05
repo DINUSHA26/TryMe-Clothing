@@ -37,8 +37,14 @@ export function AdsSellerSidebar({
   const router = useRouter();
 
   const [availableBalance, setAvailableBalance] = useState<number | null>(null);
-  const sellerName = (user as any)?.adsSeller?.sellerName || "My Store";
-  const isShopOpen = (user as any)?.adsSeller?.isShopOpen ?? false;
+  const sellerName =
+    user?.adsSeller?.businessName ||
+    (user as any)?.vendor?.businessName ||
+    "My Store";
+  const isShopOpen =
+    user?.vendor?.isShopOpen ??
+    (user as any)?.adsSeller?.isShopOpen ??
+    true;
 
   useEffect(() => {
     fetch("/api/ads-seller/wallet")
@@ -115,8 +121,16 @@ export function AdsSellerSidebar({
               <Megaphone className="w-4 h-4 text-[#FF6600]" />
               <span className="text-sm font-medium truncate">{sellerName}</span>
             </div>
-            <Badge variant={isShopOpen ? "default" : "secondary"} className="text-xs bg-[#FF6600]">
-              {isShopOpen ? "Active" : "Paused"}
+            <Badge
+              variant={isShopOpen ? "default" : "secondary"}
+              className={cn(
+                "text-xs font-semibold",
+                isShopOpen
+                  ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                  : "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300"
+              )}
+            >
+              {isShopOpen ? "Open" : "Closed"}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1">

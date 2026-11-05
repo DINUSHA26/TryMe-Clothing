@@ -18,6 +18,7 @@ import { Breadcrumbs } from "../admin/Breadcrumbs";
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { ShopStatusToggle } from "../vendor/ShopStatusToggle";
 
 interface AdsSellerHeaderProps {
   onMobileMenuToggle: () => void;
@@ -62,6 +63,7 @@ export function AdsSellerHeader({ onMobileMenuToggle }: AdsSellerHeaderProps) {
           Classifieds Portal
         </Badge>
         
+        <ShopStatusToggle />
         <ThemeToggle />
         <Button
           variant="ghost"

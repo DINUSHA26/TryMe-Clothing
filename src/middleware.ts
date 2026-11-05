@@ -92,6 +92,7 @@ const protectedRoutes: Record<string, Role[]> = {
   "/api/vendor": ["VENDOR"],
   "/ads-seller": ["ADS_SELLER"],
   "/api/ads/seller": ["ADS_SELLER"],
+  "/api/ads-seller": ["ADS_SELLER", "VENDOR", "ADMIN"],
 };
 
 // Public routes that don't require authentication
