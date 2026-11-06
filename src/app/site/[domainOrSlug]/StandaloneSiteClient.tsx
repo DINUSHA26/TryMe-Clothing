@@ -3199,6 +3199,147 @@ export default function StandaloneSiteClient({
             </div>
           </div>
         </div>
+      ) : activePage === "about" ? (
+        /* ── DEDICATED ABOUT US PAGE VIEW ── */
+        <div className="py-12 sm:py-16 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold border-b pb-4">
+            <button onClick={() => navigateTo("home")} className="hover:text-slate-900">
+              Home
+            </button>
+            <span>/</span>
+            <span className="text-slate-900 font-bold">About Us</span>
+          </div>
+
+          <div className="text-center max-w-3xl mx-auto space-y-3">
+            <span
+              className="text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full bg-slate-100 text-slate-800 inline-block"
+              style={{ color: primaryColor }}
+            >
+              {about.badge || "OUR STORY & HERITAGE"}
+            </span>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+              {about.title || `About ${vendor?.businessName || "Our Store"}`}
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto">
+              Learn more about our journey, values, and commitment to delivering exceptional quality.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center pt-4">
+            <div className={`space-y-6 ${about.layoutPosition === "right" ? "lg:order-2" : "lg:order-1"}`}>
+              <div className="prose prose-slate max-w-none text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-line">
+                {about.content || "Dedicated to providing the best products and experiences to our valued clients."}
+              </div>
+
+              {/* Key Features & Values */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                {(about.features && about.features.length > 0
+                  ? about.features
+                  : ["Premium Quality Guaranteed", "Fast & Islandwide Delivery", "Dedicated Customer Support", "Verified Authenticity"]
+                ).map((feat: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border text-xs font-bold text-slate-800">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+                    <span>{feat}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => navigateTo(products.length > 0 ? "products" : "contact")}
+                  className="px-6 py-3 rounded-full text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-95 transition-opacity"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {products.length > 0 ? "Explore Catalog" : "Get In Touch"}
+                </button>
+                {whatsappPhone && (
+                  <button
+                    type="button"
+                    onClick={() => handleInquiryViaWhatsApp()}
+                    className="px-5 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-2 shadow-sm transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Chat on WhatsApp</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className={`space-y-4 ${about.layoutPosition === "right" ? "lg:order-1" : "lg:order-2"}`}>
+              <div className="aspect-[4/3] rounded-3xl bg-slate-100 overflow-hidden relative border shadow-xl">
+                {about.images?.[0] ? (
+                  <Image src={about.images[0]} alt="About us" fill className="object-cover" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 p-8 text-center">
+                    <Building2 className="w-16 h-16 opacity-30 text-slate-500 mb-2" />
+                    <span className="font-bold text-sm uppercase tracking-widest text-slate-700">
+                      {vendor?.businessName}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {about.images && about.images.length > 1 && (
+                <div className="grid grid-cols-3 gap-3">
+                  {about.images.slice(1, 4).map((img: string, i: number) => (
+                    <div key={i} className="aspect-square rounded-2xl overflow-hidden border shadow-sm relative bg-slate-100">
+                      <Image src={img} alt={`Gallery item ${i}`} fill className="object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : activePage === "gallery" ? (
+        /* ── DEDICATED PHOTO GALLERY PAGE VIEW ── */
+        <div className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold border-b pb-4">
+            <button onClick={() => navigateTo("home")} className="hover:text-slate-900">
+              Home
+            </button>
+            <span>/</span>
+            <span className="text-slate-900 font-bold">Gallery</span>
+          </div>
+
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span
+              className="text-xs font-black uppercase tracking-widest inline-block"
+              style={{ color: primaryColor }}
+            >
+              VISUAL SHOWCASE
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              {gallery.title || "Photo Gallery & Work"}
+            </h1>
+            <p className="text-sm text-slate-500">
+              {gallery.subtitle || "A curated look into our products, facilities, and customer creations."}
+            </p>
+          </div>
+
+          {gallery.images && gallery.images.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {gallery.images.map((img: string, idx: number) => (
+                <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border shadow-sm group bg-slate-100">
+                  <Image
+                    src={img}
+                    alt={`Gallery ${idx + 1}`}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 text-center rounded-2xl border bg-slate-50 text-slate-500 text-sm">
+              No photos have been added to the gallery yet.
+            </div>
+          )}
+        </div>
       ) : requestedCustomPage ? (
         /* ── CUSTOM MULTI-PAGE VIEW ── */
         <div>
@@ -3392,13 +3533,21 @@ export default function StandaloneSiteClient({
               );
             }
             if (secId === "services") {
+              const srvCols =
+                config?.servicesSection?.gridColumns === 2
+                  ? "sm:grid-cols-2 lg:grid-cols-2"
+                  : config?.servicesSection?.gridColumns === 3
+                  ? "sm:grid-cols-2 lg:grid-cols-3"
+                  : "sm:grid-cols-2 lg:grid-cols-4";
+              const srvHeaderAlign = config?.servicesSection?.headerAlignment === "center";
+
               return (
                 <div key="services">
                   {/* Services Section */}
           {services.enabled !== false && normalizedServices.length > 0 && (
             <section id="services" className="py-12 sm:py-16 lg:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-3 sm:gap-4">
-                <div>
+              <div className={`flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-3 sm:gap-4 ${srvHeaderAlign ? "text-center sm:text-center justify-center" : ""}`}>
+                <div className={srvHeaderAlign ? "mx-auto" : ""}>
                   <span
                     className="text-[11px] sm:text-xs font-black uppercase tracking-widest"
                     style={{ color: primaryColor }}
@@ -3425,7 +3574,7 @@ export default function StandaloneSiteClient({
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className={`grid grid-cols-1 ${srvCols} gap-4 sm:gap-6`}>
                 {normalizedServices.slice(0, 8).map((s: any, idx: number) => renderServiceCard(s, idx))}
               </div>
             </section>
@@ -3434,14 +3583,22 @@ export default function StandaloneSiteClient({
               );
             }
             if (secId === "products") {
+              const prodCols =
+                config?.productsSection?.gridColumns === 2
+                  ? "sm:grid-cols-2 lg:grid-cols-2"
+                  : config?.productsSection?.gridColumns === 3
+                  ? "sm:grid-cols-2 lg:grid-cols-3"
+                  : "sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
+              const prodHeaderAlign = config?.productsSection?.headerAlignment === "center";
+
               return (
                 <div key="products">
                   {/* Products / Ads Showcase Section */}
           {config?.productsSection?.enabled !== false && (
             <section id="products" className="py-12 sm:py-16 lg:py-20 bg-slate-50/50 border-b">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-3 sm:gap-4">
-                  <div>
+                <div className={`flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-3 sm:gap-4 ${prodHeaderAlign ? "text-center justify-center" : ""}`}>
+                  <div className={prodHeaderAlign ? "mx-auto" : ""}>
                     <span
                       className="text-[11px] sm:text-xs font-black uppercase tracking-widest inline-flex items-center gap-1.5"
                       style={{ color: primaryColor }}
@@ -3471,7 +3628,7 @@ export default function StandaloneSiteClient({
                 </div>
 
                 {products && products.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <div className={`grid grid-cols-1 ${prodCols} gap-4 sm:gap-6`}>
                     {products.slice(0, 12).map((p: any, idx: number) => renderProductCard(p, idx))}
                   </div>
                 ) : (
@@ -3490,13 +3647,17 @@ export default function StandaloneSiteClient({
               );
             }
             if (secId === "about") {
+              const isRight = about.layoutPosition === "right";
+              const isCentered = about.layoutPosition === "center";
+              const headerAlign = about.headerAlignment === "center" || isCentered;
+
               return (
                 <div key="about">
                   {/* About Section */}
           {about.enabled !== false && (
             <section id="about" className="py-12 sm:py-16 lg:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
-                <div className="space-y-4 sm:space-y-6">
+              <div className={`grid grid-cols-1 ${isCentered ? "max-w-3xl mx-auto text-center" : "lg:grid-cols-2"} gap-8 sm:gap-12 items-center`}>
+                <div className={`space-y-4 sm:space-y-6 ${isRight ? "lg:order-2" : isCentered ? "text-center" : "lg:order-1"}`}>
                   <span
                     className="text-[11px] sm:text-xs font-black uppercase tracking-widest inline-block"
                     style={{ color: primaryColor }}
@@ -3506,11 +3667,36 @@ export default function StandaloneSiteClient({
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
                     {about.title || `About ${vendor?.businessName}`}
                   </h2>
-                  <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-line">
+                  <p className={`text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-line ${headerAlign ? "mx-auto" : ""}`}>
                     {about.content || "Dedicated to providing the best products and experiences."}
                   </p>
+
+                  {/* Bullet Features if present */}
+                  {about.features && about.features.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+                      {about.features.map((feat: string, idx: number) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs font-bold text-slate-750">
+                          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+                          <span>{feat}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Stats Counter if present */}
+                  {about.showStats !== false && about.statsItems && about.statsItems.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t">
+                      {about.statsItems.map((st: any, idx: number) => (
+                        <div key={idx} className="space-y-1">
+                          <p className="text-xl sm:text-2xl font-black text-slate-900">{st.value}</p>
+                          <p className="text-[11px] font-bold text-slate-500 uppercase">{st.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="aspect-[4/3] rounded-3xl bg-slate-100 overflow-hidden relative border shadow-lg">
+
+                <div className={`aspect-[4/3] rounded-3xl bg-slate-100 overflow-hidden relative border shadow-lg ${isRight ? "lg:order-1" : isCentered ? "w-full max-w-xl mx-auto" : "lg:order-2"}`}>
                   {about.images?.[0] ? (
                     <Image src={about.images[0]} alt="About" fill className="object-cover" />
                   ) : (
@@ -3529,17 +3715,26 @@ export default function StandaloneSiteClient({
               );
             }
             if (secId === "gallery") {
+              const galCols =
+                gallery.gridColumns === 2
+                  ? "sm:grid-cols-2 lg:grid-cols-2"
+                  : gallery.gridColumns === 3
+                  ? "sm:grid-cols-3 lg:grid-cols-3"
+                  : "sm:grid-cols-3 lg:grid-cols-4";
+              const galAlign = gallery.headerAlignment === "left" ? "text-left" : "text-center";
+
               return gallery.enabled !== false && Array.isArray(gallery.images) && gallery.images.length > 0 ? (
                 <section key="gallery" id="gallery" className="py-12 sm:py-16 lg:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b">
-                  <div className="max-w-7xl mx-auto text-center space-y-2 mb-10">
-                    <span className="text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
+                  <div className={`max-w-7xl mx-auto space-y-2 mb-10 ${galAlign}`}>
+                    <span className="text-xs font-black uppercase tracking-widest inline-block" style={{ color: primaryColor }}>
                       PHOTO GALLERY
                     </span>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">
                       {gallery.title || "A Glimpse of Our Work"}
                     </h2>
+                    {gallery.subtitle && <p className="text-xs text-slate-500">{gallery.subtitle}</p>}
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className={`grid grid-cols-2 ${galCols} gap-4`}>
                     {gallery.images.map((img: string, idx: number) => (
                       <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border shadow-xs group bg-slate-100">
                         <Image src={img} alt="Gallery item" fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="300px" />
@@ -3550,14 +3745,17 @@ export default function StandaloneSiteClient({
               ) : null;
             }
             if (secId === "reviews") {
+              const revAlign = reviews.headerAlignment === "center";
+              const isCompact = reviews.layoutStyle === "compact";
+
               return (
                 <div key="reviews">
                   {/* Reviews / Testimonials Section on Home */}
           {(reviews.enabled || localReviews.length > 0) && (
             <section id="reviews" className="py-20 bg-slate-50/50 border-b">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-4">
-                  <div>
+                <div className={`flex flex-col sm:flex-row items-center justify-between mb-12 gap-4 ${revAlign ? "text-center sm:text-center justify-center" : ""}`}>
+                  <div className={revAlign ? "mx-auto" : ""}>
                     <span
                       className="text-xs font-black uppercase tracking-widest"
                       style={{ color: primaryColor }}
@@ -3579,7 +3777,7 @@ export default function StandaloneSiteClient({
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className={`grid grid-cols-1 ${isCompact ? "md:grid-cols-2" : "md:grid-cols-3"} gap-6`}>
                   {([...(localReviews || []), ...(reviews.items || [])].slice(0, 6).length > 0
                     ? [...(localReviews || []), ...(reviews.items || [])].slice(0, 6)
                     : [
@@ -3647,12 +3845,23 @@ export default function StandaloneSiteClient({
 
       {/* ── Contact Us Section (Shown on dedicated contact page) ── */}
       {activePage === "contact" && (
-        <ContactSectionClient
-          contact={contact}
-          vendor={vendor}
-          primaryColor={primaryColor}
-          whatsappUrl={whatsappUrl}
-        />
+        <div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+            <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold border-b pb-4">
+              <button onClick={() => navigateTo("home")} className="hover:text-slate-900">
+                Home
+              </button>
+              <span>/</span>
+              <span className="text-slate-900 font-bold">Contact Us</span>
+            </div>
+          </div>
+          <ContactSectionClient
+            contact={contact}
+            vendor={vendor}
+            primaryColor={primaryColor}
+            whatsappUrl={whatsappUrl}
+          />
+        </div>
       )}
 
       {/* ── Rich Multi-Column Footer ── */}
@@ -3858,14 +4067,16 @@ export default function StandaloneSiteClient({
       />
 
       {/* Floating WhatsApp Action Button */}
-      {whatsappPhone && (
+      {whatsappPhone && config?.showFloatingWhatsapp !== false && (
         <a
           href={`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(
             `Hello ${vendor?.businessName || "Store"}, I am browsing your website and would like to inquire about your offerings.`
           )}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-6 left-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center justify-center"
+          className={`fixed z-40 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center justify-center ${
+            config?.floatingWidgetPosition === "bottom_right" ? "bottom-6 right-6" : "bottom-6 left-6"
+          }`}
           title="Chat with us on WhatsApp"
           aria-label="Chat with us on WhatsApp"
         >

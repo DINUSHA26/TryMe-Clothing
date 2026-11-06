@@ -64,6 +64,40 @@ export default function HeroSectionClient({
   const secondaryImage = hero.secondaryImage || "";
   const highlightText = hero.highlightText || "";
 
+  // Position & Alignment Overrides
+  const layoutPosition = hero.layoutPosition || "left";
+  const badgePosition = hero.badgePosition || "above_title";
+  const ctaAlignment = hero.ctaAlignment || "left";
+  const floatingCardPos = hero.floatingCardPosition || "bottom_left";
+
+  const floatingCardPosClass =
+    floatingCardPos === "bottom_right"
+      ? "absolute -bottom-4 -right-4 sm:bottom-4 sm:-right-6"
+      : floatingCardPos === "top_right"
+      ? "absolute -top-4 -right-4 sm:top-4 sm:-right-6"
+      : "absolute -bottom-4 -left-4 sm:bottom-4 sm:-left-6";
+
+  const ctaAlignClass =
+    ctaAlignment === "center"
+      ? "sm:justify-center"
+      : ctaAlignment === "right"
+      ? "sm:justify-end"
+      : "sm:justify-start";
+
+  const contentOrderClass =
+    layoutPosition === "right"
+      ? "lg:order-2 text-left"
+      : layoutPosition === "center"
+      ? "lg:col-span-2 text-center max-w-3xl mx-auto"
+      : "lg:order-1 text-left";
+
+  const mediaOrderClass =
+    layoutPosition === "right"
+      ? "lg:order-1"
+      : layoutPosition === "center"
+      ? "lg:col-span-2 max-w-3xl mx-auto w-full"
+      : "lg:order-2";
+
   // Configurable Trust Badges
   const showTrustBadges = hero.showTrustBadges !== false;
   const defaultTrustBadges: HeroTrustBadge[] = [
@@ -195,11 +229,12 @@ export default function HeroSectionClient({
   // 1. SPLIT CLASSIC (Refined Original Clean Layout)
   // -------------------------------------------------------------
   if (style === "split_classic") {
+    const isCentered = layoutPosition === "center";
     return (
       <section id="home" className="relative py-12 sm:py-16 lg:py-24 overflow-hidden bg-slate-50/70 border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
-          <div className="space-y-4 sm:space-y-6 text-left">
-            {badgeText && (
+          <div className={`space-y-4 sm:space-y-6 ${contentOrderClass}`}>
+            {badgeText && badgePosition === "above_title" && (
               <div
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-white shadow-sm"
                 style={{ backgroundColor: primaryColor }}
@@ -213,11 +248,23 @@ export default function HeroSectionClient({
               {renderHighlightedTitle(title, highlightText)}
             </h1>
 
-            <p className="text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed max-w-xl">
+            {badgeText && badgePosition === "below_title" && (
+              <div>
+                <div
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-white shadow-sm"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {renderHeroBadgeIcon(hero.badgeIcon)}
+                  <span className="truncate">{badgeText}</span>
+                </div>
+              </div>
+            )}
+
+            <p className={`text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed ${isCentered ? "max-w-2xl mx-auto" : "max-w-xl"}`}>
               {subtitle}
             </p>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+            <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 ${ctaAlignClass}`}>
               <button
                 type="button"
                 onClick={handlePrimaryClick}
@@ -241,7 +288,7 @@ export default function HeroSectionClient({
 
             {/* Quick Guarantees (Fully Dynamic from Vendor Configuration) */}
             {showTrustBadges && activeTrustBadges.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-4 border-t border-slate-200/60 max-w-lg">
+              <div className={`grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-4 border-t border-slate-200/60 ${isCentered ? "max-w-md mx-auto" : "max-w-lg"}`}>
                 {activeTrustBadges.slice(0, 3).map((b, idx) => (
                   <div key={b.id || idx} className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600">
                     {renderBadgeIcon(b.icon)}
@@ -252,7 +299,7 @@ export default function HeroSectionClient({
             )}
           </div>
 
-          <div className="relative">
+          <div className={`relative ${mediaOrderClass}`}>
             <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-200 group">
               {mainImage ? (
                 <Image src={mainImage} alt={title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" priority />
@@ -265,7 +312,7 @@ export default function HeroSectionClient({
             </div>
             {/* Floating Guarantee Card (Configurable) */}
             {showFloatingCard && (
-              <div className="absolute -bottom-4 -left-4 sm:bottom-4 sm:-left-6 bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3">
+              <div className={`${floatingCardPosClass} bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3`}>
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>

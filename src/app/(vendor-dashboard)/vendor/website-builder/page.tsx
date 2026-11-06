@@ -50,6 +50,10 @@ import {
   LayoutTemplate,
   Flame,
   Search,
+  Move,
+  ArrowUp,
+  ArrowDown,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -354,6 +358,28 @@ export default function WebsiteBuilderPage() {
       // NOTE: Updating navbar item visibility ONLY controls whether the item appears
       // in the top navigation bar. It does NOT disable the section on the page!
       const nextConfig = { ...prev, navItemsJson: updatedList };
+      autoSaveConfig(nextConfig);
+      return nextConfig;
+    });
+  };
+
+  const handleMoveNavItem = (id: string, direction: "up" | "down") => {
+    const current = [...getEffectiveNavItems()];
+    const idx = current.findIndex((it: any) => it.id === id);
+    if (idx < 0) return;
+    if (direction === "up" && idx > 0) {
+      const temp = current[idx];
+      current[idx] = current[idx - 1];
+      current[idx - 1] = temp;
+    } else if (direction === "down" && idx < current.length - 1) {
+      const temp = current[idx];
+      current[idx] = current[idx + 1];
+      current[idx + 1] = temp;
+    } else {
+      return;
+    }
+    setConfig((prev: any) => {
+      const nextConfig = { ...prev, navItemsJson: current };
       autoSaveConfig(nextConfig);
       return nextConfig;
     });
@@ -2312,6 +2338,50 @@ export default function WebsiteBuilderPage() {
                       </a>
                     </div>
                   )}
+
+                  {/* Floating Widget Position & Visibility */}
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Floating WhatsApp Button</span>
+                        <span className="text-[10px] text-slate-400 block">Display sticky WhatsApp chat button on visitor screens</span>
+                      </div>
+                      <Switch
+                        checked={config.showFloatingWhatsapp !== false}
+                        onCheckedChange={(c) => setConfig((prev: any) => ({ ...prev, showFloatingWhatsapp: c }))}
+                      />
+                    </div>
+
+                    {config.showFloatingWhatsapp !== false && (
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Floating Button Screen Position</Label>
+                        <div className="grid grid-cols-2 gap-2 mt-1">
+                          <button
+                            type="button"
+                            onClick={() => setConfig((prev: any) => ({ ...prev, floatingWidgetPosition: "bottom_left" }))}
+                            className={`p-2 rounded-xl border text-xs font-bold text-left transition-all ${
+                              (config.floatingWidgetPosition || "bottom_left") === "bottom_left"
+                                ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 shadow-sm"
+                                : "bg-white dark:bg-slate-900 text-slate-600"
+                            }`}
+                          >
+                            Bottom Left Corner
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfig((prev: any) => ({ ...prev, floatingWidgetPosition: "bottom_right" }))}
+                            className={`p-2 rounded-xl border text-xs font-bold text-left transition-all ${
+                              config.floatingWidgetPosition === "bottom_right"
+                                ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 shadow-sm"
+                                : "bg-white dark:bg-slate-900 text-slate-600"
+                            }`}
+                          >
+                            Bottom Right Corner
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -2714,6 +2784,91 @@ export default function WebsiteBuilderPage() {
                           placeholder="e.g. Dedicated to providing exceptional quality and customer care across Sri Lanka."
                           className="rounded-xl mt-1 text-xs"
                         />
+                      </div>
+                    </div>
+
+                    {/* HERO POSITIONING & LAYOUT ALIGNMENT */}
+                    <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 space-y-4">
+                      <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <Move className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Hero Positions &amp; Alignment</span>
+                      </h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* Content & Media Layout */}
+                        <div>
+                          <Label className="text-[11px] font-semibold text-slate-500">Content / Media Layout</Label>
+                          <select
+                            value={config.heroSection?.layoutPosition || "left"}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, layoutPosition: e.target.value },
+                              }))
+                            }
+                            className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold"
+                          >
+                            <option value="left">Text Left • Media Right</option>
+                            <option value="right">Media Left • Text Right</option>
+                            <option value="center">Centered Stack (Impact)</option>
+                          </select>
+                        </div>
+
+                        {/* Badge Position */}
+                        <div>
+                          <Label className="text-[11px] font-semibold text-slate-500">Badge Tag Position</Label>
+                          <select
+                            value={config.heroSection?.badgePosition || "above_title"}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, badgePosition: e.target.value },
+                              }))
+                            }
+                            className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold"
+                          >
+                            <option value="above_title">Above Main Heading</option>
+                            <option value="below_title">Below Main Heading</option>
+                          </select>
+                        </div>
+
+                        {/* Button Alignment */}
+                        <div>
+                          <Label className="text-[11px] font-semibold text-slate-500">CTA Buttons Alignment</Label>
+                          <select
+                            value={config.heroSection?.ctaAlignment || "left"}
+                            onChange={(e) =>
+                              setConfig((prev: any) => ({
+                                ...prev,
+                                heroSection: { ...prev.heroSection, ctaAlignment: e.target.value },
+                              }))
+                            }
+                            className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold"
+                          >
+                            <option value="left">Left Aligned</option>
+                            <option value="center">Centered</option>
+                            <option value="right">Right Aligned</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Floating Card Position */}
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Floating Guarantee Card Position</Label>
+                        <select
+                          value={config.heroSection?.floatingCardPosition || "bottom_left"}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              heroSection: { ...prev.heroSection, floatingCardPosition: e.target.value },
+                            }))
+                          }
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value="bottom_left">Bottom Left of Hero Photo</option>
+                          <option value="bottom_right">Bottom Right of Hero Photo</option>
+                          <option value="top_right">Top Right of Hero Photo</option>
+                        </select>
                       </div>
                     </div>
 
@@ -3242,6 +3397,43 @@ export default function WebsiteBuilderPage() {
                           />
                         </div>
 
+                        {/* Section Grid & Alignment */}
+                        <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+                          <div>
+                            <Label className="text-[11px] font-semibold text-slate-500">Grid Columns</Label>
+                            <select
+                              value={config.productsSection?.gridColumns || 4}
+                              onChange={(e) =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  productsSection: { ...(prev.productsSection || {}), gridColumns: Number(e.target.value) },
+                                }))
+                              }
+                              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                            >
+                              <option value={2}>2 Columns</option>
+                              <option value={3}>3 Columns</option>
+                              <option value={4}>4 Columns</option>
+                            </select>
+                          </div>
+                          <div>
+                            <Label className="text-[11px] font-semibold text-slate-500">Header Alignment</Label>
+                            <select
+                              value={config.productsSection?.headerAlignment || "left"}
+                              onChange={(e) =>
+                                setConfig((prev: any) => ({
+                                  ...prev,
+                                  productsSection: { ...(prev.productsSection || {}), headerAlignment: e.target.value },
+                                }))
+                              }
+                              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                            >
+                              <option value="left">Left Aligned</option>
+                              <option value="center">Centered</option>
+                            </select>
+                          </div>
+                        </div>
+
                         {/* Top Navbar Link Toggle */}
                         <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                           <div>
@@ -3685,6 +3877,43 @@ export default function WebsiteBuilderPage() {
                         }
                         className="rounded-xl mt-1 text-sm font-medium"
                       />
+                    </div>
+
+                    {/* Section Grid & Alignment */}
+                    <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Grid Columns</Label>
+                        <select
+                          value={config.servicesSection?.gridColumns || 4}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              servicesSection: { ...(prev.servicesSection || {}), gridColumns: Number(e.target.value) },
+                            }))
+                          }
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value={2}>2 Columns</option>
+                          <option value={3}>3 Columns</option>
+                          <option value={4}>4 Columns</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Header Alignment</Label>
+                        <select
+                          value={config.servicesSection?.headerAlignment || "left"}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              servicesSection: { ...(prev.servicesSection || {}), headerAlignment: e.target.value },
+                            }))
+                          }
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value="left">Left Aligned</option>
+                          <option value="center">Centered</option>
+                        </select>
+                      </div>
                     </div>
 
                     {/* Guidance Box linking to My Services */}
@@ -4178,6 +4407,43 @@ export default function WebsiteBuilderPage() {
                       />
                     </div>
 
+                    {/* Layout & Alignment */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Story &amp; Photo Layout</Label>
+                        <select
+                          value={config.aboutSection?.layoutPosition || "left"}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              aboutSection: { ...(prev.aboutSection || {}), layoutPosition: e.target.value },
+                            }))
+                          }
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value="left">Story Left • Photo Right</option>
+                          <option value="right">Photo Left • Story Right</option>
+                          <option value="center">Centered Stack</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Heading Alignment</Label>
+                        <select
+                          value={config.aboutSection?.headerAlignment || "left"}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              aboutSection: { ...(prev.aboutSection || {}), headerAlignment: e.target.value },
+                            }))
+                          }
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value="left">Left Aligned</option>
+                          <option value="center">Centered</option>
+                        </select>
+                      </div>
+                    </div>
+
                     {/* Title */}
                     <div>
                       <Label className="text-xs text-slate-500 font-semibold">Heading Title</Label>
@@ -4456,6 +4722,43 @@ export default function WebsiteBuilderPage() {
                       />
                     </div>
 
+                    {/* Gallery Alignment & Grid */}
+                    <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Header Alignment</Label>
+                        <select
+                          value={config.gallerySection?.headerAlignment || "center"}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              gallerySection: { ...(prev.gallerySection || {}), headerAlignment: e.target.value },
+                            }))
+                          }
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value="center">Centered</option>
+                          <option value="left">Left Aligned</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Grid Columns</Label>
+                        <select
+                          value={config.gallerySection?.gridColumns || 4}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              gallerySection: { ...(prev.gallerySection || {}), gridColumns: Number(e.target.value) },
+                            }))
+                          }
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value={2}>2 Columns</option>
+                          <option value={3}>3 Columns</option>
+                          <option value={4}>4 Columns</option>
+                        </select>
+                      </div>
+                    </div>
+
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <Label className="text-xs font-bold text-slate-700">Gallery Photos</Label>
@@ -4588,6 +4891,42 @@ export default function WebsiteBuilderPage() {
                         }
                         className="rounded-xl mt-1 text-sm font-semibold"
                       />
+                    </div>
+
+                    {/* Reviews Alignment & Layout */}
+                    <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Header Alignment</Label>
+                        <select
+                          value={config.reviewsSection?.headerAlignment || "left"}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              reviewsSection: { ...(prev.reviewsSection || {}), headerAlignment: e.target.value },
+                            }))
+                          }
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value="left">Left Aligned</option>
+                          <option value="center">Centered</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Layout Style</Label>
+                        <select
+                          value={config.reviewsSection?.layoutStyle || "grid"}
+                          onChange={(e) =>
+                            setConfig((prev: any) => ({
+                              ...prev,
+                              reviewsSection: { ...(prev.reviewsSection || {}), layoutStyle: e.target.value },
+                            }))
+                          }
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value="grid">Grid Cards</option>
+                          <option value="compact">Compact Row</option>
+                        </select>
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -4736,8 +5075,35 @@ export default function WebsiteBuilderPage() {
                 )}
 
                 {openSections["contact"] && config.contactSection?.enabled !== false && (
-                  <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-4 pt-1">
+                    {/* Position & Alignment */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Contact Form Position</Label>
+                        <select
+                          value={config.contactSection?.formPosition || "right"}
+                          onChange={(e) => handleUpdateContactSection({ formPosition: e.target.value })}
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value="right">Form on Right • Info on Left</option>
+                          <option value="left">Form on Left • Info on Right</option>
+                          <option value="center">Centered Stack</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-[11px] font-semibold text-slate-500">Header Alignment</Label>
+                        <select
+                          value={config.contactSection?.headerAlignment || "center"}
+                          onChange={(e) => handleUpdateContactSection({ headerAlignment: e.target.value })}
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                        >
+                          <option value="center">Centered</option>
+                          <option value="left">Left Aligned</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs text-slate-500 font-semibold">Section Heading</Label>
                       <Input
@@ -5364,205 +5730,147 @@ export default function WebsiteBuilderPage() {
                 </p>
               </div>
 
-              {/* CATALOG / MY ADS HIGHLIGHT CARD */}
-              <div className="p-4 rounded-2xl border-2 border-primary/20 bg-primary/5 space-y-4">
+              {/* REORDERABLE NAVBAR & MENU ITEMS ORGANIZER */}
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-primary text-white shadow-sm">
-                      <ShoppingBag className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-sm text-slate-900 dark:text-slate-100">
-                        {entityType === "ADS_SELLER" ? "My Ads / Classifieds Page" : "Store Products Catalog"}
-                      </h4>
-                      <span className="text-[11px] text-slate-500 block">
-                        Live synced from your TryMe dashboard ({products.length} items)
-                      </span>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={getEffectiveNavItems().find((it: any) => it.id === "products")?.visible !== false}
-                    onCheckedChange={(c) => handleUpdateNavItem("products", { visible: c })}
-                  />
-                </div>
-
-                <div className="space-y-3 pt-1">
                   <div>
-                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Navbar Display Name
-                    </Label>
-                    <Input
-                      value={
-                        getEffectiveNavItems().find((it: any) => it.id === "products")?.label ||
-                        (entityType === "ADS_SELLER" ? "My Ads" : "Products")
-                      }
-                      onChange={(e) => handleUpdateNavItem("products", { label: e.target.value })}
-                      placeholder={
-                        entityType === "ADS_SELLER"
-                          ? "e.g. My Ads, Available Cars, Mobile Deals"
-                          : "e.g. Products, Apple iPhones, Collection, Store"
-                      }
-                      className="mt-1 rounded-xl font-bold text-xs"
-                    />
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      Customize this button name to fit your brand (e.g. &quot;Apple iPhones&quot;, &quot;Vehicles&quot;).
+                    <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <Sliders className="w-4 h-4 text-primary" />
+                      <span>Menu Items &amp; Page Routing (Reorderable)</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Use ⬆️ Up and ⬇️ Down to change button order in the Navbar and Footer. Select &quot;Dedicated Page&quot; to open full views.
                     </p>
                   </div>
-
-                  <div>
-                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Navigation Action
-                    </Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateNavItem("products", { type: "scroll" })}
-                        className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all ${
-                          getEffectiveNavItems().find((it: any) => it.id === "products")?.type !== "page"
-                            ? "border-primary bg-primary/10 text-primary shadow-sm"
-                            : "bg-white dark:bg-slate-900 text-slate-600 hover:border-slate-300"
-                        }`}
-                      >
-                        <span className="block font-black">Scroll to Section</span>
-                        <span className="text-[10px] text-slate-400 font-normal">Smooth scroll on Home</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (currentTier === "ONE_PAGE") {
-                            setSelectedTierForUpgrade("SIX_PAGES");
-                            setUpgradeModalOpen(true);
-                          } else {
-                            handleUpdateNavItem("products", { type: "page" });
-                          }
-                        }}
-                        className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all ${
-                          getEffectiveNavItems().find((it: any) => it.id === "products")?.type === "page"
-                            ? "border-primary bg-primary/10 text-primary shadow-sm"
-                            : "bg-white dark:bg-slate-900 text-slate-600 hover:border-slate-300"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="block font-black">Dedicated Catalog Page</span>
-                          {currentTier === "ONE_PAGE" && <Lock className="w-3.5 h-3.5 text-amber-500" />}
-                        </div>
-                        <span className="text-[10px] text-slate-400 font-normal">
-                          {currentTier === "ONE_PAGE" ? "Requires 6-Page plan" : "Opens full catalog with search"}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SERVICES SECTION CARD */}
-              <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sliders className="w-4 h-4 text-slate-500" />
-                    <h4 className="font-bold text-sm">Services Menu Item</h4>
-                  </div>
-                  <Switch
-                    checked={getEffectiveNavItems().find((it: any) => it.id === "services")?.visible !== false}
-                    onCheckedChange={(c) => handleUpdateNavItem("services", { visible: c })}
-                  />
                 </div>
 
                 <div className="space-y-3">
-                  <div>
-                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Display Label</Label>
-                    <Input
-                      value={getEffectiveNavItems().find((it: any) => it.id === "services")?.label || "Services"}
-                      onChange={(e) => handleUpdateNavItem("services", { label: e.target.value })}
-                      placeholder="e.g. Services, Salon Packages, Repair Services"
-                      className="mt-1 rounded-xl text-xs font-bold"
-                    />
-                  </div>
+                  {getEffectiveNavItems().map((item: any, idx: number, arr: any[]) => {
+                    const isFirst = idx === 0;
+                    const isLast = idx === arr.length - 1;
+                    const isHome = item.id === "home";
 
-                  <div>
-                    <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Click Action</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateNavItem("services", { type: "scroll" })}
-                        className={`p-2 rounded-xl border text-xs font-bold text-left transition-all ${
-                          getEffectiveNavItems().find((it: any) => it.id === "services")?.type !== "page"
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "bg-white dark:bg-slate-900 text-slate-600"
-                        }`}
-                      >
-                        Scroll to #services
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (currentTier === "ONE_PAGE") {
-                            setSelectedTierForUpgrade("SIX_PAGES");
-                            setUpgradeModalOpen(true);
-                          } else {
-                            handleUpdateNavItem("services", { type: "page" });
-                          }
-                        }}
-                        className={`p-2 rounded-xl border text-xs font-bold text-left transition-all ${
-                          getEffectiveNavItems().find((it: any) => it.id === "services")?.type === "page"
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "bg-white dark:bg-slate-900 text-slate-600"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>Dedicated Page</span>
-                          {currentTier === "ONE_PAGE" && <Lock className="w-3 h-3 text-amber-500" />}
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* OTHER STANDARD SECTIONS */}
-              <div className="p-4 rounded-2xl border bg-slate-50/50 dark:bg-slate-900/50 space-y-4">
-                <div>
-                  <h4 className="font-bold text-sm">Other Standard Sections</h4>
-                  <p className="text-[11px] text-slate-400">
-                    Switch off to hide button from Navbar. The section will still stay active on your website.
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { id: "home", defaultLabel: "Home" },
-                    { id: "about", defaultLabel: "About" },
-                    { id: "gallery", defaultLabel: "Gallery" },
-                    { id: "reviews", defaultLabel: "Reviews" },
-                    { id: "contact", defaultLabel: "Contact" },
-                  ].map((sec) => {
-                    const item = getEffectiveNavItems().find((it: any) => it.id === sec.id) || {
-                      id: sec.id,
-                      label: sec.defaultLabel,
-                      visible: true,
+                    const getItemIcon = (id: string) => {
+                      if (id === "home") return <Home className="w-4 h-4 text-blue-600" />;
+                      if (id === "products") return <ShoppingBag className="w-4 h-4 text-emerald-600" />;
+                      if (id === "services") return <Sliders className="w-4 h-4 text-purple-600" />;
+                      if (id === "about") return <Building2 className="w-4 h-4 text-amber-600" />;
+                      if (id === "gallery") return <Camera className="w-4 h-4 text-pink-600" />;
+                      if (id === "reviews") return <Star className="w-4 h-4 text-amber-500 fill-amber-400" />;
+                      if (id === "contact") return <Phone className="w-4 h-4 text-teal-600" />;
+                      return <FileText className="w-4 h-4 text-slate-600" />;
                     };
+
+                    const defaultLabels: Record<string, string> = {
+                      home: "Home",
+                      products: entityType === "ADS_SELLER" ? "My Ads" : "Products",
+                      services: "Services",
+                      about: "About",
+                      gallery: "Gallery",
+                      reviews: "Reviews",
+                      contact: "Contact",
+                    };
+
                     return (
                       <div
-                        key={sec.id}
-                        className="p-3 border rounded-xl bg-white dark:bg-slate-950 flex items-center justify-between gap-3"
+                        key={item.id || idx}
+                        className="p-3.5 sm:p-4 rounded-2xl border-2 border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xs hover:border-slate-300 transition-all space-y-3"
                       >
-                        <div className="flex-1">
-                          <Input
-                            value={item.label || sec.defaultLabel}
-                            onChange={(e) => handleUpdateNavItem(sec.id, { label: e.target.value })}
-                            placeholder={sec.defaultLabel}
-                            className="h-8 text-xs font-bold rounded-lg"
-                          />
+                        {/* Top row: Reorder arrows, Icon, Label, and Visible Switch */}
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            {/* Reorder Buttons */}
+                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                              <button
+                                type="button"
+                                disabled={isFirst}
+                                onClick={() => handleMoveNavItem(item.id, "up")}
+                                className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-600 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                title="Move link up in Navbar & Footer"
+                              >
+                                <ArrowUp className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="text-[10px] font-black text-slate-400 px-1">#{idx + 1}</span>
+                              <button
+                                type="button"
+                                disabled={isLast}
+                                onClick={() => handleMoveNavItem(item.id, "down")}
+                                className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-600 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                title="Move link down in Navbar & Footer"
+                              >
+                                <ArrowDown className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                              {getItemIcon(item.id)}
+                            </div>
+                          </div>
+
+                          <div className="flex-1 min-w-[140px]">
+                            <Input
+                              value={item.label || defaultLabels[item.id] || "Page"}
+                              onChange={(e) => handleUpdateNavItem(item.id, { label: e.target.value })}
+                              placeholder={defaultLabels[item.id] || "Display Label"}
+                              className="h-8 text-xs font-bold rounded-xl"
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] uppercase font-bold text-slate-400">
+                              {item.visible !== false ? "Visible" : "Hidden"}
+                            </span>
+                            <Switch
+                              checked={item.visible !== false}
+                              onCheckedChange={(c) => handleUpdateNavItem(item.id, { visible: c })}
+                            />
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] uppercase font-bold text-slate-400">
-                            {item.visible !== false ? "Visible" : "Hidden"}
-                          </span>
-                          <Switch
-                            checked={item.visible !== false}
-                            onCheckedChange={(c) => handleUpdateNavItem(sec.id, { visible: c })}
-                          />
-                        </div>
+
+                        {/* Bottom row: Click Action (Scroll to Section vs Dedicated Page) */}
+                        {!isHome && (
+                          <div className="pt-2 border-t border-slate-100 dark:border-slate-900">
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateNavItem(item.id, { type: "scroll" })}
+                                className={`p-2 rounded-xl border text-xs font-bold text-left transition-all ${
+                                  item.type !== "page"
+                                    ? "border-primary bg-primary/10 text-primary shadow-xs"
+                                    : "bg-slate-50 dark:bg-slate-900 text-slate-600 hover:border-slate-300"
+                                }`}
+                              >
+                                <span className="block font-black text-[11px]">Scroll to #{item.target || item.id}</span>
+                                <span className="text-[10px] text-slate-400 font-normal">Smooth scroll on Home</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (currentTier === "ONE_PAGE") {
+                                    setSelectedTierForUpgrade("SIX_PAGES");
+                                    setUpgradeModalOpen(true);
+                                  } else {
+                                    handleUpdateNavItem(item.id, { type: "page" });
+                                  }
+                                }}
+                                className={`p-2 rounded-xl border text-xs font-bold text-left transition-all ${
+                                  item.type === "page"
+                                    ? "border-primary bg-primary/10 text-primary shadow-xs"
+                                    : "bg-slate-50 dark:bg-slate-900 text-slate-600 hover:border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="block font-black text-[11px]">Dedicated Page</span>
+                                  {currentTier === "ONE_PAGE" && <Lock className="w-3 h-3 text-amber-500" />}
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-normal">
+                                  {currentTier === "ONE_PAGE" ? "Requires 6-Page plan" : "Opens full page view"}
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

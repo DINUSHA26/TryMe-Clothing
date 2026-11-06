@@ -422,6 +422,9 @@ export default function ContactSectionClient({
   }
 
   // ── STANDARD FULL CONTACT SECTION ──
+  const formPos = contact?.formPosition || "right";
+  const headerAlign = contact?.headerAlignment || "center";
+
   const hasLeftColumn =
     (showContactCards && Boolean(phone || cleanWhatsapp || email || address)) ||
     (showOpeningHours && Boolean(openingHours)) ||
@@ -429,17 +432,19 @@ export default function ContactSectionClient({
 
   const leftColSpan = showContactForm
     ? hasLeftColumn
-      ? "lg:col-span-6"
+      ? `lg:col-span-6 ${formPos === "left" ? "lg:order-2" : "lg:order-1"}`
       : "hidden"
     : "lg:col-span-8 lg:mx-auto";
 
-  const rightColSpan = hasLeftColumn ? "lg:col-span-6" : "max-w-2xl mx-auto";
+  const rightColSpan = hasLeftColumn
+    ? `lg:col-span-6 ${formPos === "left" ? "lg:order-1" : "lg:order-2"}`
+    : "max-w-2xl mx-auto";
 
   return (
     <section id="contact" className="py-16 sm:py-20 bg-slate-50 dark:bg-slate-900/60 border-t">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto space-y-2">
+        <div className={`space-y-2 ${headerAlign === "left" ? "text-left max-w-3xl" : "text-center max-w-2xl mx-auto"}`}>
           <span
             className="text-xs font-black uppercase tracking-widest inline-block"
             style={{ color: primaryColor }}

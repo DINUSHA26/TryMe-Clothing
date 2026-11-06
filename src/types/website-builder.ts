@@ -57,12 +57,17 @@ export interface HeroSectionConfig {
   discountTag?: string;
   tickerItems?: string[];
   faviconUrl?: string;
+  // Layout Position & Fine Controls
+  layoutPosition?: "left" | "right" | "center";
+  badgePosition?: "above_title" | "below_title";
+  ctaAlignment?: "left" | "center" | "right";
   // Trust Badges & Floating Guarantee Card
   showTrustBadges?: boolean;
   trustBadges?: HeroTrustBadge[];
   showFloatingCard?: boolean;
   floatingCardTitle?: string;
   floatingCardSubtitle?: string;
+  floatingCardPosition?: "bottom_right" | "bottom_left" | "top_right";
 }
 
 export interface AboutSectionConfig {
@@ -72,6 +77,10 @@ export interface AboutSectionConfig {
   content: string;
   images: string[];
   features?: string[];
+  layoutPosition?: "left" | "right" | "center";
+  headerAlignment?: "left" | "center";
+  showStats?: boolean;
+  statsItems?: Array<{ label: string; value: string }>;
 }
 
 export interface ServiceItem {
@@ -89,6 +98,8 @@ export interface ProductsSectionConfig {
   enabled?: boolean;
   title?: string;
   subtitle?: string;
+  headerAlignment?: "left" | "center";
+  gridColumns?: 2 | 3 | 4;
   cardLayout?: ProductCardLayout;
   showPrice?: boolean;
   showBadge?: boolean;
@@ -113,6 +124,8 @@ export interface ServicesSectionConfig {
   enabled: boolean;
   title: string;
   subtitle?: string;
+  headerAlignment?: "left" | "center";
+  gridColumns?: 2 | 3 | 4;
   items: ServiceItem[];
   cardLayout?: ProductCardLayout;
   showPrice?: boolean;
@@ -134,6 +147,8 @@ export interface GallerySectionConfig {
   enabled: boolean;
   title: string;
   subtitle?: string;
+  headerAlignment?: "left" | "center";
+  gridColumns?: 2 | 3 | 4;
   images: string[];
 }
 
@@ -150,6 +165,9 @@ export interface ReviewsSectionConfig {
   enabled: boolean;
   title: string;
   subtitle?: string;
+  headerAlignment?: "left" | "center";
+  layoutStyle?: "grid" | "carousel" | "compact";
+  showRatingStars?: boolean;
   items: TestimonialItem[];
 }
 
@@ -157,6 +175,8 @@ export interface ContactSectionConfig {
   enabled: boolean;
   title: string;
   subtitle?: string;
+  headerAlignment?: "left" | "center";
+  formPosition?: "left" | "right" | "center";
   phone?: string;
   whatsapp?: string;
   email?: string;
@@ -177,6 +197,8 @@ export interface ContactSectionConfig {
 
 export interface FooterSectionConfig {
   enabled: boolean;
+  layoutStyle?: "4_columns" | "3_columns" | "centered";
+  showSocials?: boolean;
   copyrightText?: string;
   storeBio?: string;
   socialLinks?: {
@@ -283,6 +305,9 @@ export interface VendorWebsiteConfigData {
   fontFamily: string;
   navItemsJson?: any;
   headerStyle: string;
+  headerLayout?: "logo_left_menu_center" | "logo_left_menu_right" | "logo_center_menu_below";
+  floatingWidgetPosition?: "bottom_right" | "bottom_left";
+  showFloatingWhatsapp?: boolean;
   headerSection?: HeaderSectionConfig;
   productsSection?: ProductsSectionConfig;
   heroSection: HeroSectionConfig;
