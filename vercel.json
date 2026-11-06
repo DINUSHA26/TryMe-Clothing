@@ -11,7 +11,6 @@
     "regions": [
         "sin1"
     ],
-    "cleanUrls": true,
     "images": {
         "sizes": [
             256,
