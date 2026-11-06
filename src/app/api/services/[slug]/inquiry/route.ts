@@ -2,18 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 /**
- * POST /api/services/[id]/inquiry
+ * POST /api/services/[slug]/inquiry
  * Public endpoint to submit an inquiry for a service (from TryMe Marketplace or Website)
+ * [slug] parameter accepts either service.id or service.slug
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
 
-    const service = await (prisma as any).websiteService.findUnique({
-      where: { id },
+    const service = await (prisma as any).websiteService.findFirst({
+      where: {
+        OR: [{ id: slug }, { slug }],
+      },
       include: {
         vendor: {
           select: { id: true, businessName: true, businessPhone: true, userId: true },
@@ -130,4 +133,3 @@ export async function POST(
     );
   }
 }
-
