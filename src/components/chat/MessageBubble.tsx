@@ -1,111 +1,182 @@
 'use client';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ChatMessage, ChatRoom } from '@/stores/chatStore';
 import { format } from 'date-fns';
+import { ChatUserAvatar } from './ChatUserAvatar';
+import { ShieldCheck, Store, User as UserIcon, Package, AlertTriangle, Check, CheckCheck } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: ChatMessage;
-  isOwn?: boolean; // Is this message from the current user?
+  isOwn?: boolean;
   room?: ChatRoom;
 }
 
 /**
- * Message Bubble Component
- * Displays an individual chat message
+ * Modern Message Bubble Component
+ * Real avatars for Customer, Vendor/Ads Seller, and Admin with TryMe branding
  */
 export function MessageBubble({ message, isOwn = false, room }: MessageBubbleProps) {
   const isTempMessage = !!message.tempId && message.id.startsWith('temp_');
+  const senderRole = message.sender?.role || 'CUSTOMER';
+  const isAdmin = senderRole === 'ADMIN';
+  const isVendor = senderRole === 'VENDOR' || senderRole === 'ADS_SELLER';
 
-  // Resolve display name and initial
+  // Resolve display name and avatar
   let displayName = '';
-  let senderInitial = 'U';
+  let avatarImageSrc: string | null = null;
+  let roleLabel = '';
 
   if (isOwn) {
     displayName = 'You';
-    senderInitial = (message.sender?.firstName?.charAt(0) || 'Y').toUpperCase();
-  } else if (room) {
-    // If not own message, check if we're a vendor or customer viewing the room
-    const senderRole = message.sender?.role;
-
-    if (senderRole === 'ADMIN') {
-      displayName = 'System Admin';
-      senderInitial = 'A';
-    } else if (senderRole === 'VENDOR') {
-      displayName = room.vendor.businessName;
-      senderInitial = (displayName?.charAt(0) || 'V').toUpperCase();
-    } else {
-      displayName = `${room.customer?.firstName || ''} ${room.customer?.lastName || ''}`.trim() || 'Customer';
-      senderInitial = (room.customer?.firstName?.charAt(0) || 'C').toUpperCase();
-    }
+    avatarImageSrc = message.sender?.avatar || null;
+  } else if (isAdmin) {
+    displayName = 'TryMe Official Support';
+    avatarImageSrc = message.sender?.avatar || '/icon.png';
+    roleLabel = 'TryMe Admin';
+  } else if (isVendor) {
+    displayName =
+      message.sender?.vendor?.businessName ||
+      room?.vendor?.businessName ||
+      `${message.sender?.firstName || ''} ${message.sender?.lastName || ''}`.trim() ||
+      'Store Vendor';
+    avatarImageSrc =
+      message.sender?.avatar ||
+      message.sender?.vendor?.logo ||
+      room?.vendor?.logo ||
+      room?.vendor?.user?.avatar ||
+      null;
+    roleLabel = 'Store Owner';
   } else {
-    displayName = `${message.sender?.firstName || ''} ${message.sender?.lastName || ''}`.trim() || 'Unknown User';
-    senderInitial = (message.sender?.firstName?.charAt(0) || 'U').toUpperCase();
+    displayName =
+      `${message.sender?.firstName || ''} ${message.sender?.lastName || ''}`.trim() ||
+      `${room?.customer?.firstName || ''} ${room?.customer?.lastName || ''}`.trim() ||
+      'Customer';
+    avatarImageSrc = message.sender?.avatar || room?.customer?.avatar || null;
+    roleLabel = 'Customer';
   }
 
+  // Format message timestamp
+  let formattedTime = '';
+  try {
+    formattedTime = format(new Date(message.createdAt), 'p');
+  } catch (e) {
+    formattedTime = '';
+  }
+
+  // Check if message is an automated Order Inquiry header
+  const isOrderInquiry = message.content.startsWith('Inquiry regarding Order #');
+
   return (
-    <div className={cn('flex flex-col gap-1 mb-4', isOwn ? 'items-end' : 'items-start')}>
-      <div className={cn('flex items-end gap-2 max-w-[85%]', isOwn && 'flex-row-reverse')}>
-        {/* Avatar - Only for others */}
+    <div className={cn('flex flex-col gap-1 mb-3.5', isOwn ? 'items-end' : 'items-start')}>
+      <div className={cn('flex items-end gap-2.5 max-w-[88%] sm:max-w-[78%]', isOwn && 'flex-row-reverse')}>
+        {/* Avatar - for other participants */}
         {!isOwn && (
-          <Avatar className="h-8 w-8 flex-shrink-0 border shadow-sm">
-            <AvatarFallback className="bg-muted text-[10px]">
-              {senderInitial}
-            </AvatarFallback>
-          </Avatar>
+          <div className="flex-shrink-0 self-end mb-1">
+            <ChatUserAvatar
+              role={senderRole}
+              name={displayName}
+              imageSrc={avatarImageSrc}
+              size="sm"
+              showRoleBadge={false}
+            />
+          </div>
         )}
-        
-        {/* Message content */}
-        <div className="flex flex-col gap-0.5">
-          {/* Sender name - Only for others in group-like view (not needed here but good for clarity) */}
+
+        {/* Message container */}
+        <div className="flex flex-col gap-1 min-w-0">
+          {/* Sender role and name label for other participants */}
           {!isOwn && (
-            <p className="text-[10px] font-semibold text-primary ml-1 mb-0.5 uppercase tracking-wider">
-              {displayName}
-            </p>
+            <div className="flex items-center gap-1.5 ml-1">
+              <span className="text-[11px] font-bold text-foreground truncate max-w-[200px]">
+                {displayName}
+              </span>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-semibold tracking-wide',
+                  isAdmin
+                    ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300'
+                    : isVendor
+                    ? 'bg-orange-100 dark:bg-orange-950/60 text-[#ea580c] dark:text-orange-300'
+                    : 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
+                )}
+              >
+                {isAdmin ? (
+                  <ShieldCheck className="w-2.5 h-2.5" />
+                ) : isVendor ? (
+                  <Store className="w-2.5 h-2.5" />
+                ) : (
+                  <UserIcon className="w-2.5 h-2.5" />
+                )}
+                {roleLabel}
+              </span>
+            </div>
           )}
 
-          {/* Message bubble */}
+          {/* Bubble */}
           <div
             className={cn(
-              'relative rounded-2xl px-4 py-2 shadow-sm transition-all duration-200',
+              'relative rounded-2xl px-4 py-2.5 shadow-xs transition-all duration-150',
               isOwn
-                ? 'bg-primary text-primary-foreground rounded-tr-none'
-                : 'bg-card text-card-foreground border rounded-tl-none',
-              isTempMessage && 'opacity-60 translate-y-0.5'
+                ? 'bg-gradient-to-r from-[#FF6600] to-[#ea580c] text-white rounded-tr-xs shadow-orange-500/10'
+                : 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-foreground rounded-tl-xs',
+              isTempMessage && 'opacity-70 scale-[0.99]'
             )}
           >
-            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-              {message.content}
-            </p>
+            {/* Rich Order Inquiry Card rendering */}
+            {isOrderInquiry ? (
+              <div className="space-y-1.5 py-0.5">
+                <div className={cn(
+                  'flex items-center gap-1.5 font-bold text-xs pb-1 border-b',
+                  isOwn ? 'border-white/20 text-white' : 'border-border/60 text-[#ea580c] dark:text-orange-400'
+                )}>
+                  <Package className="w-3.5 h-3.5" />
+                  <span>Order Inquiry</span>
+                </div>
+                <p className={cn('text-xs leading-relaxed whitespace-pre-wrap', isOwn ? 'text-white/95' : 'text-foreground/90')}>
+                  {message.content}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed select-text font-normal">
+                {message.content}
+              </p>
+            )}
 
-            {/* Blocked content warning */}
+            {/* Blocked content / Filtered notice */}
             {message.hasBlockedContent && (
-              <div className="mt-2 flex items-center gap-1.5 px-2 py-1 bg-destructive/10 rounded-lg border border-destructive/20">
-                <span className="text-[10px] font-bold text-destructive uppercase">Filtered</span>
+              <div className={cn(
+                'mt-2 flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-semibold border',
+                isOwn
+                  ? 'bg-black/20 text-white/90 border-white/20'
+                  : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+              )}>
+                <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                <span>Contact info was automatically hidden for safety</span>
               </div>
             )}
 
-            {/* In-bubble timestamp and status for 'You' */}
-            <div className={cn(
-                'flex items-center justify-end gap-1 mt-1 text-[10px]',
-                isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
-            )}>
-                <span>{format(new Date(message.createdAt), 'p')}</span>
-                {isOwn && !isTempMessage && (
-                    <div className="flex -space-x-1">
-                        <svg 
-                            className={cn("w-3.5 h-3.5 fill-current", message.isRead ? "text-blue-400" : "text-current")} 
-                            viewBox="0 0 24 24"
-                        >
-                            <path d="M22.3,6.3l-12,12l-5.6-5.6l1.4-1.4l4.2,4.2l10.6-10.6L22.3,6.3z M18.1,6.3l-7.8,7.8L9,12.7l-1.4,1.4l1.7,1.7l10.2-10.2 L18.1,6.3z"/>
-                        </svg>
-                    </div>
-                )}
-                {isTempMessage && (
-                    <span className="animate-pulse">···</span>
-                )}
+            {/* In-bubble timestamp and read receipts */}
+            <div
+              className={cn(
+                'flex items-center justify-end gap-1 mt-1 text-[10px] font-medium select-none',
+                isOwn ? 'text-white/80' : 'text-muted-foreground'
+              )}
+            >
+              <span>{formattedTime}</span>
+
+              {/* Status ticks for own messages */}
+              {isOwn && (
+                <span className="inline-flex items-center ml-0.5">
+                  {isTempMessage ? (
+                    <span className="animate-pulse tracking-tighter">···</span>
+                  ) : message.isRead ? (
+                    <CheckCheck className="w-3.5 h-3.5 text-sky-200" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5 text-white/80" />
+                  )}
+                </span>
+              )}
             </div>
           </div>
         </div>

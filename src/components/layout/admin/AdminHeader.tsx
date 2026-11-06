@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "../shared/ThemeToggle";
 import { NotificationBell } from "../shared/NotificationBell";
+import { ChatButton } from "@/components/chat/ChatButton";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
@@ -56,6 +57,7 @@ export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
       <div className="flex items-center gap-2 ml-auto">
         <ThemeToggle />
         <NotificationBell />
+        <ChatButton />
 
         {/* User Menu */}
         <DropdownMenu>

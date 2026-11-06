@@ -43,6 +43,13 @@ export async function GET(
             lastName: true,
             email: true,
             role: true,
+            avatar: true,
+            vendor: {
+              select: {
+                logo: true,
+                businessName: true,
+              },
+            },
           },
         },
       },
@@ -71,11 +78,13 @@ export async function GET(
           firstName: room.customer.user.firstName,
           lastName: room.customer.user.lastName,
           email: room.customer.user.email,
+          avatar: (room.customer.user as any).avatar || null,
         },
         vendor: {
           id: room.vendor.id,
           businessName: room.vendor.businessName,
-          email: room.vendor.user.email,
+          email: room.vendor.user?.email || null,
+          logo: (room.vendor as any).logo || (room.vendor as any).user?.avatar || null,
         },
         orderItem: {
           id: room.orderItem.id,
@@ -91,10 +100,13 @@ export async function GET(
           isRead: message.isRead,
           createdAt: message.createdAt,
           sender: {
+            id: message.sender.id,
             firstName: message.sender.firstName,
             lastName: message.sender.lastName,
             email: message.sender.email,
             role: message.sender.role,
+            avatar: message.sender.avatar || message.sender.vendor?.logo || null,
+            vendor: message.sender.vendor || null,
           },
         })),
       },

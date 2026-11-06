@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { AdminSidebar } from "@/components/layout/admin/AdminSidebar";
 import { AdminHeader } from "@/components/layout/admin/AdminHeader";
 import { AdminMobileNav } from "@/components/layout/admin/AdminMobileNav";
+import { ChatDialog } from "@/components/chat/ChatDialog";
 import { cn } from "@/lib/utils";
 
 export default function AdminDashboardLayout({
@@ -68,6 +69,7 @@ export default function AdminDashboardLayout({
           {children}
         </main>
       </div>
+      <ChatDialog />
     </div>
   );
 }

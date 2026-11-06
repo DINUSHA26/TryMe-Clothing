@@ -79,11 +79,15 @@ export async function GET(request: NextRequest) {
           createdAt: room.createdAt,
           updatedAt: room.updatedAt,
           customer: {
+            id: room.customer.id,
             firstName: room.customer.user.firstName,
             lastName: room.customer.user.lastName,
+            avatar: (room.customer.user as any).avatar || null,
           },
           vendor: {
+            id: room.vendor.id,
             businessName: room.vendor.businessName,
+            logo: (room.vendor as any).logo || (room.vendor as any).user?.avatar || null,
           },
           orderItem: room.orderItem,
         },
@@ -118,11 +122,15 @@ export async function GET(request: NextRequest) {
           }
         : null,
       customer: {
+        id: room.customer.id,
         firstName: room.customer.user.firstName,
         lastName: room.customer.user.lastName,
+        avatar: (room.customer.user as any).avatar || null,
       },
       vendor: {
+        id: room.vendor.id,
         businessName: room.vendor.businessName,
+        logo: (room.vendor as any).logo || (room.vendor as any).user?.avatar || null,
       },
       orderItem: {
         productSnapshot: room.orderItem.productSnapshot,

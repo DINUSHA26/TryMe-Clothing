@@ -15,9 +15,15 @@ export interface ChatMessage {
   isRead: boolean;
   createdAt: Date | string;
   sender: {
+    id?: string;
     firstName: string | null;
     lastName: string | null;
     role: string;
+    avatar?: string | null;
+    vendor?: {
+      logo?: string | null;
+      businessName?: string | null;
+    } | null;
   };
 }
 
@@ -36,18 +42,30 @@ export interface ChatRoom {
     senderId: string;
   } | null;
   customer: {
+    id?: string;
     firstName: string;
     lastName: string;
+    avatar?: string | null;
+    email?: string | null;
   };
   vendor: {
+    id?: string;
     businessName: string;
+    logo?: string | null;
+    email?: string | null;
+    user?: {
+      avatar?: string | null;
+    } | null;
   };
   orderItem: {
+    id?: string;
     productSnapshot: any;
     variantSnapshot: any;
     order: {
+      id?: string;
       orderNumber: string;
       status: string;
+      createdAt?: string;
     };
   };
 }
@@ -327,9 +345,12 @@ export const useChatStore = create<ChatState>()(
         isRead: false,
         createdAt: new Date(),
         sender: {
+          id: currentUser?.id,
           firstName: currentUser?.firstName || 'You',
           lastName: currentUser?.lastName || '',
           role: currentUser?.role || 'CUSTOMER',
+          avatar: currentUser?.avatar || null,
+          vendor: currentUser?.vendor ? { businessName: currentUser.vendor.businessName } : null,
         },
       };
 

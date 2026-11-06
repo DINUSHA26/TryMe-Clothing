@@ -41,9 +41,9 @@ export async function verifyRoomAccess(roomId: string, userId: string, role: Use
     throw new Error('Access denied: You do not have permission to access this chat room');
   }
 
-  // Vendor can only access rooms for their items
-  if (role === UserRole.VENDOR) {
-    if (room.vendor.userId === userId) {
+  // Vendor or Ads Seller can only access rooms for their items
+  if (role === UserRole.VENDOR || (role as string) === 'ADS_SELLER') {
+    if (room.vendor.userId === userId || room.customer.userId === userId) {
       return room;
     }
     throw new Error('Access denied: You do not have permission to access this chat room');
@@ -60,165 +60,128 @@ export async function verifyRoomAccess(roomId: string, userId: string, role: Use
  * @returns Array of chat rooms
  */
 export async function getUserChatRooms(userId: string, role: UserRole) {
+  const commonInclude = {
+    customer: {
+      select: {
+        id: true,
+        userId: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatar: true,
+            role: true,
+          },
+        },
+      },
+    },
+    vendor: {
+      select: {
+        id: true,
+        userId: true,
+        businessName: true,
+        logo: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+    },
+    orderItem: {
+      select: {
+        id: true,
+        productSnapshot: true,
+        variantSnapshot: true,
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
+    },
+    messages: {
+      orderBy: { createdAt: 'desc' as const },
+      take: 1, // Get last message for preview
+    },
+  };
+
   // Admin can see all rooms
   if (role === UserRole.ADMIN) {
     return prisma.chatRoom.findMany({
-      include: {
-        customer: {
-          select: {
-            id: true,
-            userId: true,
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
-            },
-          },
-        },
-        vendor: {
-          select: {
-            id: true,
-            userId: true,
-            businessName: true,
-          },
-        },
-        orderItem: {
-          select: {
-            id: true,
-            productSnapshot: true,
-            variantSnapshot: true,
-            order: {
-              select: {
-                id: true,
-                orderNumber: true,
-                createdAt: true,
-              },
-            },
-          },
-        },
-        messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1, // Get last message for preview
-        },
-      },
+      include: commonInclude,
       orderBy: { updatedAt: 'desc' },
     });
   }
 
   // Customer: Get rooms where they are the customer
   if (role === UserRole.CUSTOMER) {
-    // First get customer ID from user ID
     const customer = await prisma.customer.findUnique({
       where: { userId },
     });
 
     if (!customer) {
-      throw new Error('Customer not found');
+      return [];
     }
 
     return prisma.chatRoom.findMany({
       where: { customerId: customer.id },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            userId: true,
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
-            },
-          },
-        },
-        vendor: {
-          select: {
-            id: true,
-            userId: true,
-            businessName: true,
-          },
-        },
-        orderItem: {
-          select: {
-            id: true,
-            productSnapshot: true,
-            variantSnapshot: true,
-            order: {
-              select: {
-                id: true,
-                orderNumber: true,
-                createdAt: true,
-              },
-            },
-          },
-        },
-        messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1, // Get last message for preview
-        },
-      },
+      include: commonInclude,
       orderBy: { updatedAt: 'desc' },
     });
   }
 
   // Vendor: Get rooms where they are the vendor
   if (role === UserRole.VENDOR) {
-    // First get vendor ID from user ID
     const vendor = await prisma.vendor.findUnique({
       where: { userId },
     });
 
     if (!vendor) {
-      throw new Error('Vendor not found');
+      return [];
     }
 
     return prisma.chatRoom.findMany({
       where: { vendorId: vendor.id },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            userId: true,
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
-            },
-          },
-        },
-        vendor: {
-          select: {
-            id: true,
-            userId: true,
-            businessName: true,
-          },
-        },
-        orderItem: {
-          select: {
-            id: true,
-            productSnapshot: true,
-            variantSnapshot: true,
-            order: {
-              select: {
-                id: true,
-                orderNumber: true,
-                createdAt: true,
-              },
-            },
-          },
-        },
-        messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1, // Get last message for preview
-        },
-      },
+      include: commonInclude,
       orderBy: { updatedAt: 'desc' },
     });
+  }
+
+  // Ads Seller: Check if also has vendor or customer records
+  if (role === UserRole.ADS_SELLER || (role as string) === 'ADS_SELLER') {
+    const vendor = await prisma.vendor.findUnique({
+      where: { userId },
+    });
+
+    if (vendor) {
+      return prisma.chatRoom.findMany({
+        where: { vendorId: vendor.id },
+        include: commonInclude,
+        orderBy: { updatedAt: 'desc' },
+      });
+    }
+
+    const customer = await prisma.customer.findUnique({
+      where: { userId },
+    });
+
+    if (customer) {
+      return prisma.chatRoom.findMany({
+        where: { customerId: customer.id },
+        include: commonInclude,
+        orderBy: { updatedAt: 'desc' },
+      });
+    }
+
+    return [];
   }
 
   throw new Error('Invalid user role');
@@ -240,7 +203,7 @@ export async function canSendMessage(roomId: string, userId: string, role: UserR
     return true;
   }
 
-  // For customer and vendor, verify they have access
+  // For customer, vendor, and ads seller, verify they have access
   try {
     await verifyRoomAccess(roomId, userId, role);
     return true;

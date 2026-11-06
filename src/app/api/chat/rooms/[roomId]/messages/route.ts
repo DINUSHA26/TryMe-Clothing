@@ -65,6 +65,13 @@ export async function GET(
             lastName: true,
             email: true,
             role: true,
+            avatar: true,
+            vendor: {
+              select: {
+                logo: true,
+                businessName: true,
+              },
+            },
           },
         },
       },
@@ -91,9 +98,12 @@ export async function GET(
       isRead: message.isRead,
       createdAt: message.createdAt,
       sender: {
+        id: message.sender.id,
         firstName: message.sender.firstName,
         lastName: message.sender.lastName,
         role: message.sender.role,
+        avatar: message.sender.avatar || message.sender.vendor?.logo || null,
+        vendor: message.sender.vendor || null,
       },
     }));
 
@@ -186,6 +196,13 @@ export async function POST(
             lastName: true,
             email: true,
             role: true,
+            avatar: true,
+            vendor: {
+              select: {
+                logo: true,
+                businessName: true,
+              },
+            },
           },
         },
       },
@@ -207,9 +224,12 @@ export async function POST(
       isRead: message.isRead,
       createdAt: message.createdAt,
       sender: {
+        id: message.sender.id,
         firstName: message.sender.firstName,
         lastName: message.sender.lastName,
         role: message.sender.role,
+        avatar: message.sender.avatar || message.sender.vendor?.logo || null,
+        vendor: message.sender.vendor || null,
       },
     };
 

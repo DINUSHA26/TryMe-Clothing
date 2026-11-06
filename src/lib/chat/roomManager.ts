@@ -72,6 +72,8 @@ export async function createChatRoomsForOrder(orderId: string): Promise<ChatRoom
                     firstName: true,
                     lastName: true,
                     email: true,
+                    avatar: true,
+                    role: true,
                   },
                 },
               },
@@ -81,6 +83,15 @@ export async function createChatRoomsForOrder(orderId: string): Promise<ChatRoom
                 id: true,
                 userId: true,
                 businessName: true,
+                logo: true,
+                user: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    avatar: true,
+                  },
+                },
               },
             },
             orderItem: {
@@ -88,6 +99,14 @@ export async function createChatRoomsForOrder(orderId: string): Promise<ChatRoom
                 id: true,
                 productSnapshot: true,
                 variantSnapshot: true,
+                order: {
+                  select: {
+                    id: true,
+                    orderNumber: true,
+                    status: true,
+                    createdAt: true,
+                  },
+                },
               },
             },
           },
@@ -123,6 +142,8 @@ export async function getChatRoomById(roomId: string) {
               firstName: true,
               lastName: true,
               email: true,
+              avatar: true,
+              role: true,
             },
           },
         },
@@ -132,11 +153,13 @@ export async function getChatRoomById(roomId: string) {
           id: true,
           userId: true,
           businessName: true,
+          logo: true,
           user: {
             select: {
               firstName: true,
               lastName: true,
               email: true,
+              avatar: true,
             },
           },
         },
@@ -150,6 +173,8 @@ export async function getChatRoomById(roomId: string) {
             select: {
               id: true,
               orderNumber: true,
+              status: true,
+              createdAt: true,
             },
           },
         },
@@ -177,6 +202,8 @@ export async function getChatRoomByOrderItemId(orderItemId: string) {
               firstName: true,
               lastName: true,
               email: true,
+              avatar: true,
+              role: true,
             },
           },
         },
@@ -186,6 +213,15 @@ export async function getChatRoomByOrderItemId(orderItemId: string) {
           id: true,
           userId: true,
           businessName: true,
+          logo: true,
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              avatar: true,
+            },
+          },
         },
       },
       orderItem: {
@@ -197,6 +233,8 @@ export async function getChatRoomByOrderItemId(orderItemId: string) {
             select: {
               id: true,
               orderNumber: true,
+              status: true,
+              createdAt: true,
             },
           },
         },

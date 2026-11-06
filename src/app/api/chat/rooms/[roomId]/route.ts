@@ -45,11 +45,13 @@ export async function GET(
           firstName: room.customer.user.firstName,
           lastName: room.customer.user.lastName,
           email: room.customer.user.email,
+          avatar: (room.customer.user as any).avatar || null,
         },
         vendor: {
           id: room.vendor.id,
           businessName: room.vendor.businessName,
-          email: room.vendor.user.email,
+          email: room.vendor.user?.email || null,
+          logo: (room.vendor as any).logo || (room.vendor as any).user?.avatar || null,
         },
         orderItem: {
           id: room.orderItem.id,
