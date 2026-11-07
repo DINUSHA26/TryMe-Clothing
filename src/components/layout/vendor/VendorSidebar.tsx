@@ -36,22 +36,25 @@ export function VendorSidebar({
   const { user, logout } = useAuthStore();
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const router = useRouter();
-  const { canAccessPath, roleName, isOwner } = useVendorAccess();
+  const { canAccessPath, roleName, isOwner, can } = useVendorAccess();
 
   const [availableBalance, setAvailableBalance] = useState<number | null>(null);
   const shopName = user?.vendor?.businessName || "My Store";
   const isShopOpen = user?.vendor?.isShopOpen ?? false;
 
   useEffect(() => {
+    if (!isOwner && !can("wallet.view") && !canAccessPath("/vendor/wallet")) {
+      return;
+    }
     fetch("/api/vendor/wallet")
       .then((res) => res.json())
       .then((result) => {
-        if (result.success) {
+        if (result.success && result.data?.balance) {
           setAvailableBalance(result.data.balance.availableBalance);
         }
       })
       .catch(() => {/* silently ignore */ });
-  }, []);
+  }, [isOwner, can, canAccessPath]);
 
   const handleLogout = () => {
     logout();
@@ -126,9 +129,18 @@ export function VendorSidebar({
               {isShopOpen ? "Open" : "Closed"}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Available: {availableBalance === null ? "..." : `Rs. ${availableBalance.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          </p>
+          {isOwner || can("wallet.view") || canAccessPath("/vendor/wallet") ? (
+            <p className="text-xs text-muted-foreground mt-1">
+              Available: {availableBalance === null ? "..." : `Rs. ${availableBalance.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            </p>
+          ) : (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-xs font-medium text-muted-foreground truncate">
+                {roleName || "Store Staff"}
+              </span>
+            </div>
+          )}
         </div>
       )}
 

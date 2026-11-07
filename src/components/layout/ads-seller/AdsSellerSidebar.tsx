@@ -36,7 +36,7 @@ export function AdsSellerSidebar({
   const { isActive } = useActiveRoute();
   const { user, logout } = useAuthStore();
   const router = useRouter();
-  const { canAccessPath, roleName, isOwner } = useAdsSellerAccess();
+  const { canAccessPath, roleName, isOwner, can } = useAdsSellerAccess();
 
   const [availableBalance, setAvailableBalance] = useState<number | null>(null);
   const sellerName =
@@ -49,15 +49,18 @@ export function AdsSellerSidebar({
     true;
 
   useEffect(() => {
+    if (!isOwner && !can("wallet.view") && !canAccessPath("/ads-seller/wallet")) {
+      return;
+    }
     fetch("/api/ads-seller/wallet")
       .then((res) => res.json())
       .then((result) => {
-        if (result.success) {
+        if (result.success && result.data?.balance) {
           setAvailableBalance(result.data.balance.availableBalance);
         }
       })
       .catch(() => {/* silently ignore */ });
-  }, []);
+  }, [isOwner, can, canAccessPath]);
 
   const handleLogout = () => {
     logout();
@@ -135,9 +138,18 @@ export function AdsSellerSidebar({
               {isShopOpen ? "Open" : "Closed"}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Available: {availableBalance === null ? "..." : `Rs. ${availableBalance.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          </p>
+          {isOwner || can("wallet.view") || canAccessPath("/ads-seller/wallet") ? (
+            <p className="text-xs text-muted-foreground mt-1">
+              Available: {availableBalance === null ? "..." : `Rs. ${availableBalance.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            </p>
+          ) : (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-xs font-medium text-muted-foreground truncate">
+                {roleName || "Store Staff"}
+              </span>
+            </div>
+          )}
         </div>
       )}
 

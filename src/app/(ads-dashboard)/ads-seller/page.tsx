@@ -22,9 +22,12 @@ import Link from "next/link";
 import { formatDistance } from "date-fns";
 import { VendorOverviewStats } from "@/components/vendor/reports/VendorOverviewStats";
 import { Globe, ShoppingCart, Package, Wallet, Tag, MonitorDot, Receipt, Sparkles } from "lucide-react";
+import { useAdsSellerAccess } from "@/hooks/useAdsSellerAccess";
+
 export default function AdsSellerDashboardHome() {
   const { user } = useAuthStore();
   const { toast } = useToast();
+  const { canAccessPath, can, isOwner, roleName } = useAdsSellerAccess();
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -86,24 +89,38 @@ export default function AdsSellerDashboardHome() {
       {/* Welcome Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+            {!isOwner && roleName && (
+              <Badge variant="secondary" className="text-xs font-semibold">
+                {roleName}
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground mt-1">
-            Welcome back, {sellerName} — manage your TryMe.lk store, classified ads, POS, and standalone website
+            Welcome back, {sellerName} —{" "}
+            {isOwner
+              ? "manage your TryMe.lk store, classified ads, POS, and standalone website"
+              : "Store staff operations dashboard"}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/ads-seller/website-builder">
-            <Button variant="outline" className="gap-2">
-              <Globe className="h-4 w-4 text-emerald-600" />
-              Website Builder
-            </Button>
-          </Link>
-          <Link href="/ads-seller/post-ad">
-            <Button className="bg-[#FF6600] hover:bg-[#e65c00] text-white gap-2 font-bold shadow-sm">
-              <PlusCircle className="h-4 w-4" />
-              Post an Ad
-            </Button>
-          </Link>
+          {(isOwner || can("website.view") || canAccessPath("/ads-seller/website-builder")) && (
+            <Link href="/ads-seller/website-builder">
+              <Button variant="outline" className="gap-2">
+                <Globe className="h-4 w-4 text-emerald-600" />
+                Website Builder
+              </Button>
+            </Link>
+          )}
+          {(isOwner || can("ads.create") || canAccessPath("/ads-seller/post-ad")) && (
+            <Link href="/ads-seller/post-ad">
+              <Button className="bg-[#FF6600] hover:bg-[#e65c00] text-white gap-2 font-bold shadow-sm">
+                <PlusCircle className="h-4 w-4" />
+                Post an Ad
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -121,122 +138,134 @@ export default function AdsSellerDashboardHome() {
               </div>
               <div>
                 <h3 className="text-sm font-bold">TryMe Marketplace</h3>
-                <p className="text-[11px] text-muted-foreground">Catalog &amp; escrow wallet</p>
+                <p className="text-[11px] text-muted-foreground">Catalog &amp; orders</p>
               </div>
             </div>
-            <Badge className="bg-blue-500/10 text-blue-700 text-[10px]">Escrow</Badge>
+            <Badge className="bg-blue-500/10 text-blue-700 text-[10px]">Marketplace</Badge>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Link href="/ads-seller/orders?source=tryme">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <ShoppingCart className="h-3.5 w-3.5 text-blue-600" />
-                Orders
-              </Button>
-            </Link>
-            <Link href="/ads-seller/products">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <Package className="h-3.5 w-3.5 text-blue-600" />
-                Products
-              </Button>
-            </Link>
-            <Link href="/ads-seller/wallet">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <Wallet className="h-3.5 w-3.5 text-blue-600" />
-                Wallet
-              </Button>
-            </Link>
-            <Link href="/ads-seller/coupons">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <Tag className="h-3.5 w-3.5 text-blue-600" />
-                Coupons
-              </Button>
-            </Link>
+            {canAccessPath("/ads-seller/orders") && (
+              <Link href="/ads-seller/orders?source=tryme">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <ShoppingCart className="h-3.5 w-3.5 text-blue-600" />
+                  Orders
+                </Button>
+              </Link>
+            )}
+            {canAccessPath("/ads-seller/products") && (
+              <Link href="/ads-seller/products">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <Package className="h-3.5 w-3.5 text-blue-600" />
+                  Products
+                </Button>
+              </Link>
+            )}
+            {(isOwner || can("wallet.view") || canAccessPath("/ads-seller/wallet")) && (
+              <Link href="/ads-seller/wallet">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <Wallet className="h-3.5 w-3.5 text-blue-600" />
+                  Wallet
+                </Button>
+              </Link>
+            )}
+            {(isOwner || can("coupons.view") || canAccessPath("/ads-seller/coupons")) && (
+              <Link href="/ads-seller/coupons">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <Tag className="h-3.5 w-3.5 text-blue-600" />
+                  Coupons
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
         {/* Standalone Website Stream */}
-        <div className="bg-card rounded-xl border border-emerald-500/20 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
-                <Globe className="h-4 w-4" />
+        {(isOwner || can("website.view") || canAccessPath("/ads-seller/website-builder")) && (
+          <div className="bg-card rounded-xl border border-emerald-500/20 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
+                  <Globe className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold">My Personal Website</h3>
+                  <p className="text-[11px] text-muted-foreground">Direct COD &amp; Bank sales</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold">My Personal Website</h3>
-                <p className="text-[11px] text-muted-foreground">Direct COD &amp; Bank sales</p>
-              </div>
+              <Badge className="bg-emerald-500/10 text-emerald-700 text-[10px]">Direct</Badge>
             </div>
-            <Badge className="bg-emerald-500/10 text-emerald-700 text-[10px]">Direct</Badge>
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/ads-seller/orders?source=website">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <ShoppingCart className="h-3.5 w-3.5 text-emerald-600" />
+                  Orders
+                </Button>
+              </Link>
+              <Link href="/ads-seller/services">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                  Services
+                </Button>
+              </Link>
+              <Link href="/ads-seller/orders?source=inquiries">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <Globe className="h-3.5 w-3.5 text-emerald-600" />
+                  Inquiries
+                </Button>
+              </Link>
+              <Link href="/ads-seller/website-builder">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <Store className="h-3.5 w-3.5 text-emerald-600" />
+                  Builder
+                </Button>
+              </Link>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/ads-seller/orders?source=website">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <ShoppingCart className="h-3.5 w-3.5 text-emerald-600" />
-                Orders
-              </Button>
-            </Link>
-            <Link href="/ads-seller/services">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
-                Services
-              </Button>
-            </Link>
-            <Link href="/ads-seller/orders?source=inquiries">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <Globe className="h-3.5 w-3.5 text-emerald-600" />
-                Inquiries
-              </Button>
-            </Link>
-            <Link href="/ads-seller/website-builder">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <Store className="h-3.5 w-3.5 text-emerald-600" />
-                Builder
-              </Button>
-            </Link>
-          </div>
-        </div>
+        )}
 
         {/* POS Counter Stream */}
-        <div className="bg-card rounded-xl border border-amber-500/20 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
-                <MonitorDot className="h-4 w-4" />
+        {(isOwner || can("pos.view") || canAccessPath("/ads-seller/pos")) && (
+          <div className="bg-card rounded-xl border border-amber-500/20 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+                  <MonitorDot className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold">POS Retail Counter</h3>
+                  <p className="text-[11px] text-muted-foreground">In-store cash register</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold">POS Retail Counter</h3>
-                <p className="text-[11px] text-muted-foreground">In-store cash register</p>
-              </div>
+              <Badge className="bg-amber-500/10 text-amber-700 text-[10px]">Walk-in</Badge>
             </div>
-            <Badge className="bg-amber-500/10 text-amber-700 text-[10px]">Walk-in</Badge>
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/ads-seller/pos">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <MonitorDot className="h-3.5 w-3.5 text-amber-600" />
+                  Open POS
+                </Button>
+              </Link>
+              <Link href="/ads-seller/orders?source=pos">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <Receipt className="h-3.5 w-3.5 text-amber-600" />
+                  Receipts
+                </Button>
+              </Link>
+              <Link href="/ads-seller/products">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <Package className="h-3.5 w-3.5 text-amber-600" />
+                  Stock Sync
+                </Button>
+              </Link>
+              <Link href="/ads-seller/reviews">
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
+                  <Store className="h-3.5 w-3.5 text-amber-600" />
+                  Reviews
+                </Button>
+              </Link>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/ads-seller/pos">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <MonitorDot className="h-3.5 w-3.5 text-amber-600" />
-                Open POS
-              </Button>
-            </Link>
-            <Link href="/ads-seller/orders?source=pos">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <Receipt className="h-3.5 w-3.5 text-amber-600" />
-                Receipts
-              </Button>
-            </Link>
-            <Link href="/ads-seller/products">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <Package className="h-3.5 w-3.5 text-amber-600" />
-                Stock Sync
-              </Button>
-            </Link>
-            <Link href="/ads-seller/reviews">
-              <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-1.5 h-8">
-                <Store className="h-3.5 w-3.5 text-amber-600" />
-                Reviews
-              </Button>
-            </Link>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Classifieds Listings & Moderation Hub */}

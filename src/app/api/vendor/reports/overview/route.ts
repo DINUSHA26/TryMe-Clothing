@@ -5,6 +5,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, handleAuthError, AuthError, getEffectiveVendor } from "@/lib/auth-helpers";
+import { getVendorAccess, getAdsSellerAccess } from "@/lib/rbac";
+import { StoreAccessInfo } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
@@ -15,6 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = requireAuth(request);
     let vendorId: string;
+    let access: StoreAccessInfo;
 
     if (user.role === UserRole.VENDOR) {
       const effective = await getEffectiveVendor(user.userId);
@@ -22,15 +25,19 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
       }
       vendorId = effective.vendor.id;
+      access = await getVendorAccess(user.userId);
     } else if (user.role === UserRole.ADS_SELLER) {
       const sellerVendor = await getOrCreateAdsSellerVendor(user.userId);
       if (!sellerVendor) {
         return NextResponse.json({ success: false, error: "Ads seller profile not found" }, { status: 404 });
       }
       vendorId = sellerVendor.vendor.id;
+      access = await getAdsSellerAccess(user.userId);
     } else {
       throw new AuthError("Forbidden: Vendor or Ads Seller access required", 403);
     }
+
+    const hasFinancialAccess = access.isOwner || access.permissions.includes("wallet.view");
 
     const searchParams = request.nextUrl.searchParams;
     const queryParams = {
@@ -160,17 +167,68 @@ export async function GET(request: NextRequest) {
     );
     const monthData = thisMonthResult[0] || {};
 
-    // Wallet Balance
-    const wallet = await prisma.wallet.findUnique({
-      where: { vendorId },
-      select: {
-        pendingBalance: true,
-        availableBalance: true,
-      },
-    });
+    // Wallet Balance (restricted to owners and staff with wallet.view)
+    let pendingBalance: number | null = null;
+    let availableBalance: number | null = null;
 
-    const pendingBalance = wallet?.pendingBalance.toNumber() || 0;
-    const availableBalance = wallet?.availableBalance.toNumber() || 0;
+    if (hasFinancialAccess) {
+      const wallet = await prisma.wallet.findUnique({
+        where: { vendorId },
+        select: {
+          pendingBalance: true,
+          availableBalance: true,
+        },
+      });
+      pendingBalance = wallet?.pendingBalance.toNumber() || 0;
+      availableBalance = wallet?.availableBalance.toNumber() || 0;
+    }
+
+    // Operational statistics for all roles (Products, low stock, today orders, fulfillment)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      totalProducts,
+      activeProducts,
+      lowStockCount,
+      outOfStockCount,
+      todayOrdersResult,
+      todayPosOrdersResult,
+      pendingFulfillmentResult,
+    ] = await Promise.all([
+      prisma.product.count({ where: { vendorId } }),
+      prisma.product.count({ where: { vendorId, isActive: true } }),
+      prisma.product.count({ where: { vendorId, stock: { lte: 5, gt: 0 } } }),
+      prisma.product.count({ where: { vendorId, stock: 0 } }),
+      prisma.$queryRawUnsafe<any[]>(
+        `SELECT COUNT(DISTINCT o."id")::int as count
+         FROM "OrderItem" i
+         JOIN "Order" o ON i."orderId" = o."id"
+         WHERE i."vendorId" = $1 AND o."createdAt" >= $2 AND o."status" != 'CANCELLED'::"OrderStatus"`,
+        vendorId,
+        todayStart
+      ),
+      prisma.$queryRawUnsafe<any[]>(
+        `SELECT COUNT(DISTINCT o."id")::int as count
+         FROM "OrderItem" i
+         JOIN "Order" o ON i."orderId" = o."id"
+         WHERE i."vendorId" = $1 AND o."createdAt" >= $2 AND o."status" != 'CANCELLED'::"OrderStatus"
+           AND (o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN'))`,
+        vendorId,
+        todayStart
+      ),
+      prisma.$queryRawUnsafe<any[]>(
+        `SELECT COUNT(DISTINCT o."id")::int as count
+         FROM "OrderItem" i
+         JOIN "Order" o ON i."orderId" = o."id"
+         WHERE i."vendorId" = $1 AND o."status" IN ('PAYMENT_CONFIRMED'::"OrderStatus", 'PROCESSING'::"OrderStatus")`,
+        vendorId
+      ),
+    ]);
+
+    const todayOrders = Number(todayOrdersResult[0]?.count) || 0;
+    const todayPosOrders = Number(todayPosOrdersResult[0]?.count) || 0;
+    const pendingFulfillment = Number(pendingFulfillmentResult[0]?.count) || 0;
 
     // Website Inquiries & Reviews count from VendorWebsiteConfig
     let websiteInquiriesCount = 0;
@@ -206,38 +264,54 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        totalSales,
-        thisMonthSales: Number(monthData.thisMonthSales) || 0,
+        hasFinancialAccess,
+        totalSales: hasFinancialAccess ? totalSales : null,
+        thisMonthSales: hasFinancialAccess ? Number(monthData.thisMonthSales) || 0 : null,
         pendingBalance,
         availableBalance,
         totalOrders,
-        averageOrderValue,
+        averageOrderValue: hasFinancialAccess ? averageOrderValue : null,
         trymeStats: {
-          totalSales: Number(trymeData.totalSales) || 0,
-          thisMonthSales: Number(monthData.trymeMonthSales) || 0,
+          totalSales: hasFinancialAccess ? Number(trymeData.totalSales) || 0 : null,
+          thisMonthSales: hasFinancialAccess ? Number(monthData.trymeMonthSales) || 0 : null,
           totalOrders: Number(trymeData.totalOrders) || 0,
-          averageOrderValue: Number(trymeData.averageOrderValue) || 0,
+          averageOrderValue: hasFinancialAccess ? Number(trymeData.averageOrderValue) || 0 : null,
           pendingBalance,
           availableBalance,
           reviewsCount: trymeReviewsCount,
         },
         websiteStats: {
-          totalSales: Number(websiteRevenueData.totalSales) || 0,
-          thisMonthSales: Number(monthData.websiteMonthSales) || 0,
+          totalSales: hasFinancialAccess ? Number(websiteRevenueData.totalSales) || 0 : null,
+          thisMonthSales: hasFinancialAccess ? Number(monthData.websiteMonthSales) || 0 : null,
           totalOrders: Number(websiteAllData.allWebsiteOrders) || 0,
           confirmedOrders: Number(websiteRevenueData.confirmedOrders) || 0,
-          pendingVerificationSales: Number(websiteAllData.pendingVerificationSales) || 0,
+          pendingVerificationSales: hasFinancialAccess ? Number(websiteAllData.pendingVerificationSales) || 0 : null,
           pendingActionOrders: Number(websiteAllData.pendingActionOrders) || 0,
-          averageOrderValue: Number(websiteRevenueData.averageOrderValue) || 0,
+          averageOrderValue: hasFinancialAccess ? Number(websiteRevenueData.averageOrderValue) || 0 : null,
           inquiriesCount: websiteInquiriesCount,
           newInquiriesCount,
           reviewsCount: websiteReviewsCount,
         },
         posStats: {
-          totalSales: Number(posData.totalSales) || 0,
-          thisMonthSales: Number(monthData.posMonthSales) || 0,
+          totalSales: hasFinancialAccess ? Number(posData.totalSales) || 0 : null,
+          thisMonthSales: hasFinancialAccess ? Number(monthData.posMonthSales) || 0 : null,
           totalOrders: Number(posData.totalOrders) || 0,
-          averageOrderValue: Number(posData.averageOrderValue) || 0,
+          averageOrderValue: hasFinancialAccess ? Number(posData.averageOrderValue) || 0 : null,
+        },
+        operationalStats: {
+          totalProducts,
+          activeProducts,
+          lowStockCount,
+          outOfStockCount,
+          todayOrders,
+          todayPosOrders,
+          pendingFulfillment,
+        },
+        roleInfo: {
+          isOwner: access.isOwner,
+          roleName: access.roleName,
+          permissions: access.permissions,
+          hasFinancialAccess,
         },
       },
     });
