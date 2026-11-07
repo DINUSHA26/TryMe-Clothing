@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, Suspense } from "react";
-import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, MoreHorizontal, Edit2, Trash2, ShieldAlert } from "lucide-react";
+import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, MoreHorizontal, Edit2, Trash2, ShieldAlert, Heart, ChevronUp, Smile, Eye } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/authStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -16,12 +16,42 @@ import { useRouter, useSearchParams } from "next/navigation";
 const CACHE_KEY = "primewear_stories_cache";
 const SELF_STORY_CACHE_KEY = "primewear_self_story_cache";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const STORY_REACTION_EMOJIS = ["❤️", "🔥", "👏", "😂", "😮", "😢", "💯"];
+
+function formatTimeAgo(isoString: string): string {
+  try {
+    const diffMs = Date.now() - new Date(isoString).getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    if (diffSec < 60) return "Just now";
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.floor(diffHours / 24)}d ago`;
+  } catch {
+    return "";
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+interface StoryReactionItem {
+  id: string;
+  userId: string;
+  name: string;
+  avatar: string | null;
+  role: string;
+  emoji: string;
+  createdAt: string;
+}
+
 interface StoryItem {
   id: string;
   imageUrl: string;
   createdAt: string;
+  reactionsCount?: number;
+  reactionsByEmoji?: Record<string, number>;
+  myReaction?: string | null;
+  reactions?: StoryReactionItem[];
 }
 
 interface GroupedStories {
@@ -142,6 +172,12 @@ export function StoriesTray() {
   const lastActiveStoryRef = useRef<string>("");
   const [isUpdatingStory, setIsUpdatingStory] = useState(false);
   const editFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Story Reactions & Activity Sheet
+  const [reactionSheetOpen, setReactionSheetOpen] = useState(false);
+  const [selectedEmojiFilter, setSelectedEmojiFilter] = useState<string>("all");
+  const [floatingReactions, setFloatingReactions] = useState<{ id: number; emoji: string }[]>([]);
+  const [isReacting, setIsReacting] = useState(false);
 
   // Moderation popup
   const [moderationPopup, setModerationPopup] = useState<{ visible: boolean; message: string }>({ visible: false, message: "" });
@@ -372,6 +408,8 @@ export function StoriesTray() {
   // ── Navigation helpers ───────────────────────────────────────────────────
   const handleNextStory = () => {
     if (activeGroupIndex === null) return;
+    setReactionSheetOpen(false);
+    setSelectedEmojiFilter("all");
     const currentGroup = groupedStories[activeGroupIndex];
     if (activeStoryIndex < currentGroup.stories.length - 1) {
       setActiveStoryIndex((p) => p + 1);
@@ -386,6 +424,8 @@ export function StoriesTray() {
 
   const handlePrevStory = () => {
     if (activeGroupIndex === null) return;
+    setReactionSheetOpen(false);
+    setSelectedEmojiFilter("all");
     if (activeStoryIndex > 0) {
       setActiveStoryIndex((p) => p - 1);
     } else if (activeGroupIndex > 0) {
@@ -401,12 +441,134 @@ export function StoriesTray() {
     setActiveGroupIndex(groupIndex);
     setActiveStoryIndex(0);
     setIsPaused(false);
+    setReactionSheetOpen(false);
+    setSelectedEmojiFilter("all");
   };
 
   const closeViewer = () => {
     setActiveGroupIndex(null);
     setActiveStoryIndex(0);
     setIsPaused(false);
+    setReactionSheetOpen(false);
+    setSelectedEmojiFilter("all");
+  };
+
+  // ── Reaction handlers ────────────────────────────────────────────────────
+  const handleReact = async (storyId: string, emoji: string) => {
+    if (!isAuthenticated) {
+      toast.error("Please login to react to stories.");
+      router.push("/login?returnUrl=" + encodeURIComponent("/social"));
+      return;
+    }
+
+    // Trigger floating animated particle
+    const animId = Date.now() + Math.random();
+    setFloatingReactions((prev) => [...prev, { id: animId, emoji }]);
+    setTimeout(() => {
+      setFloatingReactions((prev) => prev.filter((r) => r.id !== animId));
+    }, 1800);
+
+    // Optimistic update
+    setGroupedStories((prev) =>
+      prev.map((group, gIdx) => {
+        if (gIdx !== activeGroupIndex) return group;
+        return {
+          ...group,
+          stories: group.stories.map((story) => {
+            if (story.id !== storyId) return story;
+            const prevMyReaction = story.myReaction;
+            const isRemoving = prevMyReaction === emoji;
+            const newMyReaction = isRemoving ? null : emoji;
+
+            const newByEmoji = { ...(story.reactionsByEmoji || {}) };
+            if (prevMyReaction) {
+              newByEmoji[prevMyReaction] = Math.max(0, (newByEmoji[prevMyReaction] || 1) - 1);
+              if (newByEmoji[prevMyReaction] === 0) delete newByEmoji[prevMyReaction];
+            }
+            if (!isRemoving) {
+              newByEmoji[emoji] = (newByEmoji[emoji] || 0) + 1;
+            }
+
+            const newCount = Object.values(newByEmoji).reduce((a, b) => a + b, 0);
+
+            return {
+              ...story,
+              myReaction: newMyReaction,
+              reactionsCount: newCount,
+              reactionsByEmoji: newByEmoji,
+            };
+          }),
+        };
+      })
+    );
+
+    try {
+      setIsReacting(true);
+      const res = await fetch(`/api/social/stories/${storyId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setGroupedStories((prev) =>
+          prev.map((group, gIdx) => {
+            if (gIdx !== activeGroupIndex) return group;
+            return {
+              ...group,
+              stories: group.stories.map((story) => {
+                if (story.id !== storyId) return story;
+                return {
+                  ...story,
+                  myReaction: data.data.myReaction,
+                  reactionsCount: data.data.count,
+                  reactionsByEmoji: data.data.byEmoji,
+                  reactions: data.data.reactions,
+                };
+              }),
+            };
+          })
+        );
+      } else {
+        toast.error(data.error || "Failed to update reaction");
+      }
+    } catch {
+      toast.error("Failed to connect to the server");
+    } finally {
+      setIsReacting(false);
+    }
+  };
+
+  const openReactionsSheet = async (storyId: string) => {
+    setIsPaused(true);
+    setReactionSheetOpen(true);
+    setSelectedEmojiFilter("all");
+    try {
+      const res = await fetch(`/api/social/stories/${storyId}/reactions`);
+      const data = await res.json();
+      if (data.success) {
+        setGroupedStories((prev) =>
+          prev.map((group, gIdx) => {
+            if (gIdx !== activeGroupIndex) return group;
+            return {
+              ...group,
+              stories: group.stories.map((story) => {
+                if (story.id !== storyId) return story;
+                return {
+                  ...story,
+                  reactionsCount: data.data.count,
+                  reactionsByEmoji: data.data.byEmoji,
+                  reactions: data.data.reactions,
+                  myReaction: data.data.myReaction,
+                };
+              }),
+            };
+          })
+        );
+      }
+    } catch (e) {
+      console.warn("Failed to refresh reactions list:", e);
+    }
   };
 
   const selfGroup = groupedStories.find((g) => g.isSelf);
@@ -603,6 +765,14 @@ export function StoriesTray() {
                     <Store className="h-4 w-4 text-primary" />
                   )}
                 </div>
+
+                {/* Self story reaction counter badge */}
+                {group.isSelf && latestStory.reactionsCount && latestStory.reactionsCount > 0 ? (
+                  <div className="absolute top-2.5 right-2.5 bg-black/75 backdrop-blur-md border border-white/20 px-2 py-0.5 rounded-full flex items-center gap-1 z-10 text-[10px] font-extrabold text-white shadow-md">
+                    <span className="text-xs">❤️</span>
+                    <span>{latestStory.reactionsCount}</span>
+                  </div>
+                ) : null}
 
                 {/* Cached badge */}
                 {isFromCache && (
@@ -892,7 +1062,7 @@ export function StoriesTray() {
 
             {/* Mobile tap zones */}
             <div 
-              className="absolute inset-x-0 top-20 bottom-0 flex z-10"
+              className="absolute inset-x-0 top-20 bottom-24 flex z-10"
               onMouseDown={() => setIsPaused(true)}
               onMouseUp={() => setIsPaused(false)}
               onMouseLeave={() => setIsPaused(false)}
@@ -902,6 +1072,315 @@ export function StoriesTray() {
               <div onClick={handlePrevStory} className="w-1/3 h-full cursor-w-resize" />
               <div onClick={handleNextStory} className="w-2/3 h-full cursor-e-resize" />
             </div>
+
+            {/* Floating reaction particles */}
+            {floatingReactions.map((f) => (
+              <div
+                key={f.id}
+                className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-none text-5xl animate-story-float z-40 select-none"
+              >
+                {f.emoji}
+              </div>
+            ))}
+
+            {/* Bottom Bar: Owner view (Reactions & Activity) vs Viewer view (Quick Emoji Reactions) */}
+            {groupedStories[activeGroupIndex].isSelf ? (
+              // ── OWNER VIEW: Activity & Reactions Bar ──
+              <div className="absolute bottom-4 inset-x-4 z-20 flex flex-col items-center">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openReactionsSheet(
+                      groupedStories[activeGroupIndex].stories[activeStoryIndex].id
+                    );
+                  }}
+                  className="w-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white rounded-2xl px-4 py-2.5 flex items-center justify-between transition-all group shadow-xl active:scale-[0.99]"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-full bg-rose-500/25 border border-rose-500/40 flex items-center justify-center text-rose-400 flex-shrink-0">
+                      <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-black text-white flex items-center gap-1.5">
+                        <span>Story Activity</span>
+                        {groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                          .reactionsCount ? (
+                          <span className="bg-primary text-[10px] px-1.5 py-0.2 rounded-full font-black text-white">
+                            {
+                              groupedStories[activeGroupIndex].stories[
+                                activeStoryIndex
+                              ].reactionsCount
+                            }
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="text-[10px] text-white/70">
+                        {groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                          .reactionsCount &&
+                        groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                          .reactionsCount! > 0
+                          ? `${
+                              groupedStories[activeGroupIndex].stories[
+                                activeStoryIndex
+                              ].reactionsCount
+                            } ${
+                              groupedStories[activeGroupIndex].stories[
+                                activeStoryIndex
+                              ].reactionsCount === 1
+                                ? "reaction"
+                                : "reactions"
+                            } • Tap to view who reacted`
+                          : "No reactions yet • Tap to view activity"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                      .reactionsByEmoji &&
+                      Object.keys(
+                        groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                          .reactionsByEmoji!
+                      ).length > 0 && (
+                        <div className="flex items-center -space-x-1 mr-1">
+                          {Object.entries(
+                            groupedStories[activeGroupIndex].stories[
+                              activeStoryIndex
+                            ].reactionsByEmoji!
+                          )
+                            .slice(0, 3)
+                            .map(([emoji, count]) => (
+                              <span
+                                key={emoji}
+                                className="inline-flex items-center justify-center text-xs bg-white/20 backdrop-blur-sm rounded-full w-5 h-5 shadow"
+                              >
+                                {emoji}
+                              </span>
+                            ))}
+                        </div>
+                      )}
+                    <ChevronUp className="h-4 w-4 text-white/70 group-hover:-translate-y-0.5 transition-transform" />
+                  </div>
+                </button>
+              </div>
+            ) : (
+              // ── VIEWER VIEW: React with Emojis ──
+              <div 
+                className="absolute bottom-4 inset-x-4 z-20 flex flex-col items-center"
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => {
+                  if (!reactionSheetOpen) setIsPaused(false);
+                }}
+              >
+                <div className="w-full bg-black/60 hover:bg-black/75 backdrop-blur-md border border-white/20 rounded-full px-2.5 py-1.5 flex items-center justify-around gap-1 shadow-2xl">
+                  {STORY_REACTION_EMOJIS.map((emoji) => {
+                    const isMyReaction =
+                      groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                        .myReaction === emoji;
+                    return (
+                      <button
+                        key={emoji}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReact(
+                            groupedStories[activeGroupIndex].stories[
+                              activeStoryIndex
+                            ].id,
+                            emoji
+                          );
+                        }}
+                        className={cn(
+                          "relative h-9 w-9 rounded-full flex items-center justify-center text-xl transition-all duration-200 hover:scale-130 active:scale-95",
+                          isMyReaction
+                            ? "bg-white/30 ring-2 ring-primary scale-115 shadow-lg"
+                            : "hover:bg-white/10"
+                        )}
+                        title={`React with ${emoji}`}
+                      >
+                        <span className="select-none">{emoji}</span>
+                        {isMyReaction && (
+                          <span className="absolute -top-1 -right-0.5 h-2 w-2 rounded-full bg-primary ring-1 ring-black" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                  .myReaction && (
+                  <div className="mt-1.5 text-[10px] text-white/80 font-medium bg-black/50 backdrop-blur-sm px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-white/10 shadow-sm animate-in fade-in duration-200">
+                    <span>
+                      You reacted with{" "}
+                      {
+                        groupedStories[activeGroupIndex].stories[
+                          activeStoryIndex
+                        ].myReaction
+                      }
+                    </span>
+                    <span className="text-white/40">• Tap to remove</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── OWNER REACTIONS & VIEWERS SLIDE-UP DRAWER ── */}
+            {reactionSheetOpen && groupedStories[activeGroupIndex].isSelf && (
+              <div 
+                className="absolute inset-x-0 bottom-0 max-h-[75%] h-[380px] bg-slate-900/95 backdrop-blur-xl border-t border-white/15 rounded-t-3xl z-30 flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Drag handle */}
+                <div className="pt-3 pb-1 flex justify-center">
+                  <div className="w-10 h-1 rounded-full bg-white/30" />
+                </div>
+
+                {/* Header */}
+                <div className="px-4 py-2 flex items-center justify-between border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-rose-500 fill-rose-500" />
+                    <h3 className="text-sm font-bold text-white">
+                      Story Activity
+                    </h3>
+                    <span className="text-xs text-white/60">
+                      ({groupedStories[activeGroupIndex].stories[activeStoryIndex].reactionsCount || 0})
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setReactionSheetOpen(false);
+                      setIsPaused(false);
+                    }}
+                    className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Filter pills */}
+                {groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                  .reactionsByEmoji &&
+                  Object.keys(
+                    groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                      .reactionsByEmoji!
+                  ).length > 0 && (
+                    <div className="px-4 py-2 flex gap-1.5 overflow-x-auto scrollbar-none border-b border-white/10">
+                      <button
+                        onClick={() => setSelectedEmojiFilter("all")}
+                        className={cn(
+                          "text-xs font-bold px-2.5 py-1 rounded-full transition-all",
+                          selectedEmojiFilter === "all"
+                            ? "bg-white text-slate-900 shadow"
+                            : "bg-white/10 text-white/80 hover:bg-white/15"
+                        )}
+                      >
+                        All{" "}
+                        {groupedStories[activeGroupIndex].stories[activeStoryIndex].reactionsCount || 0}
+                      </button>
+                      {Object.entries(
+                        groupedStories[activeGroupIndex].stories[
+                          activeStoryIndex
+                        ].reactionsByEmoji!
+                      ).map(([emoji, count]) => (
+                        <button
+                          key={emoji}
+                          onClick={() => setSelectedEmojiFilter(emoji)}
+                          className={cn(
+                            "text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 transition-all",
+                            selectedEmojiFilter === emoji
+                              ? "bg-white text-slate-900 shadow"
+                              : "bg-white/10 text-white/80 hover:bg-white/15"
+                          )}
+                        >
+                          <span>{emoji}</span>
+                          <span>{count}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                {/* List of reactors */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+                  {(() => {
+                    const allReactions =
+                      groupedStories[activeGroupIndex].stories[activeStoryIndex]
+                        .reactions || [];
+                    const filtered =
+                      selectedEmojiFilter === "all"
+                        ? allReactions
+                        : allReactions.filter(
+                            (r) => r.emoji === selectedEmojiFilter
+                          );
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="h-full flex flex-col items-center justify-center text-center py-8">
+                          <div className="h-12 w-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2">
+                            <Heart className="h-6 w-6 text-white/30" />
+                          </div>
+                          <p className="text-sm font-semibold text-white/80">
+                            No reactions yet
+                          </p>
+                          <p className="text-xs text-white/50 mt-1 max-w-[220px]">
+                            When customers, boutique vendors or sellers react to your story, they will show up here.
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return filtered.map((reaction) => (
+                      <div
+                        key={reaction.id}
+                        className="flex items-center justify-between bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl p-2.5 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full border border-white/20 bg-white/10 overflow-hidden flex items-center justify-center flex-shrink-0">
+                            {reaction.avatar ? (
+                              <img
+                                src={reaction.avatar}
+                                alt={reaction.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-sm font-bold text-white">
+                                {reaction.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-white leading-tight">
+                              {reaction.name}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10px] text-white/50 font-medium">
+                                {formatTimeAgo(reaction.createdAt)}
+                              </span>
+                              {reaction.role === "VENDOR" && (
+                                <span className="text-[9px] bg-primary/30 text-primary-200 px-1.5 py-0.2 rounded-full font-semibold">
+                                  Boutique
+                                </span>
+                              )}
+                              {reaction.role === "ADS_SELLER" && (
+                                <span className="text-[9px] bg-amber-500/30 text-amber-200 px-1.5 py-0.2 rounded-full font-semibold">
+                                  Seller
+                                </span>
+                              )}
+                              {reaction.role === "CUSTOMER" && (
+                                <span className="text-[9px] bg-blue-500/30 text-blue-200 px-1.5 py-0.2 rounded-full font-semibold">
+                                  Customer
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="h-9 w-9 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-lg shadow-sm flex-shrink-0 select-none">
+                          {reaction.emoji}
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Desktop next */}
@@ -913,6 +1392,31 @@ export function StoriesTray() {
           </button>
         </div>
       )}
+
+      {/* ── Keyframe styles for reaction animations ── */}
+      <style>{`
+        @keyframes storyFloatUp {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, 0) scale(0.6);
+          }
+          15% {
+            opacity: 1;
+            transform: translate(-50%, -30px) scale(1.4);
+          }
+          75% {
+            opacity: 0.95;
+            transform: translate(-50%, -150px) scale(1.1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -220px) scale(0.8);
+          }
+        }
+        .animate-story-float {
+          animation: storyFloatUp 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+      `}</style>
     </div>
   );
 }

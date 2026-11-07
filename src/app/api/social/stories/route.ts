@@ -72,6 +72,36 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        reactions: {
+          select: {
+            id: true,
+            emoji: true,
+            userId: true,
+            createdAt: true,
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                role: true,
+                vendor: {
+                  select: {
+                    businessName: true,
+                    logo: true,
+                  },
+                },
+                adsSeller: {
+                  select: {
+                    businessName: true,
+                    contactInfo: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -118,10 +148,50 @@ export async function GET(request: NextRequest) {
         });
       }
 
+      const byEmoji: Record<string, number> = {};
+      story.reactions.forEach((r) => {
+        byEmoji[r.emoji] = (byEmoji[r.emoji] || 0) + 1;
+      });
+
+      const myReaction = user
+        ? story.reactions.find((r) => r.userId === user.userId)?.emoji || null
+        : null;
+
+      const formattedReactions = story.reactions.map((r) => {
+        let name = "User";
+        let avatar = r.user.avatar || null;
+
+        if (r.user.role === "VENDOR" && r.user.vendor) {
+          name = r.user.vendor.businessName;
+          avatar = r.user.vendor.logo || avatar;
+        } else if (r.user.adsSeller) {
+          name = r.user.adsSeller.businessName || "Classified Seller";
+          avatar = (r.user.adsSeller.contactInfo as any)?.logo || avatar;
+        } else {
+          name =
+            [r.user.firstName, r.user.lastName].filter(Boolean).join(" ") ||
+            "User";
+        }
+
+        return {
+          id: r.id,
+          userId: r.userId,
+          name,
+          avatar,
+          role: r.user.role,
+          emoji: r.emoji,
+          createdAt: r.createdAt.toISOString(),
+        };
+      });
+
       groupedStoriesMap.get(storyUserId).stories.push({
         id: story.id,
         imageUrl: story.imageUrl,
         createdAt: story.createdAt.toISOString(),
+        reactionsCount: story.reactions.length,
+        reactionsByEmoji: byEmoji,
+        myReaction,
+        reactions: formattedReactions,
       });
     });
 

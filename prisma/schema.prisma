@@ -174,6 +174,7 @@ model User {
   socialLikes             SocialLike[]            @relation("UserLikes")
   socialComments          SocialComment[]         @relation("UserComments")
   socialStories           SocialStory[]           @relation("UserStories")
+  storyReactions          StoryReaction[]         @relation("UserStoryReactions")
   savedPosts              SavedPost[]             @relation("UserSavedPosts")
   staffMember             StaffMember?
 
@@ -861,15 +862,31 @@ model AdsSellerFollower {
 }
 
 model SocialStory {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   userId    String
-  user      User     @relation("UserStories", fields: [userId], references: [id], onDelete: Cascade)
+  user      User            @relation("UserStories", fields: [userId], references: [id], onDelete: Cascade)
   imageUrl  String
-  createdAt DateTime @default(now())
+  createdAt DateTime        @default(now())
   expiresAt DateTime
+  reactions StoryReaction[]
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model StoryReaction {
+  id        String      @id @default(cuid())
+  storyId   String
+  story     SocialStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation("UserStoryReactions", fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([storyId, userId])
+  @@index([storyId])
+  @@index([userId])
 }
 
 model SavedPost {
