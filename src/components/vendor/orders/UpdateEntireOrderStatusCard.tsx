@@ -29,7 +29,6 @@ import {
   CreditCard,
   Ban,
   Clock,
-  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -206,8 +205,8 @@ export function UpdateEntireOrderStatusCard({
               <h3 className="font-bold text-base text-foreground">
                 Update Entire Order Status (All Items)
               </h3>
-              <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
-                <Sparkles className="w-3 h-3" /> One-Click Batch Update
+              <span className="hidden sm:inline-flex items-center text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
+                One-Click Batch Update
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
