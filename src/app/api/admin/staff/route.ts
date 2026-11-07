@@ -92,36 +92,82 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existing = await prisma.user.findFirst({
-      where: { OR: [{ email }, ...(phone ? [{ phone }] : [])] },
-      select: { id: true },
+    const existingByEmail = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        vendor: { select: { id: true, businessName: true } },
+        adsSeller: { select: { id: true, businessName: true } },
+        staffMember: { select: { id: true, vendorId: true, adsSellerId: true } },
+      },
     });
-    if (existing) {
+
+    const existingByPhone = phone
+      ? await prisma.user.findFirst({
+          where: { phone },
+          select: { id: true, email: true },
+        })
+      : null;
+
+    if (existingByPhone && (!existingByEmail || existingByPhone.id !== existingByEmail.id)) {
       return NextResponse.json(
-        { success: false, error: "A user with this email or phone already exists" },
+        {
+          success: false,
+          error: "This phone number is already registered to another account. Please use a different phone number or leave it blank.",
+        },
         { status: 409 }
       );
+    }
+
+    const existing = existingByEmail;
+
+    if (existing) {
+      if (existing.staffMember) {
+        return NextResponse.json(
+          { success: false, error: "This user is already assigned as a staff member" },
+          { status: 409 }
+        );
+      }
     }
 
     const tempPassword = generateTempPassword();
     const passwordHash = await passwordUtils.hash(tempPassword);
 
-    const created = await prisma.user.create({
-      data: {
-        email,
-        phone,
-        firstName,
-        lastName: lastName || null,
-        role: UserRole.ADMIN,
-        passwordHash,
-        mustChangePassword: true,
-        isActive: true,
-        staffMember: {
-          create: { roleId: role.id, invitedById: admin.userId, isActive: true },
+    let created: any;
+    if (existing) {
+      created = await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          role: UserRole.ADMIN,
+          firstName: firstName || existing.firstName,
+          lastName: lastName || existing.lastName,
+          phone: phone || existing.phone,
+          passwordHash,
+          mustChangePassword: true,
+          isActive: true,
+          staffMember: {
+            create: { roleId: role.id, invitedById: admin.userId, isActive: true },
+          },
         },
-      },
-      select: { id: true, email: true, firstName: true, lastName: true },
-    });
+        select: { id: true, email: true, firstName: true, lastName: true, staffMember: true },
+      });
+    } else {
+      created = await prisma.user.create({
+        data: {
+          email,
+          phone,
+          firstName,
+          lastName: lastName || null,
+          role: UserRole.ADMIN,
+          passwordHash,
+          mustChangePassword: true,
+          isActive: true,
+          staffMember: {
+            create: { roleId: role.id, invitedById: admin.userId, isActive: true },
+          },
+        },
+        select: { id: true, email: true, firstName: true, lastName: true, staffMember: true },
+      });
+    }
 
     await logAudit({
       request,

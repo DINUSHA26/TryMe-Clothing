@@ -120,43 +120,120 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existing = await prisma.user.findFirst({
-      where: { OR: [{ email }, ...(phone ? [{ phone }] : [])] },
-      select: { id: true },
+    const existingByEmail = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        vendor: { select: { id: true, businessName: true } },
+        adsSeller: { select: { id: true, businessName: true } },
+        staffMember: { select: { id: true, vendorId: true, adsSellerId: true } },
+      },
     });
-    if (existing) {
+
+    const existingByPhone = phone
+      ? await prisma.user.findFirst({
+          where: { phone },
+          select: { id: true, email: true },
+        })
+      : null;
+
+    if (existingByPhone && (!existingByEmail || existingByPhone.id !== existingByEmail.id)) {
       return NextResponse.json(
-        { success: false, error: "A user with this email or phone already exists" },
+        {
+          success: false,
+          error: "This phone number is already registered to another account. Please use a different phone number or leave it blank.",
+        },
         { status: 409 }
       );
+    }
+
+    const existing = existingByEmail;
+
+    if (existing) {
+      if (existing.adsSeller) {
+        return NextResponse.json(
+          { success: false, error: "This email is registered to an ads seller owner and cannot be added as staff" },
+          { status: 409 }
+        );
+      }
+      if (existing.vendor) {
+        return NextResponse.json(
+          { success: false, error: "This email is registered to a store owner and cannot be added as staff" },
+          { status: 409 }
+        );
+      }
+      if (existing.role === UserRole.ADMIN) {
+        return NextResponse.json(
+          { success: false, error: "Administrator accounts cannot be added as store staff" },
+          { status: 409 }
+        );
+      }
+      if (existing.staffMember) {
+        if (existing.staffMember.adsSellerId === adsSellerId) {
+          return NextResponse.json(
+            { success: false, error: "This user is already a staff member in your store" },
+            { status: 409 }
+          );
+        }
+        return NextResponse.json(
+          { success: false, error: "This user is already assigned as a staff member in another store" },
+          { status: 409 }
+        );
+      }
     }
 
     const tempPassword = generateTempPassword();
     const passwordHash = await passwordUtils.hash(tempPassword);
 
-    const created = await prisma.user.create({
-      data: {
-        email,
-        phone,
-        firstName,
-        lastName: lastName || null,
-        role: UserRole.ADS_SELLER,
-        isActive: true,
-        mustChangePassword: true,
-        passwordHash,
-        staffMember: {
-          create: {
-            roleId: role.id,
-            adsSellerId,
-            invitedById: caller.userId,
-            isActive: true,
+    let created: any;
+    if (existing) {
+      created = await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          role: UserRole.ADS_SELLER,
+          firstName: firstName || existing.firstName,
+          lastName: lastName || existing.lastName,
+          phone: phone || existing.phone,
+          passwordHash,
+          mustChangePassword: true,
+          isActive: true,
+          staffMember: {
+            create: {
+              roleId: role.id,
+              adsSellerId,
+              invitedById: caller.userId,
+              isActive: true,
+            },
           },
         },
-      },
-      include: {
-        staffMember: { include: { role: true } },
-      },
-    });
+        include: {
+          staffMember: { include: { role: true } },
+        },
+      });
+    } else {
+      created = await prisma.user.create({
+        data: {
+          email,
+          phone,
+          firstName,
+          lastName: lastName || null,
+          role: UserRole.ADS_SELLER,
+          isActive: true,
+          mustChangePassword: true,
+          passwordHash,
+          staffMember: {
+            create: {
+              roleId: role.id,
+              adsSellerId,
+              invitedById: caller.userId,
+              isActive: true,
+            },
+          },
+        },
+        include: {
+          staffMember: { include: { role: true } },
+        },
+      });
+    }
 
     await logAudit({
       request,

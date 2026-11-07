@@ -101,6 +101,18 @@ export function AdsSellerStaffTab() {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.firstName.trim()) {
+      toast.error("First name is required");
+      return;
+    }
+    if (!form.email.trim()) {
+      toast.error("Login email is required");
+      return;
+    }
+    if (!form.roleId) {
+      toast.error("Please choose a store role");
+      return;
+    }
     setInviting(true);
     try {
       const res = await fetch("/api/ads-seller/staff", {

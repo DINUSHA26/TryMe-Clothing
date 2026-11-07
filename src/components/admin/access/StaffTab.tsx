@@ -93,6 +93,18 @@ export function StaffTab() {
   }, [load]);
 
   const invite = async () => {
+    if (!form.firstName.trim()) {
+      toast.error("First name is required");
+      return;
+    }
+    if (!form.email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+    if (!form.roleId) {
+      toast.error("Please choose a role");
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/admin/staff", {
