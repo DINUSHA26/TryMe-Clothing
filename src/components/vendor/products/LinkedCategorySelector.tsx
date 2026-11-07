@@ -20,22 +20,46 @@ interface LinkedCategorySelectorProps {
     onValueChange: (value: string) => void;
 }
 
+// Module-level cache across component instances for 0ms immediate render
+let cachedCategories: Category[] | null = null;
+let categoryFetchPromise: Promise<Category[]> | null = null;
+
 export function LinkedCategorySelector({ value, onValueChange }: LinkedCategorySelectorProps) {
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [categories, setCategories] = useState<Category[]>(cachedCategories || []);
+    const [isLoading, setIsLoading] = useState(!cachedCategories);
     const [mainCategoryId, setMainCategoryId] = useState<string>("");
 
     useEffect(() => {
         let isMounted = true;
         const fetchCategories = async () => {
+            if (cachedCategories) {
+                setCategories(cachedCategories);
+                setIsLoading(false);
+                return;
+            }
+
+            if (!categoryFetchPromise) {
+                categoryFetchPromise = fetch("/api/categories")
+                    .then((res) => res.json())
+                    .then((result) => {
+                        if (result.success && result.data.categories) {
+                            cachedCategories = result.data.categories;
+                            return result.data.categories as Category[];
+                        }
+                        return [] as Category[];
+                    })
+                    .catch((err) => {
+                        console.error("Error fetching categories:", err);
+                        categoryFetchPromise = null;
+                        return [] as Category[];
+                    });
+            }
+
             try {
-                const response = await fetch("/api/categories");
-                const result = await response.json();
-                if (result.success && result.data.categories && isMounted) {
-                    setCategories(result.data.categories);
+                const cats = await categoryFetchPromise;
+                if (isMounted) {
+                    setCategories(cats);
                 }
-            } catch (error) {
-                console.error("Error fetching categories:", error);
             } finally {
                 if (isMounted) setIsLoading(false);
             }

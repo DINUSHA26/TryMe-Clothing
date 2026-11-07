@@ -58,57 +58,63 @@ export async function GET(
       );
     }
 
-    // 1. Fetch updated follower count
-    const followerCount = await prisma.vendorFollower.count({
-      where: { vendorId: vendor.id },
-    });
+    // Optimized: Execute follower count, total sells, rating aggregation, and customer check concurrently in parallel
+    const user = getAuthUser(request);
+    const [followerCount, totalSellsSum, avgRatingAgg, customer] = await Promise.all([
+      // 1. Follower count
+      prisma.vendorFollower.count({
+        where: { vendorId: vendor.id },
+      }),
 
-    // 2. Fetch total items sold (quantity sold in completed/paid orders)
-    const totalSellsSum = await prisma.orderItem.aggregate({
-      where: {
-        vendorId: vendor.id,
-        status: {
-          notIn: ["PENDING_PAYMENT", "PENDING_VERIFICATION", "CANCELLED"],
-        },
-      },
-      _sum: {
-        quantity: true,
-      },
-    });
-    const totalSells = totalSellsSum._sum.quantity || 0;
-
-    // 3. Fetch rating (calculate by reviews that vendor sold items)
-    const avgRatingAgg = await prisma.productReview.aggregate({
-      where: {
-        product: {
+      // 2. Total items sold
+      prisma.orderItem.aggregate({
+        where: {
           vendorId: vendor.id,
+          status: {
+            notIn: ["PENDING_PAYMENT", "PENDING_VERIFICATION", "CANCELLED"],
+          },
         },
-        isVisible: true,
-      },
-      _avg: {
-        rating: true,
-      },
-    });
+        _sum: {
+          quantity: true,
+        },
+      }),
+
+      // 3. Rating
+      prisma.productReview.aggregate({
+        where: {
+          product: {
+            vendorId: vendor.id,
+          },
+          isVisible: true,
+        },
+        _avg: {
+          rating: true,
+        },
+      }),
+
+      // 4. Customer lookup (if authenticated)
+      user
+        ? prisma.customer.findUnique({
+            where: { userId: user.userId },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    const totalSells = totalSellsSum._sum.quantity || 0;
     const rating = avgRatingAgg._avg.rating ? Math.round(avgRatingAgg._avg.rating * 10) / 10 : 0;
 
-    // 4. Check if the logged-in user is currently following this shop
+    // 5. Check if following
     let isFollowing = false;
-    const user = getAuthUser(request);
-    if (user) {
-      const customer = await prisma.customer.findUnique({
-        where: { userId: user.userId },
-      });
-      if (customer) {
-        const follow = await prisma.vendorFollower.findUnique({
-          where: {
-            vendorId_customerId: {
-              vendorId: vendor.id,
-              customerId: customer.id,
-            },
+    if (customer) {
+      const follow = await prisma.vendorFollower.findUnique({
+        where: {
+          vendorId_customerId: {
+            vendorId: vendor.id,
+            customerId: customer.id,
           },
-        });
-        isFollowing = !!follow;
-      }
+        },
+      });
+      isFollowing = !!follow;
     }
 
     return NextResponse.json({

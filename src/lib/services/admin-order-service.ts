@@ -103,70 +103,123 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     whereClause += ` AND o."totalAmount" <= $${queryParamsRaw.length}`;
   }
 
-  // Get total count for pagination using raw SQL
-  const countResult = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT count(*)::int as count FROM "Order" o 
-     JOIN "Customer" c ON o."customerId" = c."id"
-     JOIN "User" u ON c."userId" = u."id" 
-     ${whereClause}`,
-    ...queryParamsRaw
-  );
-  const totalCount = countResult[0]?.count || 0;
-
-  // Calculate pagination
-  const totalPages = Math.ceil(totalCount / pageSize);
   const skip = (page - 1) * pageSize;
-
-  // Fetch orders with all related data using raw SQL
   const fetchParams = [...queryParamsRaw, pageSize, skip];
-  const ordersRaw = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT o.*, u."email" as "customerEmail",
-     (
-       SELECT cp."vendorId" 
-       FROM "Coupon" cp 
-       WHERE cp."id" = o."couponId"
-       LIMIT 1
-     ) as "coupon_vendor_id",
-     (
-       SELECT json_agg(json_build_object(
-         'id', i."id",
-         'status', i."status"::text,
-         'totalPrice', i."totalPrice",
-         'vendor', json_build_object(
-           'id', v."id",
-           'businessName', v."businessName",
-           'commissionRate', v."commissionRate"
+
+  // Optimized: Run pagination count, order rows, status stats, revenue breakdown, commissions, and vendors concurrently
+  const [
+    countResult,
+    ordersRaw,
+    statusCountsRaw,
+    revenueResult,
+    trymeCommissionResult,
+    vendorsList,
+  ] = await Promise.all([
+    // 1. Total count
+    prisma.$queryRawUnsafe<any[]>(
+      `SELECT count(*)::int as count FROM "Order" o 
+       JOIN "Customer" c ON o."customerId" = c."id"
+       JOIN "User" u ON c."userId" = u."id" 
+       ${whereClause}`,
+      ...queryParamsRaw
+    ),
+
+    // 2. Orders list
+    prisma.$queryRawUnsafe<any[]>(
+      `SELECT o.*, u."email" as "customerEmail",
+       (
+         SELECT cp."vendorId" 
+         FROM "Coupon" cp 
+         WHERE cp."id" = o."couponId"
+         LIMIT 1
+       ) as "coupon_vendor_id",
+       (
+         SELECT json_agg(json_build_object(
+           'id', i."id",
+           'status', i."status"::text,
+           'totalPrice', i."totalPrice",
+           'vendor', json_build_object(
+             'id', v."id",
+             'businessName', v."businessName",
+             'commissionRate', v."commissionRate"
+           )
+         ))
+         FROM "OrderItem" i
+         JOIN "Vendor" v ON i."vendorId" = v."id"
+         WHERE i."orderId" = o."id"
+       ) as "order_items",
+       (
+         SELECT json_build_object(
+           'status', p."status"::text,
+           'paymentMethod', p."paymentMethod",
+           'paidAt', p."paidAt"
          )
-       ))
+         FROM "Payment" p
+         WHERE p."orderId" = o."id"
+         LIMIT 1
+       ) as "payment_data",
+       (SELECT count(*)::int FROM "OrderItem" WHERE "orderId" = o."id") as "total_item_count"
+       FROM "Order" o
+       JOIN "Customer" c ON o."customerId" = c."id"
+       JOIN "User" u ON c."userId" = u."id"
+       ${whereClause}
+       ORDER BY o."createdAt" DESC
+       LIMIT $${fetchParams.length - 1} OFFSET $${fetchParams.length}`,
+      ...fetchParams
+    ),
+
+    // 3. Status counts
+    prisma.$queryRawUnsafe<any[]>(
+      'SELECT "status"::text, COUNT(*)::int as "count" FROM "Order" GROUP BY "status"'
+    ),
+
+    // 4. Revenue breakdown
+    prisma.$queryRawUnsafe<any[]>(
+      `SELECT 
+         COALESCE(SUM(CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' THEN o."totalAmount" ELSE 0 END), 0)::float as "trymeRevenue",
+         COALESCE(SUM(CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN o."totalAmount" ELSE 0 END), 0)::float as "websiteRevenue",
+         COALESCE(SUM("totalAmount"), 0)::float as "totalRevenue",
+         COUNT(CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' THEN 1 END)::int as "trymeOrdersCount",
+         COUNT(CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN 1 END)::int as "websiteOrdersCount"
+       FROM "Order" o
+       WHERE o."status" IN ('PAYMENT_CONFIRMED'::"OrderStatus", 'PROCESSING'::"OrderStatus", 'SHIPPED'::"OrderStatus", 'PARTIALLY_SHIPPED'::"OrderStatus", 'DELIVERED'::"OrderStatus", 'DELIVERY_CONFIRMED'::"OrderStatus", 'COMPLETED'::"OrderStatus")`
+    ),
+
+    // 5. Commission
+    prisma.$queryRawUnsafe<any[]>(
+      `SELECT COALESCE(SUM(
+         (i."totalPrice" * COALESCE(v."commissionRate", 10)) / 100
+       ), 0)::float as "trymeCommission"
        FROM "OrderItem" i
+       JOIN "Order" o ON i."orderId" = o."id"
        JOIN "Vendor" v ON i."vendorId" = v."id"
-       WHERE i."orderId" = o."id"
-     ) as "order_items",
-     (
-       SELECT json_build_object(
-         'status', p."status"::text,
-         'paymentMethod', p."paymentMethod",
-         'paidAt', p."paidAt"
-       )
-       FROM "Payment" p
-       WHERE p."orderId" = o."id"
-       LIMIT 1
-     ) as "payment_data",
-     (SELECT count(*)::int FROM "OrderItem" WHERE "orderId" = o."id") as "total_item_count"
-     FROM "Order" o
-     JOIN "Customer" c ON o."customerId" = c."id"
-     JOIN "User" u ON c."userId" = u."id"
-     ${whereClause}
-     ORDER BY o."createdAt" DESC
-     LIMIT $${fetchParams.length - 1} OFFSET $${fetchParams.length}`,
-    ...fetchParams
-  );
+       WHERE o."orderNumber" NOT LIKE 'WEB-%'
+         AND o."status" IN ('PAYMENT_CONFIRMED'::"OrderStatus", 'PROCESSING'::"OrderStatus", 'SHIPPED'::"OrderStatus", 'PARTIALLY_SHIPPED'::"OrderStatus", 'DELIVERED'::"OrderStatus", 'DELIVERY_CONFIRMED'::"OrderStatus", 'COMPLETED'::"OrderStatus")`
+    ),
 
-  // Calculate stats using raw SQL
-  const statusCountsRaw = await prisma.$queryRawUnsafe<any[]>(
-    'SELECT "status"::text, COUNT(*)::int as "count" FROM "Order" GROUP BY "status"'
-  );
+    // 6. Active vendors for filter dropdown
+    prisma.vendor.findMany({
+      select: {
+        id: true,
+        businessName: true,
+        slug: true,
+      },
+      orderBy: {
+        businessName: "asc",
+      },
+    }),
+  ]);
 
+  const totalCount = countResult[0]?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const trymeRevenue = revenueResult[0]?.trymeRevenue || 0;
+  const websiteRevenue = revenueResult[0]?.websiteRevenue || 0;
+  const totalRevenue = revenueResult[0]?.totalRevenue || 0;
+  const trymeCommission = trymeCommissionResult[0]?.trymeCommission || 0;
+  const trymeOrdersCount = revenueResult[0]?.trymeOrdersCount || 0;
+  const websiteOrdersCount = revenueResult[0]?.websiteOrdersCount || 0;
+
+  // Calculate stats using status counts
   const stats = {
     total: totalCount,
     pendingPayment: 0,
@@ -184,7 +237,7 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
   for (const stat of statusCountsRaw) {
     const count = stat.count;
     const status = stat.status;
-    
+
     if (status === "SHIPPED" || status === "DELIVERED") {
       stats.shipped += count;
     } else if (status === "DELIVERY_CONFIRMED" || status === "COMPLETED") {
@@ -196,37 +249,6 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
       }
     }
   }
-
-  // Calculate detailed revenue breakdown using raw SQL
-  const revenueResult = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT 
-       COALESCE(SUM(CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' THEN o."totalAmount" ELSE 0 END), 0)::float as "trymeRevenue",
-       COALESCE(SUM(CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN o."totalAmount" ELSE 0 END), 0)::float as "websiteRevenue",
-       COALESCE(SUM("totalAmount"), 0)::float as "totalRevenue",
-       COUNT(CASE WHEN o."orderNumber" NOT LIKE 'WEB-%' THEN 1 END)::int as "trymeOrdersCount",
-       COUNT(CASE WHEN o."orderNumber" LIKE 'WEB-%' THEN 1 END)::int as "websiteOrdersCount"
-     FROM "Order" o
-     WHERE o."status" IN ('PAYMENT_CONFIRMED'::"OrderStatus", 'PROCESSING'::"OrderStatus", 'SHIPPED'::"OrderStatus", 'PARTIALLY_SHIPPED'::"OrderStatus", 'DELIVERED'::"OrderStatus", 'DELIVERY_CONFIRMED'::"OrderStatus", 'COMPLETED'::"OrderStatus")`
-  );
-
-  // Calculate platform commission collected ONLY from TryMe orders
-  const trymeCommissionResult = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT COALESCE(SUM(
-       (i."totalPrice" * COALESCE(v."commissionRate", 10)) / 100
-     ), 0)::float as "trymeCommission"
-     FROM "OrderItem" i
-     JOIN "Order" o ON i."orderId" = o."id"
-     JOIN "Vendor" v ON i."vendorId" = v."id"
-     WHERE o."orderNumber" NOT LIKE 'WEB-%'
-       AND o."status" IN ('PAYMENT_CONFIRMED'::"OrderStatus", 'PROCESSING'::"OrderStatus", 'SHIPPED'::"OrderStatus", 'PARTIALLY_SHIPPED'::"OrderStatus", 'DELIVERED'::"OrderStatus", 'DELIVERY_CONFIRMED'::"OrderStatus", 'COMPLETED'::"OrderStatus")`
-  );
-
-  const trymeRevenue = revenueResult[0]?.trymeRevenue || 0;
-  const websiteRevenue = revenueResult[0]?.websiteRevenue || 0;
-  const totalRevenue = revenueResult[0]?.totalRevenue || 0;
-  const trymeCommission = trymeCommissionResult[0]?.trymeCommission || 0;
-  const trymeOrdersCount = revenueResult[0]?.trymeOrdersCount || 0;
-  const websiteOrdersCount = revenueResult[0]?.websiteOrdersCount || 0;
 
   // Format orders
   const formattedOrders = ordersRaw.map((order) => {
@@ -289,18 +311,6 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
           }
         : null,
     };
-  });
-
-  // Fetch all active vendors for filter dropdown
-  const vendorsList = await prisma.vendor.findMany({
-    select: {
-      id: true,
-      businessName: true,
-      slug: true,
-    },
-    orderBy: {
-      businessName: "asc",
-    },
   });
 
   return {

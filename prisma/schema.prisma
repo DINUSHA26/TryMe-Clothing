@@ -284,6 +284,7 @@ model Category {
 
   @@index([slug])
   @@index([parentId])
+  @@index([parentId, isActive])
 }
 
 model Product {
@@ -322,6 +323,8 @@ model Product {
   @@index([categoryId])
   @@index([slug])
   @@index([isActive, isDisabledByAdmin])
+  @@index([vendorId, isActive, isDisabledByAdmin])
+  @@index([vendorId, createdAt])
 }
 
 model ProductImage {
@@ -410,6 +413,7 @@ model Order {
   @@index([orderNumber])
   @@index([status])
   @@index([createdAt])
+  @@index([status, createdAt])
 }
 
 model OrderItem {
@@ -444,6 +448,8 @@ model OrderItem {
   @@index([orderId])
   @@index([vendorId])
   @@index([status])
+  @@index([vendorId, status])
+  @@index([orderId, vendorId])
 }
 
 model OrderStatusHistory {

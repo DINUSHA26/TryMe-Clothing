@@ -228,48 +228,48 @@ export async function GET(request: NextRequest) {
       [query.sortBy]: query.sortOrder,
     };
 
-    // Get total count
-    const totalCount = await prisma.product.count({ where });
-
-    // Get products with pagination
-    const products = await prisma.product.findMany({
-      where,
-      orderBy,
-      skip: (query.page - 1) * query.pageSize,
-      take: query.pageSize,
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
+    // Optimized: Execute count and product rows in parallel
+    const [totalCount, products] = await Promise.all([
+      prisma.product.count({ where }),
+      prisma.product.findMany({
+        where,
+        orderBy,
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          images: {
+            select: {
+              url: true,
+              altText: true,
+            },
+            orderBy: { position: "asc" },
+            take: 1, // Only first image for list view
+          },
+          variants: {
+            select: {
+              id: true,
+              name: true,
+              value: true,
+              priceAdjustment: true,
+              stock: true,
+              sku: true,
+            },
+            orderBy: { name: "asc" },
+          },
+          _count: {
+            select: {
+              variants: true,
+            },
           },
         },
-        images: {
-          select: {
-            url: true,
-            altText: true,
-          },
-          orderBy: { position: "asc" },
-          take: 1, // Only first image for list view
-        },
-        variants: {
-          select: {
-            id: true,
-            name: true,
-            value: true,
-            priceAdjustment: true,
-            stock: true,
-            sku: true,
-          },
-          orderBy: { name: "asc" },
-        },
-        _count: {
-          select: {
-            variants: true,
-          },
-        },
-      },
-    });
+      }),
+    ]);
 
     // Add low stock alert flag
     const productsWithAlerts = products.map((product) => ({

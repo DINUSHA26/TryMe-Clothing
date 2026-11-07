@@ -79,71 +79,8 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     whereClause += ` AND o."createdAt" <= $${queryParamsRaw.length}`;
   }
 
-  // Get total count for pagination
-  const countResult = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT count(*)::int as count FROM "Order" o ${whereClause}`,
-    ...queryParamsRaw
-  );
-  const totalCount = countResult[0]?.count || 0;
-
-  const totalPages = Math.ceil(totalCount / pageSize);
   const skip = (page - 1) * pageSize;
-
-  // Fetch orders with vendor's items and payment info
   const fetchParams = [...queryParamsRaw, pageSize, skip];
-  const ordersRaw = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT o.*, 
-     json_build_object(
-       'email', u."email",
-       'firstName', u."firstName",
-       'lastName', u."lastName"
-     ) as "customer_user",
-     (
-       SELECT json_build_object(
-         'paymentMethod', p."paymentMethod",
-         'paymentSlipUrl', p."paymentSlipUrl",
-         'status', p."status"::text
-       )
-       FROM "Payment" p
-       WHERE p."orderId" = o."id"
-       LIMIT 1
-     ) as "payment_info",
-     (
-       SELECT json_agg(json_build_object(
-         'id', i."id",
-         'productSnapshot', i."productSnapshot",
-         'variantSnapshot', i."variantSnapshot",
-         'quantity', i."quantity",
-         'unitPrice', i."unitPrice",
-         'totalPrice', i."totalPrice",
-         'status', i."status"::text,
-         'trackingNumber', i."trackingNumber",
-         'trackingUrl', i."trackingUrl",
-         'shippedAt', i."shippedAt"
-       ))
-       FROM "OrderItem" i
-       WHERE i."orderId" = o."id" AND i."vendorId" = $1
-     ) as "vendor_items",
-     (SELECT count(*)::int FROM "OrderItem" WHERE "orderId" = o."id") as "total_item_count"
-     FROM "Order" o
-     JOIN "Customer" c ON o."customerId" = c."id"
-     JOIN "User" u ON c."userId" = u."id"
-     ${whereClause}
-     ORDER BY o."createdAt" DESC
-     LIMIT $${fetchParams.length - 1} OFFSET $${fetchParams.length}`,
-    ...fetchParams
-  );
-
-  // Get channel counts (TryMe vs Website vs POS)
-  const channelCountsRaw = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT
-       COUNT(*) FILTER (WHERE o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN') AND o."status" NOT IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus", 'CANCELLED'::"OrderStatus"))::int AS "trymeCount",
-       COUNT(*) FILTER (WHERE o."orderNumber" LIKE 'WEB-%')::int AS "websiteCount",
-       COUNT(*) FILTER (WHERE o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN'))::int AS "posCount"
-     FROM "Order" o
-     WHERE o."id" IN (SELECT DISTINCT "orderId" FROM "OrderItem" WHERE "vendorId" = $1)`,
-    vendorId
-  );
 
   // Get stats grouped by item status for the active source
   const sourceCondition =
@@ -155,14 +92,82 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
       ? `AND o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN')`
       : "";
 
-  const statusCountsRaw = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT i."status"::text as "status", COUNT(*)::int as "count"
-     FROM "OrderItem" i
-     JOIN "Order" o ON i."orderId" = o."id"
-     WHERE i."vendorId" = $1 ${sourceCondition}
-     GROUP BY i."status"`,
-    vendorId
-  );
+  // Optimized: Run pagination count, order rows, channel breakdown, and status counts in parallel
+  const [countResult, ordersRaw, channelCountsRaw, statusCountsRaw] = await Promise.all([
+    // 1. Total count
+    prisma.$queryRawUnsafe<any[]>(
+      `SELECT count(*)::int as count FROM "Order" o ${whereClause}`,
+      ...queryParamsRaw
+    ),
+
+    // 2. Orders list
+    prisma.$queryRawUnsafe<any[]>(
+      `SELECT o.*, 
+       json_build_object(
+         'email', u."email",
+         'firstName', u."firstName",
+         'lastName', u."lastName"
+       ) as "customer_user",
+       (
+         SELECT json_build_object(
+           'paymentMethod', p."paymentMethod",
+           'paymentSlipUrl', p."paymentSlipUrl",
+           'status', p."status"::text
+         )
+         FROM "Payment" p
+         WHERE p."orderId" = o."id"
+         LIMIT 1
+       ) as "payment_info",
+       (
+         SELECT json_agg(json_build_object(
+           'id', i."id",
+           'productSnapshot', i."productSnapshot",
+           'variantSnapshot', i."variantSnapshot",
+           'quantity', i."quantity",
+           'unitPrice', i."unitPrice",
+           'totalPrice', i."totalPrice",
+           'status', i."status"::text,
+           'trackingNumber', i."trackingNumber",
+           'trackingUrl', i."trackingUrl",
+           'shippedAt', i."shippedAt"
+         ))
+         FROM "OrderItem" i
+         WHERE i."orderId" = o."id" AND i."vendorId" = $1
+       ) as "vendor_items",
+       (SELECT count(*)::int FROM "OrderItem" WHERE "orderId" = o."id") as "total_item_count"
+       FROM "Order" o
+       JOIN "Customer" c ON o."customerId" = c."id"
+       JOIN "User" u ON c."userId" = u."id"
+       ${whereClause}
+       ORDER BY o."createdAt" DESC
+       LIMIT $${fetchParams.length - 1} OFFSET $${fetchParams.length}`,
+      ...fetchParams
+    ),
+
+    // 3. Channel counts
+    prisma.$queryRawUnsafe<any[]>(
+      `SELECT
+         COUNT(*) FILTER (WHERE o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN') AND o."status" NOT IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus", 'CANCELLED'::"OrderStatus"))::int AS "trymeCount",
+         COUNT(*) FILTER (WHERE o."orderNumber" LIKE 'WEB-%')::int AS "websiteCount",
+         COUNT(*) FILTER (WHERE o."orderNumber" LIKE 'POS-%' OR (o."shippingAddressJson"->>'orderSource' = 'POS_WALK_IN'))::int AS "posCount"
+       FROM "Order" o
+       WHERE o."id" IN (SELECT DISTINCT "orderId" FROM "OrderItem" WHERE "vendorId" = $1)`,
+      vendorId
+    ),
+
+    // 4. Status counts
+    prisma.$queryRawUnsafe<any[]>(
+      `SELECT i."status"::text as "status", COUNT(*)::int as "count"
+       FROM "OrderItem" i
+       JOIN "Order" o ON i."orderId" = o."id"
+       WHERE i."vendorId" = $1 ${sourceCondition}
+       GROUP BY i."status"`,
+      vendorId
+    ),
+  ]);
+
+  const totalCount = countResult[0]?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const stats = {
     total: totalCount,

@@ -91,13 +91,20 @@ interface VendorOverviewStatsProps {
   basePath?: string;
 }
 
+// Module-level Stale-While-Revalidate cache for instant 0ms switching
+const statsCache = new Map<string, { data: OverviewStats; time: number }>();
+const STATS_CACHE_STALE_MS = 20_000;
+
 export function VendorOverviewStats({
   dateFrom,
   dateTo,
   basePath = "/vendor",
 }: VendorOverviewStatsProps) {
-  const [stats, setStats] = useState<OverviewStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const cacheKey = `${basePath}:${dateFrom || ""}:${dateTo || ""}`;
+  const initialCached = statsCache.get(cacheKey);
+
+  const [stats, setStats] = useState<OverviewStats | null>(initialCached?.data || null);
+  const [isLoading, setIsLoading] = useState(!initialCached);
   const [activeChannel, setActiveChannel] = useState<"tryme" | "website" | "pos" | "all">("tryme");
 
   const isAds = basePath.startsWith("/ads-seller");
@@ -125,8 +132,20 @@ export function VendorOverviewStats({
   }, [hasFinancialAccess, canPos, canWebsite]);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchStats = async () => {
-      setIsLoading(true);
+      const cached = statsCache.get(cacheKey);
+      if (cached) {
+        setStats(cached.data);
+        setIsLoading(false);
+        // If data is very fresh (less than 20s old), skip network call
+        if (Date.now() - cached.time < STATS_CACHE_STALE_MS) {
+          return;
+        }
+      } else {
+        setIsLoading(true);
+      }
+
       try {
         const params = new URLSearchParams();
         if (dateFrom) params.append("dateFrom", dateFrom);
@@ -140,18 +159,24 @@ export function VendorOverviewStats({
         );
         const data = await response.json();
 
-        if (data.success) {
+        if (data.success && isMounted) {
           setStats(data.data);
+          statsCache.set(cacheKey, { data: data.data, time: Date.now() });
         }
       } catch (error) {
         console.error("Failed to fetch vendor overview stats:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchStats();
-  }, [dateFrom, dateTo]);
+    return () => {
+      isMounted = false;
+    };
+  }, [dateFrom, dateTo, cacheKey]);
 
   const tryme = stats?.trymeStats;
   const web = stats?.websiteStats;
