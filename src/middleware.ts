@@ -2,19 +2,24 @@ import { NextRequest, NextResponse, NextFetchEvent } from "next/server";
 import { jwtVerify, SignJWT } from "jose";
 import {
   AdminAccessInfo,
+  StoreAccessInfo,
   hasRoutePermission,
+  hasStoreRoutePermission,
   resolveRouteRequirement,
+  resolveVendorRouteRequirement,
+  resolveAdsSellerRouteRequirement,
 } from "@/lib/permissions";
 
 // Plain string role type — avoids importing @prisma/client in Edge Runtime
 type Role = "ADMIN" | "VENDOR" | "CUSTOMER" | "ADS_SELLER";
 
-// ── Admin RBAC: per-isolate cache of staff permissions (short TTL) ──────────
+// ── Admin & Store RBAC: per-isolate cache of permissions (short TTL) ──────────
 const ACCESS_CACHE_TTL_MS = 15_000;
 const accessCache = new Map<string, { exp: number; data: AdminAccessInfo }>();
+const storeAccessCache = new Map<string, { exp: number; data: StoreAccessInfo }>();
 
 /**
- * Look up RBAC permissions through the internal Node endpoint
+ * Look up Admin RBAC permissions through the internal Node endpoint
  * (Edge runtime cannot use Prisma). Returns null when the lookup fails.
  */
 async function fetchAdminAccess(origin: string, userId: string): Promise<AdminAccessInfo | null> {
@@ -34,6 +39,37 @@ async function fetchAdminAccess(origin: string, userId: string): Promise<AdminAc
     const data = (await res.json()) as AdminAccessInfo;
     if (accessCache.size > 500) accessCache.clear();
     accessCache.set(userId, { exp: Date.now() + ACCESS_CACHE_TTL_MS, data });
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Look up Store (Vendor / Ads Seller) RBAC permissions through the internal Node endpoint.
+ */
+async function fetchStoreAccess(
+  origin: string,
+  userId: string,
+  scope: "VENDOR" | "ADS_SELLER"
+): Promise<StoreAccessInfo | null> {
+  const cacheKey = `${scope}:${userId}`;
+  const cached = storeAccessCache.get(cacheKey);
+  if (cached && cached.exp > Date.now()) return cached.data;
+
+  try {
+    const res = await fetch(
+      `${origin}/api/internal/store-access?userId=${encodeURIComponent(userId)}&scope=${scope}`,
+      {
+        headers: { "x-internal-secret": process.env.JWT_SECRET || "" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as StoreAccessInfo;
+    if (storeAccessCache.size > 1000) storeAccessCache.clear();
+    storeAccessCache.set(cacheKey, { exp: Date.now() + ACCESS_CACHE_TTL_MS, data });
     return data;
   } catch {
     return null;
@@ -398,6 +434,123 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
             path: pathname,
             permission: requirement.type === "permission" ? requirement.permission : null,
             ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+          }),
+        }).catch(() => undefined)
+      );
+    }
+  }
+
+  // ── Vendor RBAC: staff members only get their store permissions ────────────
+  const isVendorArea =
+    pathname === "/vendor" ||
+    pathname.startsWith("/vendor/") ||
+    pathname === "/api/vendor" ||
+    pathname.startsWith("/api/vendor/");
+
+  if (payload.role === "VENDOR" && isVendorArea && process.env.RBAC_ENFORCE !== "false") {
+    const isApi = pathname.startsWith("/api");
+    const deny = (status: number, message: string) => {
+      if (isApi) return NextResponse.json({ error: message }, { status });
+      const forbiddenUrl = request.nextUrl.clone();
+      forbiddenUrl.pathname = "/403";
+      forbiddenUrl.search = "";
+      return NextResponse.redirect(forbiddenUrl);
+    };
+
+    const requirement = resolveVendorRouteRequirement(pathname, request.method);
+    const access = await fetchStoreAccess(request.nextUrl.origin, payload.userId, "VENDOR");
+
+    if (!access) {
+      return deny(503, "Unable to verify store permissions. Please try again.");
+    }
+    if (!access.isOwner && !access.isActive) {
+      return deny(403, "Forbidden: your store staff account is disabled");
+    }
+    if (!hasStoreRoutePermission(access.permissions, access.isOwner, requirement)) {
+      const needed = requirement.type === "permission" ? requirement.permission : "store-owner";
+      return deny(403, `Forbidden: missing permission (${needed})`);
+    }
+
+    const isMutation = !["GET", "HEAD", "OPTIONS"].includes(request.method);
+    const isOwnAudited =
+      requirement.type === "permission" &&
+      (requirement.feature === "staff" || requirement.feature === "roles");
+    if (isMutation && isApi && !isOwnAudited) {
+      event.waitUntil(
+        fetch(`${request.nextUrl.origin}/api/internal/audit`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-internal-secret": process.env.JWT_SECRET || "",
+          },
+          body: JSON.stringify({
+            userId: payload.userId,
+            email: payload.email,
+            method: request.method,
+            path: pathname,
+            permission: requirement.type === "permission" ? requirement.permission : null,
+            ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+            scope: "VENDOR",
+            vendorId: access.storeId || null,
+          }),
+        }).catch(() => undefined)
+      );
+    }
+  }
+
+  // ── Ads Seller RBAC: staff members only get their store permissions ────────
+  const isAdsSellerArea =
+    pathname === "/ads-seller" ||
+    pathname.startsWith("/ads-seller/") ||
+    pathname === "/api/ads-seller" ||
+    pathname.startsWith("/api/ads-seller/") ||
+    pathname.startsWith("/api/ads/seller");
+
+  if (payload.role === "ADS_SELLER" && isAdsSellerArea && process.env.RBAC_ENFORCE !== "false") {
+    const isApi = pathname.startsWith("/api");
+    const deny = (status: number, message: string) => {
+      if (isApi) return NextResponse.json({ error: message }, { status });
+      const forbiddenUrl = request.nextUrl.clone();
+      forbiddenUrl.pathname = "/403";
+      forbiddenUrl.search = "";
+      return NextResponse.redirect(forbiddenUrl);
+    };
+
+    const requirement = resolveAdsSellerRouteRequirement(pathname, request.method);
+    const access = await fetchStoreAccess(request.nextUrl.origin, payload.userId, "ADS_SELLER");
+
+    if (!access) {
+      return deny(503, "Unable to verify store permissions. Please try again.");
+    }
+    if (!access.isOwner && !access.isActive) {
+      return deny(403, "Forbidden: your store staff account is disabled");
+    }
+    if (!hasStoreRoutePermission(access.permissions, access.isOwner, requirement)) {
+      const needed = requirement.type === "permission" ? requirement.permission : "store-owner";
+      return deny(403, `Forbidden: missing permission (${needed})`);
+    }
+
+    const isMutation = !["GET", "HEAD", "OPTIONS"].includes(request.method);
+    const isOwnAudited =
+      requirement.type === "permission" &&
+      (requirement.feature === "staff" || requirement.feature === "roles");
+    if (isMutation && isApi && !isOwnAudited) {
+      event.waitUntil(
+        fetch(`${request.nextUrl.origin}/api/internal/audit`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-internal-secret": process.env.JWT_SECRET || "",
+          },
+          body: JSON.stringify({
+            userId: payload.userId,
+            email: payload.email,
+            method: request.method,
+            path: pathname,
+            permission: requirement.type === "permission" ? requirement.permission : null,
+            ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+            scope: "ADS_SELLER",
+            adsSellerId: access.storeId || null,
           }),
         }).catch(() => undefined)
       );

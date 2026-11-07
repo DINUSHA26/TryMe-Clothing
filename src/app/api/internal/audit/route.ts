@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { userId, email, method, path, permission, ip } = body || {};
+    const { userId, email, method, path, permission, ip, scope, vendorId, adsSellerId } = body || {};
     if (!userId || !method || !path) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
@@ -22,10 +22,13 @@ export async function POST(request: NextRequest) {
       actorId: String(userId),
       actorEmail: email ? String(email) : null,
       action: "api.mutation",
-      entity: "AdminApi",
+      entity: scope === "VENDOR" ? "VendorApi" : scope === "ADS_SELLER" ? "AdsSellerApi" : "AdminApi",
       entityId: String(path).slice(0, 200),
       metadata: { method: String(method), path: String(path).slice(0, 300), permission: permission || null },
       ip: ip ? String(ip) : null,
+      scope: scope || "ADMIN",
+      vendorId: vendorId || null,
+      adsSellerId: adsSellerId || null,
     });
 
     return NextResponse.json({ ok: true });

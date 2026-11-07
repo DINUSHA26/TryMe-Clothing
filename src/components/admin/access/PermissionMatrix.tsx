@@ -4,8 +4,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   ACTION_LABELS,
   ALL_ACTIONS,
-  FEATURES,
-  FEATURE_GROUPS,
+  FEATURES as DEFAULT_FEATURES,
+  FEATURE_GROUPS as DEFAULT_FEATURE_GROUPS,
+  FeatureDef,
   PermissionAction,
 } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -15,16 +16,26 @@ interface PermissionMatrixProps {
   onChange: (next: string[]) => void;
   grantable?: string[];
   readOnly?: boolean;
+  features?: FeatureDef[];
+  featureGroups?: string[];
 }
 
-export function PermissionMatrix({ value, onChange, grantable, readOnly }: PermissionMatrixProps) {
+export function PermissionMatrix({
+  value,
+  onChange,
+  grantable,
+  readOnly,
+  features = DEFAULT_FEATURES,
+  featureGroups,
+}: PermissionMatrixProps) {
+  const groups = featureGroups || Array.from(new Set(features.map((f) => f.group)));
   const selected = new Set(value);
   const canGrant = (perm: string) => !grantable || grantable.includes(perm);
 
   const toggle = (featureKey: string, action: PermissionAction, checked: boolean) => {
     const next = new Set(selected);
     const perm = `${featureKey}.${action}`;
-    const feature = FEATURES.find((f) => f.key === featureKey)!;
+    const feature = features.find((f) => f.key === featureKey)!;
 
     if (checked) {
       next.add(perm);
@@ -41,7 +52,7 @@ export function PermissionMatrix({ value, onChange, grantable, readOnly }: Permi
   };
 
   const toggleRow = (featureKey: string, checked: boolean) => {
-    const feature = FEATURES.find((f) => f.key === featureKey)!;
+    const feature = features.find((f) => f.key === featureKey)!;
     const next = new Set(selected);
     feature.actions.forEach((a) => {
       const perm = `${featureKey}.${a}`;
@@ -70,10 +81,11 @@ export function PermissionMatrix({ value, onChange, grantable, readOnly }: Permi
             </tr>
           </thead>
           <tbody>
-            {FEATURE_GROUPS.map((group) => (
+            {groups.map((group) => (
               <GroupRows
                 key={group}
                 group={group}
+                features={features.filter((f) => f.group === group)}
                 selected={selected}
                 canGrant={canGrant}
                 readOnly={!!readOnly}
@@ -90,6 +102,7 @@ export function PermissionMatrix({ value, onChange, grantable, readOnly }: Permi
 
 function GroupRows({
   group,
+  features,
   selected,
   canGrant,
   readOnly,
@@ -97,13 +110,13 @@ function GroupRows({
   toggleRow,
 }: {
   group: string;
+  features: FeatureDef[];
   selected: Set<string>;
   canGrant: (p: string) => boolean;
   readOnly: boolean;
   toggle: (feature: string, action: PermissionAction, checked: boolean) => void;
   toggleRow: (feature: string, checked: boolean) => void;
 }) {
-  const features = FEATURES.filter((f) => f.group === group);
   return (
     <>
       <tr className="bg-muted/30">
@@ -153,3 +166,4 @@ function GroupRows({
     </>
   );
 }
+

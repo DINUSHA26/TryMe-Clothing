@@ -226,6 +226,11 @@ export const vendorNavItems: NavItem[] = [
     icon: Globe,
   },
   {
+    label: "Staff & Roles",
+    href: "/vendor/access-control",
+    icon: ShieldCheck,
+  },
+  {
     label: "Settings",
     href: "/vendor/settings",
     icon: Settings,
@@ -307,6 +312,11 @@ export const adsSellerNavItems: NavItem[] = [
     label: "Website Builder",
     href: "/ads-seller/website-builder",
     icon: Globe,
+  },
+  {
+    label: "Staff & Roles",
+    href: "/ads-seller/access-control",
+    icon: ShieldCheck,
   },
   {
     label: "Settings",

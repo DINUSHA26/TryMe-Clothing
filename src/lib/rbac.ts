@@ -1,19 +1,22 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin, AuthError } from "@/lib/auth-helpers";
+import { requireAdmin, requireVendor, requireAdsSeller, AuthError } from "@/lib/auth-helpers";
 import {
   AdminAccessInfo,
+  StoreAccessInfo,
   isValidPermission,
   normalizePermissions,
+  getAllPermissionsByScope,
 } from "@/lib/permissions";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. ADMIN RBAC
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Resolve what an ADMIN-role user may do.
  *  - No StaffMember record  → Super Admin (full access)
  *  - StaffMember record     → permissions of the assigned StaffRole (if active)
- *
- * If the RBAC tables have not been created yet (schema not pushed), everybody is
- * treated as Super Admin so existing admins are never locked out.
  */
 export async function getAdminAccess(userId: string): Promise<AdminAccessInfo> {
   try {
@@ -30,12 +33,11 @@ export async function getAdminAccess(userId: string): Promise<AdminAccessInfo> {
     return {
       isSuper: false,
       isActive: active,
-      permissions: active ? normalizePermissions(staff.role.permissions) : [],
+      permissions: active ? normalizePermissions(staff.role.permissions, "ADMIN") : [],
       roleId: staff.roleId,
       roleName: staff.role.name,
     };
   } catch (error: any) {
-    // P2021 = table does not exist, P2022 = column does not exist
     if (error?.code === "P2021" || error?.code === "P2022") {
       console.warn("[RBAC] Tables missing – run `npx prisma db push`. Treating admin as Super Admin.");
       return { isSuper: true, isActive: true, permissions: [] };
@@ -44,11 +46,7 @@ export async function getAdminAccess(userId: string): Promise<AdminAccessInfo> {
   }
 }
 
-/**
- * Defense-in-depth guard for sensitive routes (the middleware already enforces
- * route level permissions, this re-checks inside the handler).
- * Throws AuthError(403) when the admin lacks the permission.
- */
+/** Defense-in-depth guard for sensitive admin routes */
 export async function requirePermission(request: NextRequest, permission: string) {
   const admin = requireAdmin(request);
   const access = await getAdminAccess(admin.userId);
@@ -62,21 +60,182 @@ export async function requirePermission(request: NextRequest, permission: string
   return { admin, access };
 }
 
-/** True if every permission in `wanted` is held by the actor (Super Admin holds all) */
-export function canGrant(access: AdminAccessInfo, wanted: string[]): boolean {
-  if (access.isSuper) return true;
-  return wanted.every((p) => access.permissions.includes(p));
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. VENDOR RBAC
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Resolve what a VENDOR-role user may do in their store.
+ *  - Direct Vendor owner (Vendor.userId == userId) → Owner (full access)
+ *  - StaffMember record with vendorId               → permissions of assigned StaffRole
+ */
+export async function getVendorAccess(userId: string): Promise<StoreAccessInfo> {
+  try {
+    const ownerVendor = await prisma.vendor.findUnique({
+      where: { userId },
+      select: { id: true, businessName: true },
+    });
+
+    if (ownerVendor) {
+      return {
+        isOwner: true,
+        isActive: true,
+        permissions: [],
+        storeId: ownerVendor.id,
+        storeName: ownerVendor.businessName,
+        scope: "VENDOR",
+      };
+    }
+
+    const staff = await prisma.staffMember.findUnique({
+      where: { userId },
+      include: {
+        role: true,
+        vendor: { select: { id: true, businessName: true } },
+        user: { select: { isActive: true } },
+      },
+    });
+
+    if (staff && staff.vendor && staff.vendorId) {
+      const active = staff.isActive && staff.user.isActive;
+      return {
+        isOwner: false,
+        isActive: active,
+        permissions: active ? normalizePermissions(staff.role.permissions, "VENDOR") : [],
+        roleId: staff.roleId,
+        roleName: staff.role.name,
+        storeId: staff.vendorId,
+        storeName: staff.vendor.businessName,
+        scope: "VENDOR",
+      };
+    }
+
+    return {
+      isOwner: false,
+      isActive: false,
+      permissions: [],
+      scope: "VENDOR",
+    };
+  } catch (error: any) {
+    console.error("[RBAC] getVendorAccess error:", error);
+    return { isOwner: false, isActive: false, permissions: [], scope: "VENDOR" };
+  }
 }
 
-export function validatePermissionList(input: unknown): { ok: true; value: string[] } | { ok: false; error: string } {
-  if (!Array.isArray(input)) return { ok: false, error: "permissions must be an array" };
-  const invalid = input.filter((p) => typeof p !== "string" || !isValidPermission(p));
-  if (invalid.length) return { ok: false, error: `Unknown permission(s): ${invalid.join(", ")}` };
-  return { ok: true, value: normalizePermissions(input) };
+/** Defense-in-depth guard for vendor routes */
+export async function requireVendorPermission(request: NextRequest, permission: string) {
+  const vendorUser = requireVendor(request);
+  const access = await getVendorAccess(vendorUser.userId);
+
+  if (!access.isActive) {
+    throw new AuthError("Your store staff account is disabled or not found", 403);
+  }
+  if (!access.isOwner && !access.permissions.includes(permission)) {
+    throw new AuthError(`Forbidden: missing store permission "${permission}"`, 403);
+  }
+  return { user: vendorUser, access };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Audit log
+// 3. ADS SELLER RBAC
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Resolve what an ADS_SELLER-role user may do in their store.
+ *  - Direct AdsSeller owner (AdsSeller.userId == userId) → Owner (full access)
+ *  - StaffMember record with adsSellerId                 → permissions of assigned StaffRole
+ */
+export async function getAdsSellerAccess(userId: string): Promise<StoreAccessInfo> {
+  try {
+    const ownerSeller = await prisma.adsSeller.findUnique({
+      where: { userId },
+      select: { id: true, businessName: true },
+    });
+
+    if (ownerSeller) {
+      return {
+        isOwner: true,
+        isActive: true,
+        permissions: [],
+        storeId: ownerSeller.id,
+        storeName: ownerSeller.businessName || "My Store",
+        scope: "ADS_SELLER",
+      };
+    }
+
+    const staff = await prisma.staffMember.findUnique({
+      where: { userId },
+      include: {
+        role: true,
+        adsSeller: { select: { id: true, businessName: true } },
+        user: { select: { isActive: true } },
+      },
+    });
+
+    if (staff && staff.adsSeller && staff.adsSellerId) {
+      const active = staff.isActive && staff.user.isActive;
+      return {
+        isOwner: false,
+        isActive: active,
+        permissions: active ? normalizePermissions(staff.role.permissions, "ADS_SELLER") : [],
+        roleId: staff.roleId,
+        roleName: staff.role.name,
+        storeId: staff.adsSellerId,
+        storeName: staff.adsSeller.businessName || "My Store",
+        scope: "ADS_SELLER",
+      };
+    }
+
+    return {
+      isOwner: false,
+      isActive: false,
+      permissions: [],
+      scope: "ADS_SELLER",
+    };
+  } catch (error: any) {
+    console.error("[RBAC] getAdsSellerAccess error:", error);
+    return { isOwner: false, isActive: false, permissions: [], scope: "ADS_SELLER" };
+  }
+}
+
+/** Defense-in-depth guard for ads seller routes */
+export async function requireAdsSellerPermission(request: NextRequest, permission: string) {
+  const sellerUser = requireAdsSeller(request);
+  const access = await getAdsSellerAccess(sellerUser.userId);
+
+  if (!access.isActive) {
+    throw new AuthError("Your staff account is disabled or not found", 403);
+  }
+  if (!access.isOwner && !access.permissions.includes(permission)) {
+    throw new AuthError(`Forbidden: missing store permission "${permission}"`, 403);
+  }
+  return { user: sellerUser, access };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Privilege escalation guards & validation
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function canGrant(
+  access: { isSuper?: boolean; isOwner?: boolean; permissions: string[] },
+  wanted: string[]
+): boolean {
+  if (access.isSuper || access.isOwner) return true;
+  return wanted.every((p) => access.permissions.includes(p));
+}
+
+export function validatePermissionList(
+  input: unknown,
+  scope: "ADMIN" | "VENDOR" | "ADS_SELLER" = "ADMIN"
+): { ok: true; value: string[] } | { ok: false; error: string } {
+  if (!Array.isArray(input)) return { ok: false, error: "permissions must be an array" };
+  const invalid = input.filter((p) => typeof p !== "string" || !isValidPermission(p, scope));
+  if (invalid.length) return { ok: false, error: `Unknown permission(s): ${invalid.join(", ")}` };
+  return { ok: true, value: normalizePermissions(input, scope) };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit Log Helper
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function getClientIp(request: NextRequest): string | null {
@@ -94,6 +253,9 @@ export async function logAudit(params: {
   entityId?: string;
   metadata?: Record<string, unknown>;
   ip?: string | null;
+  scope?: "ADMIN" | "VENDOR" | "ADS_SELLER";
+  vendorId?: string | null;
+  adsSellerId?: string | null;
 }) {
   try {
     await prisma.auditLog.create({
@@ -105,19 +267,21 @@ export async function logAudit(params: {
         entityId: params.entityId ?? null,
         metadata: (params.metadata as any) ?? undefined,
         ip: params.ip ?? (params.request ? getClientIp(params.request) : null),
+        scope: params.scope ?? "ADMIN",
+        vendorId: params.vendorId ?? null,
+        adsSellerId: params.adsSellerId ?? null,
       },
     });
   } catch (error) {
-    // Never break the main operation because auditing failed
     console.error("[Audit] Failed to write audit log:", error);
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Default roles
+// Default System Roles Seeding
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DEFAULT_ROLES: { name: string; description: string; permissions: string[] }[] = [
+const DEFAULT_ADMIN_ROLES: { name: string; description: string; permissions: string[] }[] = [
   {
     name: "Support Agent",
     description: "Handles orders, disputes and customer communication",
@@ -157,19 +321,137 @@ const DEFAULT_ROLES: { name: string; description: string; permissions: string[] 
   },
 ];
 
-/** Create the default roles the first time the roles list is requested */
 export async function ensureDefaultRoles() {
   const count = await prisma.staffRole.count({ where: { scope: "ADMIN" } });
   if (count > 0) return;
-  for (const role of DEFAULT_ROLES) {
-    await prisma.staffRole.upsert({
-      where: { name: role.name },
-      update: {},
-      create: {
+  for (const role of DEFAULT_ADMIN_ROLES) {
+    const existing = await prisma.staffRole.findFirst({
+      where: { name: role.name, scope: "ADMIN" },
+    });
+    if (!existing) {
+      await prisma.staffRole.create({
+        data: {
+          name: role.name,
+          description: role.description,
+          permissions: normalizePermissions(role.permissions, "ADMIN"),
+          scope: "ADMIN",
+          isSystem: true,
+        },
+      });
+    }
+  }
+}
+
+const DEFAULT_VENDOR_ROLES: { name: string; description: string; permissions: string[] }[] = [
+  {
+    name: "Store Manager",
+    description: "Full management of products, services, orders, POS, coupons and settings",
+    permissions: [
+      "products.view", "products.create", "products.edit", "products.delete",
+      "services.view", "services.create", "services.edit",
+      "orders.view", "orders.edit",
+      "pos.view", "pos.create",
+      "coupons.view", "coupons.create", "coupons.edit",
+      "reviews.view", "reviews.edit",
+      "ai.view",
+      "website.view", "website.edit",
+      "settings.view", "settings.edit",
+    ],
+  },
+  {
+    name: "Cashier / POS Operator",
+    description: "Operates store POS terminal, looks up products and views orders",
+    permissions: [
+      "pos.view", "pos.create",
+      "products.view",
+      "orders.view",
+    ],
+  },
+  {
+    name: "Order Fulfillment",
+    description: "Processes customer orders and updates packing/shipping statuses",
+    permissions: [
+      "orders.view", "orders.edit",
+      "products.view",
+    ],
+  },
+  {
+    name: "Catalog Editor",
+    description: "Creates and edits store products, services, pricing and images",
+    permissions: [
+      "products.view", "products.create", "products.edit",
+      "services.view", "services.create", "services.edit",
+      "reviews.view", "reviews.edit",
+    ],
+  },
+];
+
+export async function ensureDefaultVendorRoles(vendorId: string) {
+  const count = await prisma.staffRole.count({ where: { vendorId } });
+  if (count > 0) return;
+  for (const role of DEFAULT_VENDOR_ROLES) {
+    await prisma.staffRole.create({
+      data: {
         name: role.name,
         description: role.description,
-        permissions: normalizePermissions(role.permissions),
-        scope: "ADMIN",
+        permissions: normalizePermissions(role.permissions, "VENDOR"),
+        scope: "VENDOR",
+        vendorId,
+        isSystem: true,
+      },
+    });
+  }
+}
+
+const DEFAULT_ADS_SELLER_ROLES: { name: string; description: string; permissions: string[] }[] = [
+  {
+    name: "Store Manager",
+    description: "Full management of ads, products, services, orders, POS, coupons and storefront",
+    permissions: [
+      "ads.view", "ads.create", "ads.edit", "ads.delete",
+      "products.view", "products.create", "products.edit", "products.delete",
+      "services.view", "services.create", "services.edit",
+      "orders.view", "orders.edit",
+      "pos.view", "pos.create",
+      "coupons.view", "coupons.create", "coupons.edit",
+      "reviews.view", "reviews.edit",
+      "ai.view",
+      "website.view", "website.edit",
+      "settings.view", "settings.edit",
+    ],
+  },
+  {
+    name: "Ad & Catalog Specialist",
+    description: "Posts classified ads, manages catalog items and services",
+    permissions: [
+      "ads.view", "ads.create", "ads.edit",
+      "products.view", "products.create", "products.edit",
+      "services.view", "services.create", "services.edit",
+    ],
+  },
+  {
+    name: "Sales & Orders Agent",
+    description: "Handles orders, POS checkout, and inquiries",
+    permissions: [
+      "orders.view", "orders.edit",
+      "pos.view", "pos.create",
+      "products.view",
+      "ai.view",
+    ],
+  },
+];
+
+export async function ensureDefaultAdsSellerRoles(adsSellerId: string) {
+  const count = await prisma.staffRole.count({ where: { adsSellerId } });
+  if (count > 0) return;
+  for (const role of DEFAULT_ADS_SELLER_ROLES) {
+    await prisma.staffRole.create({
+      data: {
+        name: role.name,
+        description: role.description,
+        permissions: normalizePermissions(role.permissions, "ADS_SELLER"),
+        scope: "ADS_SELLER",
+        adsSellerId,
         isSystem: true,
       },
     });

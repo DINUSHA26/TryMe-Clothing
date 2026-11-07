@@ -215,6 +215,9 @@ model Vendor {
   services             WebsiteService[]
   serviceInquiries     ServiceInquiry[]
   aiConversations      StoreAiConversation[]
+  staffRoles           StaffRole[]
+  staffMembers         StaffMember[]
+  auditLogs            AuditLog[]
 
   @@index([slug])
   @@index([status, isShopOpen])
@@ -957,6 +960,9 @@ model AdsSeller {
   services             WebsiteService[]
   serviceInquiries     ServiceInquiry[]
   aiConversations      StoreAiConversation[]
+  staffRoles           StaffRole[]
+  staffMembers         StaffMember[]
+  auditLogs            AuditLog[]
 }
 
 // Mini-website custom service pages
@@ -1423,22 +1429,31 @@ model StoreAiConversation {
 }
 
 // ==================== ROLE-BASED ACCESS CONTROL (RBAC) ====================
-// An ADMIN user WITHOUT a StaffMember record is a Super Admin (full access).
-// An ADMIN user WITH a StaffMember record only gets the permissions of their StaffRole.
+// ADMIN: An ADMIN user WITHOUT a StaffMember record is a Super Admin (full access).
+//        An ADMIN user WITH a StaffMember record only gets the permissions of their StaffRole.
+// VENDOR / ADS_SELLER: Store owner (User.vendor / User.adsSeller) has full access.
+//                      Store staff (User + StaffMember with vendorId/adsSellerId) has scoped permissions.
 
 model StaffRole {
   id          String        @id @default(cuid())
-  name        String        @unique
+  name        String
   description String?
-  scope       String        @default("ADMIN") // reserved for VENDOR / ADS_SELLER staff in later phases
+  scope       String        @default("ADMIN") // "ADMIN" | "VENDOR" | "ADS_SELLER"
   permissions String[]      // e.g. ["orders.view", "orders.edit"]
   isSystem    Boolean       @default(false)   // default roles cannot be deleted
   createdById String?
+  vendorId    String?
+  vendor      Vendor?       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  adsSellerId String?
+  adsSeller   AdsSeller?    @relation(fields: [adsSellerId], references: [id], onDelete: Cascade)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   members     StaffMember[]
 
   @@index([scope])
+  @@index([name])
+  @@index([vendorId])
+  @@index([adsSellerId])
 }
 
 model StaffMember {
@@ -1449,24 +1464,38 @@ model StaffMember {
   role        StaffRole @relation(fields: [roleId], references: [id])
   isActive    Boolean   @default(true)
   invitedById String?
+  vendorId    String?
+  vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  adsSellerId String?
+  adsSeller   AdsSeller? @relation(fields: [adsSellerId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([roleId])
+  @@index([vendorId])
+  @@index([adsSellerId])
 }
 
 model AuditLog {
-  id         String   @id @default(cuid())
-  actorId    String?
-  actorEmail String?
-  action     String   // e.g. "staff.invite", "role.update", "api.mutation"
-  entity     String?  // e.g. "StaffMember", "StaffRole"
-  entityId   String?
-  metadata   Json?
-  ip         String?
-  createdAt  DateTime @default(now())
+  id          String    @id @default(cuid())
+  actorId     String?
+  actorEmail  String?
+  action      String    // e.g. "staff.invite", "role.update", "api.mutation"
+  entity      String?   // e.g. "StaffMember", "StaffRole"
+  entityId    String?
+  metadata    Json?
+  ip          String?
+  scope       String    @default("ADMIN") // "ADMIN" | "VENDOR" | "ADS_SELLER"
+  vendorId    String?
+  vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  adsSellerId String?
+  adsSeller   AdsSeller? @relation(fields: [adsSellerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
 
   @@index([actorId])
   @@index([action])
+  @@index([scope])
+  @@index([vendorId])
+  @@index([adsSellerId])
   @@index([createdAt])
 }

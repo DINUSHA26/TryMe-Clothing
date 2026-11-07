@@ -43,6 +43,22 @@ export async function GET(request: NextRequest) {
           },
         },
         adsSeller: true,
+        staffMember: {
+          include: {
+            role: true,
+            vendor: {
+              select: {
+                id: true,
+                businessName: true,
+                slug: true,
+                logo: true,
+                status: true,
+                isShopOpen: true,
+              },
+            },
+            adsSeller: true,
+          },
+        },
         customer: {
           select: {
             id: true,
@@ -88,8 +104,15 @@ export async function GET(request: NextRequest) {
           phoneVerified: user.phoneVerified,
           mustChangePassword: user.mustChangePassword,
           isActive: user.isActive,
-          vendor: user.vendor,
-          adsSeller: (user as any).adsSeller,
+          vendor: user.vendor || user.staffMember?.vendor || null,
+          adsSeller: (user as any).adsSeller || user.staffMember?.adsSeller || null,
+          staffMember: user.staffMember
+            ? {
+                id: user.staffMember.id,
+                role: user.staffMember.role,
+                isActive: user.staffMember.isActive,
+              }
+            : null,
           customer: user.customer,
           createdAt: user.createdAt,
         },

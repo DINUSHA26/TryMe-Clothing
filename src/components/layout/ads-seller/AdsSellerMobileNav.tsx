@@ -12,6 +12,7 @@ import { Logo } from "../shared/Logo";
 import { adsSellerNavItems } from "@/lib/navigation";
 import { useActiveRoute } from "@/hooks/useActiveRoute";
 import { useAuthStore } from "@/stores/authStore";
+import { useAdsSellerAccess } from "@/hooks/useAdsSellerAccess";
 import { cn } from "@/lib/utils";
 
 interface AdsSellerMobileNavProps {
@@ -24,6 +25,7 @@ export function AdsSellerMobileNav({ isOpen, onClose }: AdsSellerMobileNavProps)
   const { isActive } = useActiveRoute();
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const { canAccessPath } = useAdsSellerAccess();
 
   const businessName = user?.adsSeller?.businessName || `${user?.firstName}'s Store`;
 
@@ -57,8 +59,10 @@ export function AdsSellerMobileNav({ isOpen, onClose }: AdsSellerMobileNavProps)
 
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="space-y-1">
-            {adsSellerNavItems.map((item) => {
-              const isItemActive = isActive(item.href, item.href === "/ads-seller");
+            {adsSellerNavItems
+              .filter((item) => canAccessPath(item.href))
+              .map((item) => {
+                const isItemActive = isActive(item.href, item.href === "/ads-seller");
 
               return (
                 <Link

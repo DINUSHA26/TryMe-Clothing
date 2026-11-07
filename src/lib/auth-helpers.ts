@@ -120,6 +120,46 @@ export function requireAdsSeller(request: NextRequest): TokenPayload {
 import { prisma } from "./prisma";
 
 /**
+ * Resolves the Vendor store for either the direct owner or an authorized staff member.
+ */
+export async function getEffectiveVendor(userId: string) {
+  const owner = await prisma.vendor.findUnique({
+    where: { userId },
+  });
+  if (owner) {
+    return { vendor: owner, isOwner: true, staff: null };
+  }
+  const staff = await prisma.staffMember.findUnique({
+    where: { userId },
+    include: { vendor: true, role: true, user: { select: { isActive: true } } },
+  });
+  if (staff && staff.vendor && staff.isActive && staff.user.isActive) {
+    return { vendor: staff.vendor, isOwner: false, staff };
+  }
+  return null;
+}
+
+/**
+ * Resolves the Ads Seller store for either the direct owner or an authorized staff member.
+ */
+export async function getEffectiveAdsSeller(userId: string) {
+  const owner = await prisma.adsSeller.findUnique({
+    where: { userId },
+  });
+  if (owner) {
+    return { seller: owner, isOwner: true, staff: null };
+  }
+  const staff = await prisma.staffMember.findUnique({
+    where: { userId },
+    include: { adsSeller: true, role: true, user: { select: { isActive: true } } },
+  });
+  if (staff && staff.adsSeller && staff.isActive && staff.user.isActive) {
+    return { seller: staff.adsSeller, isOwner: false, staff };
+  }
+  return null;
+}
+
+/**
  * Check if user has any of the specified roles
  */
 export function requireAnyRole(

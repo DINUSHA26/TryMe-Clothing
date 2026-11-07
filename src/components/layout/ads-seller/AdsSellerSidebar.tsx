@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { adsSellerNavItems } from "@/lib/navigation";
 import { useActiveRoute } from "@/hooks/useActiveRoute";
 import { useAuthStore } from "@/stores/authStore";
+import { useAdsSellerAccess } from "@/hooks/useAdsSellerAccess";
 import { cn } from "@/lib/utils";
 
 interface AdsSellerSidebarProps {
@@ -35,6 +36,7 @@ export function AdsSellerSidebar({
   const { isActive } = useActiveRoute();
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const { canAccessPath, roleName, isOwner } = useAdsSellerAccess();
 
   const [availableBalance, setAvailableBalance] = useState<number | null>(null);
   const sellerName =
@@ -146,10 +148,12 @@ export function AdsSellerSidebar({
         <TooltipProvider delayDuration={0}>
           <nav className="space-y-1">
             {/* Ads Seller Main Nav Items */}
-            {adsSellerNavItems.map((item) => {
-              const isItemActive = isActive(item.href, item.href === "/ads-seller");
-              return renderNavLink(item, isItemActive);
-            })}
+            {adsSellerNavItems
+              .filter((item) => canAccessPath(item.href))
+              .map((item) => {
+                const isItemActive = isActive(item.href, item.href === "/ads-seller");
+                return renderNavLink(item, isItemActive);
+              })}
           </nav>
         </TooltipProvider>
       </ScrollArea>
@@ -160,10 +164,15 @@ export function AdsSellerSidebar({
       <div className="p-4 space-y-3">
         {!isCollapsed && user && (
           <div className="px-3 py-2 bg-accent rounded-lg">
-            <p className="text-sm font-medium truncate">
-              {user.firstName || "Ads Seller"}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-sm font-medium truncate">
+                {user.firstName || "Ads Seller"}
+              </p>
+              <Badge variant={isOwner ? "default" : "outline"} className="text-[10px] px-1.5 py-0 shrink-0">
+                {roleName}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
               {user.email}
             </p>
           </div>

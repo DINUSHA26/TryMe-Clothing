@@ -57,7 +57,17 @@ export async function POST(request: NextRequest) {
       // Find normal user
       user = await prisma.user.findUnique({
         where: { email },
-        include: { vendor: true, adsSeller: true },
+        include: {
+          vendor: true,
+          adsSeller: true,
+          staffMember: {
+            include: {
+              role: true,
+              vendor: true,
+              adsSeller: true,
+            },
+          },
+        },
       });
 
       // Verify password
@@ -100,11 +110,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if account is active
-    if (!user.isActive) {
+    if (!user.isActive || (user.staffMember && !user.staffMember.isActive)) {
       return NextResponse.json(
         {
           success: false,
-          error: "Your account has been deactivated. Please contact support.",
+          error: "Your account has been deactivated. Please contact support or your store owner.",
         },
         { status: 403 }
       );
@@ -132,8 +142,15 @@ export async function POST(request: NextRequest) {
           lastName: user.lastName,
           avatar: (user as any).avatar,
           mustChangePassword: user.mustChangePassword,
-          vendor: user.vendor,
-          adsSeller: (user as any).adsSeller,
+          vendor: user.vendor || user.staffMember?.vendor || null,
+          adsSeller: (user as any).adsSeller || user.staffMember?.adsSeller || null,
+          staffMember: user.staffMember
+            ? {
+                id: user.staffMember.id,
+                role: user.staffMember.role,
+                isActive: user.staffMember.isActive,
+              }
+            : null,
         },
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,

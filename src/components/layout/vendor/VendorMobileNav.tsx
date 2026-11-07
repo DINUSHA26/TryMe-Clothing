@@ -13,6 +13,7 @@ import { Logo } from "../shared/Logo";
 import { vendorNavItems } from "@/lib/navigation";
 import { useActiveRoute } from "@/hooks/useActiveRoute";
 import { useAuthStore } from "@/stores/authStore";
+import { useVendorAccess } from "@/hooks/useVendorAccess";
 import { cn } from "@/lib/utils";
 
 interface VendorMobileNavProps {
@@ -25,6 +26,7 @@ export function VendorMobileNav({ isOpen, onClose }: VendorMobileNavProps) {
   const { isActive } = useActiveRoute();
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const { canAccessPath } = useVendorAccess();
 
   // Mock data - will be replaced with real data in Phase 4+
   const mockShopName = "My Store";
@@ -74,8 +76,10 @@ export function VendorMobileNav({ isOpen, onClose }: VendorMobileNavProps) {
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="space-y-1">
             {/* Vendor Management Sections */}
-            {vendorNavItems.map((item) => {
-              const isItemActive = isActive(item.href, item.href === "/vendor");
+            {vendorNavItems
+              .filter((item) => canAccessPath(item.href))
+              .map((item) => {
+                const isItemActive = isActive(item.href, item.href === "/vendor");
 
               return (
                 <Link

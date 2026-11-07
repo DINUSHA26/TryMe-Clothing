@@ -20,6 +20,7 @@ import { vendorNavItems } from "@/lib/navigation";
 import { useActiveRoute } from "@/hooks/useActiveRoute";
 import { useAuthStore } from "@/stores/authStore";
 import { useNotificationStore } from "@/stores/notificationStore";
+import { useVendorAccess } from "@/hooks/useVendorAccess";
 import { cn } from "@/lib/utils";
 
 interface VendorSidebarProps {
@@ -35,6 +36,7 @@ export function VendorSidebar({
   const { user, logout } = useAuthStore();
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const router = useRouter();
+  const { canAccessPath, roleName, isOwner } = useVendorAccess();
 
   const [availableBalance, setAvailableBalance] = useState<number | null>(null);
   const shopName = user?.vendor?.businessName || "My Store";
@@ -137,10 +139,12 @@ export function VendorSidebar({
         <TooltipProvider delayDuration={0}>
           <nav className="space-y-1">
             {/* Vendor Management Sections */}
-            {vendorNavItems.map((item) => {
-              const isItemActive = isActive(item.href, item.href === "/vendor");
-              return renderNavLink(item, isItemActive);
-            })}
+            {vendorNavItems
+              .filter((item) => canAccessPath(item.href))
+              .map((item) => {
+                const isItemActive = isActive(item.href, item.href === "/vendor");
+                return renderNavLink(item, isItemActive);
+              })}
           </nav>
         </TooltipProvider>
       </ScrollArea>
@@ -151,10 +155,15 @@ export function VendorSidebar({
       <div className="p-4 space-y-3">
         {!isCollapsed && user && (
           <div className="px-3 py-2 bg-accent rounded-lg">
-            <p className="text-sm font-medium truncate">
-              {user.firstName || "Vendor"}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-sm font-medium truncate">
+                {user.firstName || "Vendor"}
+              </p>
+              <Badge variant={isOwner ? "default" : "outline"} className="text-[10px] px-1.5 py-0 shrink-0">
+                {roleName}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
               {user.email}
             </p>
           </div>
