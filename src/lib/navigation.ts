@@ -25,6 +25,7 @@ import {
   Briefcase,
   ScanBarcode,
   Bot,
+  ShieldCheck,
 } from "lucide-react";
 
 export interface NavItem {
@@ -160,6 +161,11 @@ export const adminNavItems: NavItem[] = [
     label: "All Services",
     href: "/admin/services",
     icon: Briefcase,
+  },
+  {
+    label: "Staff & Roles",
+    href: "/admin/access-control",
+    icon: ShieldCheck,
   },
 ];
 

@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { adminNavItems } from "@/lib/navigation";
 import { useActiveRoute } from "@/hooks/useActiveRoute";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useAuthStore } from "@/stores/authStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ export function AdminSidebar({
   onToggleCollapse,
 }: AdminSidebarProps) {
   const { isActive } = useActiveRoute();
+  const { canAccessPath, roleName, isSuper } = useAdminAccess();
   const { user, logout } = useAuthStore();
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const router = useRouter();
@@ -99,10 +101,12 @@ export function AdminSidebar({
         <TooltipProvider delayDuration={0}>
           <nav className="space-y-1">
             {/* Admin Management Sections */}
-            {adminNavItems.map((item) => {
-              const isItemActive = isActive(item.href, item.href === "/admin");
-              return renderNavLink(item, isItemActive);
-            })}
+            {adminNavItems
+              .filter((item) => canAccessPath(item.href))
+              .map((item) => {
+                const isItemActive = isActive(item.href, item.href === "/admin");
+                return renderNavLink(item, isItemActive);
+              })}
           </nav>
         </TooltipProvider>
       </ScrollArea>
@@ -119,6 +123,11 @@ export function AdminSidebar({
             <p className="text-xs text-muted-foreground truncate">
               {user.email}
             </p>
+            {roleName && !isSuper && (
+              <p className="mt-1 inline-block text-[10px] font-semibold uppercase tracking-wide bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                {roleName}
+              </p>
+            )}
           </div>
         )}
 

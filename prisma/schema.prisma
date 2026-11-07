@@ -174,6 +174,7 @@ model User {
   socialComments          SocialComment[]         @relation("UserComments")
   socialStories           SocialStory[]           @relation("UserStories")
   savedPosts              SavedPost[]             @relation("UserSavedPosts")
+  staffMember             StaffMember?
 
   @@index([email])
   @@index([phone])
@@ -1419,4 +1420,53 @@ model StoreAiConversation {
   @@index([customerId])
   @@index([sessionId])
   @@index([updatedAt])
+}
+
+// ==================== ROLE-BASED ACCESS CONTROL (RBAC) ====================
+// An ADMIN user WITHOUT a StaffMember record is a Super Admin (full access).
+// An ADMIN user WITH a StaffMember record only gets the permissions of their StaffRole.
+
+model StaffRole {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  scope       String        @default("ADMIN") // reserved for VENDOR / ADS_SELLER staff in later phases
+  permissions String[]      // e.g. ["orders.view", "orders.edit"]
+  isSystem    Boolean       @default(false)   // default roles cannot be deleted
+  createdById String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  members     StaffMember[]
+
+  @@index([scope])
+}
+
+model StaffMember {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId      String
+  role        StaffRole @relation(fields: [roleId], references: [id])
+  isActive    Boolean   @default(true)
+  invitedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([roleId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorEmail String?
+  action     String   // e.g. "staff.invite", "role.update", "api.mutation"
+  entity     String?  // e.g. "StaffMember", "StaffRole"
+  entityId   String?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
 }

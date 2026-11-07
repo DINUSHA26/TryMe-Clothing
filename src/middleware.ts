@@ -1,8 +1,44 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, NextFetchEvent } from "next/server";
 import { jwtVerify, SignJWT } from "jose";
+import {
+  AdminAccessInfo,
+  hasRoutePermission,
+  resolveRouteRequirement,
+} from "@/lib/permissions";
 
 // Plain string role type — avoids importing @prisma/client in Edge Runtime
 type Role = "ADMIN" | "VENDOR" | "CUSTOMER" | "ADS_SELLER";
+
+// ── Admin RBAC: per-isolate cache of staff permissions (short TTL) ──────────
+const ACCESS_CACHE_TTL_MS = 15_000;
+const accessCache = new Map<string, { exp: number; data: AdminAccessInfo }>();
+
+/**
+ * Look up RBAC permissions through the internal Node endpoint
+ * (Edge runtime cannot use Prisma). Returns null when the lookup fails.
+ */
+async function fetchAdminAccess(origin: string, userId: string): Promise<AdminAccessInfo | null> {
+  const cached = accessCache.get(userId);
+  if (cached && cached.exp > Date.now()) return cached.data;
+
+  try {
+    const res = await fetch(
+      `${origin}/api/internal/admin-access?userId=${encodeURIComponent(userId)}`,
+      {
+        headers: { "x-internal-secret": process.env.JWT_SECRET || "" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as AdminAccessInfo;
+    if (accessCache.size > 500) accessCache.clear();
+    accessCache.set(userId, { exp: Date.now() + ACCESS_CACHE_TTL_MS, data });
+    return data;
+  } catch {
+    return null;
+  }
+}
 
 // Verify JWT using jose (Edge Runtime compatible)
 async function verifyToken(token: string): Promise<{ userId: string; email: string; role: Role } | null> {
@@ -139,7 +175,7 @@ const publicRoutes = [
   "/api/vendor/website/subscribe/payhere-webhook",
 ];
 
-export async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl;
 
   // Skip middleware for static files and images
@@ -305,6 +341,67 @@ export async function middleware(request: NextRequest) {
     }
     url.pathname = "/403";
     return NextResponse.redirect(url);
+  }
+
+  // ── Admin RBAC: staff members only get the permissions of their role ──────
+  // Super Admins (ADMIN users without a StaffMember record) pass every check.
+  // Set RBAC_ENFORCE=false in the environment to disable (emergency switch).
+  const isAdminArea =
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/api/admin" ||
+    pathname.startsWith("/api/admin/");
+
+  if (payload.role === "ADMIN" && isAdminArea && process.env.RBAC_ENFORCE !== "false") {
+    const isApi = pathname.startsWith("/api");
+    const deny = (status: number, message: string) => {
+      if (isApi) return NextResponse.json({ error: message }, { status });
+      const forbiddenUrl = request.nextUrl.clone();
+      forbiddenUrl.pathname = "/403";
+      forbiddenUrl.search = "";
+      return NextResponse.redirect(forbiddenUrl);
+    };
+
+    const requirement = resolveRouteRequirement(pathname, request.method);
+    const access = await fetchAdminAccess(request.nextUrl.origin, payload.userId);
+
+    if (!access) {
+      // Fail closed: if we cannot verify permissions we do not let the request through
+      return deny(503, "Unable to verify permissions. Please try again.");
+    }
+    if (!access.isActive) {
+      return deny(403, "Forbidden: your staff account is disabled");
+    }
+    if (!hasRoutePermission(access.permissions, access.isSuper, requirement)) {
+      const needed = requirement.type === "permission" ? requirement.permission : "super-admin";
+      return deny(403, `Forbidden: missing permission (${needed})`);
+    }
+
+    // Record admin write actions in the audit log (fire-and-forget).
+    // Staff / role changes are audited with richer detail by their own routes.
+    const isMutation = !["GET", "HEAD", "OPTIONS"].includes(request.method);
+    const isOwnAudited =
+      requirement.type === "permission" &&
+      (requirement.feature === "staff" || requirement.feature === "roles");
+    if (isMutation && isApi && !isOwnAudited) {
+      event.waitUntil(
+        fetch(`${request.nextUrl.origin}/api/internal/audit`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-internal-secret": process.env.JWT_SECRET || "",
+          },
+          body: JSON.stringify({
+            userId: payload.userId,
+            email: payload.email,
+            method: request.method,
+            path: pathname,
+            permission: requirement.type === "permission" ? requirement.permission : null,
+            ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+          }),
+        }).catch(() => undefined)
+      );
+    }
   }
 
   // Authenticated & authorized — forward user info to route handlers via headers

@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Logo } from "../shared/Logo";
 import { adminNavItems } from "@/lib/navigation";
 import { useActiveRoute } from "@/hooks/useActiveRoute";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ interface AdminMobileNavProps {
 export function AdminMobileNav({ isOpen, onClose }: AdminMobileNavProps) {
   const pathname = usePathname();
   const { isActive } = useActiveRoute();
+  const { canAccessPath } = useAdminAccess();
   const { user, logout } = useAuthStore();
   const router = useRouter();
 
@@ -49,7 +51,7 @@ export function AdminMobileNav({ isOpen, onClose }: AdminMobileNavProps) {
 
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="space-y-1">
-            {adminNavItems.map((item) => {
+            {adminNavItems.filter((item) => canAccessPath(item.href)).map((item) => {
               const isItemActive = isActive(item.href, item.href === "/admin");
 
               return (
