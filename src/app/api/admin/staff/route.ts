@@ -20,20 +20,56 @@ export async function GET(request: NextRequest) {
     const { access } = await requirePermission(request, "staff.view");
     await ensureDefaultRoles();
 
-    const [staff, roles, superAdmins] = await Promise.all([
+    const { searchParams } = request.nextUrl;
+    const scope = searchParams.get("scope") || "ADMIN";
+    const vendorId = searchParams.get("vendorId") || "";
+    const adsSellerId = searchParams.get("adsSellerId") || "";
+
+    const staffWhere: any = {};
+    if (scope === "ADMIN") {
+      staffWhere.vendorId = null;
+      staffWhere.adsSellerId = null;
+    } else if (scope === "VENDOR") {
+      if (vendorId) {
+        staffWhere.vendorId = vendorId;
+      } else {
+        staffWhere.vendorId = { not: null };
+      }
+    } else if (scope === "ADS_SELLER") {
+      if (adsSellerId) {
+        staffWhere.adsSellerId = adsSellerId;
+      } else {
+        staffWhere.adsSellerId = { not: null };
+      }
+    }
+
+    const [staff, roles, superAdmins, vendorsList, adsSellersList] = await Promise.all([
       prisma.staffMember.findMany({
+        where: staffWhere,
         orderBy: { createdAt: "desc" },
         include: {
-          role: { select: { id: true, name: true, permissions: true } },
+          role: { select: { id: true, name: true, permissions: true, scope: true } },
+          vendor: { select: { id: true, businessName: true, slug: true } },
+          adsSeller: { select: { id: true, businessName: true, slug: true } },
           user: {
             select: { id: true, email: true, phone: true, firstName: true, lastName: true, isActive: true, mustChangePassword: true },
           },
         },
       }),
       prisma.staffRole.findMany({ where: { scope: "ADMIN" }, orderBy: { name: "asc" } }),
-      prisma.user.findMany({
-        where: { role: UserRole.ADMIN, staffMember: null },
-        select: { id: true, email: true, firstName: true, lastName: true, isActive: true },
+      scope === "ADMIN" || scope === "ALL"
+        ? prisma.user.findMany({
+            where: { role: UserRole.ADMIN, staffMember: null },
+            select: { id: true, email: true, firstName: true, lastName: true, isActive: true },
+          })
+        : Promise.resolve([]),
+      prisma.vendor.findMany({
+        select: { id: true, businessName: true, slug: true },
+        orderBy: { businessName: "asc" },
+      }),
+      prisma.adsSeller.findMany({
+        select: { id: true, businessName: true, slug: true },
+        orderBy: { businessName: "asc" },
       }),
     ]);
 
@@ -44,6 +80,8 @@ export async function GET(request: NextRequest) {
       data: {
         staff,
         superAdmins,
+        vendorsList,
+        adsSellersList,
         roles: assignableRoles.map((r) => ({ id: r.id, name: r.name, description: r.description, permissions: r.permissions })),
         viewer: { isSuper: access.isSuper },
       },

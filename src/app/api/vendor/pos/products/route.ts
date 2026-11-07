@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 
 export async function GET(request: NextRequest) {
   try {
     const user = requireVendor(request);
 
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-      select: { id: true, businessName: true, logo: true, businessPhone: true, businessAddress: true },
-    });
-
-    if (!vendor) {
+    const effective = await getEffectiveVendor(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
     }
+    const vendor = effective.vendor;
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search")?.trim() || "";

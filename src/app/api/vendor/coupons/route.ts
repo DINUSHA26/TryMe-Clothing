@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import {
@@ -23,17 +23,16 @@ export async function GET(request: NextRequest) {
     const vendor = requireVendor(request);
 
     // Get vendor record
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: vendor.userId },
-    });
+    const effective = await getEffectiveVendor(vendor.userId);
 
-    if (!vendorRecord) {
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
 
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     const { searchParams } = new URL(request.url);
@@ -147,17 +146,16 @@ export async function POST(request: NextRequest) {
     const vendor = requireVendor(request);
 
     // Get vendor record
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: vendor.userId },
-    });
+    const effective = await getEffectiveVendor(vendor.userId);
 
-    if (!vendorRecord) {
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
 
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     const body = await request.json();

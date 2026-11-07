@@ -24,9 +24,9 @@ import {
 import { format } from 'date-fns';
 
 interface DisputeDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 async function getDisputeDetails(disputeId: string) {

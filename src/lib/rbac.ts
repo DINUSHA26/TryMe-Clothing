@@ -283,6 +283,58 @@ export async function logAudit(params: {
 
 const DEFAULT_ADMIN_ROLES: { name: string; description: string; permissions: string[] }[] = [
   {
+    name: "Vendor Manager",
+    description: "Full management of vendor accounts, bank details, approvals and status",
+    permissions: [
+      "vendors.view", "vendors.create", "vendors.edit", "vendors.delete", "vendors.approve",
+      "payouts.view",
+    ],
+  },
+  {
+    name: "Ads Seller Manager",
+    description: "Manage classified ad sellers, ads dashboard, pricing plans and subscriptions",
+    permissions: [
+      "ads.sellers.view", "ads.sellers.edit", "ads.sellers.delete", "ads.sellers.approve",
+      "ads.plans.view", "ads.plans.create", "ads.plans.edit", "ads.plans.approve",
+    ],
+  },
+  {
+    name: "Product & Order Manager",
+    description: "Manage store products, category catalog, coupons and customer orders",
+    permissions: [
+      "products.view", "products.create", "products.edit", "products.delete", "products.approve",
+      "orders.view", "orders.edit", "orders.approve",
+      "categories.view", "categories.create", "categories.edit", "categories.delete",
+      "coupons.view", "coupons.create", "coupons.edit", "coupons.delete",
+      "reviews.view", "reviews.edit",
+    ],
+  },
+  {
+    name: "Chat Operations Manager",
+    description: "Oversight and moderation of customer-vendor chats and platform notifications",
+    permissions: [
+      "chat.view", "chat.edit", "chat.delete",
+      "notifications.view", "notifications.create",
+      "ai.view",
+    ],
+  },
+  {
+    name: "Classified Ads Manager",
+    description: "Moderate and approve marketplace classified ads and seller ad listings",
+    permissions: [
+      "ads.marketplace.view", "ads.marketplace.edit", "ads.marketplace.delete", "ads.marketplace.approve",
+      "ads.plans.view", "ads.sellers.view",
+    ],
+  },
+  {
+    name: "Social & Media Manager",
+    description: "Moderate social stories, posts, comments and customer product reviews",
+    permissions: [
+      "social.view", "social.edit", "social.delete",
+      "reviews.view", "reviews.edit", "reviews.delete",
+    ],
+  },
+  {
     name: "Support Agent",
     description: "Handles orders, disputes and customer communication",
     permissions: [
@@ -322,8 +374,6 @@ const DEFAULT_ADMIN_ROLES: { name: string; description: string; permissions: str
 ];
 
 export async function ensureDefaultRoles() {
-  const count = await prisma.staffRole.count({ where: { scope: "ADMIN" } });
-  if (count > 0) return;
   for (const role of DEFAULT_ADMIN_ROLES) {
     const existing = await prisma.staffRole.findFirst({
       where: { name: role.name, scope: "ADMIN" },

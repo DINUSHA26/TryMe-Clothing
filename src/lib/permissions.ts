@@ -51,7 +51,7 @@ export const FEATURES: FeatureDef[] = [
   { key: "reports", group: "Sales & Finance", label: "Reports", description: "Revenue and analytics reports", paths: ["reports"], actions: ["view"] },
   // ── Communication ──
   { key: "notifications", group: "Communication", label: "Notifications", description: "Send & view notifications", paths: ["notifications"], actions: ["view", "create"] },
-  { key: "chat", group: "Communication", label: "Chat Oversight", description: "Monitor customer / vendor chats", paths: ["chat"], actions: ["view"] },
+  { key: "chat", group: "Communication", label: "Chat Oversight & Management", description: "Monitor and manage customer / vendor chats", paths: ["chat"], actions: ["view", "edit", "delete"] },
   { key: "ai", group: "Communication", label: "AI Conversations", description: "AI assistant conversation logs", paths: ["ai-assistant", "ai-conversations"], actions: ["view"] },
   { key: "social", group: "Communication", label: "Social Moderation", description: "Moderate social posts & comments", paths: ["social"], actions: ["view", "edit", "delete"] },
   { key: "newsletter", group: "Communication", label: "Newsletter & Zoho", description: "Newsletter campaigns & Zoho sync", paths: ["newsletter", "zoho-settings"], actions: ["view", "create", "edit", "delete"] },

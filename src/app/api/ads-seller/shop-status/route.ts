@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth-helpers";
+import { getAuthUser, getEffectiveAdsSeller } from "@/lib/auth-helpers";
 import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
 
 /**
@@ -57,9 +57,8 @@ export async function PATCH(req: NextRequest) {
     });
 
     // 2. Also sync to AdsSeller contactInfo metadata
-    const seller = await prisma.adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
+    const effective = await getEffectiveAdsSeller(user.userId);
+    const seller = effective?.seller;
 
     if (seller) {
       const contactInfo = (seller.contactInfo as any) || {};

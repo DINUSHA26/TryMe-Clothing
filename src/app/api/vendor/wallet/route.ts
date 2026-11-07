@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { startOfMonth } from "date-fns";
 
@@ -17,16 +17,15 @@ export async function GET(request: NextRequest) {
     // Auth check
     const user = requireVendor(request);
 
-    // Look up vendor record (TokenPayload has no vendorId field)
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
-    if (!vendorRecord) {
+    // Look up vendor record
+    const effective = await getEffectiveVendor(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     // Fetch wallet with balances

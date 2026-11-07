@@ -35,7 +35,17 @@ export async function POST(request: NextRequest) {
       // Check if admin already exists in DB
       let dbAdmin = await prisma.user.findUnique({
         where: { email: "admin@fashiondora.lk" },
-        include: { vendor: true },
+        include: {
+          vendor: true,
+          adsSeller: true,
+          staffMember: {
+            include: {
+              role: true,
+              vendor: true,
+              adsSeller: true,
+            },
+          },
+        },
       });
 
       if (!dbAdmin) {
@@ -49,7 +59,17 @@ export async function POST(request: NextRequest) {
             isActive: true,
             passwordHash: await passwordUtils.hash("admin123"),
           },
-          include: { vendor: true, adsSeller: true },
+          include: {
+            vendor: true,
+            adsSeller: true,
+            staffMember: {
+              include: {
+                role: true,
+                vendor: true,
+                adsSeller: true,
+              },
+            },
+          },
         });
       }
       user = dbAdmin;

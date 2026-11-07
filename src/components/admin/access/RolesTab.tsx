@@ -25,6 +25,11 @@ interface RoleRow {
   description: string | null;
   permissions: string[];
   isSystem: boolean;
+  scope?: string;
+  vendorId?: string | null;
+  vendor?: { id: string; businessName: string } | null;
+  adsSellerId?: string | null;
+  adsSeller?: { id: string; businessName: string } | null;
   _count: { members: number };
 }
 
@@ -32,6 +37,7 @@ export function RolesTab() {
   const { can, isSuper, access } = useAdminAccess();
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedScope, setSelectedScope] = useState<"ADMIN" | "VENDOR" | "ADS_SELLER" | "ALL">("ADMIN");
   const [editing, setEditing] = useState<Partial<RoleRow> | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<RoleRow | null>(null);
@@ -41,7 +47,7 @@ export function RolesTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/roles", { credentials: "include" });
+      const res = await fetch(`/api/admin/roles?scope=${selectedScope}`, { credentials: "include" });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Failed to load roles");
       setRoles(json.data.roles);
@@ -50,7 +56,7 @@ export function RolesTab() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedScope]);
 
   useEffect(() => {
     load();
@@ -107,38 +113,77 @@ export function RolesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           Roles decide which dashboard features a staff member can see and what they can do there.
         </p>
-        {can("roles.create") && (
+        {can("roles.create") && selectedScope === "ADMIN" && (
           <Button onClick={() => setEditing({ name: "", description: "", permissions: [] })}>
-            <Plus className="h-4 w-4 mr-1.5" /> New Role
+            <Plus className="h-4 w-4 mr-1.5" /> New Admin Role
           </Button>
         )}
       </div>
+
+      {/* Scope Filter Bar */}
+      <div className="flex flex-wrap items-center gap-1.5 p-3 bg-muted/40 rounded-xl border">
+        <span className="text-xs font-medium text-muted-foreground mr-1">Scope:</span>
+        {(
+          [
+            { label: "Admin Roles", value: "ADMIN" },
+            { label: "Vendor Store Roles", value: "VENDOR" },
+            { label: "Ads Seller Roles", value: "ADS_SELLER" },
+            { label: "All Roles", value: "ALL" },
+          ] as const
+        ).map((item) => (
+          <Button
+            key={item.value}
+            variant={selectedScope === item.value ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-7 px-2.5"
+            onClick={() => setSelectedScope(item.value)}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </div>
+
+      {selectedScope !== "ADMIN" && (
+        <div className="p-3 text-xs bg-amber-500/10 text-amber-900 dark:text-amber-200 border border-amber-500/20 rounded-lg">
+          💡 Store roles are configured and controlled directly by store owners. Admin can view and inspect configured role permissions here.
+        </div>
+      )}
 
       <div className="grid gap-3 md:grid-cols-2">
         {roles.map((role) => (
           <div key={role.id} className="border rounded-xl bg-card p-4 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
                   <h3 className="font-semibold truncate">{role.name}</h3>
                   {role.isSystem && <Badge variant="secondary" className="text-[10px]">Default</Badge>}
+                  {role.vendor && (
+                    <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-700 dark:text-blue-300">
+                      Store: {role.vendor.businessName}
+                    </Badge>
+                  )}
+                  {role.adsSeller && (
+                    <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-700 dark:text-purple-300">
+                      Ads: {role.adsSeller.businessName}
+                    </Badge>
+                  )}
                 </div>
                 {role.description && (
                   <p className="text-xs text-muted-foreground mt-1">{role.description}</p>
                 )}
               </div>
               <div className="flex gap-1 shrink-0">
-                {can("roles.edit") && (
+                {can("roles.edit") && !role.vendorId && !role.adsSellerId && (
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(role)} aria-label="Edit role">
                     <Pencil className="h-4 w-4" />
                   </Button>
                 )}
-                {can("roles.delete") && !role.isSystem && (
+                {can("roles.delete") && !role.isSystem && !role.vendorId && !role.adsSellerId && (
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600" onClick={() => setDeleting(role)} aria-label="Delete role">
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -152,7 +197,11 @@ export function RolesTab() {
           </div>
         ))}
         {roles.length === 0 && (
-          <p className="text-sm text-muted-foreground col-span-full text-center py-10">No roles yet.</p>
+          <p className="text-sm text-muted-foreground col-span-full text-center py-10">
+            {selectedScope === "ADMIN"
+              ? "No custom admin roles yet. Click 'New Admin Role' to create one."
+              : `No roles found for ${selectedScope === "VENDOR" ? "vendors" : selectedScope === "ADS_SELLER" ? "ads sellers" : "this selection"}.`}
+          </p>
         )}
       </div>
 

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth, handleAuthError, AuthError } from "@/lib/auth-helpers";
+import { requireAuth, handleAuthError, AuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
@@ -17,13 +17,11 @@ export async function GET(request: NextRequest) {
     let vendorId: string;
 
     if (user.role === UserRole.VENDOR) {
-      const vendorRecord = await prisma.vendor.findUnique({
-        where: { userId: user.userId },
-      });
-      if (!vendorRecord) {
+      const effective = await getEffectiveVendor(user.userId);
+      if (!effective) {
         return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
       }
-      vendorId = vendorRecord.id;
+      vendorId = effective.vendor.id;
     } else if (user.role === UserRole.ADS_SELLER) {
       const sellerVendor = await getOrCreateAdsSellerVendor(user.userId);
       if (!sellerVendor) {

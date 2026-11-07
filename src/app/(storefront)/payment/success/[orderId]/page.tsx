@@ -5,7 +5,7 @@
  * Shows payment confirmation with polling for webhook delays
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,13 @@ import {
 } from "lucide-react";
 
 interface PaymentSuccessPageProps {
-  params: { orderId: string };
+  params: Promise<{ orderId: string }>;
 }
 
 export default function PaymentSuccessPage({
   params,
 }: PaymentSuccessPageProps) {
+  const { orderId } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export default function PaymentSuccessPage({
   // Fetch order details
   const fetchOrder = async () => {
     try {
-      const response = await fetch(`/api/orders/${params.orderId}`);
+      const response = await fetch(`/api/orders/${orderId}`);
       const result = await response.json();
 
       if (!result.success) {
@@ -55,7 +56,7 @@ export default function PaymentSuccessPage({
   // Initial fetch
   useEffect(() => {
     fetchOrder();
-  }, [params.orderId]);
+  }, [orderId]);
 
   // Polling logic for webhook delay
   useEffect(() => {
@@ -261,7 +262,7 @@ export default function PaymentSuccessPage({
           <div className="flex gap-3">
             {isConfirmed && (
               <Button
-                onClick={() => router.push(`/orders/${params.orderId}`)}
+                onClick={() => router.push(`/orders/${orderId}`)}
                 className="flex-1"
               >
                 View Order Details

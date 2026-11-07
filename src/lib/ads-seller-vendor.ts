@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getEffectiveAdsSeller } from "@/lib/auth-helpers";
 
 /**
  * Ensures an Ads Seller has an associated Vendor record and Wallet
@@ -6,19 +7,17 @@ import { prisma } from "@/lib/prisma";
  * seamlessly with full relational integrity.
  */
 export async function getOrCreateAdsSellerVendor(userId: string) {
+  const effective = await getEffectiveAdsSeller(userId);
+  if (!effective) return null;
+  const seller = effective.seller;
+  const ownerUserId = seller.userId;
+
   let vendor = await prisma.vendor.findUnique({
-    where: { userId },
+    where: { userId: ownerUserId },
     include: { wallet: true },
   });
 
   if (!vendor) {
-    const seller = await (prisma as any).adsSeller.findUnique({
-      where: { userId },
-      include: { user: true },
-    });
-
-    if (!seller) return null;
-
     const baseSlug = seller.slug || `seller-${Date.now().toString(36)}`;
     let slug = baseSlug;
     const existingSlug = await prisma.vendor.findUnique({ where: { slug } });
@@ -28,9 +27,9 @@ export async function getOrCreateAdsSellerVendor(userId: string) {
 
     vendor = await prisma.vendor.create({
       data: {
-        userId,
-        businessName: seller.businessName || `${seller.user.firstName || "Seller"} Store`,
-        businessEmail: seller.user.email || `${seller.slug}@tryme.lk`,
+        userId: ownerUserId,
+        businessName: seller.businessName || "Seller Store",
+        businessEmail: `${seller.slug || "seller"}@tryme.lk`,
         businessPhone: seller.phone || "0770000000",
         slug,
         status: "ACTIVE",

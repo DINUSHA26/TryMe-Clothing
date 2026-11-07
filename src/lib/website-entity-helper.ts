@@ -46,13 +46,41 @@ export async function resolveWebsiteEntity(userId: string): Promise<ResolvedWebs
           contactInfo: true,
         },
       },
+      staffMember: {
+        include: {
+          vendor: {
+            select: {
+              id: true,
+              businessName: true,
+              slug: true,
+              logo: true,
+              banner: true,
+              businessPhone: true,
+              businessEmail: true,
+              businessAddress: true,
+            },
+          },
+          adsSeller: {
+            select: {
+              id: true,
+              businessName: true,
+              slug: true,
+              phone: true,
+              contactInfo: true,
+            },
+          },
+        },
+      },
     },
   });
 
   if (!user) return null;
 
-  const vendorId = user.vendor?.id;
-  const adsSellerId = user.adsSeller?.id;
+  const vendor = user.vendor || user.staffMember?.vendor;
+  const adsSeller = user.adsSeller || user.staffMember?.adsSeller;
+
+  const vendorId = vendor?.id;
+  const adsSellerId = adsSeller?.id;
 
   const flexibleWhere =
     vendorId && adsSellerId
@@ -66,52 +94,52 @@ export async function resolveWebsiteEntity(userId: string): Promise<ResolvedWebs
       : { vendorId: "none" };
 
   // 1. If user is ADS_SELLER, AdsSeller is primary!
-  if (user.role === "ADS_SELLER" && user.adsSeller) {
+  if (user.role === "ADS_SELLER" && adsSeller) {
     return {
       type: "ADS_SELLER",
-      entity: user.adsSeller,
+      entity: adsSeller,
       userRole: user.role,
       vendorId,
       adsSellerId,
-      primaryWhere: { adsSellerId: user.adsSeller.id },
+      primaryWhere: { adsSellerId: adsSeller.id },
       flexibleWhere,
     };
   }
 
   // 2. If user is VENDOR, Vendor is primary!
-  if (user.role === "VENDOR" && user.vendor) {
+  if (user.role === "VENDOR" && vendor) {
     return {
       type: "VENDOR",
-      entity: user.vendor,
+      entity: vendor,
       userRole: user.role,
       vendorId,
       adsSellerId,
-      primaryWhere: { vendorId: user.vendor.id },
+      primaryWhere: { vendorId: vendor.id },
       flexibleWhere,
     };
   }
 
   // 3. Fallbacks:
-  if (user.adsSeller) {
+  if (adsSeller) {
     return {
       type: "ADS_SELLER",
-      entity: user.adsSeller,
+      entity: adsSeller,
       userRole: user.role,
       vendorId,
       adsSellerId,
-      primaryWhere: { adsSellerId: user.adsSeller.id },
+      primaryWhere: { adsSellerId: adsSeller.id },
       flexibleWhere,
     };
   }
 
-  if (user.vendor) {
+  if (vendor) {
     return {
       type: "VENDOR",
-      entity: user.vendor,
+      entity: vendor,
       userRole: user.role,
       vendorId,
       adsSellerId,
-      primaryWhere: { vendorId: user.vendor.id },
+      primaryWhere: { vendorId: vendor.id },
       flexibleWhere,
     };
   }

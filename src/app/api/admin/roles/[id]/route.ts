@@ -43,7 +43,7 @@ export async function PATCH(
         return NextResponse.json({ success: false, error: "Role name must be 2-60 characters" }, { status: 400 });
       }
       if (name !== role.name) {
-        const clash = await prisma.staffRole.findUnique({ where: { name } });
+        const clash = await prisma.staffRole.findFirst({ where: { name, scope: "ADMIN" } });
         if (clash) {
           return NextResponse.json({ success: false, error: "A role with this name already exists" }, { status: 409 });
         }

@@ -15,10 +15,30 @@ export async function GET(request: NextRequest) {
     await requirePermission(request, "roles.view");
     await ensureDefaultRoles();
 
+    const { searchParams } = request.nextUrl;
+    const scope = searchParams.get("scope") || "ADMIN";
+    const vendorId = searchParams.get("vendorId") || "";
+    const adsSellerId = searchParams.get("adsSellerId") || "";
+
+    const roleWhere: any = {};
+    if (scope === "ADMIN") {
+      roleWhere.scope = "ADMIN";
+    } else if (scope === "VENDOR") {
+      roleWhere.scope = "VENDOR";
+      if (vendorId) roleWhere.vendorId = vendorId;
+    } else if (scope === "ADS_SELLER") {
+      roleWhere.scope = "ADS_SELLER";
+      if (adsSellerId) roleWhere.adsSellerId = adsSellerId;
+    }
+
     const roles = await prisma.staffRole.findMany({
-      where: { scope: "ADMIN" },
+      where: roleWhere,
       orderBy: { name: "asc" },
-      include: { _count: { select: { members: true } } },
+      include: {
+        _count: { select: { members: true } },
+        vendor: { select: { id: true, businessName: true } },
+        adsSeller: { select: { id: true, businessName: true } },
+      },
     });
 
     return NextResponse.json({ success: true, data: { roles } });
@@ -55,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const exists = await prisma.staffRole.findUnique({ where: { name } });
+    const exists = await prisma.staffRole.findFirst({ where: { name, scope: "ADMIN" } });
     if (exists) {
       return NextResponse.json({ success: false, error: "A role with this name already exists" }, { status: 409 });
     }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth-helpers";
+import { getAuthUser, getEffectiveVendor } from "@/lib/auth-helpers";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 
@@ -11,13 +11,11 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const vendor = await prisma.vendor.findUnique({
-            where: { userId: user.userId },
-        });
-
-        if (!vendor) {
+        const effective = await getEffectiveVendor(user.userId);
+        if (!effective) {
             return NextResponse.json({ success: false, error: "Vendor profile not found" }, { status: 404 });
         }
+        const vendor = effective.vendor;
 
         return NextResponse.json({ success: true, data: vendor });
     } catch (error) {
@@ -41,13 +39,11 @@ export async function PATCH(req: NextRequest) {
         }
 
         // Get current vendor profile to check for changes
-        const currentVendor = await prisma.vendor.findUnique({
-            where: { userId: user.userId },
-        });
-
-        if (!currentVendor) {
+        const effective = await getEffectiveVendor(user.userId);
+        if (!effective) {
             return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
         }
+        const currentVendor = effective.vendor;
 
         const oldName = currentVendor.businessName;
         const isNameChanged = businessName !== undefined && oldName !== businessName;
@@ -55,7 +51,7 @@ export async function PATCH(req: NextRequest) {
         const hasOtherChanges = businessEmail !== undefined || businessPhone !== undefined || businessAddress !== undefined || description !== undefined || logo !== undefined || banner !== undefined;
 
         const updatedVendor = await prisma.vendor.update({
-            where: { userId: user.userId },
+            where: { id: currentVendor.id },
             data: {
                 ...(businessName && { businessName }),
                 ...(businessEmail && { businessEmail }),

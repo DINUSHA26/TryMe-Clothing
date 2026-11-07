@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 
 export async function GET(request: NextRequest) {
   try {
     const authUser = requireVendor(request);
 
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId: authUser.userId },
-      select: { id: true, businessName: true },
-    });
-
-    if (!vendor) {
+    const effective = await getEffectiveVendor(authUser.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor profile not found" },
         { status: 404 }
       );
     }
+    const vendor = effective.vendor;
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search")?.trim() || "";
@@ -77,14 +74,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, error: "ID is required" }, { status: 400 });
     }
 
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId: authUser.userId },
-      select: { id: true },
-    });
-
-    if (!vendor) {
+    const effective = await getEffectiveVendor(authUser.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
     }
+    const vendor = effective.vendor;
 
     await (prisma as any).storeAiConversation.updateMany({
       where: { id, vendorId: vendor.id },

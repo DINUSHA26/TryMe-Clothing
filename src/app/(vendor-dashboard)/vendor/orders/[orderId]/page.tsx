@@ -6,6 +6,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
+import { getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getVendorOrderDetail } from "@/lib/services/vendor-order-service";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
@@ -53,13 +54,12 @@ async function getVendorOrderDetailsDirectCall(orderId: string) {
   }
 
   try {
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: payload.userId },
-    });
+    const effective = await getEffectiveVendor(payload.userId);
 
-    if (!vendorRecord) {
+    if (!effective) {
       return null;
     }
+    const vendorRecord = effective.vendor;
 
     const data = await getVendorOrderDetail(vendorRecord.id, orderId);
     return data;

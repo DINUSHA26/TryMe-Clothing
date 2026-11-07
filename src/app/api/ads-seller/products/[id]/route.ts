@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdsSeller, handleAuthError } from "@/lib/auth-helpers";
+import { requireAdsSeller, handleAuthError, getEffectiveAdsSeller } from "@/lib/auth-helpers";
 
 export async function PATCH(
   request: NextRequest,
@@ -10,14 +10,11 @@ export async function PATCH(
     const user = requireAdsSeller(request);
     const { id } = await context.params;
 
-    const adsSeller = await (prisma as any).adsSeller.findUnique({
-      where: { userId: user.userId },
-      select: { id: true },
-    });
-
-    if (!adsSeller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Ads seller not found" }, { status: 404 });
     }
+    const adsSeller = effective.seller;
 
     const ad = await (prisma as any).classifiedAd.findUnique({
       where: { id },
@@ -98,14 +95,11 @@ export async function DELETE(
     const user = requireAdsSeller(request);
     const { id } = await context.params;
 
-    const adsSeller = await (prisma as any).adsSeller.findUnique({
-      where: { userId: user.userId },
-      select: { id: true },
-    });
-
-    if (!adsSeller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Ads seller not found" }, { status: 404 });
     }
+    const adsSeller = effective.seller;
 
     const ad = await (prisma as any).classifiedAd.findUnique({
       where: { id },

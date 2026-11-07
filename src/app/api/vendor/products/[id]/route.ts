@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { generateSlug, generateUniqueSlug } from "@/lib/utils/slug";
@@ -19,16 +19,15 @@ export async function GET(
 
     const { id } = await params;
 
-    // Look up vendor record (TokenPayload has no vendorId field)
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
-    if (!vendorRecord) {
+    // Look up vendor record
+    const effective = await getEffectiveVendor(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     // Get product with ownership check
@@ -93,16 +92,15 @@ export async function PATCH(
 
     const { id } = await params;
 
-    // Look up vendor record (TokenPayload has no vendorId field)
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
-    if (!vendorRecord) {
+    // Look up vendor record
+    const effective = await getEffectiveVendor(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     // Check if product exists and belongs to vendor
@@ -311,16 +309,15 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Look up vendor record (TokenPayload has no vendorId field)
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
-    if (!vendorRecord) {
+    // Look up vendor record
+    const effective = await getEffectiveVendor(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     // Check if product exists and belongs to vendor

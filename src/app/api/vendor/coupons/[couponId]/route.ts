@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { updateCouponSchema } from "@/lib/validations/coupon";
 
@@ -25,17 +25,16 @@ export async function GET(
     const { couponId } = await params;
 
     // Get vendor record to resolve vendorId
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
+    const effective = await getEffectiveVendor(user.userId);
 
-    if (!vendorRecord) {
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
 
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     const coupon = await prisma.coupon.findUnique({
@@ -139,17 +138,16 @@ export async function PATCH(
     const { couponId } = await params;
 
     // Get vendor record to resolve vendorId
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
+    const effective = await getEffectiveVendor(user.userId);
 
-    if (!vendorRecord) {
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
 
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     // Check if coupon exists and belongs to vendor
@@ -264,17 +262,16 @@ export async function DELETE(
     const { couponId } = await params;
 
     // Get vendor record to resolve vendorId
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
+    const effective = await getEffectiveVendor(user.userId);
 
-    if (!vendorRecord) {
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
 
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     // Check if coupon exists and belongs to vendor

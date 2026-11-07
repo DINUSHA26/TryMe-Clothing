@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth-helpers";
+import { getAuthUser, getEffectiveVendor } from "@/lib/auth-helpers";
 
 async function resolveVendor(request: NextRequest) {
   let userId = request.headers.get("X-User-Id");
@@ -16,10 +16,8 @@ async function resolveVendor(request: NextRequest) {
   }
   if (!userId) return null;
 
-  const vendorRecord = await prisma.vendor.findUnique({
-    where: { userId },
-  });
-  return vendorRecord;
+  const effective = await getEffectiveVendor(userId);
+  return effective?.vendor || null;
 }
 
 export async function GET(request: NextRequest) {

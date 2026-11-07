@@ -5,7 +5,7 @@
  * Shown when user cancels payment on PayHere
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { XCircle, Loader2, AlertCircle } from "lucide-react";
 
 interface PaymentCancelPageProps {
-  params: { orderId: string };
+  params: Promise<{ orderId: string }>;
 }
 
 export default function PaymentCancelPage({
   params,
 }: PaymentCancelPageProps) {
+  const { orderId } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +29,7 @@ export default function PaymentCancelPage({
   useEffect(() => {
     async function fetchOrder() {
       try {
-        const response = await fetch(`/api/orders/${params.orderId}`);
+        const response = await fetch(`/api/orders/${orderId}`);
         const result = await response.json();
 
         if (!result.success) {
@@ -46,7 +47,7 @@ export default function PaymentCancelPage({
     }
 
     fetchOrder();
-  }, [params.orderId]);
+  }, [orderId]);
 
   if (loading) {
     return (
@@ -143,7 +144,7 @@ export default function PaymentCancelPage({
           {/* Action Buttons */}
           <div className="flex gap-3">
             <Button
-              onClick={() => router.push(`/payment/${params.orderId}`)}
+              onClick={() => router.push(`/payment/${orderId}`)}
               className="flex-1"
             >
               Try Payment Again

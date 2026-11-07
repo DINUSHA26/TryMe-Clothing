@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 async function generatePosOrderNumber(tx: any): Promise<string> {
@@ -88,28 +88,11 @@ export async function POST(request: NextRequest) {
   try {
     const user = requireVendor(request);
 
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-      select: {
-        id: true,
-        businessName: true,
-        businessPhone: true,
-        businessEmail: true,
-        businessAddress: true,
-        logo: true,
-        slug: true,
-        websiteConfig: {
-          select: {
-            heroSection: true,
-            contactSection: true,
-          },
-        },
-      },
-    });
-
-    if (!vendor) {
+    const effective = await getEffectiveVendor(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
     }
+    const vendor = effective.vendor;
 
     const body = await request.json();
     const {

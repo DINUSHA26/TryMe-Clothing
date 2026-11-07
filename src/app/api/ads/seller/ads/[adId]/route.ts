@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdsSeller, handleAuthError } from "@/lib/auth-helpers";
+import { requireAdsSeller, handleAuthError, getEffectiveAdsSeller } from "@/lib/auth-helpers";
 import { createNotification } from "@/lib/notifications/notificationService";
 
 /**
@@ -15,16 +15,14 @@ export async function GET(
     const user = requireAdsSeller(request);
     const { adId } = await params;
 
-    const seller = await prisma.adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Seller profile not found" },
         { status: 404 }
       );
     }
+    const seller = effective.seller;
 
     const ad = await prisma.classifiedAd.findUnique({
       where: { id: adId },
@@ -72,16 +70,14 @@ export async function PUT(
     const { adId } = await params;
     const body = await request.json();
 
-    const seller = await prisma.adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Seller profile not found" },
         { status: 404 }
       );
     }
+    const seller = effective.seller;
 
     const existingAd = await prisma.classifiedAd.findUnique({
       where: { id: adId },
@@ -170,16 +166,14 @@ export async function PATCH(
     const { adId } = await params;
     const body = await request.json();
 
-    const seller = await prisma.adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Seller profile not found" },
         { status: 404 }
       );
     }
+    const seller = effective.seller;
 
     const existingAd = await prisma.classifiedAd.findUnique({
       where: { id: adId },
@@ -236,8 +230,16 @@ export async function DELETE(
     const { adId } = await params;
 
     // Get seller profile
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
+      return NextResponse.json(
+        { success: false, error: "Seller profile not found" },
+        { status: 404 }
+      );
+    }
+
     const seller = await prisma.adsSeller.findUnique({
-      where: { userId: user.userId },
+      where: { id: effective.seller.id },
       include: {
         subscriptions: {
           where: { status: "ACTIVE" },

@@ -286,7 +286,7 @@ export async function releaseVendorFunds(
     }, new Decimal(0));
 
     // If this vendor is the coupon's vendor, deduct discountAmount
-    if (order.coupon?.vendorId === vendorId) {
+    if ((order as any).coupon?.vendorId === vendorId) {
       grossAmount = grossAmount.sub(order.discountAmount);
     }
 
@@ -413,7 +413,7 @@ export async function refundOrder(
 
     // Calculate amounts to refund (matching creditVendorWallets & releaseVendorFunds logic)
     let grossAmount = items.reduce((sum, item) => sum.add(item.totalPrice), new Decimal(0));
-    if (order.coupon?.vendorId === vendorId) {
+    if ((order as any).coupon?.vendorId === vendorId) {
       grossAmount = grossAmount.sub(order.discountAmount);
     }
     const commissionRate = items[0].vendor.commissionRate;

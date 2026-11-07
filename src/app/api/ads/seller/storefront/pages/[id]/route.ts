@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdsSeller, handleAuthError } from "@/lib/auth-helpers";
+import { requireAdsSeller, handleAuthError, getEffectiveAdsSeller } from "@/lib/auth-helpers";
 
 export async function PUT(
   request: NextRequest,
@@ -10,16 +10,14 @@ export async function PUT(
     const user = requireAdsSeller(request);
     const { id } = await params;
 
-    const seller = await prisma.adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Ads Seller profile not found" },
         { status: 404 }
       );
     }
+    const seller = effective.seller;
 
     const page = await prisma.adsSellerPage.findUnique({
       where: { id },
@@ -106,16 +104,14 @@ export async function DELETE(
     const user = requireAdsSeller(request);
     const { id } = await params;
 
-    const seller = await prisma.adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Ads Seller profile not found" },
         { status: 404 }
       );
     }
+    const seller = effective.seller;
 
     const page = await prisma.adsSellerPage.findUnique({
       where: { id },

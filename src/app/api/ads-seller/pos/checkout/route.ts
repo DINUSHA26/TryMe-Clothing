@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdsSeller, handleAuthError } from "@/lib/auth-helpers";
+import { requireAdsSeller, handleAuthError, getEffectiveAdsSeller } from "@/lib/auth-helpers";
 import { getOrCreateAdsSellerVendor, getOrCreateVendorProduct } from "@/lib/ads-seller-vendor";
 import { Prisma } from "@prisma/client";
 
@@ -83,19 +83,11 @@ export async function POST(request: NextRequest) {
   try {
     const user = requireAdsSeller(request);
 
-    const adsSeller = await (prisma as any).adsSeller.findUnique({
-      where: { userId: user.userId },
-      select: {
-        id: true,
-        businessName: true,
-        phone: true,
-        user: { select: { id: true, email: true } },
-      },
-    });
-
-    if (!adsSeller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Ads seller not found" }, { status: 404 });
     }
+    const adsSeller = effective.seller;
 
     const sellerVendor = await getOrCreateAdsSellerVendor(user.userId);
     if (!sellerVendor) {

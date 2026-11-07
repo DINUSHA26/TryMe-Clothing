@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdsSeller, handleAuthError } from "@/lib/auth-helpers";
+import { requireAdsSeller, handleAuthError, getEffectiveAdsSeller } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
 
@@ -10,13 +10,11 @@ import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
 export async function GET(request: NextRequest) {
   try {
     const user = requireAdsSeller(request);
-    const seller = await (prisma as any).adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Ads seller not found" }, { status: 404 });
     }
+    const seller = effective.seller;
 
     const sellerVendor = await getOrCreateAdsSellerVendor(user.userId);
     const vendorId = sellerVendor?.vendor.id;
@@ -224,13 +222,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = requireAdsSeller(request);
-    const seller = await (prisma as any).adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Ads seller not found" }, { status: 404 });
     }
+    const seller = effective.seller;
 
     const body = await request.json();
     const { customerName, rating = 5, comment = "", itemName = "Store Review", itemImage = null } = body;
@@ -299,13 +295,11 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const user = requireAdsSeller(request);
-    const seller = await (prisma as any).adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Ads seller not found" }, { status: 404 });
     }
+    const seller = effective.seller;
 
     const body = await request.json();
     const { action, reviewId, replyText } = body;

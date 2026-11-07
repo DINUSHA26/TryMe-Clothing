@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdsSeller, handleAuthError } from "@/lib/auth-helpers";
+import { requireAdsSeller, handleAuthError, getEffectiveAdsSeller } from "@/lib/auth-helpers";
 
 export async function GET(request: NextRequest) {
   try {
     const user = requireAdsSeller(request);
 
-    const seller = await prisma.adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Ads Seller profile not found" },
         { status: 404 }
       );
     }
+    const seller = effective.seller;
 
     const pages = await prisma.adsSellerPage.findMany({
       where: { sellerId: seller.id },
@@ -41,16 +39,14 @@ export async function POST(request: NextRequest) {
   try {
     const user = requireAdsSeller(request);
 
-    const seller = await prisma.adsSeller.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!seller) {
+    const effective = await getEffectiveAdsSeller(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Ads Seller profile not found" },
         { status: 404 }
       );
     }
+    const seller = effective.seller;
 
     const body = await request.json();
     const { title, content, imageUrl, isPublished = true, sortOrder = 0 } = body;

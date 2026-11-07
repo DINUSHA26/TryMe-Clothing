@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { exportRequestSchema } from "@/lib/validations/report";
 import Papa from "papaparse";
@@ -32,12 +32,11 @@ export async function POST(request: NextRequest) {
     const { reportType, filters } = validation.data;
 
     // Get vendor record
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
-    if (!vendorRecord) {
+    const effective = await getEffectiveVendor(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
     }
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     let data: any[] = [];

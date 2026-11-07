@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { reorderImagesSchema } from "@/lib/validations/product";
 
@@ -15,16 +15,15 @@ export async function PATCH(
     // Auth check
     const user = requireVendor(request);
 
-    // Look up vendor record (TokenPayload has no vendorId field)
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
-    if (!vendorRecord) {
+    // Look up vendor record
+    const effective = await getEffectiveVendor(user.userId);
+    if (!effective) {
       return NextResponse.json(
         { success: false, error: "Vendor not found" },
         { status: 404 }
       );
     }
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     const { id: productId } = await params;

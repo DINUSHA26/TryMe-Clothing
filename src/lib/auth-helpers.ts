@@ -125,13 +125,18 @@ import { prisma } from "./prisma";
 export async function getEffectiveVendor(userId: string) {
   const owner = await prisma.vendor.findUnique({
     where: { userId },
+    include: { websiteConfig: true, wallet: true },
   });
   if (owner) {
     return { vendor: owner, isOwner: true, staff: null };
   }
   const staff = await prisma.staffMember.findUnique({
     where: { userId },
-    include: { vendor: true, role: true, user: { select: { isActive: true } } },
+    include: {
+      vendor: { include: { websiteConfig: true, wallet: true } },
+      role: true,
+      user: { select: { isActive: true } },
+    },
   });
   if (staff && staff.vendor && staff.isActive && staff.user.isActive) {
     return { vendor: staff.vendor, isOwner: false, staff };
@@ -143,17 +148,22 @@ export async function getEffectiveVendor(userId: string) {
  * Resolves the Ads Seller store for either the direct owner or an authorized staff member.
  */
 export async function getEffectiveAdsSeller(userId: string) {
-  const owner = await prisma.adsSeller.findUnique({
+  const owner = await (prisma as any).adsSeller.findUnique({
     where: { userId },
+    include: { servicePages: true, subscriptions: true },
   });
   if (owner) {
     return { seller: owner, isOwner: true, staff: null };
   }
-  const staff = await prisma.staffMember.findUnique({
+  const staff = await (prisma as any).staffMember.findUnique({
     where: { userId },
-    include: { adsSeller: true, role: true, user: { select: { isActive: true } } },
+    include: {
+      adsSeller: { include: { servicePages: true, subscriptions: true } },
+      role: true,
+      user: { select: { isActive: true } },
+    },
   });
-  if (staff && staff.adsSeller && staff.isActive && staff.user.isActive) {
+  if (staff && staff.adsSeller && staff.isActive && staff.user?.isActive) {
     return { seller: staff.adsSeller, isOwner: false, staff };
   }
   return null;

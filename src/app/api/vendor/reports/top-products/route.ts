@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
+import { requireVendor, handleAuthError, getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { topItemsFiltersSchema } from "@/lib/validations/report";
 
@@ -38,12 +38,11 @@ export async function GET(request: NextRequest) {
     const { dateFrom, dateTo, limit, sortBy } = validation.data;
 
     // Get vendor record
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: user.userId },
-    });
-    if (!vendorRecord) {
+    const effective = await getEffectiveVendor(user.userId);
+    if (!effective) {
       return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
     }
+    const vendorRecord = effective.vendor;
     const vendorId = vendorRecord.id;
 
     // Build where clause

@@ -6,6 +6,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
+import { getEffectiveVendor } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getVendorOrders as getVendorOrdersDirect } from "@/lib/services/vendor-order-service";
 import { VendorOrdersTable } from "@/components/vendor/orders/VendorOrdersTable";
@@ -36,13 +37,12 @@ async function getVendorOrders(searchParams: SearchParams) {
   }
 
   try {
-    const vendorRecord = await prisma.vendor.findUnique({
-      where: { userId: payload.userId },
-    });
+    const effective = await getEffectiveVendor(payload.userId);
 
-    if (!vendorRecord) {
+    if (!effective) {
       return { error: "Vendor profile not found" };
     }
+    const vendorRecord = effective.vendor;
 
     const data = await getVendorOrdersDirect(vendorRecord.id, {
       page: searchParams.page,
