@@ -304,7 +304,17 @@ export default function AdsSellerServicesPage() {
                         <TableCell>
                           <div className="max-w-[240px]">
                             <span className="font-bold text-sm text-gray-900 block truncate">{srv.name}</span>
-                            {srv.shortDesc && (
+                            {(srv.district || srv.city) && (
+                              <span className="text-[11px] text-gray-500 block truncate font-medium">
+                                📍 {[srv.city, srv.district].filter(Boolean).join(", ")} •{" "}
+                                {srv.deliveryType === "DOORSTEP"
+                                  ? "Doorstep"
+                                  : srv.deliveryType === "AT_VENDOR"
+                                  ? "In-Store"
+                                  : "Store & Doorstep"}
+                              </span>
+                            )}
+                            {srv.shortDesc && !srv.district && (
                               <span className="text-xs text-gray-500 block truncate">{srv.shortDesc}</span>
                             )}
                             {srv.isFeatured && (

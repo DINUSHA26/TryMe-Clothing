@@ -19,7 +19,11 @@ import {
   Loader2,
   X,
   ExternalLink,
+  MapPin,
+  Car,
+  RefreshCw,
 } from "lucide-react";
+import { SL_LOCATIONS } from "@/lib/ads-locations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -65,8 +69,11 @@ function ServicesContent() {
   const selectedCategoryId = searchParams.get("categoryId") || "all";
   const searchParam = searchParams.get("search") || "";
   const priceTypeParam = searchParams.get("priceType") || "all";
+  const locationParam = searchParams.get("location") || "all";
+  const deliveryTypeParam = searchParams.get("deliveryType") || "all";
   const sortByParam = searchParams.get("sortBy") || "newest";
 
+  const districtList = Object.keys(SL_LOCATIONS);
   const [searchInput, setSearchInput] = useState(searchParam);
 
   // Inquiry Modal State
@@ -120,6 +127,12 @@ function ServicesContent() {
       if (priceTypeParam && priceTypeParam !== "all") {
         params.set("priceType", priceTypeParam);
       }
+      if (locationParam && locationParam !== "all") {
+        params.set("location", locationParam);
+      }
+      if (deliveryTypeParam && deliveryTypeParam !== "all") {
+        params.set("deliveryType", deliveryTypeParam);
+      }
       if (sortByParam) params.set("sortBy", sortByParam);
       params.set("page", String(pagination.page));
       params.set("limit", "12");
@@ -149,7 +162,7 @@ function ServicesContent() {
 
   useEffect(() => {
     fetchServices();
-  }, [selectedCategoryId, searchParam, priceTypeParam, sortByParam, pagination.page]);
+  }, [selectedCategoryId, searchParam, priceTypeParam, locationParam, deliveryTypeParam, sortByParam, pagination.page]);
 
   // Update URL params
   const updateQuery = (key: string, value: string) => {
@@ -325,16 +338,54 @@ function ServicesContent() {
             <span>Found {pagination.total} service(s)</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+            {/* Location / District Filter */}
+            <Select
+              value={locationParam}
+              onValueChange={(val) => updateQuery("location", val)}
+            >
+              <SelectTrigger className="h-9 w-36 sm:w-44 text-xs bg-card">
+                <MapPin className="w-3.5 h-3.5 mr-1 text-[#FF6600] shrink-0" />
+                <SelectValue placeholder="Location" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64 rounded-xl">
+                <SelectItem value="all">All Locations</SelectItem>
+                <SelectItem value="Islandwide" className="font-semibold text-[#FF6600]">
+                  🇱🇰 Islandwide
+                </SelectItem>
+                {districtList.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Delivery Option Filter */}
+            <Select
+              value={deliveryTypeParam}
+              onValueChange={(val) => updateQuery("deliveryType", val)}
+            >
+              <SelectTrigger className="h-9 w-36 sm:w-44 text-xs bg-card">
+                <SelectValue placeholder="Delivery Option" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="all">All Delivery Options</SelectItem>
+                <SelectItem value="DOORSTEP">🚗 Doorstep / Home Visit</SelectItem>
+                <SelectItem value="AT_VENDOR">🏢 At Store / Workshop</SelectItem>
+                <SelectItem value="BOTH">🔄 Both Available</SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* Price Type Filter */}
             <Select
               value={priceTypeParam}
               onValueChange={(val) => updateQuery("priceType", val)}
             >
-              <SelectTrigger className="h-9 w-36 text-xs bg-card">
+              <SelectTrigger className="h-9 w-32 sm:w-36 text-xs bg-card">
                 <SelectValue placeholder="Price Type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="all">All Pricing</SelectItem>
                 <SelectItem value="FIXED">Fixed Price</SelectItem>
                 <SelectItem value="STARTING_FROM">Starting From</SelectItem>
@@ -348,10 +399,10 @@ function ServicesContent() {
               value={sortByParam}
               onValueChange={(val) => updateQuery("sortBy", val)}
             >
-              <SelectTrigger className="h-9 w-40 text-xs bg-card">
+              <SelectTrigger className="h-9 w-34 sm:w-40 text-xs bg-card">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="newest">Newest First</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
@@ -452,9 +503,38 @@ function ServicesContent() {
 
                     {/* Duration badge if exists */}
                     {svc.duration && (
-                      <div className="absolute top-2.5 right-2.5 bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-sm flex items-center gap-1">
+                      <div className="absolute top-2.5 right-2.5 bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-300 text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-sm flex items-center gap-1">
                         <Clock className="w-3 h-3 text-[#FF6600]" />
                         {svc.duration}
+                      </div>
+                    )}
+
+                    {/* Bottom-left: Location Pill */}
+                    {(svc.city || svc.district) && (
+                      <div className="absolute bottom-2.5 left-2.5 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 max-w-[140px]">
+                        <MapPin className="w-3 h-3 text-orange-400 shrink-0" />
+                        <span className="truncate">
+                          {[svc.city, svc.district].filter(Boolean).join(", ")}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Bottom-right: Delivery Type Pill */}
+                    {svc.deliveryType && (
+                      <div className="absolute bottom-2.5 right-2.5 shadow-sm">
+                        {svc.deliveryType === "DOORSTEP" ? (
+                          <span className="bg-sky-600/90 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Car className="w-2.5 h-2.5" /> Doorstep
+                          </span>
+                        ) : svc.deliveryType === "AT_VENDOR" ? (
+                          <span className="bg-amber-600/90 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Store className="w-2.5 h-2.5" /> In-Store
+                          </span>
+                        ) : svc.deliveryType === "BOTH" ? (
+                          <span className="bg-emerald-600/90 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <RefreshCw className="w-2.5 h-2.5" /> Store & Home
+                          </span>
+                        ) : null}
                       </div>
                     )}
                   </Link>
@@ -479,8 +559,19 @@ function ServicesContent() {
                         {svc.name}
                       </Link>
 
+                      {/* Location & Coverage Row */}
+                      {(svc.district || svc.city || svc.serviceArea) && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 mb-1 truncate">
+                          <MapPin className="w-3.5 h-3.5 text-[#FF6600] shrink-0" />
+                          <span className="truncate font-medium text-slate-600 dark:text-slate-400">
+                            {[svc.city, svc.district].filter(Boolean).join(", ") || svc.district}
+                            {svc.serviceArea && ` • ${svc.serviceArea}`}
+                          </span>
+                        </div>
+                      )}
+
                       {/* Short Description */}
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1.5">
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                         {svc.shortDesc || svc.description}
                       </p>
 
@@ -510,27 +601,27 @@ function ServicesContent() {
                         </span>
                       </div>
 
-                      {/* Action buttons: WhatsApp / Inquire */}
-                      <div className="grid grid-cols-2 gap-2">
+                      {/* Beautiful Action Buttons: WhatsApp / Inquire */}
+                      <div className="grid grid-cols-2 gap-2 mt-2">
                         <Button
                           type="button"
                           size="sm"
                           onClick={() => handleOpenWhatsApp(svc)}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-sm h-8.5"
+                          className="bg-[#25D366] hover:bg-[#20ba59] active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-xs hover:shadow transition-all flex items-center justify-center gap-1.5 h-9"
                           title="Inquire directly on WhatsApp"
                         >
-                          <MessageCircle className="w-3.5 h-3.5 mr-1" />
-                          WhatsApp
+                          <MessageCircle className="w-4 h-4 fill-white/20" />
+                          <span>WhatsApp</span>
                         </Button>
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
                           onClick={() => handleOpenInquiryModal(svc)}
-                          className="border-slate-300 dark:border-slate-700 hover:bg-orange-50 hover:text-[#FF6600] hover:border-orange-200 font-semibold text-xs rounded-xl h-8.5"
+                          className="bg-orange-50/80 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-950/70 active:scale-[0.98] text-[#FF6600] border-orange-200 dark:border-orange-900/60 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 h-9"
                         >
-                          <Mail className="w-3.5 h-3.5 mr-1" />
-                          Inquire
+                          <Mail className="w-3.5 h-3.5" />
+                          <span>Inquire</span>
                         </Button>
                       </div>
                     </div>

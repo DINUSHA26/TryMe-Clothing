@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, X, UploadCloud, CheckCircle2 } from "lucide-react";
+import { Loader2, Plus, X, UploadCloud, CheckCircle2, MapPin, Store, Car, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/utils/image";
+import { SL_LOCATIONS } from "@/lib/ads-locations";
+import { cn } from "@/lib/utils";
 
 interface ServiceFormModalProps {
   isOpen: boolean;
@@ -39,6 +41,11 @@ export function ServiceFormModal({
   const [priceType, setPriceType] = useState<string>("FIXED");
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("");
+  const [deliveryType, setDeliveryType] = useState<string>("BOTH");
+  const [district, setDistrict] = useState<string>("Colombo");
+  const [city, setCity] = useState<string>("");
+  const [serviceArea, setServiceArea] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
   const [shortDesc, setShortDesc] = useState("");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -73,6 +80,11 @@ export function ServiceFormModal({
       setPriceType(service.priceType || "FIXED");
       setPrice(service.price != null ? String(service.price) : "");
       setDuration(service.duration || "");
+      setDeliveryType(service.deliveryType || "BOTH");
+      setDistrict(service.district || "Colombo");
+      setCity(service.city || "");
+      setServiceArea(service.serviceArea || "");
+      setAddress(service.address || "");
       setShortDesc(service.shortDesc || "");
       setDescription(service.description || "");
       setImages(Array.isArray(service.images) ? service.images : []);
@@ -87,6 +99,11 @@ export function ServiceFormModal({
       setPriceType("FIXED");
       setPrice("");
       setDuration("");
+      setDeliveryType("BOTH");
+      setDistrict("Colombo");
+      setCity("");
+      setServiceArea("");
+      setAddress("");
       setShortDesc("");
       setDescription("");
       setImages([]);
@@ -204,6 +221,11 @@ export function ServiceFormModal({
         priceType,
         price: priceType === "CONTACT_FOR_PRICE" || !price ? null : parseFloat(price),
         duration: duration.trim() || null,
+        deliveryType,
+        district: district && district !== "All Islandwide" ? district : "Islandwide",
+        city: city && city !== "none" ? city.trim() : null,
+        serviceArea: serviceArea.trim() || null,
+        address: address.trim() || null,
         shortDesc: shortDesc.trim() || null,
         description: description.trim(),
         images,
@@ -256,6 +278,9 @@ export function ServiceFormModal({
 
   const selectedCategoryObj = categories.find((c) => c.id === categoryId);
   const availableSubCategories = selectedCategoryObj?.subCategories || [];
+
+  const districtList = Object.keys(SL_LOCATIONS);
+  const availableCities = (district && SL_LOCATIONS[district]?.all) || [];
 
   const handleCategoryChange = (val: string) => {
     setCategoryId(val);
@@ -391,6 +416,174 @@ export function ServiceFormModal({
               onChange={(e) => setDuration(e.target.value)}
               className="rounded-xl text-sm"
             />
+          </div>
+
+          {/* ================= SERVICE DELIVERY & LOCATION SECTION ================= */}
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-orange-50/70 dark:bg-orange-950/25 border border-orange-200/80 dark:border-orange-900/50 space-y-4">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-[#FF6600]" />
+              <span className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
+                Service Delivery Mode & Location
+              </span>
+            </div>
+
+            {/* Delivery Mode: Customer visits / Doorstep / Both */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                Where is this service provided? <span className="text-red-500">*</span>
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* At Vendor */}
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType("AT_VENDOR")}
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all flex flex-col gap-1",
+                    deliveryType === "AT_VENDOR"
+                      ? "border-[#FF6600] bg-white dark:bg-slate-900 ring-2 ring-orange-400/30 shadow-xs"
+                      : "border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-slate-900/50 hover:border-gray-300"
+                  )}
+                >
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-gray-100">
+                    <Store className="w-3.5 h-3.5 text-[#FF6600]" />
+                    <span>Customer Visits Location</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-tight">
+                    Customer visits your store, studio, or workshop.
+                  </p>
+                </button>
+
+                {/* Doorstep / Home Service */}
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType("DOORSTEP")}
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all flex flex-col gap-1",
+                    deliveryType === "DOORSTEP"
+                      ? "border-[#FF6600] bg-white dark:bg-slate-900 ring-2 ring-orange-400/30 shadow-xs"
+                      : "border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-slate-900/50 hover:border-gray-300"
+                  )}
+                >
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-gray-100">
+                    <Car className="w-3.5 h-3.5 text-[#FF6600]" />
+                    <span>Doorstep / Home Visit</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-tight">
+                    You travel to the customer&apos;s home or office.
+                  </p>
+                </button>
+
+                {/* Both Available */}
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType("BOTH")}
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all flex flex-col gap-1",
+                    deliveryType === "BOTH"
+                      ? "border-[#FF6600] bg-white dark:bg-slate-900 ring-2 ring-orange-400/30 shadow-xs"
+                      : "border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-slate-900/50 hover:border-gray-300"
+                  )}
+                >
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-gray-100">
+                    <RefreshCw className="w-3.5 h-3.5 text-[#FF6600]" />
+                    <span>Both Options Available</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-tight">
+                    Customer can visit you, or you can visit them.
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {/* District & City Selection */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Primary District / Region <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={district}
+                  onValueChange={(val) => {
+                    setDistrict(val);
+                    setCity("");
+                  }}
+                >
+                  <SelectTrigger className="rounded-xl text-sm bg-white dark:bg-slate-900">
+                    <SelectValue placeholder="Select District" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60 rounded-xl">
+                    <SelectItem value="All Islandwide" className="font-semibold text-[#FF6600]">
+                      🇱🇰 All Islandwide / Across Sri Lanka
+                    </SelectItem>
+                    {districtList.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  City / Main Town <span className="text-gray-400 font-normal">(Optional)</span>
+                </Label>
+                {availableCities.length > 0 ? (
+                  <Select value={city} onValueChange={setCity}>
+                    <SelectTrigger className="rounded-xl text-sm bg-white dark:bg-slate-900">
+                      <SelectValue placeholder="Select City" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 rounded-xl">
+                      <SelectItem value="none" className="text-gray-400 italic">
+                        -- Entire District --
+                      </SelectItem>
+                      {availableCities.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    placeholder="e.g. Nugegoda, Negombo, Kandy City"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="rounded-xl text-sm bg-white dark:bg-slate-900"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Service Coverage / Radius */}
+            <div className="space-y-1.5">
+              <Label htmlFor="srv-coverage" className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                Service Coverage Area / Radius
+              </Label>
+              <Input
+                id="srv-coverage"
+                placeholder="e.g. Within 15km of Colombo, Western Province, or All Suburbs"
+                value={serviceArea}
+                onChange={(e) => setServiceArea(e.target.value)}
+                className="rounded-xl text-sm bg-white dark:bg-slate-900"
+              />
+            </div>
+
+            {/* Workshop Address (if customer visits) */}
+            {(deliveryType === "AT_VENDOR" || deliveryType === "BOTH") && (
+              <div className="space-y-1.5 animate-fadeIn">
+                <Label htmlFor="srv-address" className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Workshop / Store Address <span className="text-gray-400 font-normal">(Where customer visits)</span>
+                </Label>
+                <Input
+                  id="srv-address"
+                  placeholder="e.g. No. 45/B, High Level Road, Nugegoda"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="rounded-xl text-sm bg-white dark:bg-slate-900"
+                />
+              </div>
+            )}
           </div>
 
           {/* Short Summary */}

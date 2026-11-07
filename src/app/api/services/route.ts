@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const priceType = searchParams.get("priceType");
+    const location = searchParams.get("location") || searchParams.get("district");
+    const city = searchParams.get("city");
+    const deliveryType = searchParams.get("deliveryType");
     const sortBy = searchParams.get("sortBy") || "newest";
 
     const where: any = {
@@ -44,10 +47,34 @@ export async function GET(request: NextRequest) {
       where.subCategoryId = subCategoryId;
     }
 
+    // Delivery Type Filter
+    if (deliveryType && deliveryType !== "all") {
+      if (deliveryType === "DOORSTEP") {
+        where.deliveryType = { in: ["DOORSTEP", "BOTH"] };
+      } else if (deliveryType === "AT_VENDOR") {
+        where.deliveryType = { in: ["AT_VENDOR", "BOTH"] };
+      } else {
+        where.deliveryType = deliveryType;
+      }
+    }
+
+    // Location / District Filter
+    if (location && location !== "all" && location !== "All Sri Lanka" && location !== "Islandwide") {
+      where.OR = [
+        { district: { equals: location, mode: "insensitive" } },
+        { city: { contains: location, mode: "insensitive" } },
+        { serviceArea: { contains: location, mode: "insensitive" } },
+      ];
+    }
+
+    if (city && city !== "all") {
+      where.city = { contains: city, mode: "insensitive" };
+    }
+
     // Text Search
     if (search && search.trim()) {
       const q = search.trim();
-      where.OR = [
+      const searchConditions = [
         { name: { contains: q, mode: "insensitive" } },
         { description: { contains: q, mode: "insensitive" } },
         { shortDesc: { contains: q, mode: "insensitive" } },
@@ -55,7 +82,21 @@ export async function GET(request: NextRequest) {
         { subCategory: { name: { contains: q, mode: "insensitive" } } },
         { vendor: { businessName: { contains: q, mode: "insensitive" } } },
         { adsSeller: { businessName: { contains: q, mode: "insensitive" } } },
+        { district: { contains: q, mode: "insensitive" } },
+        { city: { contains: q, mode: "insensitive" } },
+        { serviceArea: { contains: q, mode: "insensitive" } },
+        { address: { contains: q, mode: "insensitive" } },
       ];
+
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          { OR: searchConditions },
+        ];
+        delete where.OR;
+      } else {
+        where.OR = searchConditions;
+      }
     }
 
     // Price filter

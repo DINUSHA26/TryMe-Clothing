@@ -170,6 +170,26 @@ export async function PATCH(
       updateData.duration = body.duration ? String(body.duration).trim() : null;
     }
 
+    if (body.deliveryType !== undefined) {
+      updateData.deliveryType = body.deliveryType;
+    }
+
+    if (body.district !== undefined) {
+      updateData.district = body.district ? String(body.district).trim() : null;
+    }
+
+    if (body.city !== undefined) {
+      updateData.city = body.city ? String(body.city).trim() : null;
+    }
+
+    if (body.serviceArea !== undefined) {
+      updateData.serviceArea = body.serviceArea ? String(body.serviceArea).trim() : null;
+    }
+
+    if (body.address !== undefined) {
+      updateData.address = body.address ? String(body.address).trim() : null;
+    }
+
     if (body.features !== undefined && Array.isArray(body.features)) {
       updateData.features = body.features.map((f: any) => String(f).trim()).filter(Boolean);
     }

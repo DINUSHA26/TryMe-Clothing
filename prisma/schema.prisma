@@ -1294,6 +1294,13 @@ enum ServicePriceType {
   CONTACT_FOR_PRICE
 }
 
+enum ServiceDeliveryType {
+  AT_VENDOR        // Customer visits provider's location / workshop / salon
+  DOORSTEP         // Provider visits customer's location / home service
+  BOTH             // Both options available (in-store & doorstep)
+  ONLINE           // Online / Remote service
+}
+
 model ServiceCategory {
   id          String           @id @default(cuid())
   name        String
@@ -1350,6 +1357,11 @@ model WebsiteService {
   price              Decimal?         @db.Decimal(10, 2)
   priceType          ServicePriceType @default(FIXED)
   duration           String?
+  deliveryType       ServiceDeliveryType @default(BOTH)
+  district           String?
+  city               String?
+  serviceArea        String?
+  address            String?
   images             String[]
   features           String[]
 
@@ -1371,6 +1383,8 @@ model WebsiteService {
   @@index([adsSellerId])
   @@index([categoryId])
   @@index([subCategoryId])
+  @@index([district])
+  @@index([deliveryType])
 }
 
 model ServiceInquiry {

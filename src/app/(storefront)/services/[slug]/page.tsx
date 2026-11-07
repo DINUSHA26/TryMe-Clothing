@@ -19,6 +19,8 @@ import {
   Sparkles,
   Loader2,
   MapPin,
+  Car,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -377,6 +379,69 @@ export default function ServiceDetailPage({
                 <p className="text-[11px] text-muted-foreground mt-1">
                   Services are booked directly via WhatsApp or inquiry without online checkout.
                 </p>
+              </div>
+
+              {/* Service Fulfilment & Location Card */}
+              <div className="p-4 rounded-xl bg-orange-50/60 dark:bg-orange-950/20 border border-orange-200/80 dark:border-orange-900/40 space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#FF6600]" />
+                  Service Fulfilment & Location
+                </span>
+
+                {/* Delivery Mode Banner */}
+                <div className="flex items-start gap-2.5 text-xs text-slate-700 dark:text-slate-300">
+                  {service.deliveryType === "DOORSTEP" ? (
+                    <>
+                      <div className="p-1.5 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 shrink-0">
+                        <Car className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="font-bold block text-foreground">Doorstep Service Available</span>
+                        <span className="text-muted-foreground text-[11px]">Provider visits your home or office location.</span>
+                      </div>
+                    </>
+                  ) : service.deliveryType === "AT_VENDOR" ? (
+                    <>
+                      <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 shrink-0">
+                        <Store className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="font-bold block text-foreground">In-Store / Studio Service</span>
+                        <span className="text-muted-foreground text-[11px]">Customer visits provider&apos;s workshop or store.</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 shrink-0">
+                        <RefreshCw className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="font-bold block text-foreground">Flexible: Store & Doorstep Options</span>
+                        <span className="text-muted-foreground text-[11px]">You can visit the provider, or request a home visit.</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Location & Coverage */}
+                {(service.district || service.city || service.serviceArea) && (
+                  <div className="pt-2 border-t border-orange-200/60 dark:border-orange-900/30 text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+                      <span>Area:</span>
+                      <span>{[service.city, service.district].filter(Boolean).join(", ") || service.district}</span>
+                    </div>
+                    {service.serviceArea && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Coverage: {service.serviceArea}
+                      </p>
+                    )}
+                    {service.address && (service.deliveryType === "AT_VENDOR" || service.deliveryType === "BOTH") && (
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                        Address: {service.address}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* CTA Action Buttons */}

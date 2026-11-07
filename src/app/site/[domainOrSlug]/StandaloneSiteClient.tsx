@@ -1221,6 +1221,21 @@ export default function StandaloneSiteClient({
             <h3 className="font-extrabold text-sm sm:text-base text-slate-900 group-hover:underline line-clamp-2">
               {s.name}
             </h3>
+            {(s.district || s.city || s.location) && (
+              <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-1 truncate">
+                <MapPin className="w-3 h-3 text-[#FF6600] shrink-0" />
+                <span className="truncate">
+                  {[s.city, s.district].filter(Boolean).join(", ") || s.district || s.location}
+                  {s.deliveryType === "DOORSTEP"
+                    ? " • Doorstep"
+                    : s.deliveryType === "AT_VENDOR"
+                    ? " • In-Store"
+                    : s.deliveryType === "BOTH"
+                    ? " • Store & Home"
+                    : ""}
+                </span>
+              </p>
+            )}
             {showDescription && s.description && (
               <p className="text-xs text-slate-500 mt-1 line-clamp-2">{s.description}</p>
             )}
