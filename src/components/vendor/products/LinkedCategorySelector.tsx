@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
     Select,
     SelectContent,
@@ -23,27 +23,30 @@ interface LinkedCategorySelectorProps {
 export function LinkedCategorySelector({ value, onValueChange }: LinkedCategorySelectorProps) {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-
     const [mainCategoryId, setMainCategoryId] = useState<string>("");
 
     useEffect(() => {
+        let isMounted = true;
         const fetchCategories = async () => {
             try {
-                const response = await fetch("/api/categories?pageSize=100");
+                const response = await fetch("/api/categories");
                 const result = await response.json();
-                if (result.success && result.data.categories) {
+                if (result.success && result.data.categories && isMounted) {
                     setCategories(result.data.categories);
                 }
             } catch (error) {
                 console.error("Error fetching categories:", error);
             } finally {
-                setIsLoading(false);
+                if (isMounted) setIsLoading(false);
             }
         };
         fetchCategories();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
-    // When categories load, if we have a value (selected subcategory), figure out its main category
+    // When categories load or value is provided, sync mainCategoryId without mutating value
     useEffect(() => {
         if (categories.length > 0 && value) {
             const selectedCat = categories.find((c) => c.id === value);
@@ -56,6 +59,22 @@ export function LinkedCategorySelector({ value, onValueChange }: LinkedCategoryS
             }
         }
     }, [categories, value]);
+
+    const handleMainCategoryChange = useCallback((newMainId: string) => {
+        setMainCategoryId(newMainId);
+        const subCats = categories.filter((c) => c.parentId === newMainId);
+        if (subCats.length === 0) {
+            // Main category has no subcategories: select it directly
+            onValueChange(newMainId);
+        } else {
+            // Check if current value is already a subcategory of this main category
+            const isCurrentSub = subCats.some((c) => c.id === value);
+            if (!isCurrentSub) {
+                // Auto-select first subcategory so category is always valid and not blank
+                onValueChange(subCats[0].id);
+            }
+        }
+    }, [categories, value, onValueChange]);
 
     const mainCategories = categories.filter((c) => !c.parentId);
     const subCategories = categories.filter((c) => c.parentId === mainCategoryId);
@@ -77,17 +96,7 @@ export function LinkedCategorySelector({ value, onValueChange }: LinkedCategoryS
             {/* Main Category Selector */}
             <Select
                 value={mainCategoryId || undefined}
-                onValueChange={(val) => {
-                    setMainCategoryId(val);
-                    // Auto-select if no subcategories? The prompt implies choosing a main category populates the subcategory menu.
-                    // Reset the actual category value until a subcategory is selected, OR if the main category has no subcategories, select it.
-                    const subCats = categories.filter((c) => c.parentId === val);
-                    if (subCats.length === 0) {
-                        onValueChange(val); // Select main category directly if no subcategories exist
-                    } else {
-                        onValueChange(""); // Force user to pick a subcategory
-                    }
-                }}
+                onValueChange={handleMainCategoryChange}
             >
                 <SelectTrigger>
                     <SelectValue placeholder="Select Main Category" />
@@ -104,9 +113,9 @@ export function LinkedCategorySelector({ value, onValueChange }: LinkedCategoryS
             {/* Sub Category Selector */}
             {subCategories.length > 0 && (
                 <Select
-                    value={value === mainCategoryId ? "" : value} // don't highlight subcategory if it's main
+                    value={value || undefined}
                     onValueChange={(val) => {
-                        onValueChange(val);
+                        if (val) onValueChange(val);
                     }}
                 >
                     <SelectTrigger>

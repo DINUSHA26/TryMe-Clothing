@@ -52,6 +52,10 @@ export default function EditProductPage({
         sku: productData.sku || "",
         stock: productData.stock,
         lowStockThreshold: productData.lowStockThreshold,
+        unit: productData.unit || "PCS",
+        showOnWebsite: productData.showOnWebsite !== undefined ? productData.showOnWebsite : true,
+        showOnMarketplace: productData.showOnMarketplace !== undefined ? productData.showOnMarketplace : true,
+        sizeChart: productData.sizeChart || "",
         images: productData.images.map((img: any) => ({
           id: img.id,
           url: img.url,

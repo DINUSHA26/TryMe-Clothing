@@ -410,11 +410,11 @@ const DEFAULT_VENDOR_ROLES: { name: string; description: string; permissions: st
   },
   {
     name: "Cashier / POS Operator",
-    description: "Operates store POS terminal, looks up products and views orders",
+    description: "Operates store POS terminal, looks up products, manages inventory and views orders",
     permissions: [
       "pos.view", "pos.create",
-      "products.view",
-      "orders.view",
+      "products.view", "products.create", "products.edit",
+      "orders.view", "orders.edit",
     ],
   },
   {
@@ -481,11 +481,11 @@ const DEFAULT_ADS_SELLER_ROLES: { name: string; description: string; permissions
   },
   {
     name: "Sales & Orders Agent",
-    description: "Handles orders, POS checkout, and inquiries",
+    description: "Handles orders, POS checkout, product management and inquiries",
     permissions: [
       "orders.view", "orders.edit",
       "pos.view", "pos.create",
-      "products.view",
+      "products.view", "products.create", "products.edit",
       "ai.view",
     ],
   },

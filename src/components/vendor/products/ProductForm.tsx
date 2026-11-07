@@ -355,7 +355,7 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
           e.preventDefault();
           handleFormSubmit(false);
         }}
-        className="space-y-8"
+        className="space-y-8 pb-12"
       >
         {/* Basic Information Section */}
         <div className="space-y-6">

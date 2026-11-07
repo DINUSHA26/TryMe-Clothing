@@ -29,7 +29,18 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
         if (/^(PW|WEB|POS)-/i.test(segment)) {
           label = `#${segment.toUpperCase()}`;
         } else if (/^c[a-z0-9]{20,}$/i.test(segment)) {
-          label = "Order Details";
+          const prev = array[index - 1]?.toLowerCase();
+          if (prev === "products") {
+            label = "Product Details";
+          } else if (prev === "orders") {
+            label = "Order Details";
+          } else if (prev === "coupons") {
+            label = "Coupon Details";
+          } else if (prev === "staff") {
+            label = "Staff Details";
+          } else {
+            label = "Details";
+          }
         } else {
           label = segment
             .split("-")
