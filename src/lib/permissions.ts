@@ -181,13 +181,17 @@ export function splitPermission(p: string): [string, string] {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ADMIN_OPEN_PAGES = ["/admin", "/admin/change-password", "/admin/login"];
-const ADMIN_OPEN_API_PREFIXES = ["/api/admin/access"];
+const ADMIN_OPEN_API_PREFIXES = ["/api/admin/access", "/api/admin/reports/overview"];
 
 const VENDOR_OPEN_PAGES = ["/vendor", "/vendor/change-password", "/vendor/login"];
-const VENDOR_OPEN_API_PREFIXES = ["/api/vendor/access"];
+const VENDOR_OPEN_API_PREFIXES = ["/api/vendor/access", "/api/vendor/reports/overview"];
 
 const ADS_SELLER_OPEN_PAGES = ["/ads-seller", "/ads-seller/change-password", "/ads-seller/login"];
-const ADS_SELLER_OPEN_API_PREFIXES = ["/api/ads-seller/access"];
+const ADS_SELLER_OPEN_API_PREFIXES = [
+  "/api/ads-seller/access",
+  "/api/ads-seller/reports/overview",
+  "/api/vendor/reports/overview",
+];
 
 const APPROVE_RE = /(approve|reject|verify|confirm|resolve|release)/i;
 
