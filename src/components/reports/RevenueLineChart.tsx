@@ -103,6 +103,7 @@ export function RevenueLineChart({
             <YAxis
               className="text-xs"
               tick={{ fill: "currentColor" }}
+              width={80}
               tickFormatter={(value) => formatValue(value)}
             />
             <Tooltip content={<CustomTooltip />} />

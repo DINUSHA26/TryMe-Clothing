@@ -33,13 +33,13 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
     const percentage = total > 0 ? ((data.value as number) / total) * 100 : 0;
 
     return (
-      <div className="bg-background border rounded-lg shadow-lg p-3">
-        <p className="font-medium mb-1">{data.name}</p>
-        <p className="text-sm text-muted-foreground">
-          Count: <span className="font-medium text-foreground">{data.value}</span>
+      <div className="bg-background border rounded-xl shadow-lg p-3 min-w-[150px]">
+        <p className="font-bold text-sm mb-1 text-foreground">{data.name} Plan</p>
+        <p className="text-xs text-muted-foreground">
+          Subscribers: <span className="font-bold text-foreground">{data.value} sellers</span>
         </p>
-        <p className="text-sm text-muted-foreground">
-          Percentage: <span className="font-medium text-foreground">{percentage.toFixed(1)}%</span>
+        <p className="text-xs text-muted-foreground">
+          Percentage: <span className="font-bold text-foreground">{percentage.toFixed(1)}%</span>
         </p>
       </div>
     );
@@ -143,18 +143,18 @@ export function PieChartCard({
         </ResponsiveContainer>
 
         {showLegend && (
-          <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
+          <div className="mt-4 pt-3 border-t flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs">
             {dataWithTotal.map((entry, index) => {
               const percentage = total > 0 ? ((entry.value / total) * 100).toFixed(1) : "0";
               const color = chartColors[index % chartColors.length];
               return (
-                <div key={index} className="flex items-center gap-1.5 min-w-[120px] sm:min-w-[auto]">
+                <div key={index} className="flex items-center gap-2">
                   <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    className="w-3 h-3 rounded-full shrink-0 shadow-xs"
                     style={{ backgroundColor: color }}
                   />
                   <span className="text-muted-foreground font-medium">
-                    {entry.name} <span className="text-foreground">({percentage}%)</span>
+                    {entry.name}: <strong className="text-foreground font-bold">{entry.value}</strong> ({percentage}%)
                   </span>
                 </div>
               );

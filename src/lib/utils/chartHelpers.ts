@@ -73,18 +73,24 @@ export function formatChartCurrency(value: number, showSymbol: boolean = true): 
     return `${symbol}${(value / 1000).toFixed(0)}K`;
   }
 
-  // For values >= 10K, show as "12.5K"
+  // For values >= 10K, show as "12.5K" (or "12K" if whole)
   if (Math.abs(value) >= 10000) {
-    return `${symbol}${(value / 1000).toFixed(1)}K`;
+    const k = value / 1000;
+    return `${symbol}${k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)}K`;
   }
 
-  // For values >= 1K, show as "1.23K"
+  // For values >= 1K, show as "1.5K" (or "1K" if whole)
   if (Math.abs(value) >= 1000) {
-    return `${symbol}${(value / 1000).toFixed(2)}K`;
+    const k = value / 1000;
+    return `${symbol}${k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)}K`;
   }
 
-  // For smaller values, show with 2 decimals
-  return `${symbol}${value.toFixed(2)}`;
+  // For smaller values, show clean integer without trailing .00
+  if (Math.abs(value % 1) < 0.01) {
+    return `${symbol}${Math.round(value)}`;
+  }
+
+  return `${symbol}${value.toFixed(1)}`;
 }
 
 /**

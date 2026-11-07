@@ -111,7 +111,7 @@ export function BarChartCard({
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={height}>
-          <BarChart data={processedData} margin={{ top: 5, right: 30, left: 20, bottom: 75 }}>
+          <BarChart data={processedData} margin={{ top: 10, right: 30, left: 15, bottom: 75 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis
               dataKey={xKey}
@@ -124,6 +124,7 @@ export function BarChartCard({
             <YAxis
               className="text-xs"
               tick={{ fill: "currentColor" }}
+              width={80}
               tickFormatter={(value) => yAxisFormatter(value)}
             />
             <Tooltip content={<CustomTooltip formatter={tooltipFormatter} />} />

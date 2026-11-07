@@ -132,6 +132,7 @@ export function VendorEarningsBreakdown({
             <YAxis
               className="text-xs"
               tick={{ fill: "currentColor" }}
+              width={80}
               tickFormatter={(value) => `Rs. ${(value / 1000).toFixed(0)}K`}
             />
             <Tooltip content={<CustomTooltip />} />
