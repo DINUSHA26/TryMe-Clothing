@@ -176,7 +176,7 @@ export function validateStatusTransition(
   if (role === "CUSTOMER") {
     if (newStatus === "CANCELLED") {
       // Can cancel within 24h if not yet shipped
-      if (!["PENDING_PAYMENT", "PAYMENT_CONFIRMED"].includes(currentStatus)) {
+      if (!["PENDING_PAYMENT", "PENDING_VERIFICATION", "PAYMENT_CONFIRMED", "PROCESSING"].includes(currentStatus)) {
         return {
           isValid: false,
           error: "Cannot cancel order after it has been shipped"
@@ -196,7 +196,7 @@ export function validateStatusTransition(
 
     // Customer marks order as DELIVERED (new canonical delivery confirmation)
     if (newStatus === "DELIVERED") {
-      if (currentStatus !== "SHIPPED") {
+      if (!["SHIPPED", "PARTIALLY_SHIPPED"].includes(currentStatus)) {
         return {
           isValid: false,
           error: "Order must be shipped before you can confirm delivery"
@@ -207,7 +207,7 @@ export function validateStatusTransition(
 
     // Legacy: DELIVERY_CONFIRMED still accepted for backward compatibility
     if (newStatus === "DELIVERY_CONFIRMED") {
-      if (!["SHIPPED", "DELIVERED"].includes(currentStatus)) {
+      if (!["SHIPPED", "PARTIALLY_SHIPPED", "DELIVERED"].includes(currentStatus)) {
         return {
           isValid: false,
           error: "Order must be shipped before you can confirm delivery"
@@ -252,8 +252,8 @@ export function validateStatusTransition(
   // Vendor-specific validations
   if (role === "VENDOR") {
     const allowedTransitions: Record<string, string[]> = {
-      PAYMENT_CONFIRMED: ["PROCESSING"],
-      PROCESSING: ["SHIPPED"],
+      PAYMENT_CONFIRMED: ["PROCESSING", "SHIPPED", "CANCELLED"],
+      PROCESSING: ["SHIPPED", "CANCELLED"],
     };
 
     if (!allowedTransitions[currentStatus]?.includes(newStatus)) {
@@ -307,17 +307,16 @@ export function calculateOrderActions(order: {
   return {
     canPay: order.status === "PENDING_PAYMENT",
     canCancel:
-      ["PENDING_PAYMENT", "PAYMENT_CONFIRMED"].includes(order.status) &&
+      ["PENDING_PAYMENT", "PENDING_VERIFICATION", "PAYMENT_CONFIRMED", "PROCESSING"].includes(order.status) &&
       hoursSinceOrder <= 24,
     cancelReason:
       hoursSinceOrder > 24
         ? "Cancellation window expired (must be within 24 hours of order placement)"
-        : ["PROCESSING", "SHIPPED", "DELIVERED"].includes(order.status)
+        : ["SHIPPED", "PARTIALLY_SHIPPED", "DELIVERED", "DELIVERY_CONFIRMED", "COMPLETED"].includes(order.status)
         ? "Order already shipped or delivered"
         : undefined,
-    // Customer can confirm from SHIPPED only (clicking → DELIVERED + funds released)
-    // DELIVERED and DELIVERY_CONFIRMED are already terminal delivery states
-    canConfirmDelivery: order.status === "SHIPPED",
+    // Customer can confirm from SHIPPED or PARTIALLY_SHIPPED (clicking → DELIVERED + funds released)
+    canConfirmDelivery: ["SHIPPED", "PARTIALLY_SHIPPED"].includes(order.status),
     canRequestReturn:
       ["DELIVERED", "DELIVERY_CONFIRMED"].includes(order.status) &&
       (hoursSinceDelivery ?? 0) <= 24,

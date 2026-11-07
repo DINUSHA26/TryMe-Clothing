@@ -79,11 +79,11 @@ export async function markOrderDelivered(
     };
   }
 
-  // 3. Validate current status — must be SHIPPED to proceed
-  if (order.status !== "SHIPPED") {
+  // 3. Validate current status — must be SHIPPED or PARTIALLY_SHIPPED to proceed
+  if (!["SHIPPED", "PARTIALLY_SHIPPED"].includes(order.status)) {
     return {
       success: false,
-      message: `Order must be in SHIPPED status to mark as delivered (current: ${order.status})`,
+      message: `Order must be in SHIPPED or PARTIALLY_SHIPPED status to mark as delivered (current: ${order.status})`,
     };
   }
 

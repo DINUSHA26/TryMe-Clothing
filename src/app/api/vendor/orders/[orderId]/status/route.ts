@@ -20,37 +20,29 @@ async function updateParentOrderStatus(orderId: string, tx: any): Promise<void> 
 
   if (!order) return;
 
-  const itemStatuses = order.items.map((i: any) => i.status);
-  const uniqueStatuses = [...new Set(itemStatuses)];
+  const nonCancelledItems = order.items.filter((i: any) => i.status !== "CANCELLED");
 
   let newStatus = order.status;
 
-  if (uniqueStatuses.length === 1) {
-    const commonStatus = uniqueStatuses[0] as string;
-    if (
-      [
-        "PENDING_VERIFICATION",
-        "PAYMENT_CONFIRMED",
-        "PROCESSING",
-        "SHIPPED",
-        "DELIVERED",
-        "COMPLETED",
-        "CANCELLED",
-      ].includes(commonStatus)
-    ) {
-      newStatus = commonStatus;
-    }
+  if (nonCancelledItems.length === 0) {
+    newStatus = "CANCELLED";
   } else {
-    if (itemStatuses.some((s: string) => s === "PAYMENT_CONFIRMED")) {
-      newStatus = "PAYMENT_CONFIRMED";
-    } else if (itemStatuses.some((s: string) => s === "PROCESSING")) {
-      newStatus = "PROCESSING";
-    } else if (itemStatuses.some((s: string) => s === "SHIPPED")) {
+    const nonCancelledStatuses = nonCancelledItems.map((i: any) => i.status);
+    const allDeliveredOrCompleted = nonCancelledStatuses.every((s: string) => s === "DELIVERED" || s === "COMPLETED");
+    const allShippedOrBeyond = nonCancelledStatuses.every((s: string) => ["SHIPPED", "DELIVERED", "COMPLETED"].includes(s));
+    const anyShippedOrBeyond = nonCancelledStatuses.some((s: string) => ["SHIPPED", "DELIVERED", "COMPLETED"].includes(s));
+    const anyProcessing = nonCancelledStatuses.some((s: string) => s === "PROCESSING");
+
+    if (allDeliveredOrCompleted) {
+      newStatus = nonCancelledStatuses.every((s: string) => s === "COMPLETED") ? "COMPLETED" : "DELIVERED";
+    } else if (allShippedOrBeyond) {
       newStatus = "SHIPPED";
-    } else if (itemStatuses.every((s: string) => s === "DELIVERED")) {
-      newStatus = "DELIVERED";
-    } else if (itemStatuses.every((s: string) => s === "COMPLETED")) {
-      newStatus = "COMPLETED";
+    } else if (anyShippedOrBeyond) {
+      newStatus = "PARTIALLY_SHIPPED";
+    } else if (anyProcessing) {
+      newStatus = "PROCESSING";
+    } else if (nonCancelledStatuses.every((s: string) => s === "PAYMENT_CONFIRMED")) {
+      newStatus = "PAYMENT_CONFIRMED";
     }
   }
 

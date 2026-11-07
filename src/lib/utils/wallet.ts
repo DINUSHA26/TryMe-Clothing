@@ -411,23 +411,15 @@ export async function refundOrder(
       continue;
     }
 
-    // Calculate amounts to refund
-    // HOLD transactions added funds to pendingBalance
-    // COMMISSION transactions deducted from pendingBalance
-    // Net amount in pending = HOLD - COMMISSION
-    // We need to reverse this net amount
-    const holdAmount = items.reduce((sum, item) => {
-      const holdTx = item.walletTransactions.find((t) => t.type === "HOLD");
-      return holdTx ? sum.add(holdTx.amount) : sum;
-    }, new Decimal(0));
-
-    const commissionAmount = items.reduce((sum, item) => {
-      const commTx = item.walletTransactions.find((t) => t.type === "COMMISSION");
-      return commTx ? sum.add(commTx.amount) : sum;
-    }, new Decimal(0));
-
-    // Net amount to deduct from pending balance
-    const netAmount = holdAmount.sub(commissionAmount);
+    // Calculate amounts to refund (matching creditVendorWallets & releaseVendorFunds logic)
+    let grossAmount = items.reduce((sum, item) => sum.add(item.totalPrice), new Decimal(0));
+    if (order.coupon?.vendorId === vendorId) {
+      grossAmount = grossAmount.sub(order.discountAmount);
+    }
+    const commissionRate = items[0].vendor.commissionRate;
+    const commissionAmount = grossAmount.mul(commissionRate).div(100);
+    const holdAmount = grossAmount;
+    const netAmount = grossAmount.sub(commissionAmount);
 
     if (netAmount.isZero()) {
       console.warn(`[Wallet] No funds to refund for vendor ${vendorId}`);

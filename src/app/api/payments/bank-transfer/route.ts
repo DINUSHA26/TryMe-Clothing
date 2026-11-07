@@ -148,6 +148,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Update order items status to PENDING_VERIFICATION
+    await prisma.orderItem.updateMany({
+      where: { orderId: order.id },
+      data: {
+        status: "PENDING_VERIFICATION",
+      },
+    });
+
     // Record status history
     await prisma.orderStatusHistory.create({
       data: {
