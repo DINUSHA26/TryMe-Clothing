@@ -298,8 +298,9 @@ model Product {
   price              Decimal          @db.Decimal(10, 2)
   compareAtPrice     Decimal?         @db.Decimal(10, 2) // Original price for showing discounts
   sku                String?
-  stock              Int              @default(0)
-  lowStockThreshold  Int              @default(5)
+  unit               String?          @default("PCS")
+  stock              Float            @default(0)
+  lowStockThreshold  Float            @default(5)
   images             ProductImage[]
   variants           ProductVariant[]
   sizeChart          String?
@@ -342,7 +343,7 @@ model ProductVariant {
   name       String   // e.g., "Size", "Color"
   value      String   // e.g., "XL", "Red"
   priceAdjustment Decimal? @db.Decimal(10, 2) // Price adjustment (can be negative)
-  stock      Int      @default(0)
+  stock      Float    @default(0)
   sku        String?
   image      String?  // Image specific to this variant (e.g. for color swatches)
   createdAt  DateTime @default(now())
@@ -420,7 +421,7 @@ model OrderItem {
   vendorId        String
   vendor          Vendor      @relation(fields: [vendorId], references: [id])
   productSnapshot Json        // Snapshot of product at time of order
-  quantity        Int
+  quantity        Float
   unitPrice       Decimal     @db.Decimal(10, 2)
   totalPrice      Decimal     @db.Decimal(10, 2)
   variantId       String?

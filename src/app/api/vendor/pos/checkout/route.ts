@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
           throw new Error(`Product not found or unauthorized: ${item.name || item.productId}`);
         }
 
-        const quantity = Math.max(1, parseInt(item.quantity) || 1);
+        const quantity = Math.max(0.001, parseFloat(item.quantity) || 1);
         let unitPrice = Number(product.price);
         let variantSnapshot = null;
 
@@ -181,6 +181,7 @@ export async function POST(request: NextRequest) {
             id: product.id,
             name: product.name,
             sku: product.sku,
+            unit: product.unit || item.unit || "PCS",
             images: product.images.map((img) => img.url),
           },
           variantSnapshot,

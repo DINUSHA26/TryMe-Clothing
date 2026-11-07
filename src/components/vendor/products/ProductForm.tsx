@@ -146,6 +146,7 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
       price: initialData?.price || 0,
       compareAtPrice: initialData?.compareAtPrice,
       sku: initialData?.sku || "",
+      unit: (initialData as any)?.unit || "PCS",
       stock: initialData?.stock || 0,
       lowStockThreshold: initialData?.lowStockThreshold || 5,
       showOnWebsite: (initialData as any)?.showOnWebsite !== undefined ? (initialData as any).showOnWebsite : true,
@@ -171,6 +172,7 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
         price: initialData.price || 0,
         compareAtPrice: initialData.compareAtPrice,
         sku: initialData.sku || "",
+        unit: (initialData as any).unit || "PCS",
         stock: initialData.stock || 0,
         lowStockThreshold: initialData.lowStockThreshold || 5,
         images: initialData.images || [],
@@ -530,11 +532,53 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
         {/* Inventory Section */}
         <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-bold">Inventory</h2>
-            <p className="text-muted-foreground">Manage stock levels</p>
+            <h2 className="text-2xl font-bold">Inventory &amp; Measurement</h2>
+            <p className="text-muted-foreground">Manage stock levels, units of measure, and thresholds</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Unit of Measurement */}
+            <FormField
+              control={form.control}
+              name="unit"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Unit of Measure (UOM) *</FormLabel>
+                  <Select
+                    value={field.value || "PCS"}
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Measurement Unit" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="PCS">Pieces / Units (Pcs) - Clothing, Electronics, Shoes, General Retail</SelectItem>
+                      <SelectItem value="PAIR">Pairs (Pair) - Footwear, Socks, Gloves</SelectItem>
+                      <SelectItem value="PACK">Packs (Pack) - Packaged Goods, Bakery, Stationery</SelectItem>
+                      <SelectItem value="BOX">Boxes (Box) - Tiles, Bulk Cartons, Wholesale</SelectItem>
+                      <SelectItem value="KG">Kilograms (kg) - Grocery, Produce, Vegetables, Meat, Rice, Flour</SelectItem>
+                      <SelectItem value="G">Grams (g) - Spices, Tea, Herbs, Powder, Fine Goods</SelectItem>
+                      <SelectItem value="METER">Meters (m) - Fabrics, Textiles, Electrical Wires, Pipes</SelectItem>
+                      <SelectItem value="FEET">Feet (ft) - Timber, Hardware, Metal Profiles</SelectItem>
+                      <SelectItem value="INCH">Inches (in) - Custom Trims, Framing</SelectItem>
+                      <SelectItem value="YARD">Yards (yd) - Traditional Textile Yards</SelectItem>
+                      <SelectItem value="LITER">Liters (L) - Paints, Oils, Lubricants, Solvents</SelectItem>
+                      <SelectItem value="ML">Milliliters (ml) - Perfumes, Syrups, Chemical Solutions</SelectItem>
+                      <SelectItem value="BOTTLE">Bottles - Beverages, Cosmetics, Wine</SelectItem>
+                      <SelectItem value="STRIP">Strips - Pharmacy Tablets, Capsules</SelectItem>
+                      <SelectItem value="PORTION">Portions - Restaurant Dishes, Food Service</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Determines how the item is sold and billed in the POS counter (supports fractional quantities like 0.25 kg, 2.5 m, or discrete units).
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Stock */}
             <FormField
               control={form.control}
@@ -557,17 +601,18 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
                     <FormControl>
                       <Input
                         type="number"
+                        step="any"
                         min="0"
                         placeholder="100"
                         {...field}
                         onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
+                          field.onChange(parseFloat(e.target.value) || 0)
                         }
                       />
                     </FormControl>
                   )}
                   <FormDescription>
-                    {!variantSettings.hasVariants && "Available quantity"}
+                    {!variantSettings.hasVariants && `Available quantity in ${form.watch("unit") || "PCS"}`}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -584,11 +629,12 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
                   <FormControl>
                     <Input
                       type="number"
+                      step="any"
                       min="0"
                       placeholder="5"
                       {...field}
                       onChange={(e) =>
-                        field.onChange(parseInt(e.target.value) || 0)
+                        field.onChange(parseFloat(e.target.value) || 0)
                       }
                     />
                   </FormControl>

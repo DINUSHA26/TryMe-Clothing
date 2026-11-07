@@ -16,9 +16,10 @@ export interface PosReceiptData {
   orderNumber: string;
   items: Array<{
     name?: string;
-    productSnapshot?: { name: string; sku?: string };
+    productSnapshot?: { name: string; sku?: string; unit?: string };
     variantSnapshot?: { name?: string; value: string; sku?: string } | null;
     variantName?: string | null;
+    unit?: string;
     quantity: number;
     unitPrice: number;
     totalPrice: number;
@@ -177,6 +178,8 @@ export function PosReceiptModal({
                   const title = item.name || item.productSnapshot?.name || "Product";
                   const variantVal =
                     item.variantSnapshot?.value || item.variantName || null;
+                  const rawUnit = item.unit || item.productSnapshot?.unit || "";
+                  const unitStr = rawUnit && rawUnit !== "PCS" ? ` ${rawUnit.toLowerCase()}` : "";
 
                   return (
                     <div key={idx} className="text-[11px]">
@@ -190,7 +193,7 @@ export function PosReceiptModal({
                       )}
                       <div className="flex justify-between text-gray-700 pt-0.5">
                         <span className="text-gray-500">
-                          {item.quantity} x Rs. {Number(item.unitPrice).toFixed(2)}
+                          {item.quantity}{unitStr} x Rs. {Number(item.unitPrice).toFixed(2)}
                         </span>
                         <span className="font-bold">
                           Rs. {Number(item.totalPrice).toFixed(2)}

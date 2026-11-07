@@ -12,7 +12,7 @@ const productVariantSchema = z.object({
   name: z.string().min(1).max(50).trim(),
   value: z.string().min(1).max(100).trim(),
   priceAdjustment: z.number().optional(),
-  stock: z.number().int().min(0),
+  stock: z.number().min(0),
   sku: z.string().max(100).optional(),
   image: z.string().url("Invalid image URL").trim().optional().or(z.literal("")),
 });
@@ -51,8 +51,9 @@ export const createProductSchema = z
       .max(99999999.99)
       .optional(),
     sku: z.string().max(100).optional(),
-    stock: z.number().int().min(0, "Stock cannot be negative"),
-    lowStockThreshold: z.number().int().min(0).optional(),
+    unit: z.string().max(20).optional().default("PCS"),
+    stock: z.number().min(0, "Stock cannot be negative"),
+    lowStockThreshold: z.number().min(0).optional(),
     images: z
       .array(productImageSchema)
       .min(1, "At least one image is required")
@@ -113,8 +114,9 @@ export const updateProductSchema = z.object({
     .max(99999999.99)
     .optional(),
   sku: z.string().max(100).optional(),
-  stock: z.number().int().min(0, "Stock cannot be negative").optional(),
-  lowStockThreshold: z.number().int().min(0).optional(),
+  unit: z.string().max(20).optional(),
+  stock: z.number().min(0, "Stock cannot be negative").optional(),
+  lowStockThreshold: z.number().min(0).optional(),
   isActive: z.boolean().optional(),
   showOnWebsite: z.boolean().optional(),
   showOnMarketplace: z.boolean().optional(),

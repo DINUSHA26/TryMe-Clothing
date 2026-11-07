@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
         compareAtPrice: null,
         sku: baseSku,
         barcode: baseSku,
+        unit: specs.unit || "PCS",
         stock,
         categoryName: ad.category?.name || "Advertised Item",
         imageUrl: ad.images?.[0] || null,

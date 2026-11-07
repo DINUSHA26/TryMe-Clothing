@@ -65,6 +65,7 @@ export interface PosProduct {
   sku: string;
   barcode: string;
   stock: number;
+  unit?: string;
   imageUrl?: string | null;
   categoryName?: string;
   variants: PosProductVariant[];
@@ -80,11 +81,18 @@ export interface CartItem {
   price: number;
   quantity: number;
   stock: number;
+  unit?: string;
   imageUrl?: string | null;
   discountAmount: number; // total flat discount for this line item
   discountType: "FIXED" | "PERCENTAGE";
   discountValue: number;
 }
+
+export const isFractionalUnit = (unit?: string): boolean => {
+  if (!unit) return false;
+  const u = unit.toUpperCase();
+  return ["KG", "G", "METER", "FEET", "INCH", "YARD", "LITER", "ML"].includes(u);
+};
 
 export interface HeldCart {
   id: string;
@@ -324,7 +332,7 @@ export function PosRegisterClient({
       overallDiscountType,
       paymentMethod,
       total: netTotal,
-      itemCount: cart.reduce((s, i) => s + i.quantity, 0),
+      itemCount: cart.length,
     };
 
     const updated = [newHeld, ...heldCarts];
@@ -352,7 +360,7 @@ export function PosRegisterClient({
         overallDiscountType,
         paymentMethod,
         total: netTotal,
-        itemCount: cart.reduce((s, i) => s + i.quantity, 0),
+        itemCount: cart.length,
       };
       const remaining = heldCarts.filter((h) => h.id !== held.id);
       saveHeldCarts([autoParked, ...remaining]);
@@ -428,6 +436,7 @@ export function PosRegisterClient({
           price,
           quantity: 1,
           stock,
+          unit: product.unit || "PCS",
           imageUrl: variant?.imageUrl || product.imageUrl,
           discountAmount: 0,
           discountType: "FIXED",
@@ -500,7 +509,7 @@ export function PosRegisterClient({
             toast({
               variant: "destructive",
               title: "Stock Limit",
-              description: `Maximum available stock is ${item.stock}`,
+              description: `Maximum available stock is ${item.stock} ${item.unit ? item.unit.toLowerCase() : "units"}`,
             });
             return item;
           }
@@ -825,7 +834,7 @@ export function PosRegisterClient({
                 Cart
                 {cart.length > 0 && (
                   <span className="ml-1 bg-primary text-white text-[10px] font-bold rounded-full h-4 w-4 inline-flex items-center justify-center">
-                    {cart.reduce((s, i) => s + i.quantity, 0)}
+                    {cart.length}
                   </span>
                 )}
               </TabsTrigger>
@@ -1092,7 +1101,7 @@ export function PosRegisterClient({
                                     : "bg-emerald-600 text-white"
                                 }`}
                               >
-                                Stock: {product.stock}
+                                Stock: {product.stock} {product.unit && product.unit !== "PCS" ? product.unit.toLowerCase() : ""}
                               </Badge>
                             )}
                           </div>
@@ -1121,9 +1130,16 @@ export function PosRegisterClient({
 
                       {/* Pricing & Add Action */}
                       <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100 dark:border-slate-700/60">
-                        <span className="font-black text-xs sm:text-sm text-primary">
-                          Rs. {product.price.toLocaleString("en-LK")}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-black text-xs sm:text-sm text-primary">
+                            Rs. {product.price.toLocaleString("en-LK")}
+                          </span>
+                          {product.unit && product.unit !== "PCS" && (
+                            <span className="text-[10px] text-muted-foreground font-semibold">
+                              per {product.unit.toLowerCase()}
+                            </span>
+                          )}
+                        </div>
                         <Button
                           size="sm"
                           variant="secondary"
@@ -1153,7 +1169,7 @@ export function PosRegisterClient({
               <ShoppingCart className="w-5 h-5 text-primary" />
               <h2 className="font-bold text-sm sm:text-base">Current Cart</h2>
               <Badge variant="secondary" className="font-bold text-xs">
-                {cart.reduce((s, i) => s + i.quantity, 0)} Items
+                {cart.length} {cart.length === 1 ? "Item" : "Items"}
               </Badge>
             </div>
             <div className="flex items-center gap-1">
@@ -1245,25 +1261,138 @@ export function PosRegisterClient({
                         </p>
                       )}
 
-                      <div className="flex items-center justify-between mt-2">
-                        {/* Quantity Controls */}
-                        <div className="flex items-center border rounded-lg bg-white dark:bg-slate-900">
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="w-7 text-center font-bold text-xs">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
+                      <div className="flex items-center justify-between mt-2 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
+                        {/* Quantity Controls: Fractional vs Discrete */}
+                        {isFractionalUnit(item.unit) ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const step = item.unit?.toUpperCase() === "KG" ? 0.25 : 0.5;
+                                  updateQuantity(item.id, Math.max(0.01, Number((item.quantity - step).toFixed(3))));
+                                }}
+                                className="w-6 h-6 flex items-center justify-center rounded border bg-white dark:bg-slate-900 hover:bg-slate-100 text-slate-700 dark:text-slate-300 font-bold"
+                              >
+                                -
+                              </button>
+                              <div className="relative">
+                                <Input
+                                  type="number"
+                                  step="any"
+                                  min="0.001"
+                                  value={item.quantity === 0 ? "" : item.quantity}
+                                  placeholder="Qty"
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    if (!isNaN(val)) {
+                                      updateQuantity(item.id, Math.max(0, val));
+                                    } else if (e.target.value === "") {
+                                      updateQuantity(item.id, 0);
+                                    }
+                                  }}
+                                  className="w-16 h-6 text-xs font-bold font-mono text-center bg-white dark:bg-slate-900 border-primary/40 focus:border-primary px-1 py-0"
+                                />
+                              </div>
+                              <span className="text-[10px] font-bold text-primary uppercase px-1 py-0.5 rounded bg-primary/10">
+                                {item.unit || "unit"}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const step = item.unit?.toUpperCase() === "KG" ? 0.25 : 0.5;
+                                  updateQuantity(item.id, Number((item.quantity + step).toFixed(3)));
+                                }}
+                                className="w-6 h-6 flex items-center justify-center rounded border bg-white dark:bg-slate-900 hover:bg-slate-100 text-slate-700 dark:text-slate-300 font-bold"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            {/* Quick Increment Chips */}
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {item.unit?.toUpperCase() === "KG" && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuantity(item.id, Number((item.quantity + 0.25).toFixed(3)))}
+                                    className="text-[9px] font-bold px-1 py-0.2 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200"
+                                  >
+                                    +250g
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuantity(item.id, Number((item.quantity + 0.5).toFixed(3)))}
+                                    className="text-[9px] font-bold px-1 py-0.2 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200"
+                                  >
+                                    +500g
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuantity(item.id, Number((item.quantity + 1).toFixed(3)))}
+                                    className="text-[9px] font-bold px-1 py-0.2 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200"
+                                  >
+                                    +1kg
+                                  </button>
+                                </>
+                              )}
+                              {["METER", "FEET", "YARD"].includes(item.unit?.toUpperCase() || "") && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuantity(item.id, Number((item.quantity + 0.5).toFixed(2)))}
+                                    className="text-[9px] font-bold px-1 py-0.2 rounded bg-blue-50 hover:bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200"
+                                  >
+                                    +0.5
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuantity(item.id, Number((item.quantity + 1).toFixed(2)))}
+                                    className="text-[9px] font-bold px-1 py-0.2 rounded bg-blue-50 hover:bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200"
+                                  >
+                                    +1m
+                                  </button>
+                                </>
+                              )}
+                              {["LITER", "ML"].includes(item.unit?.toUpperCase() || "") && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuantity(item.id, Number((item.quantity + 0.5).toFixed(2)))}
+                                    className="text-[9px] font-bold px-1 py-0.2 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200"
+                                  >
+                                    +0.5L
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuantity(item.id, Number((item.quantity + 1).toFixed(2)))}
+                                    className="text-[9px] font-bold px-1 py-0.2 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200"
+                                  >
+                                    +1L
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center border rounded-lg bg-white dark:bg-slate-900">
+                            <button
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="w-7 text-center font-bold text-xs">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
 
                         {/* Price & Discount Trigger */}
                         <div className="text-right">
@@ -1286,12 +1415,15 @@ export function PosRegisterClient({
                               {item.discountAmount > 0 ? `Disc: -Rs.${item.discountAmount}` : "Disc"}
                             </button>
                             <span className="font-black text-xs sm:text-sm text-foreground">
-                              Rs. {lineNet.toLocaleString("en-LK")}
+                              Rs. {lineNet.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
+                          <span className="text-[10px] text-muted-foreground block font-mono">
+                            {item.quantity} {item.unit && item.unit !== "PCS" ? item.unit.toLowerCase() : "units"} @ Rs. {item.price.toLocaleString("en-LK")}
+                          </span>
                           {item.discountAmount > 0 && (
-                            <span className="text-[10px] text-muted-foreground line-through block">
-                              Rs. {lineRaw.toLocaleString("en-LK")}
+                            <span className="text-[10px] text-muted-foreground line-through block font-mono">
+                              Rs. {lineRaw.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           )}
                         </div>

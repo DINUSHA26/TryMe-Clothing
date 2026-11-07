@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     const processedItems: any[] = [];
 
     for (const item of cartItems) {
-      const quantity = Math.max(1, parseInt(item.quantity) || 1);
+      const quantity = Math.max(0.001, parseFloat(item.quantity) || 1);
       const unitPrice = Number(item.price) || 0;
       const lineRawTotal = unitPrice * quantity;
       const itemDiscount = Math.max(0, Math.min(lineRawTotal, Number(item.discountAmount) || 0));
@@ -130,6 +130,7 @@ export async function POST(request: NextRequest) {
         name: item.name || item.title || "Till Item",
         variantName: item.variantName || null,
         variantId: item.variantId || null,
+        unit: item.unit || "PCS",
         quantity,
         unitPrice,
         totalPrice: lineFinalTotal,

@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
         compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
         sku: baseSku,
         barcode: baseSku,
+        unit: p.unit || "PCS",
         stock: p.stock,
         categoryName: p.category?.name || "General",
         imageUrl: p.images[0]?.url || null,

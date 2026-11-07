@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
             ? new Prisma.Decimal(data.compareAtPrice)
             : null,
           sku: data.sku || null,
+          unit: data.unit || "PCS",
           stock: data.stock,
           lowStockThreshold: data.lowStockThreshold || 5,
           sizeChart: data.sizeChart || null,

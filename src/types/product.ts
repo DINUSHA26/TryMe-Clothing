@@ -72,6 +72,7 @@ export interface ProductFormData {
   price: number;
   compareAtPrice?: number;
   sku?: string;
+  unit?: string;
   stock: number;
   lowStockThreshold?: number;
   images: {

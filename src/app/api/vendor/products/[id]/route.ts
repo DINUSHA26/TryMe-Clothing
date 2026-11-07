@@ -199,6 +199,7 @@ export async function PATCH(
             compareAtPrice: data.compareAtPrice ? new Prisma.Decimal(data.compareAtPrice) : null,
           }),
           ...(data.sku !== undefined && { sku: data.sku || null }),
+          ...(data.unit !== undefined && { unit: data.unit }),
           ...(data.stock !== undefined && { stock: data.stock }),
           ...(data.lowStockThreshold !== undefined && {
             lowStockThreshold: data.lowStockThreshold,
