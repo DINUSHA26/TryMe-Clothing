@@ -9,9 +9,42 @@ export async function GET(request: NextRequest) {
         const page = parseInt(url.searchParams.get("page") || "1");
         const limit = parseInt(url.searchParams.get("limit") || "10");
         const skip = (page - 1) * limit;
+        const search = url.searchParams.get("search")?.trim() || "";
+        const userRole = url.searchParams.get("userRole")?.trim() || "ALL";
+        const userId = url.searchParams.get("userId")?.trim() || "";
+
+        const where: any = { isActive: true };
+
+        if (userId) {
+            where.userId = userId;
+        }
+
+        if (userRole === "CUSTOMER") {
+            where.user = { role: "CUSTOMER" };
+        } else if (userRole === "VENDOR") {
+            where.user = { role: "VENDOR" };
+        } else if (userRole === "ADS_SELLER") {
+            where.user = { role: "ADS_SELLER" };
+        }
+
+        if (search) {
+            where.AND = [
+                ...(where.AND || []),
+                {
+                    OR: [
+                        { content: { contains: search, mode: "insensitive" } },
+                        { user: { firstName: { contains: search, mode: "insensitive" } } },
+                        { user: { lastName: { contains: search, mode: "insensitive" } } },
+                        { user: { email: { contains: search, mode: "insensitive" } } },
+                        { user: { vendor: { businessName: { contains: search, mode: "insensitive" } } } },
+                        { user: { adsSeller: { businessName: { contains: search, mode: "insensitive" } } } },
+                    ],
+                },
+            ];
+        }
 
         const posts = await prisma.socialPost.findMany({
-            where: { isActive: true },
+            where,
             include: {
                 user: {
                     select: {
@@ -19,6 +52,7 @@ export async function GET(request: NextRequest) {
                         firstName: true,
                         lastName: true,
                         email: true,
+                        role: true,
                         vendor: {
                             select: { id: true, businessName: true, logo: true, slug: true }
                         },
@@ -84,7 +118,7 @@ export async function GET(request: NextRequest) {
             };
         });
 
-        const total = await prisma.socialPost.count({ where: { isActive: true } });
+        const total = await prisma.socialPost.count({ where });
 
         return NextResponse.json({
             success: true,

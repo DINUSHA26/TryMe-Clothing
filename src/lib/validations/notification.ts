@@ -92,7 +92,7 @@ export const createAnnouncementSchema = z.object({
       NotificationType.SYSTEM_MAINTENANCE,
     ])
     .default(NotificationType.SYSTEM_ANNOUNCEMENT),
-  recipientRole: z.enum(["ALL", "ADMIN", "VENDOR", "CUSTOMER"]).default("ALL"),
+  recipientRole: z.enum(["ALL", "ADMIN", "VENDOR", "CUSTOMER", "ADS_SELLER"]).default("ALL"),
   metadata: z.any().optional(),
 });
 

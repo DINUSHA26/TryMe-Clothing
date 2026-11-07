@@ -6,7 +6,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Send, Users, UserCircle, Package } from "lucide-react";
+import { Bell, Send, Users, UserCircle, Package, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { NotificationType } from "@/types/notification";
 
-type AnnouncementTarget = "ALL" | "VENDOR" | "CUSTOMER";
+type AnnouncementTarget = "ALL" | "VENDOR" | "CUSTOMER" | "ADS_SELLER";
 
 export default function AdminNotificationsPage() {
   const { toast } = useToast();
@@ -91,6 +91,8 @@ export default function AdminNotificationsPage() {
         return <Package className="h-4 w-4" />;
       case "CUSTOMER":
         return <UserCircle className="h-4 w-4" />;
+      case "ADS_SELLER":
+        return <Megaphone className="h-4 w-4" />;
     }
   };
 
@@ -142,6 +144,12 @@ export default function AdminNotificationsPage() {
                   <div className="flex items-center gap-2">
                     <UserCircle className="h-4 w-4" />
                     <span>Customers Only</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="ADS_SELLER">
+                  <div className="flex items-center gap-2">
+                    <Megaphone className="h-4 w-4" />
+                    <span>Ads Sellers Only</span>
                   </div>
                 </SelectItem>
               </SelectContent>
