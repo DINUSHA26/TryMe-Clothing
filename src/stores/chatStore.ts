@@ -80,6 +80,7 @@ interface ChatState {
   rooms: ChatRoom[];
   messages: Record<string, ChatMessage[]>; // roomId → messages
   isTyping: Record<string, boolean>; // roomId → typing status
+  presence: Record<string, { isOnline: boolean; lastSeenAt?: string | null; lastSeenText?: string }>;
   activeChannels: string[]; // Tracking active Pusher subscriptions
 
   // Loading states
@@ -89,11 +90,13 @@ interface ChatState {
 
   // Actions
   fetchRoom: (roomId: string) => Promise<void>;
+  fetchPresence: (roomId: string) => Promise<void>;
+  sendHeartbeat: () => Promise<void>;
   openChat: (roomId?: string) => Promise<void>;
   closeChat: () => void;
   selectRoom: (roomId: string) => void;
   loadRooms: () => Promise<void>;
-  loadMessages: (roomId: string, offset?: number) => Promise<void>;
+  loadMessages: (roomId: string, offset?: number, silent?: boolean) => Promise<void>;
   sendMessage: (roomId: string, content: string) => Promise<void>;
   receiveMessage: (message: ChatMessage) => Promise<void>;
   acknowledgeSentMessage: (tempId: string, message: ChatMessage) => void;
@@ -117,10 +120,38 @@ export const useChatStore = create<ChatState>()(
     rooms: [],
     messages: {},
     isTyping: {},
+    presence: {},
     activeChannels: [],
     isLoadingRooms: false,
     isLoadingMessages: {},
     error: null,
+
+    // Presence actions
+    fetchPresence: async (roomId) => {
+      try {
+        const res = await fetch(`/api/chat/rooms/${roomId}/presence`, { credentials: 'include' });
+        const data = await res.json();
+        if (data.success && data.presence) {
+          set((state) => {
+            state.presence[roomId] = {
+              isOnline: data.presence.isOnline,
+              lastSeenAt: data.presence.lastSeenAt,
+              lastSeenText: data.presence.lastSeenText,
+            };
+          });
+        }
+      } catch (err) {
+        // silently ignore presence lookup error
+      }
+    },
+
+    sendHeartbeat: async () => {
+      try {
+        await fetch('/api/chat/presence/heartbeat', { method: 'POST', credentials: 'include' });
+      } catch (err) {
+        // ignore
+      }
+    },
 
     // Fetch a single room
     fetchRoom: async (roomId) => {
@@ -268,11 +299,13 @@ export const useChatStore = create<ChatState>()(
     },
 
     // Load messages for a room
-    loadMessages: async (roomId, offset = 0) => {
-      set((state) => {
-        state.isLoadingMessages[roomId] = true;
-        state.error = null;
-      });
+    loadMessages: async (roomId, offset = 0, silent = false) => {
+      if (!silent) {
+        set((state) => {
+          state.isLoadingMessages[roomId] = true;
+          state.error = null;
+        });
+      }
 
       try {
         const response = await fetch(
@@ -295,8 +328,13 @@ export const useChatStore = create<ChatState>()(
 
         set((state) => {
           if (offset === 0) {
-            // Initial load
-            state.messages[roomId] = data.messages;
+            // Initial load or background refresh: preserve any pending temp messages
+            const pendingTemps = (state.messages[roomId] || []).filter(
+              (m) => m.tempId && m.id.startsWith('temp_')
+            );
+            const serverIds = new Set(data.messages.map((m: any) => m.id));
+            const remainingTemps = pendingTemps.filter((m) => !serverIds.has(m.id));
+            state.messages[roomId] = [...data.messages, ...remainingTemps];
           } else {
             // Load more (prepend older messages)
             state.messages[roomId] = [...data.messages, ...(state.messages[roomId] || [])];
@@ -304,12 +342,14 @@ export const useChatStore = create<ChatState>()(
           state.isLoadingMessages[roomId] = false;
         });
       } catch (error: any) {
-        console.error('Failed to load messages:', error);
-        set((state) => {
-          state.error = error.message;
-          state.isLoadingMessages[roomId] = false;
-        });
-        toast.error(error.message || 'Failed to load messages');
+        if (!silent) {
+          console.error('Failed to load messages:', error);
+          set((state) => {
+            state.error = error.message;
+            state.isLoadingMessages[roomId] = false;
+          });
+          toast.error(error.message || 'Failed to load messages');
+        }
       }
     },
 
@@ -523,10 +563,13 @@ export const useChatStore = create<ChatState>()(
 
         // Update local state
         set((state) => {
-          // Mark messages as read
+          // Mark other participants' incoming messages as read
+          const currentUserId = useAuthStore.getState().user?.id;
           const messages = state.messages[roomId] || [];
           messages.forEach((m) => {
-            m.isRead = true;
+            if (m.senderId !== currentUserId) {
+              m.isRead = true;
+            }
           });
 
           // Reset unread count

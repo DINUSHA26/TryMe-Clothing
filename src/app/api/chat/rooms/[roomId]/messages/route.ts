@@ -10,6 +10,7 @@ import { verifyRoomAccess, canSendMessage } from '@/lib/chat/accessControl';
 import { filterContactInfo } from '@/lib/utils/contactFilter';
 import { prisma } from '@/lib/prisma';
 import { sendMessageSchema, getMessagesQuerySchema } from '@/lib/validations/chat';
+import { recordUserActivity } from '@/lib/chat/presence';
 
 /**
  * GET /api/chat/rooms/[roomId]/messages
@@ -35,6 +36,9 @@ export async function GET(
 
     // Verify access
     await verifyRoomAccess(roomId, userId, userRole as UserRole);
+
+    // Record user activity
+    await recordUserActivity(userId);
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
@@ -96,6 +100,7 @@ export async function GET(
       content: message.content,
       hasBlockedContent: message.hasBlockedContent,
       isRead: message.isRead,
+      readAt: message.readAt,
       createdAt: message.createdAt,
       sender: {
         id: message.sender.id,
@@ -175,6 +180,9 @@ export async function POST(
     // Verify access
     await verifyRoomAccess(roomId, userId, userRole as UserRole);
 
+    // Record user activity
+    await recordUserActivity(userId);
+
     // Filter contact information
     const filterResult = filterContactInfo(content);
 
@@ -222,6 +230,7 @@ export async function POST(
       content: message.content,
       hasBlockedContent: message.hasBlockedContent,
       isRead: message.isRead,
+      readAt: message.readAt,
       createdAt: message.createdAt,
       sender: {
         id: message.sender.id,

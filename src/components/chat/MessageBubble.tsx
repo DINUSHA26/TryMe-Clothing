@@ -169,11 +169,11 @@ export function MessageBubble({ message, isOwn = false, room }: MessageBubblePro
               {isOwn && (
                 <span className="inline-flex items-center ml-0.5">
                   {isTempMessage ? (
-                    <span className="animate-pulse tracking-tighter">···</span>
+                    <span className="animate-pulse tracking-tighter text-white/70 font-bold">···</span>
                   ) : message.isRead ? (
-                    <CheckCheck className="w-3.5 h-3.5 text-sky-200" />
+                    <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb] dark:text-[#53bdeb] stroke-[2.4] drop-shadow-xs" />
                   ) : (
-                    <Check className="w-3.5 h-3.5 text-white/80" />
+                    <Check className="w-3.5 h-3.5 text-white/75 dark:text-white/70 stroke-[2]" />
                   )}
                 </span>
               )}

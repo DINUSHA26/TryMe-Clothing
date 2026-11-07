@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserRole } from '@prisma/client';
 import { verifyRoomAccess } from '@/lib/chat/accessControl';
 import { prisma } from '@/lib/prisma';
+import { recordUserActivity } from '@/lib/chat/presence';
 
 /**
  * PATCH /api/chat/rooms/[roomId]/read
@@ -30,7 +31,11 @@ export async function PATCH(
     // Verify access
     await verifyRoomAccess(roomId, userId, userRole as UserRole);
 
+    // Record presence of reader
+    await recordUserActivity(userId);
+
     // Mark all unread messages from other users as read
+    const now = new Date();
     const result = await prisma.chatMessage.updateMany({
       where: {
         chatRoomId: roomId,
@@ -39,6 +44,7 @@ export async function PATCH(
       },
       data: {
         isRead: true,
+        readAt: now,
       },
     });
 

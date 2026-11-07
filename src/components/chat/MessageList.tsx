@@ -16,13 +16,51 @@ interface MessageListProps {
  * Featuring auto-scroll, date dividers, typing animation, and polished TryMe styling
  */
 export function MessageList({ roomId }: MessageListProps) {
-  const { messages, isLoadingMessages, isTyping, rooms, sendMessage } = useChatStore();
+  const { messages, isLoadingMessages, isTyping, rooms, sendMessage, loadMessages, markAsRead, sendHeartbeat } = useChatStore();
   const { user } = useAuthStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const roomMessages = messages[roomId] || [];
   const room = rooms.find((r) => r.id === roomId);
   const isLoading = isLoadingMessages[roomId];
   const isTypingInRoom = isTyping[roomId];
+
+  // Active sync loop: poll messages and heartbeat while in this chat room
+  useEffect(() => {
+    // Initial fetch
+    loadMessages(roomId, 0, false);
+    sendHeartbeat();
+
+    // Poll messages every 3.5s so double ticks and incoming messages update in real-time
+    const pollInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      loadMessages(roomId, 0, true);
+    }, 3500);
+
+    // Heartbeat every 25s to keep active user's presence online
+    const heartbeatInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        sendHeartbeat();
+      }
+    }, 25000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearInterval(heartbeatInterval);
+    };
+  }, [roomId, loadMessages, sendHeartbeat]);
+
+  // Automatically mark incoming messages as read when viewed
+  const hasUnreadIncoming = useMemo(() => {
+    return roomMessages.some(
+      (m) => m.senderId !== user?.id && !m.isRead && !m.id.startsWith('temp_')
+    );
+  }, [roomMessages, user?.id]);
+
+  useEffect(() => {
+    if (hasUnreadIncoming) {
+      markAsRead(roomId);
+    }
+  }, [roomId, hasUnreadIncoming, markAsRead]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

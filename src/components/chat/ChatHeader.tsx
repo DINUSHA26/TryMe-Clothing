@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ShieldCheck, ShieldAlert, Store, User as UserIcon, Package, X } from 'lucide-react';
@@ -18,9 +19,23 @@ interface ChatHeaderProps {
  * Displays participant profile image, online indicator, verified badges, and order context
  */
 export function ChatHeader({ room }: ChatHeaderProps) {
-  const { selectRoom, closeChat, isConnected } = useChatStore();
+  const { selectRoom, closeChat } = useChatStore();
+  const presence = useChatStore((state) => state.presence[room.id]);
+  const fetchPresence = useChatStore((state) => state.fetchPresence);
   const { user } = useAuthStore();
   const isMobile = useMediaQuery('(max-width: 1024px)');
+
+  // Poll participant presence
+  useEffect(() => {
+    fetchPresence(room.id);
+    const interval = setInterval(() => {
+      fetchPresence(room.id);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [room.id, fetchPresence]);
+
+  const isParticipantOnline = !!presence?.isOnline;
+  const lastSeenText = presence?.lastSeenText || '';
 
   // Determine viewer role
   const isVendor = user?.role === 'VENDOR' || user?.role === 'ADS_SELLER';
@@ -91,7 +106,7 @@ export function ChatHeader({ room }: ChatHeaderProps) {
             imageSrc={participantAvatar}
             size="md"
             showOnline={true}
-            isOnline={isConnected}
+            isOnline={isParticipantOnline}
           />
 
           {/* Details */}
@@ -122,13 +137,19 @@ export function ChatHeader({ room }: ChatHeaderProps) {
                 {roleBadgeLabel}
               </span>
 
-              {/* Online status */}
-              {isConnected && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+              {/* Real Online / WhatsApp Last Seen status */}
+              {isParticipantOnline ? (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="text-muted-foreground/40 font-normal">•</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Online
                 </span>
-              )}
+              ) : lastSeenText ? (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground truncate">
+                  <span className="text-muted-foreground/40 font-normal">•</span>
+                  {lastSeenText}
+                </span>
+              ) : null}
             </div>
 
             {/* Context order line */}
