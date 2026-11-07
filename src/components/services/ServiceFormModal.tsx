@@ -290,11 +290,11 @@ export function ServiceFormModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[92vh] flex flex-col p-0 overflow-hidden w-[95vw] sm:w-full rounded-2xl sm:rounded-3xl">
-        <DialogHeader className="p-4 sm:p-6 pb-2 border-b border-gray-100">
-          <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900">
+        <DialogHeader className="p-4 sm:p-6 pb-2 border-b border-gray-100 dark:border-slate-800">
+          <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
             {service ? "Edit Service" : "Add New Service"}
           </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm text-gray-500">
+          <DialogDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
             Manage service details, pricing, gallery, and visibility on TryMe Marketplace and your personal website.
           </DialogDescription>
         </DialogHeader>
@@ -741,13 +741,13 @@ export function ServiceFormModal({
             <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
           </div>
 
-          <DialogFooter className="pt-3 border-t border-gray-100 flex-col-reverse sm:flex-row gap-2">
+          <DialogFooter className="pt-3 border-t border-gray-100 dark:border-slate-800 flex-col-reverse sm:flex-row gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="w-full sm:w-auto rounded-xl border-gray-200"
+              className="w-full sm:w-auto rounded-xl border-gray-200 dark:border-slate-750 dark:hover:bg-slate-800"
             >
               Cancel
             </Button>

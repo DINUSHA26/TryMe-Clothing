@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
     let page = parseInt(searchParams.get("page") || "1");
     if (isNaN(page) || page < 1) page = 1;
     
-    let pageSize = parseInt(searchParams.get("pageSize") || "12");
-    if (isNaN(pageSize) || pageSize < 1) pageSize = 12;
+    let pageSize = parseInt(searchParams.get("pageSize") || "20");
+    if (isNaN(pageSize) || pageSize < 1) pageSize = 20;
 
     // Build the query where parameters
     const where: Prisma.ClassifiedAdWhereInput = {

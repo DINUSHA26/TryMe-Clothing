@@ -179,17 +179,17 @@ export default function VendorServicesPage() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-orange-50 via-white to-orange-50/30 p-4 sm:p-6 rounded-2xl border border-orange-100/60 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-orange-50 via-white to-orange-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 p-4 sm:p-6 rounded-2xl border border-orange-100/60 dark:border-slate-800 shadow-sm">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="p-2 bg-[#FF6600]/10 text-[#FF6600] rounded-xl">
+            <span className="p-2 bg-[#FF6600]/10 dark:bg-[#FF6600]/20 text-[#FF6600] rounded-xl">
               <Briefcase className="h-5 w-5" />
             </span>
-            <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
               My Services
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-gray-600 max-w-xl">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 max-w-xl">
             List and manage professional services across TryMe.lk Marketplace and your personal website. Track leads and WhatsApp inquiries with source tracking.
           </p>
         </div>
@@ -207,19 +207,19 @@ export default function VendorServicesPage() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-gray-200">
+      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-slate-800">
         <button
           type="button"
           onClick={() => setActiveTab("services")}
           className={`pb-3 px-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === "services"
               ? "border-[#FF6600] text-[#FF6600]"
-              : "border-transparent text-gray-500 hover:text-gray-900"
+              : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
           <Briefcase className="w-4 h-4" />
           <span>Services</span>
-          <Badge variant="secondary" className="text-xs px-2 py-0">
+          <Badge variant="secondary" className="text-xs px-2 py-0 dark:bg-slate-800 dark:text-slate-300">
             {services.length}
           </Badge>
         </button>
@@ -230,7 +230,7 @@ export default function VendorServicesPage() {
           className={`pb-3 px-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === "inquiries"
               ? "border-[#FF6600] text-[#FF6600]"
-              : "border-transparent text-gray-500 hover:text-gray-900"
+              : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
           <Mail className="w-4 h-4" />
@@ -242,18 +242,18 @@ export default function VendorServicesPage() {
       {activeTab === "services" && (
         <>
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-gray-100 min-h-[300px]">
+            <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 min-h-[300px]">
               <Loader2 className="h-8 w-8 animate-spin text-[#FF6600] mb-3" />
-              <p className="text-sm font-medium text-gray-500">Loading your services...</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Loading your services...</p>
             </div>
           ) : services.length === 0 ? (
-            <div className="text-center p-8 sm:p-14 bg-white rounded-2xl border border-dashed border-gray-200 space-y-4">
-              <div className="w-14 h-14 bg-orange-50 text-[#FF6600] rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+            <div className="text-center p-8 sm:p-14 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800 space-y-4">
+              <div className="w-14 h-14 bg-orange-50 dark:bg-orange-950/40 text-[#FF6600] rounded-2xl flex items-center justify-center mx-auto shadow-inner">
                 <Briefcase className="h-7 w-7" />
               </div>
               <div className="space-y-1 max-w-md mx-auto">
-                <h3 className="text-base sm:text-lg font-bold text-gray-900">No Services Added Yet</h3>
-                <p className="text-xs sm:text-sm text-gray-500">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">No Services Added Yet</h3>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
                   Publish custom tailoring, repairs, detailing, consultations, or bespoke services to TryMe.lk Marketplace and your personal site!
                 </p>
               </div>
@@ -269,17 +269,17 @@ export default function VendorServicesPage() {
               </Button>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50/60 hover:bg-gray-50/60">
-                    <TableHead className="w-[80px]">Photo</TableHead>
-                    <TableHead>Service Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Pricing</TableHead>
-                    <TableHead>Channel Visibility</TableHead>
-                    <TableHead>Active Status</TableHead>
-                    <TableHead className="w-[60px] text-right">Actions</TableHead>
+                  <TableRow className="bg-gray-50/60 dark:bg-slate-850/60 hover:bg-gray-50/60 dark:hover:bg-slate-850/60 border-b border-gray-100 dark:border-slate-800">
+                    <TableHead className="w-[80px] dark:text-slate-400">Photo</TableHead>
+                    <TableHead className="dark:text-slate-400">Service Name</TableHead>
+                    <TableHead className="dark:text-slate-400">Category</TableHead>
+                    <TableHead className="dark:text-slate-400">Pricing</TableHead>
+                    <TableHead className="dark:text-slate-400">Channel Visibility</TableHead>
+                    <TableHead className="dark:text-slate-400">Active Status</TableHead>
+                    <TableHead className="w-[60px] text-right dark:text-slate-400">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -288,14 +288,14 @@ export default function VendorServicesPage() {
                     const isWebLive = srv.showOnWebsite !== false;
 
                     return (
-                      <TableRow key={srv.id} className="hover:bg-gray-50/40">
+                      <TableRow key={srv.id} className="hover:bg-gray-50/40 dark:hover:bg-slate-800/40 border-b border-gray-100 dark:border-slate-800">
                         {/* Image */}
                         <TableCell>
-                          <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden relative shrink-0">
+                          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 overflow-hidden relative shrink-0">
                             {srv.images?.[0] ? (
                               <img src={srv.images[0]} alt={srv.name} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-slate-500">
                                 <Briefcase className="h-5 w-5" />
                               </div>
                             )}
@@ -305,9 +305,9 @@ export default function VendorServicesPage() {
                         {/* Name & Subtitle */}
                         <TableCell>
                           <div className="max-w-[240px]">
-                            <span className="font-bold text-sm text-gray-900 block truncate">{srv.name}</span>
+                            <span className="font-bold text-sm text-gray-900 dark:text-white block truncate">{srv.name}</span>
                             {(srv.district || srv.city) && (
-                              <span className="text-[11px] text-gray-500 block truncate font-medium">
+                              <span className="text-[11px] text-gray-500 dark:text-slate-400 block truncate font-medium">
                                 📍 {[srv.city, srv.district].filter(Boolean).join(", ")} •{" "}
                                 {srv.deliveryType === "DOORSTEP"
                                   ? "Doorstep"
@@ -317,10 +317,10 @@ export default function VendorServicesPage() {
                               </span>
                             )}
                             {srv.shortDesc && !srv.district && (
-                              <span className="text-xs text-gray-500 block truncate">{srv.shortDesc}</span>
+                              <span className="text-xs text-gray-500 dark:text-slate-400 block truncate">{srv.shortDesc}</span>
                             )}
                             {srv.isFeatured && (
-                              <Badge variant="outline" className="mt-1 bg-amber-50 text-amber-700 border-amber-200 text-[9px] font-bold py-0 h-4">
+                              <Badge variant="outline" className="mt-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 text-[9px] font-bold py-0 h-4">
                                 ⭐ Featured on Homepage
                               </Badge>
                             )}
@@ -329,7 +329,7 @@ export default function VendorServicesPage() {
 
                         {/* Category */}
                         <TableCell>
-                          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs font-medium">
+                          <Badge variant="outline" className="bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-200 border-gray-200 dark:border-slate-700 text-xs font-medium">
                             {srv.category?.name || "Uncategorized"}
                           </Badge>
                           {srv.subCategory && (
@@ -341,9 +341,9 @@ export default function VendorServicesPage() {
 
                         {/* Price */}
                         <TableCell>
-                          <span className="font-bold text-sm text-gray-900 block">{formatPrice(srv)}</span>
+                          <span className="font-bold text-sm text-gray-900 dark:text-white block">{formatPrice(srv)}</span>
                           {srv.duration && (
-                            <span className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
+                            <span className="text-[11px] text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                               <Clock className="h-3 w-3" />
                               {srv.duration}
                             </span>
@@ -359,8 +359,8 @@ export default function VendorServicesPage() {
                               onClick={() => handleToggleChannel(srv.id, "marketplace", isMktLive)}
                               className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border transition-colors w-fit ${
                                 isMktLive
-                                  ? "bg-orange-50 text-orange-700 border-orange-200 hover:bg-red-50 hover:text-red-700"
-                                  : "bg-gray-100 text-gray-400 border-gray-200 hover:bg-orange-50 hover:text-orange-700"
+                                  ? "bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-700 dark:hover:text-orange-300"
                               }`}
                               title="Click to toggle Marketplace visibility"
                             >
@@ -374,8 +374,8 @@ export default function VendorServicesPage() {
                               onClick={() => handleToggleChannel(srv.id, "website", isWebLive)}
                               className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border transition-colors w-fit ${
                                 isWebLive
-                                  ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-red-50 hover:text-red-700"
-                                  : "bg-gray-100 text-gray-400 border-gray-200 hover:bg-blue-50 hover:text-blue-700"
+                                  ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-700 dark:hover:text-blue-300"
                               }`}
                               title="Click to toggle Website visibility"
                             >
@@ -392,7 +392,7 @@ export default function VendorServicesPage() {
                               checked={srv.isActive}
                               onCheckedChange={() => handleToggleActive(srv.id, srv.isActive)}
                             />
-                            <span className={`text-[11px] font-bold ${srv.isActive ? "text-emerald-600" : "text-gray-400"}`}>
+                            <span className={`text-[11px] font-bold ${srv.isActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-slate-500"}`}>
                               {srv.isActive ? "Active" : "Hidden"}
                             </span>
                           </div>
@@ -402,11 +402,11 @@ export default function VendorServicesPage() {
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuContent align="end" className="w-44 dark:bg-slate-900 dark:border-slate-800">
                               <DropdownMenuItem
                                 onClick={() => {
                                   setEditingService(srv);
@@ -427,7 +427,7 @@ export default function VendorServicesPage() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleDelete(srv.id, srv.name)}
-                                className="text-red-600 focus:text-red-600"
+                                className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete Service

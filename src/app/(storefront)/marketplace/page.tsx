@@ -21,7 +21,7 @@ function MarketplacePortalPageContent() {
   const [featuredAds, setFeaturedAds] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 12,
+    pageSize: 20,
     totalCount: 0,
     totalPages: 0,
   });
@@ -165,7 +165,7 @@ function MarketplacePortalPageContent() {
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        pageSize: hasActiveFilters ? "10" : "12",
+        pageSize: "20",
         sort: currentSort,
         ...(currentCategory && { category: currentCategory }),
         ...(currentSubCategory && { subCategory: currentSubCategory }),
@@ -789,7 +789,7 @@ function MarketplacePortalPageContent() {
             </div>
 
             {/* Center listing pane */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-3 space-y-4">
               {/* Refinement info row */}
               <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-3 transition-colors">
                 <span className="text-xs text-gray-500 dark:text-slate-450 font-bold">
@@ -857,31 +857,6 @@ function MarketplacePortalPageContent() {
                   )}
                 </div>
               )}
-            </div>
-
-            {/* Right panel: Mock sidebar advertising slot */}
-            <div className="lg:col-span-1 hidden lg:block space-y-4">
-              <div className="bg-gradient-to-br from-indigo-900 to-indigo-950 text-white rounded-2xl overflow-hidden shadow-md text-center p-6 border border-indigo-950 relative min-h-[400px] flex flex-col justify-between">
-                <div>
-                  <span className="bg-yellow-500 text-black hover:bg-yellow-600 border-none font-extrabold uppercase text-[9px] px-2.5 py-0.5 rounded-full inline-block">
-                    Sponsor Ad
-                  </span>
-                  <h3 className="text-xl font-black mt-4 tracking-tight leading-snug">
-                    R.S. 250.00 FREE BONUS ON SOCCER!
-                  </h3>
-                  <p className="text-indigo-200 text-xs mt-2.5 font-medium">
-                    Enjoy first deposit play rewards instantly via BetSS portal.
-                  </p>
-                </div>
-                <div className="space-y-4 pt-10">
-                  <div className="w-16 h-16 bg-white/10 border border-white/20 rounded-full flex items-center justify-center mx-auto text-yellow-400 font-extrabold text-2xl shadow-inner">
-                    🎰
-                  </div>
-                  <Button variant="default" className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold w-full rounded-xl text-xs py-5">
-                    Click Here
-                  </Button>
-                </div>
-              </div>
             </div>
           </div>
         )}
