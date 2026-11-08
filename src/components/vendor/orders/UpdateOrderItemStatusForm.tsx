@@ -50,26 +50,51 @@ export function UpdateOrderItemStatusForm({
   const [isLoading, setIsLoading] = useState(false);
 
   const getAvailableStatuses = () => {
-    if (isWebsiteOrder) {
-      // Full lifecycle control for Direct Website Orders
-      const allWebsiteStatuses = [
+    // 1. Direct website orders with pending payment
+    if (
+      isWebsiteOrder &&
+      (currentStatus === "PENDING_PAYMENT" || currentStatus === "PENDING_VERIFICATION")
+    ) {
+      return [
         { value: "PAYMENT_CONFIRMED", label: "Confirm Payment / Verify Order" },
-        { value: "PROCESSING", label: "Mark as Processing / Packing" },
-        { value: "SHIPPED", label: "Mark as Shipped / Dispatched" },
-        { value: "DELIVERED", label: "Mark as Delivered to Customer" },
-        { value: "COMPLETED", label: "Mark as Completed & Paid" },
-        { value: "CANCELLED", label: "Cancel Order (Restores Stock)" },
+        { value: "CANCELLED", label: "Cancel Item (Restores Stock)" },
       ];
-      return allWebsiteStatuses.filter((s) => s.value !== currentStatus);
     }
 
-    // Standard TryMe Marketplace transitions
-    if (currentStatus === "PAYMENT_CONFIRMED") {
-      return [{ value: "PROCESSING", label: "Mark as Processing" }];
-    } else if (currentStatus === "PROCESSING") {
-      return [{ value: "SHIPPED", label: "Mark as Shipped" }];
+    // 2. Sequential lifecycle: Payment Confirmed -> Processing -> Shipped -> Delivered -> Completed
+    switch (currentStatus) {
+      case "PENDING_PAYMENT":
+      case "PENDING_VERIFICATION":
+        return [];
+
+      case "PAYMENT_CONFIRMED":
+        return [
+          { value: "PROCESSING", label: "Mark as Processing / Packing" },
+          { value: "CANCELLED", label: "Cancel Item" },
+        ];
+
+      case "PROCESSING":
+        return [
+          { value: "SHIPPED", label: "Mark as Shipped / Dispatched" },
+          { value: "CANCELLED", label: "Cancel Item" },
+        ];
+
+      case "SHIPPED":
+        return [
+          { value: "DELIVERED", label: "Mark as Delivered" },
+        ];
+
+      case "DELIVERED":
+      case "DELIVERY_CONFIRMED":
+        return [
+          { value: "COMPLETED", label: "Mark as Completed" },
+        ];
+
+      case "COMPLETED":
+      case "CANCELLED":
+      default:
+        return [];
     }
-    return [];
   };
 
   const availableStatuses = getAvailableStatuses();

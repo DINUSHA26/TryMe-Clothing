@@ -212,7 +212,7 @@ export default async function OrderDetailsPage({
               <div className="mb-4 overflow-x-auto pb-1">
                 <div className="inline-flex items-center gap-1.5 p-1 bg-muted rounded-xl flex-wrap">
                   <Link
-                    href={`/orders/${order.id}`}
+                    href={`/orders/${order.orderNumber || order.id}`}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       !selectedVendorGroup
                         ? "bg-background text-foreground shadow-xs"
@@ -227,7 +227,7 @@ export default async function OrderDetailsPage({
                     return (
                       <Link
                         key={vg.vendorId}
-                        href={`/orders/${order.id}?subOrder=${encodeURIComponent(subOrderParam)}`}
+                        href={`/orders/${order.orderNumber || order.id}?subOrder=${encodeURIComponent(subOrderParam)}`}
                         className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                           isSelected
                             ? "bg-primary text-primary-foreground shadow-xs"
@@ -275,7 +275,7 @@ export default async function OrderDetailsPage({
           {statusHistory && statusHistory.length > 0 && (
             <div>
               <OrderTimeline
-                orderId={order.id}
+                orderId={order.orderNumber || order.id}
                 activeSubOrder={activeSubOrder}
                 statusHistory={statusHistory}
                 currentStatus={order.status}

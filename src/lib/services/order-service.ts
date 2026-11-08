@@ -191,16 +191,18 @@ export async function getCustomerOrders(customerId: string, filters: OrderFilter
 export async function getOrderDetails(orderId: string, auth: { userId: string; role: string; customerId?: string; vendorId?: string }) {
   // Check if order is eligible for 24-hour auto-completion
   try {
-    const orderCheck = await prisma.order.findUnique({
-      where: { id: orderId },
-      select: { status: true, deliveryConfirmedAt: true },
+    const orderCheck = await prisma.order.findFirst({
+      where: {
+        OR: [{ id: orderId }, { orderNumber: orderId }],
+      },
+      select: { id: true, status: true, deliveryConfirmedAt: true },
     });
 
     if (orderCheck && ["DELIVERED", "DELIVERY_CONFIRMED"].includes(orderCheck.status) && orderCheck.deliveryConfirmedAt) {
       const hoursSinceDelivery = (Date.now() - new Date(orderCheck.deliveryConfirmedAt).getTime()) / (1000 * 60 * 60);
       if (hoursSinceDelivery > 24) {
         const { autoCompleteEligibleItems } = await import("@/lib/utils/orderCompletion");
-        await autoCompleteEligibleItems(orderId, 24);
+        await autoCompleteEligibleItems(orderCheck.id, 24);
       }
     }
   } catch (err) {
@@ -208,6 +210,7 @@ export async function getOrderDetails(orderId: string, auth: { userId: string; r
   }
 
   // Fetch order with all related data using raw SQL to bypass enum errors
+  // Support both internal cuid id and customer-facing orderNumber
   const orderResults = await prisma.$queryRawUnsafe<any[]>(
     `SELECT o.*, u."email" as "customerEmail",
      (SELECT json_build_object(
@@ -220,7 +223,7 @@ export async function getOrderDetails(orderId: string, auth: { userId: string; r
      FROM "Order" o
      JOIN "Customer" c ON o."customerId" = c."id"
      JOIN "User" u ON c."userId" = u."id"
-     WHERE o."id" = $1`,
+     WHERE o."id" = $1 OR o."orderNumber" = $1`,
     orderId
   );
 
@@ -230,6 +233,8 @@ export async function getOrderDetails(orderId: string, auth: { userId: string; r
     throw new Error("Order not found");
   }
 
+  const realOrderId = rawOrder.id;
+
   // Fetch items with vendor and chat room info
   const rawItems = await prisma.$queryRawUnsafe<any[]>(
     `SELECT i.*, v."businessName" as "vendorName", v."slug" as "vendorSlug", cr."id" as "chatRoomId"
@@ -238,13 +243,13 @@ export async function getOrderDetails(orderId: string, auth: { userId: string; r
      LEFT JOIN "ChatRoom" cr ON i."id" = cr."orderItemId"
      WHERE i."orderId" = $1
      ORDER BY i."createdAt" ASC`,
-    orderId
+    realOrderId
   );
 
   // Fetch status history
   const rawHistory = await prisma.$queryRawUnsafe<any[]>(
     'SELECT "id", "status"::text, "note", "createdAt", "createdBy" FROM "OrderStatusHistory" WHERE "orderId" = $1 ORDER BY "createdAt" DESC',
-    orderId
+    realOrderId
   );
 
   // Authorization check

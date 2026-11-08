@@ -28,7 +28,7 @@ export function OrderCard({ order }: OrderCardProps) {
   return (
     <div className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-card relative">
       <Link
-        href={`/orders/${order.id}`}
+        href={`/orders/${order.orderNumber || order.id}`}
         className="flex items-start gap-4"
       >
         {/* Product Images Preview */}

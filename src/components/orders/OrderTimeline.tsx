@@ -34,6 +34,7 @@ export interface PackageOption {
 
 interface OrderTimelineProps {
   orderId?: string;
+  basePath?: string;
   activeSubOrder?: string;
   statusHistory: StatusHistoryItem[];
   currentStatus: OrderStatus;
@@ -42,6 +43,7 @@ interface OrderTimelineProps {
 
 export function OrderTimeline({
   orderId,
+  basePath = "/orders",
   activeSubOrder,
   statusHistory,
   currentStatus,
@@ -76,11 +78,11 @@ export function OrderTimeline({
     if (!orderId) return;
 
     if (vendorId === "all") {
-      router.push(`/orders/${orderId}`, { scroll: false });
+      router.push(`${basePath}/${orderId}`, { scroll: false });
     } else {
       const pkg = packages.find((p) => p.vendorId === vendorId);
       const subOrderParam = pkg?.vendorSlug || vendorId;
-      router.push(`/orders/${orderId}?subOrder=${encodeURIComponent(subOrderParam)}`, {
+      router.push(`${basePath}/${orderId}?subOrder=${encodeURIComponent(subOrderParam)}`, {
         scroll: false,
       });
     }

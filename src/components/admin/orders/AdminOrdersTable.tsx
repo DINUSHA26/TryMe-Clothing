@@ -73,7 +73,7 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
               <tr key={order.id} className="hover:bg-muted/50">
                 <td className="px-4 py-3">
                   <Link
-                    href={`/admin/orders/${order.id}`}
+                    href={`/admin/orders/${order.orderNumber || order.id}`}
                     className="font-medium hover:underline"
                   >
                     {order.orderNumber}
@@ -144,7 +144,7 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
                   />
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link href={`/admin/orders/${order.id}`}>
+                  <Link href={`/admin/orders/${order.orderNumber || order.id}`}>
                     <Button variant="ghost" size="sm">
                       <Eye className="w-4 h-4 mr-2" />
                       View

@@ -141,21 +141,21 @@ export async function PATCH(
           { status: 400 }
         );
       }
+    }
 
-      const transitionValidation = validateStatusTransition(
-        orderItem.status,
-        status as any,
-        "VENDOR",
-        orderItem.order.createdAt,
-        null
+    const transitionValidation = validateStatusTransition(
+      orderItem.status,
+      status as any,
+      "VENDOR",
+      orderItem.order.createdAt,
+      null
+    );
+
+    if (!transitionValidation.isValid) {
+      return NextResponse.json(
+        { success: false, error: transitionValidation.error },
+        { status: 400 }
       );
-
-      if (!transitionValidation.isValid) {
-        return NextResponse.json(
-          { success: false, error: transitionValidation.error },
-          { status: 400 }
-        );
-      }
     }
 
     const result = await prisma.$transaction(async (tx) => {

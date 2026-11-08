@@ -62,32 +62,16 @@ export function UpdateEntireOrderStatusCard({
   const defaultApiEndpoint = apiEndpoint || `/api/vendor/orders/${orderId}/status`;
 
   const getAvailableStatuses = () => {
-    if (isWebsiteOrder) {
-      const allWebsiteStatuses = [
+    // 1. Direct website orders with pending payment
+    if (
+      isWebsiteOrder &&
+      (currentStatus === "PENDING_PAYMENT" || currentStatus === "PENDING_VERIFICATION")
+    ) {
+      return [
         {
           value: "PAYMENT_CONFIRMED",
           label: "Confirm Payment / Verify Order",
           icon: CreditCard,
-        },
-        {
-          value: "PROCESSING",
-          label: "Mark as Processing / Packing",
-          icon: Clock,
-        },
-        {
-          value: "SHIPPED",
-          label: "Mark as Shipped / Dispatched",
-          icon: Truck,
-        },
-        {
-          value: "DELIVERED",
-          label: "Mark as Delivered to Customer",
-          icon: PackageCheck,
-        },
-        {
-          value: "COMPLETED",
-          label: "Mark as Completed & Paid",
-          icon: CheckCircle2,
         },
         {
           value: "CANCELLED",
@@ -95,39 +79,76 @@ export function UpdateEntireOrderStatusCard({
           icon: Ban,
         },
       ];
-      return allWebsiteStatuses.filter((s) => s.value !== currentStatus);
     }
 
-    // Standard TryMe Marketplace transitions
-    const standardStatuses = [
-      {
-        value: "PROCESSING",
-        label: "Mark All as Processing / Packing",
-        icon: Clock,
-      },
-      {
-        value: "SHIPPED",
-        label: "Mark All as Shipped / Dispatched",
-        icon: Truck,
-      },
-      {
-        value: "DELIVERED",
-        label: "Mark All as Delivered",
-        icon: PackageCheck,
-      },
-      {
-        value: "COMPLETED",
-        label: "Mark All as Completed",
-        icon: CheckCircle2,
-      },
-      {
-        value: "CANCELLED",
-        label: "Cancel Entire Order",
-        icon: Ban,
-      },
-    ];
+    // 2. Sequential lifecycle: Payment Confirmed -> Processing -> Shipped -> Delivered -> Completed
+    switch (currentStatus) {
+      case "PENDING_PAYMENT":
+      case "PENDING_VERIFICATION":
+        // For marketplace orders, vendor waits for admin verification
+        return [];
 
-    return standardStatuses.filter((s) => s.value !== currentStatus);
+      case "PAYMENT_CONFIRMED":
+        return [
+          {
+            value: "PROCESSING",
+            label: "Mark All as Processing / Packing",
+            icon: Clock,
+          },
+          {
+            value: "CANCELLED",
+            label: isWebsiteOrder
+              ? "Cancel Entire Order (Restores Stock)"
+              : "Cancel Entire Order",
+            icon: Ban,
+          },
+        ];
+
+      case "PROCESSING":
+        return [
+          {
+            value: "SHIPPED",
+            label: "Mark All as Shipped / Dispatched",
+            icon: Truck,
+          },
+          {
+            value: "CANCELLED",
+            label: isWebsiteOrder
+              ? "Cancel Entire Order (Restores Stock)"
+              : "Cancel Entire Order",
+            icon: Ban,
+          },
+        ];
+
+      case "SHIPPED":
+        return [
+          {
+            value: "DELIVERED",
+            label: isWebsiteOrder
+              ? "Mark as Delivered to Customer"
+              : "Mark All as Delivered",
+            icon: PackageCheck,
+          },
+        ];
+
+      case "DELIVERED":
+      case "DELIVERY_CONFIRMED":
+        return [
+          {
+            value: "COMPLETED",
+            label: isWebsiteOrder
+              ? "Mark as Completed & Paid"
+              : "Mark All as Completed",
+            icon: CheckCircle2,
+          },
+        ];
+
+      case "COMPLETED":
+      case "CANCELLED":
+      default:
+        // Terminal states - cannot advance further
+        return [];
+    }
   };
 
   const availableStatuses = getAvailableStatuses();
@@ -225,8 +246,20 @@ export function UpdateEntireOrderStatusCard({
         </div>
       </div>
 
-      {/* Update Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+      {availableStatuses.length === 0 ? (
+        <div className="py-3 px-4 rounded-xl bg-muted/50 border text-xs text-muted-foreground flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>
+            {currentStatus === "COMPLETED"
+              ? "This order has been completed. No further status changes are required."
+              : currentStatus === "CANCELLED"
+              ? "This order is cancelled."
+              : `Order is currently ${currentStatus.replace(/_/g, " ")}. Further status changes will unlock after customer confirmation.`}
+          </span>
+        </div>
+      ) : (
+        /* Update Form */
+        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Status Selection */}
           <div className="space-y-2">
@@ -365,6 +398,7 @@ export function UpdateEntireOrderStatusCard({
           </span>
         </div>
       </form>
+      )}
     </div>
   );
 }

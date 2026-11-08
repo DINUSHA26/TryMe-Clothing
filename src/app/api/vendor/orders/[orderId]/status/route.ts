@@ -140,6 +140,33 @@ export async function PATCH(
       }
     }
 
+    // Enforce sequential status progression (e.g. cannot jump directly to COMPLETED)
+    const ALLOWED_NEXT_STATUSES: Record<string, string[]> = {
+      PENDING_PAYMENT: isWebsiteOrder ? ["PAYMENT_CONFIRMED", "CANCELLED"] : [],
+      PENDING_VERIFICATION: isWebsiteOrder ? ["PAYMENT_CONFIRMED", "CANCELLED"] : [],
+      PAYMENT_CONFIRMED: ["PROCESSING", "CANCELLED"],
+      PROCESSING: ["SHIPPED", "CANCELLED"],
+      SHIPPED: ["DELIVERED"],
+      DELIVERED: ["COMPLETED"],
+      DELIVERY_CONFIRMED: ["COMPLETED"],
+      COMPLETED: [],
+      CANCELLED: [],
+    };
+
+    for (const item of order.items) {
+      if (item.status === status) continue;
+      const allowed = ALLOWED_NEXT_STATUSES[item.status] || [];
+      if (!allowed.includes(status)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Cannot change status directly from ${item.status.replace(/_/g, " ")} to ${status.replace(/_/g, " ")}. Status must be updated sequentially (Processing -> Shipped -> Delivered -> Completed).`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     await prisma.$transaction(async (tx) => {
       const itemUpdateData: any = {
         status,

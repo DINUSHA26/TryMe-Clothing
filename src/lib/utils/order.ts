@@ -252,14 +252,19 @@ export function validateStatusTransition(
   // Vendor-specific validations
   if (role === "VENDOR") {
     const allowedTransitions: Record<string, string[]> = {
-      PAYMENT_CONFIRMED: ["PROCESSING", "SHIPPED", "CANCELLED"],
+      PENDING_PAYMENT: ["PAYMENT_CONFIRMED", "CANCELLED"],
+      PENDING_VERIFICATION: ["PAYMENT_CONFIRMED", "CANCELLED"],
+      PAYMENT_CONFIRMED: ["PROCESSING", "CANCELLED"],
       PROCESSING: ["SHIPPED", "CANCELLED"],
+      SHIPPED: ["DELIVERED"],
+      DELIVERED: ["COMPLETED"],
+      DELIVERY_CONFIRMED: ["COMPLETED"],
     };
 
     if (!allowedTransitions[currentStatus]?.includes(newStatus)) {
       return {
         isValid: false,
-        error: `Cannot transition from ${currentStatus} to ${newStatus}`
+        error: `Cannot change status directly from ${currentStatus.replace(/_/g, " ")} to ${newStatus.replace(/_/g, " ")}. Status must be updated sequentially (Processing -> Shipped -> Delivered -> Completed).`
       };
     }
 

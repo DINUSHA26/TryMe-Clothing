@@ -6,6 +6,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { VendorOrderGroup } from "@/components/orders/VendorOrderGroup";
@@ -25,6 +26,7 @@ import {
   CheckCircle,
   XCircle,
   FileText,
+  Store,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -136,9 +138,36 @@ export default function AdminOrderDetailsPage({
     );
   }
 
+  const searchParams = useSearchParams();
+  const rawSubOrder = searchParams.get("subOrder") || searchParams.get("package");
+  const activeSubOrder = rawSubOrder && rawSubOrder !== "all" ? rawSubOrder : undefined;
+
   const { order } = orderData;
   const statusHistory = order.statusHistory;
-  const itemsByVendor = order.itemsByVendor;
+  const itemsByVendor = order.itemsByVendor || [];
+  const isMultiVendor = itemsByVendor.length > 1;
+
+  const packagesList = itemsByVendor.map((vg: any) => ({
+    vendorId: vg.vendorId,
+    vendorName: vg.vendorName,
+    vendorSlug: vg.vendorSlug,
+    status: vg.status,
+    itemCount: vg.items?.length || 0,
+  }));
+
+  const selectedVendorGroup = activeSubOrder
+    ? itemsByVendor.find(
+        (vg: any) =>
+          vg.vendorSlug === activeSubOrder ||
+          vg.vendorId === activeSubOrder ||
+          (vg.vendorName &&
+            vg.vendorName.toLowerCase().replace(/\s+/g, "-") === activeSubOrder.toLowerCase())
+      )
+    : undefined;
+
+  const displayedVendorGroups = selectedVendorGroup
+    ? [selectedVendorGroup]
+    : itemsByVendor;
 
   return (
     <div className="p-8">
@@ -257,24 +286,80 @@ export default function AdminOrderDetailsPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Items by Vendor */}
+          {/* Items by Vendor / Packages */}
           <div>
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              Order Items
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary" />
+                <span>
+                  {isMultiVendor
+                    ? `Order Packages (${itemsByVendor.length} Stores)`
+                    : "Order Items"}
+                </span>
+              </h2>
+            </div>
+
+            {/* Package / Sub-Order Tabs when order has multiple stores */}
+            {isMultiVendor && (
+              <div className="mb-4 overflow-x-auto pb-1">
+                <div className="inline-flex items-center gap-1.5 p-1 bg-muted rounded-xl flex-wrap">
+                  <Link
+                    href={`/admin/orders/${order.orderNumber || order.id}`}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      !selectedVendorGroup
+                        ? "bg-background text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All Packages ({itemsByVendor.length})
+                  </Link>
+                  {itemsByVendor.map((vg: any, idx: number) => {
+                    const isSelected = selectedVendorGroup?.vendorId === vg.vendorId;
+                    const subOrderParam = vg.vendorSlug || vg.vendorId;
+                    return (
+                      <Link
+                        key={vg.vendorId || vg.vendorName}
+                        href={`/admin/orders/${order.orderNumber || order.id}?subOrder=${encodeURIComponent(subOrderParam)}`}
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Store className="w-3.5 h-3.5" />
+                        <span>{vg.vendorName}</span>
+                        <span className="text-[10px] opacity-80">
+                          (Package #{idx + 1})
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
-              {itemsByVendor.map((vendorGroup: any) => (
-                <VendorOrderGroup
-                  key={vendorGroup.vendorName}
-                  vendorName={vendorGroup.vendorName}
-                  items={vendorGroup.items}
-                  orderId={order.id}
-                  orderNumber={order.orderNumber}
-                  isCustomer={false}
-                  vendorStatus={vendorGroup.status}
-                />
-              ))}
+              {displayedVendorGroups.map((vendorGroup: any, idx: number) => {
+                const origIdx = itemsByVendor.findIndex((v: any) => v.vendorId === vendorGroup.vendorId);
+                const pkgNumber = origIdx >= 0 ? origIdx + 1 : idx + 1;
+                return (
+                  <VendorOrderGroup
+                    key={vendorGroup.vendorId || vendorGroup.vendorName}
+                    vendorId={vendorGroup.vendorId}
+                    vendorName={vendorGroup.vendorName}
+                    items={vendorGroup.items}
+                    chatRoomId={vendorGroup.chatRoomId}
+                    orderStatus={order.status}
+                    orderId={order.id}
+                    orderNumber={order.orderNumber}
+                    deliveryConfirmedAt={order.deliveryConfirmedAt}
+                    isCustomer={false}
+                    vendorStatus={vendorGroup.status}
+                    packageIndex={pkgNumber}
+                    totalPackages={itemsByVendor.length}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -282,8 +367,12 @@ export default function AdminOrderDetailsPage({
           {statusHistory && statusHistory.length > 0 && (
             <div>
               <OrderTimeline
+                orderId={order.orderNumber || order.id}
+                basePath="/admin/orders"
+                activeSubOrder={activeSubOrder}
                 statusHistory={statusHistory}
                 currentStatus={order.status}
+                packages={packagesList}
               />
             </div>
           )}
