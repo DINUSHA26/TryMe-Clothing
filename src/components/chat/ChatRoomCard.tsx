@@ -55,6 +55,30 @@ export function ChatRoomCard({ room, isSelected, onClick }: ChatRoomCardProps) {
     lastMessageTime = 'now';
   }
 
+  // Format last message text / attachment indicator
+  let lastMessageSnippet = 'No messages yet';
+  if (room.lastMessage?.content) {
+    const raw = room.lastMessage.content;
+    if (raw.startsWith('{"type":"attachment"')) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.fileType === 'image') {
+          lastMessageSnippet = parsed.caption ? `📷 ${parsed.caption}` : '📷 Photo';
+        } else if (parsed.fileType === 'pdf') {
+          lastMessageSnippet = `📄 ${parsed.name || 'PDF Document'}`;
+        } else if (parsed.fileType === 'excel') {
+          lastMessageSnippet = `📊 ${parsed.name || 'Spreadsheet'}`;
+        } else {
+          lastMessageSnippet = `📎 ${parsed.name || 'File'}`;
+        }
+      } catch {
+        lastMessageSnippet = '📎 Attachment';
+      }
+    } else {
+      lastMessageSnippet = raw;
+    }
+  }
+
   return (
     <button
       onClick={onClick}
@@ -120,7 +144,7 @@ export function ChatRoomCard({ room, isSelected, onClick }: ChatRoomCardProps) {
                   : 'text-muted-foreground/85'
               )}
             >
-              {room.lastMessage ? room.lastMessage.content : 'No messages yet'}
+              {lastMessageSnippet}
             </p>
 
             {/* Unread badge */}

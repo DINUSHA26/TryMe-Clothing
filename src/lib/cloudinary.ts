@@ -59,13 +59,16 @@ export async function uploadImage(
 export async function uploadFile(
   file: Buffer,
   mimeType: string,
-  folder: string = "documents"
+  folder: string = "documents",
+  originalFilename?: string
 ): Promise<CloudinaryUploadResult> {
   try {
     const result = await cloudinary.uploader.upload(
-      `data:${mimeType};base64,${file.toString("base64")}`,
+      `data:${mimeType || "application/octet-stream"};base64,${file.toString("base64")}`,
       {
         folder: `fashiondora/${folder}`,
+        resource_type: "auto",
+        public_id: originalFilename ? originalFilename.replace(/\.[^/.]+$/, "") : undefined,
       }
     );
 

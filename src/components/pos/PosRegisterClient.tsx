@@ -1053,7 +1053,10 @@ export function PosRegisterClient({
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 {filteredProducts.map((product) => {
                   const hasVariants = product.variants && product.variants.length > 0;
-                  const isOutOfStock = product.stock <= 0;
+                  const totalStock = hasVariants
+                    ? product.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
+                    : Number(product.stock) || 0;
+                  const isOutOfStock = totalStock <= 0;
 
                   return (
                     <div
@@ -1096,12 +1099,12 @@ export function PosRegisterClient({
                               <Badge
                                 variant="secondary"
                                 className={`text-[10px] px-1.5 py-0 font-bold ${
-                                  product.stock <= 5
+                                  totalStock <= 5
                                     ? "bg-amber-500 text-white"
                                     : "bg-emerald-600 text-white"
                                 }`}
                               >
-                                Stock: {product.stock} {product.unit && product.unit !== "PCS" ? product.unit.toLowerCase() : ""}
+                                Stock: {totalStock} {product.unit && product.unit !== "PCS" ? product.unit.toLowerCase() : ""}
                               </Badge>
                             )}
                           </div>

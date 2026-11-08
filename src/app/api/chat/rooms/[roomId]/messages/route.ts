@@ -183,17 +183,44 @@ export async function POST(
     // Record user activity
     await recordUserActivity(userId);
 
-    // Filter contact information
-    const filterResult = filterContactInfo(content);
+    // Filter contact information (with support for structured attachments)
+    let finalContent = content;
+    let hasBlocked = false;
+    let violations: any[] = [];
+
+    let attachmentPayload: any = null;
+    if (content.startsWith('{"type":"attachment"')) {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed.type === 'attachment' && parsed.url) {
+          attachmentPayload = parsed;
+        }
+      } catch {}
+    }
+
+    if (attachmentPayload) {
+      if (attachmentPayload.caption) {
+        const captionFilter = filterContactInfo(attachmentPayload.caption);
+        attachmentPayload.caption = captionFilter.filteredContent;
+        hasBlocked = captionFilter.hasBlockedContent;
+        violations = captionFilter.violations;
+        finalContent = JSON.stringify(attachmentPayload);
+      }
+    } else {
+      const filterResult = filterContactInfo(content);
+      finalContent = filterResult.filteredContent;
+      hasBlocked = filterResult.hasBlockedContent;
+      violations = filterResult.violations;
+    }
 
     // Save message
     const message = await prisma.chatMessage.create({
       data: {
         chatRoomId: roomId,
         senderId: userId,
-        content: filterResult.filteredContent,
-        contentFiltered: filterResult.hasBlockedContent ? filterResult.filteredContent : null,
-        hasBlockedContent: filterResult.hasBlockedContent,
+        content: finalContent,
+        contentFiltered: hasBlocked ? finalContent : null,
+        hasBlockedContent: hasBlocked,
         isRead: false,
       },
       include: {
@@ -258,8 +285,8 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: formattedMessage,
-      contactBlocked: filterResult.hasBlockedContent,
-      violations: filterResult.hasBlockedContent ? filterResult.violations : undefined,
+      contactBlocked: hasBlocked,
+      violations: hasBlocked ? violations : undefined,
     });
   } catch (error: any) {
     console.error('[API] Error sending message:', error);

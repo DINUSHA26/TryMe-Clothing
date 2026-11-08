@@ -83,6 +83,28 @@ export function OrderItemCard({
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
 
+  const safeProduct: ProductSnapshot =
+    typeof productSnapshot === "string"
+      ? (() => {
+          try {
+            return JSON.parse(productSnapshot);
+          } catch {
+            return { name: "Product", slug: "", image: "", basePrice: 0, vendorId: "", vendorName: "" };
+          }
+        })()
+      : (productSnapshot || { name: "Product", slug: "", image: "", basePrice: 0, vendorId: "", vendorName: "" });
+
+  const safeVariant: VariantSnapshot | null =
+    typeof variantSnapshot === "string"
+      ? (() => {
+          try {
+            return JSON.parse(variantSnapshot);
+          } catch {
+            return null;
+          }
+        })()
+      : variantSnapshot;
+
   const actions = calculateItemActions({
     status: status || "PENDING_PAYMENT",
     deliveryConfirmedAt: deliveryConfirmedAt ? new Date(deliveryConfirmedAt) : null,
@@ -97,10 +119,10 @@ export function OrderItemCard({
     <div className="flex gap-4 p-4 border rounded-lg bg-card">
       {/* Product Image */}
       <div className="relative w-20 h-20 flex-shrink-0 rounded overflow-hidden bg-muted">
-        {productSnapshot.image ? (
+        {safeProduct.image ? (
           <Image
-            src={productSnapshot.image}
-            alt={productSnapshot.name}
+            src={safeProduct.image}
+            alt={safeProduct.name}
             fill
             className="object-cover"
           />
@@ -114,22 +136,22 @@ export function OrderItemCard({
       {/* Product Details */}
       <div className="flex-1 min-w-0">
         <Link
-          href={`/products/${productSnapshot.slug}`}
+          href={`/products/${safeProduct.slug}`}
           className="font-medium hover:underline line-clamp-1"
         >
-          {productSnapshot.name}
+          {safeProduct.name}
         </Link>
 
         {/* Variant */}
-        {variantSnapshot && (
+        {safeVariant && (
           <p className="text-sm text-muted-foreground mt-1">
-            {variantSnapshot.name}: {variantSnapshot.value}
+            {safeVariant.name}: {safeVariant.value}
           </p>
         )}
 
         {/* Vendor */}
         <p className="text-sm text-muted-foreground mt-1">
-          Sold by: {productSnapshot.vendorName}
+          Sold by: {safeProduct.vendorName}
         </p>
 
         {/* Quantity & Price */}

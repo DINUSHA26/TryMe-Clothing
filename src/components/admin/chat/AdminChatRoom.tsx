@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, FileText, FileSpreadsheet, File, ExternalLink, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -118,6 +118,18 @@ export function AdminChatRoom({ roomId, customer, vendor }: AdminChatRoomProps) 
 
       {messages.map((msg) => {
         const styles = getMessageStyles(msg);
+        let attachment: { type: string; fileType?: string; url: string; name?: string; size?: number; caption?: string } | null = null;
+        if (msg.content && msg.content.trim().startsWith('{') && msg.content.includes('"type":"attachment"')) {
+          try {
+            const parsed = JSON.parse(msg.content);
+            if (parsed.type === 'attachment') {
+              attachment = parsed;
+            }
+          } catch {
+            // plain text
+          }
+        }
+
         return (
           <div
             key={msg.id}
@@ -133,7 +145,86 @@ export function AdminChatRoom({ roomId, customer, vendor }: AdminChatRoomProps) 
                 msg.hasBlockedContent && 'ring-2 ring-destructive/50'
               )}
             >
-              {msg.content}
+              {attachment ? (
+                <div className="space-y-2">
+                  {attachment.fileType === 'image' && (
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block overflow-hidden rounded-md border border-white/20 hover:opacity-90 transition-opacity"
+                    >
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name || 'Image'}
+                        className="max-h-60 max-w-full object-cover rounded"
+                      />
+                    </a>
+                  )}
+
+                  {attachment.fileType === 'pdf' && (
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 p-2 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-600 transition-colors"
+                    >
+                      <FileText className="w-6 h-6 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold truncate">{attachment.name || 'Document.pdf'}</div>
+                        {attachment.size && (
+                          <div className="text-[10px] opacity-75">{(attachment.size / 1024).toFixed(1)} KB</div>
+                        )}
+                      </div>
+                      <ExternalLink className="w-4 h-4 shrink-0 opacity-70" />
+                    </a>
+                  )}
+
+                  {attachment.fileType === 'excel' && (
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="flex items-center gap-2.5 p-2 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 transition-colors"
+                    >
+                      <FileSpreadsheet className="w-6 h-6 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold truncate">{attachment.name || 'Spreadsheet.xlsx'}</div>
+                        {attachment.size && (
+                          <div className="text-[10px] opacity-75">{(attachment.size / 1024).toFixed(1)} KB</div>
+                        )}
+                      </div>
+                      <Download className="w-4 h-4 shrink-0 opacity-70" />
+                    </a>
+                  )}
+
+                  {attachment.fileType === 'file' && (
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="flex items-center gap-2.5 p-2 rounded-md bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 transition-colors"
+                    >
+                      <File className="w-6 h-6 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold truncate">{attachment.name || 'File'}</div>
+                        {attachment.size && (
+                          <div className="text-[10px] opacity-75">{(attachment.size / 1024).toFixed(1)} KB</div>
+                        )}
+                      </div>
+                      <Download className="w-4 h-4 shrink-0 opacity-70" />
+                    </a>
+                  )}
+
+                  {attachment.caption && (
+                    <p className="text-xs break-words">{attachment.caption}</p>
+                  )}
+                </div>
+              ) : (
+                msg.content
+              )}
             </div>
             {msg.hasBlockedContent && (
               <Badge variant="destructive" className="mt-1 text-[10px] gap-1 h-4 uppercase">

@@ -5,8 +5,8 @@
 
 "use client";
 
-import { Suspense, use, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { VendorOrderGroup } from "@/components/orders/VendorOrderGroup";
@@ -36,11 +36,10 @@ interface AdminOrderDetailsPageProps {
   }>;
 }
 
-function AdminOrderDetailsContent({
-  params,
-}: AdminOrderDetailsPageProps) {
-  const { orderId } = use(params);
+function AdminOrderDetailsContent() {
+  const routeParams = useParams();
   const searchParams = useSearchParams();
+  const orderId = (routeParams?.orderId as string) || "";
 
   const [orderData, setOrderData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,8 +47,12 @@ function AdminOrderDetailsContent({
   const [isMarkingDelivered, setIsMarkingDelivered] = useState(false);
 
   const fetchOrderDetails = async () => {
+    if (!orderId) {
+      setIsLoading(false);
+      return;
+    }
     try {
-      const response = await fetch(`/api/orders/${orderId}`);
+      const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`);
       const data = await response.json();
 
       if (data.success) {
@@ -195,17 +198,17 @@ function AdminOrderDetailsContent({
               order={{
                 id: order.id,
                 orderNumber: order.orderNumber,
-                orderSource: order.orderNumber.startsWith("WEB-")
+                orderSource: (order.orderNumber || "").startsWith("WEB-")
                   ? "VENDOR_WEBSITE"
                   : "TRYME_MARKETPLACE",
                 paymentMethod: order.payment?.paymentMethod || order.paymentMethod,
                 paymentStatus: order.payment?.status,
                 status: order.status,
                 bankReference: order.payment?.notificationData?.bankReference,
-                shippingAmount: order.shippingAmount,
-                totalAmount: order.totalAmount,
+                shippingAmount: Number(order.shippingAmount) || 0,
+                totalAmount: Number(order.totalAmount) || 0,
                 notes: order.notes,
-                customerEmail: order.customer?.user?.email,
+                customerEmail: order.customer?.email || order.customer?.user?.email,
                 createdAt: order.createdAt,
               }}
               vendorItems={order.items || []}
@@ -243,7 +246,7 @@ function AdminOrderDetailsContent({
             <p className="text-sm text-muted-foreground mb-1">Subtotal</p>
             <p className="text-xl font-semibold">
               Rs.{" "}
-              {order.subtotal.toLocaleString("en-LK", {
+              {(Number(order.subtotal) || 0).toLocaleString("en-LK", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -253,7 +256,7 @@ function AdminOrderDetailsContent({
             <p className="text-sm text-muted-foreground mb-1">Discount</p>
             <p className="text-xl font-semibold text-green-600">
               - Rs.{" "}
-              {order.discountAmount.toLocaleString("en-LK", {
+              {(Number(order.discountAmount) || 0).toLocaleString("en-LK", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -263,7 +266,7 @@ function AdminOrderDetailsContent({
             <p className="text-sm text-muted-foreground mb-1">Total</p>
             <p className="text-2xl font-bold">
               Rs.{" "}
-              {order.totalAmount.toLocaleString("en-LK", {
+              {(Number(order.totalAmount) || 0).toLocaleString("en-LK", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -271,7 +274,9 @@ function AdminOrderDetailsContent({
           </div>
           <div className="border rounded-lg p-4 bg-card">
             <p className="text-sm text-muted-foreground mb-1">Items</p>
-            <p className="text-xl font-semibold">{itemsByVendor.reduce((total: number, v: any) => total + v.items.length, 0)}</p>
+            <p className="text-xl font-semibold">
+              {itemsByVendor.reduce((total: number, v: any) => total + (v.items?.length || 0), 0)}
+            </p>
           </div>
         </div>
 
@@ -580,7 +585,7 @@ function AdminOrderDetailsContent({
   );
 }
 
-export default function AdminOrderDetailsPage(props: AdminOrderDetailsPageProps) {
+export default function AdminOrderDetailsPage() {
   return (
     <Suspense
       fallback={
@@ -591,7 +596,7 @@ export default function AdminOrderDetailsPage(props: AdminOrderDetailsPageProps)
         </div>
       }
     >
-      <AdminOrderDetailsContent {...props} />
+      <AdminOrderDetailsContent />
     </Suspense>
   );
 }

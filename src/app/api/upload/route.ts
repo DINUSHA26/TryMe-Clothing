@@ -20,20 +20,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const fileNameLower = (file.name || "").toLowerCase();
     const isImage = file.type.startsWith("image/");
-    const isPdf = file.type === "application/pdf";
+    const isPdf = file.type === "application/pdf" || fileNameLower.endsWith(".pdf");
+    const isExcel =
+      file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.type === "application/vnd.ms-excel" ||
+      file.type === "text/csv" ||
+      file.type.includes("spreadsheet") ||
+      file.type.includes("excel") ||
+      fileNameLower.endsWith(".xlsx") ||
+      fileNameLower.endsWith(".xls") ||
+      fileNameLower.endsWith(".csv");
+    const isWord =
+      file.type === "application/msword" ||
+      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      fileNameLower.endsWith(".doc") ||
+      fileNameLower.endsWith(".docx");
 
     // Validate file type
-    if (!isImage && !isPdf) {
+    if (!isImage && !isPdf && !isExcel && !isWord) {
       return NextResponse.json(
-        { success: false, error: "File must be an image or a PDF" },
+        {
+          success: false,
+          error: "Unsupported file type. Please upload images (JPG, PNG, WebP), PDFs, Excel files (.xlsx, .xls, .csv), or Word documents.",
+        },
         { status: 400 }
       );
     }
 
-    // Validate file size (5MB)
-    if (file.size > IMAGE_CONFIG.maxSize) {
-      const maxSizeMB = IMAGE_CONFIG.maxSize / 1024 / 1024;
+    // Validate file size: up to 15MB for documents, 5MB for general images
+    const maxAllowedSize = isImage ? 10 * 1024 * 1024 : 15 * 1024 * 1024;
+    if (file.size > maxAllowedSize) {
+      const maxSizeMB = Math.round(maxAllowedSize / 1024 / 1024);
       return NextResponse.json(
         {
           success: false,
@@ -48,17 +67,24 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     let result;
-    if (isPdf) {
-      // Upload PDF to Cloudinary
-      result = await uploadFile(buffer, file.type, folder);
-    } else {
+    if (isImage) {
       // Upload Image to Cloudinary
       result = await uploadImage(buffer, folder);
+    } else {
+      // Upload PDF, Excel, or Word to Cloudinary
+      result = await uploadFile(buffer, file.type, folder, file.name);
     }
+
+    const detectedType = isImage ? "image" : isPdf ? "pdf" : isExcel ? "excel" : "file";
 
     return NextResponse.json({
       success: true,
-      data: result,
+      data: {
+        ...result,
+        name: file.name,
+        size: file.size,
+        fileType: detectedType,
+      },
     });
   } catch (error) {
     console.error("Upload error:", error);

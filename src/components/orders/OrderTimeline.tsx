@@ -289,8 +289,8 @@ export function OrderTimeline({
                     {/* Created by */}
                     {item.createdBy && (
                       <p className="text-[11px] text-muted-foreground mt-1">
-                        by {item.createdBy.email}
-                        {item.createdBy.role && ` (${item.createdBy.role})`}
+                        by {typeof item.createdBy === "object" ? (item.createdBy.email || "Staff") : "Staff"}
+                        {typeof item.createdBy === "object" && item.createdBy.role && ` (${item.createdBy.role})`}
                       </p>
                     )}
                   </div>

@@ -26,6 +26,15 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   serverExternalPackages: ["jose", "@prisma/client", "prisma"],
+  outputFileTracingExcludes: {
+    "*": [
+      "node_modules/@swc/core-win32-x64-msvc",
+      "node_modules/@swc/core-darwin-arm64",
+      "node_modules/@esbuild",
+      "node_modules/webpack",
+      "node_modules/terser",
+    ],
+  },
 };
 
 export default nextConfig;
