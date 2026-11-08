@@ -26,6 +26,7 @@ import {
   ScanBarcode,
   Bot,
   ShieldCheck,
+  UserCheck,
 } from "lucide-react";
 
 export interface NavItem {
@@ -53,6 +54,11 @@ export const adminNavItems: NavItem[] = [
     icon: Users,
   },
   {
+    label: "Customer Panel",
+    href: "/admin/customers",
+    icon: UserCheck,
+  },
+  {
     label: "Categories",
     href: "/admin/categories",
     icon: FolderTree,
@@ -66,6 +72,11 @@ export const adminNavItems: NavItem[] = [
     label: "Orders",
     href: "/admin/orders",
     icon: ShoppingCart,
+  },
+  {
+    label: "POS Panel",
+    href: "/admin/pos",
+    icon: ScanBarcode,
   },
   {
     label: "Coupons",

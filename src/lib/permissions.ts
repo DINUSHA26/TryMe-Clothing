@@ -40,12 +40,14 @@ export interface FeatureDef {
 export const FEATURES: FeatureDef[] = [
   // ── Marketplace ──
   { key: "vendors", group: "Marketplace", label: "Vendors", description: "Vendor accounts, approvals and bank details", paths: ["vendors", "bank-details"], actions: ["view", "create", "edit", "delete", "approve"] },
+  { key: "customers", group: "Marketplace", label: "Customer Panel", description: "View and filter customers from TryMe.lk and Vendor Direct Sites", paths: ["customers"], actions: ["view"] },
   { key: "categories", group: "Marketplace", label: "Categories", description: "Product categories & subcategories", paths: ["categories"], actions: ["view", "create", "edit", "delete"] },
   { key: "products", group: "Marketplace", label: "Products", description: "Moderate & manage all products", paths: ["products"], actions: ["view", "create", "edit", "delete", "approve"] },
   { key: "coupons", group: "Marketplace", label: "Coupons", description: "Platform-wide coupons", paths: ["coupons"], actions: ["view", "create", "edit", "delete"] },
   { key: "reviews", group: "Marketplace", label: "Reviews", description: "Moderate customer reviews", paths: ["reviews"], actions: ["view", "edit", "delete"] },
   // ── Sales & Finance ──
   { key: "orders", group: "Sales & Finance", label: "Orders", description: "All platform orders", paths: ["orders"], actions: ["view", "edit", "approve"] },
+  { key: "pos", group: "Sales & Finance", label: "POS Panel", description: "Monitor POS sales, walk-in customers and receipts across all shops", paths: ["pos"], actions: ["view"] },
   { key: "payouts", group: "Sales & Finance", label: "Payouts", description: "Vendor payouts & settlements", paths: ["payouts"], actions: ["view", "edit", "approve"] },
   { key: "disputes", group: "Sales & Finance", label: "Disputes", description: "Customer / vendor disputes", paths: ["disputes"], actions: ["view", "edit", "approve"] },
   { key: "reports", group: "Sales & Finance", label: "Reports", description: "Revenue and analytics reports", paths: ["reports"], actions: ["view"] },
