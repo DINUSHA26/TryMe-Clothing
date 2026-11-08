@@ -664,3 +664,4 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
     </div>
   );
 }
+

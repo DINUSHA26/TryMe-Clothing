@@ -119,14 +119,17 @@ export function AdminChatRoom({ roomId, customer, vendor }: AdminChatRoomProps) 
       {messages.map((msg) => {
         const styles = getMessageStyles(msg);
         let attachment: { type: string; fileType?: string; url: string; name?: string; size?: number; caption?: string } | null = null;
-        if (msg.content && msg.content.trim().startsWith('{') && msg.content.includes('"type":"attachment"')) {
-          try {
-            const parsed = JSON.parse(msg.content);
-            if (parsed.type === 'attachment') {
-              attachment = parsed;
+        if (typeof msg.content === 'string') {
+          const trimmed = msg.content.trim();
+          if (trimmed.startsWith('{') && trimmed.includes('"attachment"') && trimmed.includes('"url"')) {
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (parsed.type === 'attachment' && parsed.url) {
+                attachment = parsed;
+              }
+            } catch {
+              // plain text
             }
-          } catch {
-            // plain text
           }
         }
 
@@ -149,7 +152,7 @@ export function AdminChatRoom({ roomId, customer, vendor }: AdminChatRoomProps) 
                 <div className="space-y-2">
                   {attachment.fileType === 'image' && (
                     <a
-                      href={attachment.url}
+                      href={`/api/chat/download?url=${encodeURIComponent(attachment.url)}&name=${encodeURIComponent(attachment.name || 'image.jpg')}&mode=inline`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block overflow-hidden rounded-md border border-white/20 hover:opacity-90 transition-opacity"
@@ -164,7 +167,7 @@ export function AdminChatRoom({ roomId, customer, vendor }: AdminChatRoomProps) 
 
                   {attachment.fileType === 'pdf' && (
                     <a
-                      href={attachment.url}
+                      href={`/api/chat/download?url=${encodeURIComponent(attachment.url)}&name=${encodeURIComponent(attachment.name || 'document.pdf')}&mode=inline`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2.5 p-2 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-600 transition-colors"
@@ -182,10 +185,10 @@ export function AdminChatRoom({ roomId, customer, vendor }: AdminChatRoomProps) 
 
                   {attachment.fileType === 'excel' && (
                     <a
-                      href={attachment.url}
+                      href={`/api/chat/download?url=${encodeURIComponent(attachment.url)}&name=${encodeURIComponent(attachment.name || 'spreadsheet.xlsx')}&mode=attachment`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      download
+                      download={attachment.name || 'spreadsheet.xlsx'}
                       className="flex items-center gap-2.5 p-2 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 transition-colors"
                     >
                       <FileSpreadsheet className="w-6 h-6 shrink-0" />
@@ -201,10 +204,10 @@ export function AdminChatRoom({ roomId, customer, vendor }: AdminChatRoomProps) 
 
                   {attachment.fileType === 'file' && (
                     <a
-                      href={attachment.url}
+                      href={`/api/chat/download?url=${encodeURIComponent(attachment.url)}&name=${encodeURIComponent(attachment.name || 'file')}&mode=attachment`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      download
+                      download={attachment.name || 'file'}
                       className="flex items-center gap-2.5 p-2 rounded-md bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 transition-colors"
                     >
                       <File className="w-6 h-6 shrink-0" />

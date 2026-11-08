@@ -59,17 +59,22 @@ export function ChatRoomCard({ room, isSelected, onClick }: ChatRoomCardProps) {
   let lastMessageSnippet = 'No messages yet';
   if (room.lastMessage?.content) {
     const raw = room.lastMessage.content;
-    if (raw.startsWith('{"type":"attachment"')) {
+    const trimmed = typeof raw === 'string' ? raw.trim() : '';
+    if (trimmed.startsWith('{') && trimmed.includes('"attachment"') && trimmed.includes('"url"')) {
       try {
-        const parsed = JSON.parse(raw);
-        if (parsed.fileType === 'image') {
-          lastMessageSnippet = parsed.caption ? `📷 ${parsed.caption}` : '📷 Photo';
-        } else if (parsed.fileType === 'pdf') {
-          lastMessageSnippet = `📄 ${parsed.name || 'PDF Document'}`;
-        } else if (parsed.fileType === 'excel') {
-          lastMessageSnippet = `📊 ${parsed.name || 'Spreadsheet'}`;
+        const parsed = JSON.parse(trimmed);
+        if (parsed.type === 'attachment') {
+          if (parsed.fileType === 'image') {
+            lastMessageSnippet = parsed.caption ? `📷 ${parsed.caption}` : '📷 Photo';
+          } else if (parsed.fileType === 'pdf') {
+            lastMessageSnippet = `📄 ${parsed.name || 'PDF Document'}`;
+          } else if (parsed.fileType === 'excel') {
+            lastMessageSnippet = `📊 ${parsed.name || 'Spreadsheet'}`;
+          } else {
+            lastMessageSnippet = `📎 ${parsed.name || 'File'}`;
+          }
         } else {
-          lastMessageSnippet = `📎 ${parsed.name || 'File'}`;
+          lastMessageSnippet = raw;
         }
       } catch {
         lastMessageSnippet = '📎 Attachment';

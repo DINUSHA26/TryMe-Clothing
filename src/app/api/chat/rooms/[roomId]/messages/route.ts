@@ -189,13 +189,16 @@ export async function POST(
     let violations: any[] = [];
 
     let attachmentPayload: any = null;
-    if (content.startsWith('{"type":"attachment"')) {
-      try {
-        const parsed = JSON.parse(content);
-        if (parsed.type === 'attachment' && parsed.url) {
-          attachmentPayload = parsed;
-        }
-      } catch {}
+    if (typeof content === 'string') {
+      const trimmed = content.trim();
+      if (trimmed.startsWith('{') && trimmed.includes('"attachment"') && trimmed.includes('"url"')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (parsed.type === 'attachment' && parsed.url) {
+            attachmentPayload = parsed;
+          }
+        } catch {}
+      }
     }
 
     if (attachmentPayload) {

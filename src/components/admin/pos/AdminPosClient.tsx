@@ -667,3 +667,4 @@ export function AdminPosClient({ initialData }: AdminPosClientProps) {
     </div>
   );
 }
+

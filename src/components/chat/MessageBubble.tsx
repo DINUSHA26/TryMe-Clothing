@@ -91,13 +91,20 @@ export function MessageBubble({ message, isOwn = false, room }: MessageBubblePro
     caption?: string;
   } | null = null;
 
-  if (message.content.startsWith('{"type":"attachment"')) {
-    try {
-      const parsed = JSON.parse(message.content);
-      if (parsed.type === 'attachment' && parsed.url) {
-        attachment = parsed;
-      }
-    } catch {}
+  if (typeof message.content === 'string') {
+    const trimmed = message.content.trim();
+    if (trimmed.startsWith('{') && trimmed.includes('"attachment"') && trimmed.includes('"url"')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed.type === 'attachment' && parsed.url) {
+          attachment = {
+            ...parsed,
+            fileType: parsed.fileType || 'file',
+            name: parsed.name || 'Attachment',
+          };
+        }
+      } catch {}
+    }
   }
 
   return (
@@ -162,7 +169,7 @@ export function MessageBubble({ message, isOwn = false, room }: MessageBubblePro
                 {/* 1. Image Attachment */}
                 {attachment.fileType === 'image' && (
                   <a
-                    href={attachment.url}
+                    href={`/api/chat/download?url=${encodeURIComponent(attachment.url)}&name=${encodeURIComponent(attachment.name || 'image.jpg')}&mode=inline`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block relative rounded-xl overflow-hidden border border-black/10 dark:border-white/10 group cursor-pointer bg-black/5"
@@ -183,7 +190,7 @@ export function MessageBubble({ message, isOwn = false, room }: MessageBubblePro
                 {/* 2. PDF Attachment */}
                 {attachment.fileType === 'pdf' && (
                   <a
-                    href={attachment.url}
+                    href={`/api/chat/download?url=${encodeURIComponent(attachment.url)}&name=${encodeURIComponent(attachment.name || 'Document.pdf')}&mode=inline`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={cn(
@@ -220,10 +227,10 @@ export function MessageBubble({ message, isOwn = false, room }: MessageBubblePro
                 {/* 3. Excel Spreadsheet Attachment */}
                 {attachment.fileType === 'excel' && (
                   <a
-                    href={attachment.url}
+                    href={`/api/chat/download?url=${encodeURIComponent(attachment.url)}&name=${encodeURIComponent(attachment.name || 'Spreadsheet.xlsx')}&mode=attachment`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    download={attachment.name}
+                    download={attachment.name || 'Spreadsheet.xlsx'}
                     className={cn(
                       'flex items-center gap-2.5 p-2.5 rounded-xl border transition-all text-left group',
                       isOwn
@@ -258,10 +265,10 @@ export function MessageBubble({ message, isOwn = false, room }: MessageBubblePro
                 {/* 4. Other File Attachment */}
                 {attachment.fileType === 'file' && (
                   <a
-                    href={attachment.url}
+                    href={`/api/chat/download?url=${encodeURIComponent(attachment.url)}&name=${encodeURIComponent(attachment.name || 'Attachment')}&mode=attachment`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    download={attachment.name}
+                    download={attachment.name || 'Attachment'}
                     className={cn(
                       'flex items-center gap-2.5 p-2.5 rounded-xl border transition-all text-left group',
                       isOwn

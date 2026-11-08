@@ -63,12 +63,26 @@ export async function uploadFile(
   originalFilename?: string
 ): Promise<CloudinaryUploadResult> {
   try {
+    const isPdf = mimeType === "application/pdf" || originalFilename?.toLowerCase().endsWith(".pdf");
+    const isDoc =
+      isPdf ||
+      mimeType.includes("spreadsheet") ||
+      mimeType.includes("excel") ||
+      mimeType.includes("csv") ||
+      mimeType.includes("word") ||
+      originalFilename?.toLowerCase().endsWith(".xlsx") ||
+      originalFilename?.toLowerCase().endsWith(".xls") ||
+      originalFilename?.toLowerCase().endsWith(".csv") ||
+      originalFilename?.toLowerCase().endsWith(".docx");
+
     const result = await cloudinary.uploader.upload(
       `data:${mimeType || "application/octet-stream"};base64,${file.toString("base64")}`,
       {
         folder: `fashiondora/${folder}`,
-        resource_type: "auto",
-        public_id: originalFilename ? originalFilename.replace(/\.[^/.]+$/, "") : undefined,
+        resource_type: isDoc ? "raw" : "auto",
+        public_id: originalFilename
+          ? (isDoc ? originalFilename : originalFilename.replace(/\.[^/.]+$/, ""))
+          : undefined,
       }
     );
 
