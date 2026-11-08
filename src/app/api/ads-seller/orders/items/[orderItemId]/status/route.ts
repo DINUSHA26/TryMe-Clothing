@@ -208,12 +208,13 @@ export async function PATCH(
           .catch(() => {});
       }
 
+      const prefix = `[Package: ${sellerVendor.vendor.businessName}] `;
       const historyNote =
         status === "SHIPPED"
-          ? `Item shipped by seller${trackingNumber ? ` (Tracking: ${trackingNumber})` : ""}${
+          ? `${prefix}Item shipped by seller${trackingNumber ? ` (Tracking: ${trackingNumber})` : ""}${
               note ? `\n${note}` : ""
             }`
-          : `Item marked as ${status} by seller${note ? `\n${note}` : ""}`;
+          : `${prefix}Item marked as ${status} by seller${note ? `\n${note}` : ""}`;
 
       await tx.orderStatusHistory.create({
         data: {

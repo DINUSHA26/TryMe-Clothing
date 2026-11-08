@@ -118,6 +118,18 @@ export function OrderStatusBadge({ status, items, className }: OrderStatusBadgeP
         </Badge>
       );
     }
+
+    const shippedOrHigherCount = nonCancelled.filter(item => ['SHIPPED', 'DELIVERED', 'DELIVERY_CONFIRMED', 'COMPLETED'].includes(item.status)).length;
+    if (shippedOrHigherCount > 0 && shippedOrHigherCount < nonCancelled.length) {
+      return (
+        <Badge
+          variant="default"
+          className={`bg-indigo-600 hover:bg-indigo-700 text-white font-bold ${className || ""}`}
+        >
+          Partially Shipped ({shippedOrHigherCount}/{nonCancelled.length})
+        </Badge>
+      );
+    }
   }
 
   const config = STATUS_CONFIG[status];

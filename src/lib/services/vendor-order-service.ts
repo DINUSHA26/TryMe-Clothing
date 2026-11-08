@@ -233,13 +233,39 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
         ? order.shippingAddressJson?.phone || "Guest Customer"
         : order.customer_user?.email);
 
+    // Calculate vendor's sub-order status based on vendor's own items
+    let vendorOrderStatus = order.status;
+    if (items.length > 0) {
+      const nonCancelled = items.filter((i: any) => i.status !== "CANCELLED");
+      if (nonCancelled.length === 0) {
+        vendorOrderStatus = "CANCELLED";
+      } else {
+        const statuses = nonCancelled.map((i: any) => i.status);
+        if (statuses.every((s: string) => s === "COMPLETED")) {
+          vendorOrderStatus = "COMPLETED";
+        } else if (statuses.every((s: string) => s === "DELIVERED" || s === "COMPLETED")) {
+          vendorOrderStatus = "DELIVERED";
+        } else if (statuses.every((s: string) => ["SHIPPED", "DELIVERED", "COMPLETED"].includes(s))) {
+          vendorOrderStatus = "SHIPPED";
+        } else if (statuses.some((s: string) => ["SHIPPED", "DELIVERED", "COMPLETED"].includes(s))) {
+          vendorOrderStatus = "PARTIALLY_SHIPPED";
+        } else if (statuses.some((s: string) => s === "PROCESSING")) {
+          vendorOrderStatus = "PROCESSING";
+        } else if (statuses.every((s: string) => s === "PAYMENT_CONFIRMED")) {
+          vendorOrderStatus = "PAYMENT_CONFIRMED";
+        } else {
+          vendorOrderStatus = statuses[0];
+        }
+      }
+    }
+
     return {
       id: order.id,
       orderNumber: order.orderNumber,
       orderSource: isPosOrder ? "POS_WALK_IN" : isWebsiteOrder ? "VENDOR_WEBSITE" : "TRYME_MARKETPLACE",
       paymentMethod,
       paymentSlipUrl,
-      status: order.status,
+      status: vendorOrderStatus,
       totalAmount: Number(order.totalAmount),
       vendorTotal,
       createdAt: new Date(order.createdAt).toISOString(),
@@ -406,6 +432,32 @@ export async function getVendorOrderDetail(vendorId: string, orderIdOrNumber: st
       ? order.shippingAddressJson?.phone || "Guest Customer"
       : order.customerEmail);
 
+  // Calculate vendor sub-order status based on vendor's items
+  let vendorSubOrderStatus = order.status;
+  if (vendorItems.length > 0) {
+    const nonCancelled = vendorItems.filter((i: any) => i.status !== "CANCELLED");
+    if (nonCancelled.length === 0) {
+      vendorSubOrderStatus = "CANCELLED";
+    } else {
+      const statuses = nonCancelled.map((i: any) => i.status);
+      if (statuses.every((s: string) => s === "COMPLETED")) {
+        vendorSubOrderStatus = "COMPLETED";
+      } else if (statuses.every((s: string) => s === "DELIVERED" || s === "COMPLETED")) {
+        vendorSubOrderStatus = "DELIVERED";
+      } else if (statuses.every((s: string) => ["SHIPPED", "DELIVERED", "COMPLETED"].includes(s))) {
+        vendorSubOrderStatus = "SHIPPED";
+      } else if (statuses.some((s: string) => ["SHIPPED", "DELIVERED", "COMPLETED"].includes(s))) {
+        vendorSubOrderStatus = "PARTIALLY_SHIPPED";
+      } else if (statuses.some((s: string) => s === "PROCESSING")) {
+        vendorSubOrderStatus = "PROCESSING";
+      } else if (statuses.every((s: string) => s === "PAYMENT_CONFIRMED")) {
+        vendorSubOrderStatus = "PAYMENT_CONFIRMED";
+      } else {
+        vendorSubOrderStatus = statuses[0];
+      }
+    }
+  }
+
   return {
     order: {
       id: order.id,
@@ -417,7 +469,7 @@ export async function getVendorOrderDetail(vendorId: string, orderIdOrNumber: st
       paymentStatus: order.paymentInfo?.status || "PENDING",
       shippingAmount: Number(order.shippingAmount || 0),
       totalAmount: Number(order.totalAmount || 0),
-      status: order.status,
+      status: vendorSubOrderStatus,
       customerEmail: displayEmail,
       notes: order.notes,
       createdAt: new Date(order.createdAt).toISOString(),

@@ -186,14 +186,21 @@ export async function PATCH(
       }
 
       // 3. Status History Entry
-      const historyNote =
-        status === "SHIPPED"
-          ? `Entire order (${order.items.length} items) marked as SHIPPED by vendor${
-              trackingNumber ? ` (Tracking: ${trackingNumber})` : ""
-            }${note ? `\nNote: ${note}` : ""}`
-          : `Entire order (${order.items.length} items) marked as ${status.replace(/_/g, " ")} by vendor${
-              note ? `\nNote: ${note}` : ""
-            }`;
+      const otherItemsCount = await tx.orderItem.count({
+        where: {
+          orderId: order.id,
+          vendorId: { not: vendorId },
+        },
+      });
+      const isMultiVendorOrder = otherItemsCount > 0;
+
+      const historyNote = isMultiVendorOrder
+        ? `[Package: ${vendorRecord.businessName}] Package (${order.items.length} items) marked as ${status.replace(/_/g, " ")} by vendor${
+            trackingNumber ? ` (Tracking: ${trackingNumber})` : ""
+          }${note ? `\nNote: ${note}` : ""}`
+        : `Order marked as ${status.replace(/_/g, " ")} by vendor${
+            trackingNumber ? ` (Tracking: ${trackingNumber})` : ""
+          }${note ? `\nNote: ${note}` : ""}`;
 
       await tx.orderStatusHistory.create({
         data: {

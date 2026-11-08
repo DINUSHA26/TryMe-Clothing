@@ -193,15 +193,32 @@ export async function PATCH(
         });
       }
 
+      // Check if multi-vendor order
+      const otherItemsCount = await tx.orderItem.count({
+        where: {
+          orderId: order.id,
+          vendorId: { not: vendorId },
+        },
+      });
+
       // 3. Status History Entry
+      const packagePrefix = `[Package: ${sellerVendor.vendor.businessName}] `;
       const historyNote =
-        status === "SHIPPED"
-          ? `Entire order (${order.items.length} items) marked as SHIPPED by seller${
-              trackingNumber ? ` (Tracking: ${trackingNumber})` : ""
-            }${note ? `\nNote: ${note}` : ""}`
-          : `Entire order (${order.items.length} items) marked as ${status.replace(/_/g, " ")} by seller${
-              note ? `\nNote: ${note}` : ""
-            }`;
+        otherItemsCount > 0
+          ? status === "SHIPPED"
+            ? `${packagePrefix}Package (${order.items.length} items) marked as SHIPPED by seller${
+                trackingNumber ? ` (Tracking: ${trackingNumber})` : ""
+              }${note ? `\nNote: ${note}` : ""}`
+            : `${packagePrefix}Package (${order.items.length} items) marked as ${status.replace(/_/g, " ")} by seller${
+                note ? `\nNote: ${note}` : ""
+              }`
+          : status === "SHIPPED"
+            ? `${packagePrefix}Entire order (${order.items.length} items) marked as SHIPPED by seller${
+                trackingNumber ? ` (Tracking: ${trackingNumber})` : ""
+              }${note ? `\nNote: ${note}` : ""}`
+            : `${packagePrefix}Entire order (${order.items.length} items) marked as ${status.replace(/_/g, " ")} by seller${
+                note ? `\nNote: ${note}` : ""
+              }`;
 
       await tx.orderStatusHistory.create({
         data: {

@@ -232,7 +232,7 @@ export async function getOrderDetails(orderId: string, auth: { userId: string; r
 
   // Fetch items with vendor and chat room info
   const rawItems = await prisma.$queryRawUnsafe<any[]>(
-    `SELECT i.*, v."businessName" as "vendorName", cr."id" as "chatRoomId"
+    `SELECT i.*, v."businessName" as "vendorName", v."slug" as "vendorSlug", cr."id" as "chatRoomId"
      FROM "OrderItem" i
      JOIN "Vendor" v ON i."vendorId" = v."id"
      LEFT JOIN "ChatRoom" cr ON i."id" = cr."orderItemId"
@@ -342,6 +342,7 @@ export async function getOrderDetails(orderId: string, auth: { userId: string; r
       vendor: {
         id: item.vendorId,
         businessName: item.vendorName,
+        slug: item.vendorSlug,
       },
     };
   });
@@ -353,6 +354,7 @@ export async function getOrderDetails(orderId: string, auth: { userId: string; r
       acc[vId] = {
         vendorId: vId,
         vendorName: item.vendor.businessName,
+        vendorSlug: item.vendor.slug,
         items: [],
         status: item.status,
       };
@@ -360,6 +362,31 @@ export async function getOrderDetails(orderId: string, auth: { userId: string; r
     acc[vId].items.push(item);
     return acc;
   }, {} as any);
+
+  // Calculate accurate package/sub-order status for each vendor
+  Object.values(itemsByVendorGroups).forEach((group: any) => {
+    const nonCancelled = group.items.filter((i: any) => i.status !== "CANCELLED");
+    if (nonCancelled.length === 0) {
+      group.status = "CANCELLED";
+    } else {
+      const statuses = nonCancelled.map((i: any) => i.status);
+      if (statuses.every((s: string) => s === "COMPLETED")) {
+        group.status = "COMPLETED";
+      } else if (statuses.every((s: string) => s === "DELIVERED" || s === "COMPLETED")) {
+        group.status = "DELIVERED";
+      } else if (statuses.every((s: string) => ["SHIPPED", "DELIVERED", "COMPLETED"].includes(s))) {
+        group.status = "SHIPPED";
+      } else if (statuses.some((s: string) => ["SHIPPED", "DELIVERED", "COMPLETED"].includes(s))) {
+        group.status = "PARTIALLY_SHIPPED";
+      } else if (statuses.some((s: string) => s === "PROCESSING")) {
+        group.status = "PROCESSING";
+      } else if (statuses.every((s: string) => s === "PAYMENT_CONFIRMED")) {
+        group.status = "PAYMENT_CONFIRMED";
+      } else {
+        group.status = statuses[0];
+      }
+    }
+  });
 
   return {
     order: {
