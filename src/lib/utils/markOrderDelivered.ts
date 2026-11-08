@@ -38,7 +38,8 @@ export interface MarkDeliveredResult {
 export async function markOrderDelivered(
   orderId: string,
   triggeredBy: DeliveryTrigger,
-  adminUserId?: string
+  adminUserId?: string,
+  targetVendorId?: string
 ): Promise<MarkDeliveredResult> {
   // 1. Fetch order with customer info for notifications
   const order = await prisma.order.findUnique({
@@ -65,6 +66,125 @@ export async function markOrderDelivered(
 
   if (!order) {
     return { success: false, message: "Order not found" };
+  }
+
+  // Handle specific vendor package delivery
+  if (targetVendorId) {
+    const targetItems = order.items.filter((i) => i.vendorId === targetVendorId);
+    if (targetItems.length === 0) {
+      return { success: false, message: "No items found for this vendor in this order" };
+    }
+
+    const targetVendor = targetItems[0].vendor;
+    const nonCancelledTarget = targetItems.filter((i) => i.status !== "CANCELLED");
+
+    const allTargetDelivered =
+      nonCancelledTarget.length > 0 &&
+      nonCancelledTarget.every((i) =>
+        ["DELIVERED", "DELIVERY_CONFIRMED", "COMPLETED"].includes(i.status)
+      );
+
+    if (allTargetDelivered) {
+      return {
+        success: true,
+        message: `Package from ${targetVendor.businessName} already marked as delivered`,
+        alreadyDelivered: true,
+      };
+    }
+
+    // Target items must have at least one item shipped
+    const hasShippedItem = nonCancelledTarget.some((i) =>
+      ["SHIPPED", "PARTIALLY_SHIPPED", "DELIVERED"].includes(i.status)
+    );
+
+    if (!hasShippedItem && triggeredBy === "customer") {
+      return {
+        success: false,
+        message: `Package from ${targetVendor.businessName} must be shipped before confirming delivery`,
+      };
+    }
+
+    const note =
+      triggeredBy === "customer"
+        ? `Customer confirmed delivery for ${targetVendor.businessName} package`
+        : triggeredBy === "admin"
+        ? `Admin confirmed delivery for ${targetVendor.businessName} package`
+        : `Auto-delivered: carrier tracking confirmed for ${targetVendor.businessName} package`;
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Update items belonging to this vendor
+      await tx.orderItem.updateMany({
+        where: {
+          orderId,
+          vendorId: targetVendorId,
+          status: { notIn: ["CANCELLED", "RETURNED", "RETURN_REQUESTED", "DISPUTED", "DELIVERED", "COMPLETED"] },
+        },
+        data: { status: "DELIVERED" },
+      });
+
+      // 2. Audit history
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          status: "DELIVERED",
+          note,
+          createdBy: adminUserId || null,
+        },
+      });
+
+      // 3. Move funds from pendingBalance → availableBalance ONLY for this vendor
+      await releaseVendorFunds(orderId, order.orderNumber, tx, targetVendorId);
+
+      // 4. Check if all items in entire order are delivered
+      const allItems = await tx.orderItem.findMany({
+        where: { orderId },
+        select: { status: true },
+      });
+
+      const nonCancelledAll = allItems.filter((i) => i.status !== "CANCELLED");
+      const allDelivered =
+        nonCancelledAll.length > 0 &&
+        nonCancelledAll.every((i) =>
+          ["DELIVERED", "DELIVERY_CONFIRMED", "COMPLETED"].includes(i.status)
+        );
+
+      if (allDelivered) {
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            status: "DELIVERED",
+            deliveryConfirmedAt: new Date(),
+          },
+        });
+      } else {
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            status: "PARTIALLY_SHIPPED",
+          },
+        });
+      }
+    });
+
+    // Notify customer
+    try {
+      await createNotification({
+        userId: order.customer.user.id,
+        type: NotificationType.ORDER_DELIVERY_CONFIRMED,
+        title: "Package Delivery Confirmed",
+        message: `Thank you for confirming delivery of your package from ${targetVendor.businessName} (Order ${order.orderNumber}).`,
+        link: `/orders/${orderId}?package=${targetVendorId}`,
+        metadata: {
+          orderId,
+          orderNumber: order.orderNumber,
+          vendorName: targetVendor.businessName,
+        },
+      });
+    } catch (notifErr) {
+      console.error("[markOrderDelivered] Notification failed (non-critical):", notifErr);
+    }
+
+    return { success: true, message: `Package from ${targetVendor.businessName} marked as delivered` };
   }
 
   // 2. Idempotency: already delivered or confirmed — return success without re-releasing
@@ -108,7 +228,7 @@ export async function markOrderDelivered(
     await tx.orderItem.updateMany({
       where: { 
         orderId,
-        status: { notIn: ["CANCELLED", "RETURNED", "RETURN_REQUESTED", "DISPUTED"] }
+        status: { notIn: ["CANCELLED", "RETURNED", "RETURN_REQUESTED", "DISPUTED", "DELIVERED", "COMPLETED"] }
       },
       data: { status: "DELIVERED" },
     });

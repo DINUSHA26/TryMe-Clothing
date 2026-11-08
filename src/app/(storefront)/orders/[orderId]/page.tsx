@@ -13,15 +13,17 @@ import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { VendorOrderGroup } from "@/components/orders/VendorOrderGroup";
 import { OrderActions } from "@/components/orders/OrderActions";
 import { format } from "date-fns";
-import { Package, MapPin, CreditCard } from "lucide-react";
+import { Package, MapPin, CreditCard, ArrowLeft, Store, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { headers } from "next/headers";
 
 interface OrderDetailsPageProps {
   params: Promise<{
     orderId: string;
+  }>;
+  searchParams?: Promise<{
+    package?: string;
   }>;
 }
 
@@ -60,8 +62,12 @@ async function getOrderDetailsDirectCall(orderId: string) {
 
 export default async function OrderDetailsPage({
   params,
+  searchParams,
 }: OrderDetailsPageProps) {
   const { orderId } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const activePackageVendorId = resolvedSearchParams.package;
+
   const orderData = await getOrderDetailsDirectCall(orderId);
 
   if (!orderData) {
@@ -70,6 +76,19 @@ export default async function OrderDetailsPage({
 
   const { order } = orderData;
   const { statusHistory, itemsByVendor, actions } = order;
+
+  const isMultiVendor = itemsByVendor.length > 1;
+
+  const packagesList = itemsByVendor.map((vg: any) => ({
+    vendorId: vg.vendorId,
+    vendorName: vg.vendorName,
+  }));
+
+  // Filter items by vendor if specific package is selected in URL
+  const displayedVendorGroups =
+    activePackageVendorId && activePackageVendorId !== "all"
+      ? itemsByVendor.filter((vg: any) => vg.vendorId === activePackageVendorId)
+      : itemsByVendor;
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
@@ -142,6 +161,9 @@ export default async function OrderDetailsPage({
               orderId={order.id}
               orderNumber={order.orderNumber}
               actions={actions}
+              isMultiVendor={isMultiVendor}
+              singleVendorId={!isMultiVendor ? (itemsByVendor as any[])[0]?.vendorId : undefined}
+              singleVendorName={!isMultiVendor ? (itemsByVendor as any[])[0]?.vendorName : undefined}
             />
           </div>
         )}
@@ -150,16 +172,68 @@ export default async function OrderDetailsPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Items by Vendor */}
+          {/* Items by Vendor / Packages */}
           <div>
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              Order Items
-            </h2>
-            <div className="space-y-4">
-              {itemsByVendor.map((vendorGroup: any) => (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary" />
+                <span>
+                  {isMultiVendor
+                    ? `Order Packages (${itemsByVendor.length} Stores)`
+                    : "Order Items"}
+                </span>
+              </h2>
+
+              {isMultiVendor && (
+                <span className="text-xs text-muted-foreground font-medium">
+                  Confirm delivery separately for each store as they arrive
+                </span>
+              )}
+            </div>
+
+            {/* Package / Sub-Order Tabs when order has multiple stores */}
+            {isMultiVendor && (
+              <div className="mb-4 overflow-x-auto pb-1">
+                <div className="inline-flex items-center gap-1.5 p-1 bg-muted rounded-xl flex-wrap">
+                  <Link
+                    href={`/orders/${order.id}`}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      !activePackageVendorId || activePackageVendorId === "all"
+                        ? "bg-background text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All Packages ({itemsByVendor.length})
+                  </Link>
+                  {itemsByVendor.map((vg: any, idx: number) => {
+                    const isSelected = activePackageVendorId === vg.vendorId;
+                    return (
+                      <Link
+                        key={vg.vendorId}
+                        href={`/orders/${order.id}?package=${vg.vendorId}`}
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Store className="w-3.5 h-3.5" />
+                        <span>{vg.vendorName}</span>
+                        <span className="text-[10px] opacity-80">
+                          (Package #{idx + 1})
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-5">
+              {displayedVendorGroups.map((vendorGroup: any, idx: number) => (
                 <VendorOrderGroup
-                  key={vendorGroup.vendorName}
+                  key={vendorGroup.vendorId || vendorGroup.vendorName}
+                  vendorId={vendorGroup.vendorId}
                   vendorName={vendorGroup.vendorName}
                   items={vendorGroup.items}
                   chatRoomId={vendorGroup.chatRoomId}
@@ -169,6 +243,8 @@ export default async function OrderDetailsPage({
                   deliveryConfirmedAt={order.deliveryConfirmedAt}
                   isCustomer={true}
                   vendorStatus={vendorGroup.status}
+                  packageIndex={idx + 1}
+                  totalPackages={itemsByVendor.length}
                 />
               ))}
             </div>
@@ -180,6 +256,7 @@ export default async function OrderDetailsPage({
               <OrderTimeline
                 statusHistory={statusHistory}
                 currentStatus={order.status}
+                packages={packagesList}
               />
             </div>
           )}

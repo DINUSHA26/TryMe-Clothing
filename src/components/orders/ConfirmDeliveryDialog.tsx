@@ -22,6 +22,8 @@ import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 interface ConfirmDeliveryDialogProps {
   orderId: string;
   orderNumber: string;
+  vendorId?: string;
+  vendorName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
@@ -30,6 +32,8 @@ interface ConfirmDeliveryDialogProps {
 export function ConfirmDeliveryDialog({
   orderId,
   orderNumber,
+  vendorId,
+  vendorName,
   open,
   onOpenChange,
   onSuccess,
@@ -48,6 +52,9 @@ export function ConfirmDeliveryDialog({
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          ...(vendorId ? { vendorId } : {}),
+        }),
       });
 
       const data = await response.json();
@@ -77,11 +84,12 @@ export function ConfirmDeliveryDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-600" />
-            Confirm Delivery
+            {vendorName ? `Confirm ${vendorName} Delivery` : "Confirm Delivery"}
           </DialogTitle>
           <DialogDescription>
-            Please confirm that you have received order {orderNumber} and are
-            satisfied with your purchase.
+            {vendorName
+              ? `Please confirm that you have received your package from ${vendorName} for order ${orderNumber}.`
+              : `Please confirm that you have received order ${orderNumber} and are satisfied with your purchase.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -91,8 +99,8 @@ export function ConfirmDeliveryDialog({
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <strong>Important:</strong> By confirming delivery, you acknowledge
-              that you have received all items in good condition. This will
-              release payment to the vendor(s).
+              that you have received {vendorName ? `all items from ${vendorName}` : "all items in this order"} in good condition. This will
+              release payment to {vendorName ? `the store (${vendorName})` : "the vendor(s)"}.
             </AlertDescription>
           </Alert>
 

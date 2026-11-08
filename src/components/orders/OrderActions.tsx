@@ -28,6 +28,9 @@ interface OrderActionsProps {
     cancelReason?: string;
     returnReason?: string;
   };
+  singleVendorId?: string;
+  singleVendorName?: string;
+  isMultiVendor?: boolean;
   onSuccess?: () => void;
 }
 
@@ -35,15 +38,17 @@ export function OrderActions({
   orderId,
   orderNumber,
   actions,
+  singleVendorId,
+  singleVendorName,
+  isMultiVendor = false,
   onSuccess,
 }: OrderActionsProps) {
-  console.log("OrderActions render actions:", actions);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [confirmDeliveryDialogOpen, setConfirmDeliveryDialogOpen] =
     useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
 
-  // If no actions available, don't render anything
+  // If no actions available and not multi-vendor prompt, don't render anything
   if (
     !actions.canPay &&
     !actions.canCancel &&
@@ -85,12 +90,13 @@ export function OrderActions({
         </>
       )}
 
-      {/* Confirm Delivery */}
-      {actions.canConfirmDelivery && (
+      {/* Confirm Delivery - only rendered at top level if single-vendor; multi-vendor packages have their own confirm button */}
+      {actions.canConfirmDelivery && !isMultiVendor && (
         <>
           <Button
             variant="default"
             onClick={() => setConfirmDeliveryDialogOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
           >
             <CheckCircle className="w-4 h-4 mr-2" />
             Confirm Delivery
@@ -98,6 +104,8 @@ export function OrderActions({
           <ConfirmDeliveryDialog
             orderId={orderId}
             orderNumber={orderNumber}
+            vendorId={singleVendorId}
+            vendorName={singleVendorName}
             open={confirmDeliveryDialogOpen}
             onOpenChange={setConfirmDeliveryDialogOpen}
             onSuccess={onSuccess}

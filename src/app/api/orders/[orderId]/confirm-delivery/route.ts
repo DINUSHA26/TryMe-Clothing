@@ -83,8 +83,12 @@ export async function POST(
       );
     }
 
+    // Parse vendorId from request body if confirming a specific package
+    const body = await request.json().catch(() => ({}));
+    const vendorId = typeof body?.vendorId === "string" ? body.vendorId : undefined;
+
     // Delegate to shared utility (handles idempotency, validation, fund release, notification)
-    const result = await markOrderDelivered(orderId, "customer");
+    const result = await markOrderDelivered(orderId, "customer", undefined, vendorId);
 
     if (!result.success) {
       return NextResponse.json(

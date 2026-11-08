@@ -240,7 +240,8 @@ export function calculatePlatformCommission(
 export async function releaseVendorFunds(
   orderId: string,
   orderNumber: string,
-  tx: Prisma.TransactionClient
+  tx: Prisma.TransactionClient,
+  targetVendorId?: string
 ): Promise<void> {
   // 1. Fetch order with items and vendor wallets
   const order = await tx.order.findUnique({
@@ -273,11 +274,29 @@ export async function releaseVendorFunds(
     vendorGroups.get(vendorId)!.push(item);
   }
 
-  // 3. For each vendor, release funds
+  // 3. For each vendor, release funds (or only for targetVendorId if specified)
   for (const [vendorId, items] of vendorGroups.entries()) {
+    if (targetVendorId && vendorId !== targetVendorId) {
+      continue;
+    }
+
     const wallet = items[0].vendor.wallet;
     if (!wallet) {
       throw new Error(`Wallet not found for vendor ${vendorId}`);
+    }
+
+    // Check if funds have already been released for this vendor and order to ensure idempotency
+    const alreadyReleased = await tx.walletTransaction.findFirst({
+      where: {
+        walletId: wallet.id,
+        type: "RELEASE",
+        description: { contains: orderNumber },
+      },
+    });
+
+    if (alreadyReleased) {
+      console.log(`[Wallet] Funds already released for vendor ${vendorId} order ${orderNumber}, skipping`);
+      continue;
     }
 
     // Calculate net amount: gross total minus commission (matching creditVendorWallets logic)

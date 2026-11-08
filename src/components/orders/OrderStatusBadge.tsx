@@ -105,6 +105,19 @@ export function OrderStatusBadge({ status, items, className }: OrderStatusBadgeP
         </Badge>
       );
     }
+
+    const nonCancelled = items.filter(item => item.status !== 'CANCELLED');
+    const deliveredCount = nonCancelled.filter(item => ['DELIVERED', 'DELIVERY_CONFIRMED', 'COMPLETED'].includes(item.status)).length;
+    if (deliveredCount > 0 && deliveredCount < nonCancelled.length) {
+      return (
+        <Badge
+          variant="default"
+          className={`bg-teal-600 hover:bg-teal-700 text-white font-bold ${className || ""}`}
+        >
+          Partially Delivered ({deliveredCount}/{nonCancelled.length})
+        </Badge>
+      );
+    }
   }
 
   const config = STATUS_CONFIG[status];
