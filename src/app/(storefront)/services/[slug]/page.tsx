@@ -542,7 +542,7 @@ export default function ServiceDetailPage({
                   <Link
                     href={
                       service.vendor
-                        ? `/vendors/${provider.slug}`
+                        ? `/vendors/${provider.slug}?tab=services`
                         : `/site/${provider.slug}`
                     }
                   >

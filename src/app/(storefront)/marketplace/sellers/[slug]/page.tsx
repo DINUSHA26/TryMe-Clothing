@@ -149,7 +149,7 @@ export default function PublicSellerStorefrontPage() {
     );
   }
 
-  const { seller, servicePages = [], ads = [] } = data;
+  const { seller, servicePages = [], services = [], ads = [] } = data;
   const contactInfo = seller.contactInfo || {};
 
   const formatWhatsAppNumber = (numStr: string) => {
@@ -235,7 +235,7 @@ export default function PublicSellerStorefrontPage() {
             { id: "ads", label: `Ads (${ads.length})`, icon: Grid },
             { id: "about", label: "About Us", icon: Info },
             { id: "contact", label: "Contact Us", icon: MapPin },
-            { id: "services", label: `Services (${servicePages.length})`, icon: FileText },
+            { id: "services", label: `Services (${services.length + servicePages.length})`, icon: FileText },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -359,54 +359,121 @@ export default function PublicSellerStorefrontPage() {
 
         {/* Services tab */}
         {activeTab === "services" && (
-          <div className="space-y-4">
-            <h2 className="text-base font-black text-gray-900">Custom Services Pages</h2>
-            {servicePages.length === 0 ? (
+          <div className="space-y-6">
+            {/* Marketplace Published Services */}
+            {services.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-base font-black text-gray-900">Professional Services Offered</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {services.map((svc: any) => {
+                    const primaryImg = svc.images?.[0] || svc.category?.image || null;
+                    return (
+                      <div
+                        key={svc.id}
+                        className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="w-full aspect-[4/3] bg-gray-50 overflow-hidden relative">
+                            {primaryImg ? (
+                              <img
+                                src={optimizeImageUrl(primaryImg, 500)}
+                                alt={svc.name}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-tr from-orange-50 to-orange-100/50 flex flex-col items-center justify-center text-orange-400">
+                                <FileText className="h-8 w-8 text-orange-300 mb-1" />
+                                <span className="text-[10px] font-bold uppercase">Service</span>
+                              </div>
+                            )}
+                            <div className="absolute top-2.5 left-2.5">
+                              <span className="bg-black/75 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow">
+                                {svc.subCategory?.name || svc.category?.name || "Service"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="p-4 space-y-1.5">
+                            <h3 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2">
+                              {svc.name}
+                            </h3>
+                            {svc.shortDesc && (
+                              <p className="text-[11px] text-gray-400 line-clamp-2">
+                                {svc.shortDesc}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="p-4 pt-0 border-t border-gray-50 mt-2 flex items-center justify-between">
+                          <span className="font-bold text-xs text-[#FF6600]">
+                            {svc.price != null ? `Rs. ${Number(svc.price).toLocaleString("en-LK")}` : "Contact for Price"}
+                          </span>
+                          <Button size="sm" asChild className="rounded-xl text-xs bg-[#FF6600] hover:bg-[#e65c00] text-white font-bold h-8 px-3">
+                            <a href={`/services/${svc.slug || svc.id}`}>
+                              View Service
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Custom Services Pages */}
+            {servicePages.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-base font-black text-gray-900">Custom Information &amp; Pages</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {servicePages.map((page: any) => (
+                    <div
+                      key={page.id}
+                      onClick={() => setSelectedServicePage(page)}
+                      className="group bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 flex flex-col"
+                    >
+                      {/* Top Image */}
+                      <div className="w-full aspect-[4/3] bg-gray-50 overflow-hidden relative shrink-0">
+                        {page.imageUrl ? (
+                          <img
+                            src={optimizeImageUrl(page.imageUrl, 500)}
+                            alt={page.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-tr from-orange-50 to-orange-100/50 flex flex-col items-center justify-center text-orange-400 gap-1.5">
+                            <ImageIcon className="h-8 w-8 text-orange-300" />
+                            <span className="text-[10px] font-bold tracking-wider uppercase text-orange-400/80">Services</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bottom Info */}
+                      <div className="p-4.5 flex flex-col justify-between flex-1 gap-3">
+                        <div className="space-y-1.5">
+                          <h3 className="text-sm font-bold text-gray-900 group-hover:text-[#FF6600] transition-colors leading-tight line-clamp-2">
+                            {page.title}
+                          </h3>
+                          <p className="text-[11px] text-gray-400 leading-relaxed line-clamp-2">
+                            {page.content}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-blue-600 font-bold mt-1">
+                          <MapPin className="h-3.5 w-3.5 shrink-0" />
+                          <span>{seller.businessName || "Verified Shop"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {services.length === 0 && servicePages.length === 0 && (
               <div className="text-center py-16 text-gray-400 bg-white border border-gray-100 rounded-2xl shadow-sm">
                 No custom services or additional pages published by this store.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {servicePages.map((page: any) => (
-                  <div
-                    key={page.id}
-                    onClick={() => setSelectedServicePage(page)}
-                    className="group bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 flex flex-col"
-                  >
-                    {/* Top Image */}
-                    <div className="w-full aspect-[4/3] bg-gray-50 overflow-hidden relative shrink-0">
-                      {page.imageUrl ? (
-                        <img
-                          src={optimizeImageUrl(page.imageUrl, 500)}
-                          alt={page.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-tr from-orange-50 to-orange-100/50 flex flex-col items-center justify-center text-orange-400 gap-1.5">
-                          <ImageIcon className="h-8 w-8 text-orange-300" />
-                          <span className="text-[10px] font-bold tracking-wider uppercase text-orange-400/80">Services</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Bottom Info */}
-                    <div className="p-4.5 flex flex-col justify-between flex-1 gap-3">
-                      <div className="space-y-1.5">
-                        <h3 className="text-sm font-bold text-gray-900 group-hover:text-[#FF6600] transition-colors leading-tight line-clamp-2">
-                          {page.title}
-                        </h3>
-                        <p className="text-[11px] text-gray-400 leading-relaxed line-clamp-2">
-                          {page.content}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 text-[11px] text-blue-600 font-bold mt-1">
-                        <MapPin className="h-3.5 w-3.5 shrink-0" />
-                        <span>{seller.businessName || "Verified Shop"}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </div>

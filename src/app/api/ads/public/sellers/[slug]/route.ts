@@ -53,6 +53,21 @@ export async function GET(
       },
     });
 
+    // Get active services from this ads seller
+    const services = await (prisma as any).websiteService.findMany({
+      where: {
+        adsSellerId: seller.id,
+        isActive: true,
+        isDisabledByAdmin: false,
+        showOnMarketplace: true,
+      },
+      include: {
+        category: { select: { id: true, name: true, slug: true, icon: true, image: true } },
+        subCategory: { select: { id: true, name: true, slug: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
     // Get follower counts and status
     let isFollowing = false;
     let followerCount = 0;
@@ -96,6 +111,7 @@ export async function GET(
           isFollowing,
         },
         servicePages: seller.servicePages,
+        services: services || [],
         ads,
       },
     });

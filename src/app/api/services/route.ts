@@ -24,11 +24,20 @@ export async function GET(request: NextRequest) {
     const deliveryType = searchParams.get("deliveryType");
     const sortBy = searchParams.get("sortBy") || "newest";
 
+    // Shop / Provider Filters (Vendor or Ads Seller)
+    const shop = searchParams.get("shop");
+    const vendorId = searchParams.get("vendorId");
+    const adsSellerId = searchParams.get("adsSellerId");
+    const providerType = searchParams.get("providerType");
+    const shopSlug = searchParams.get("shopSlug");
+
     const where: any = {
       isActive: true,
       isDisabledByAdmin: false,
       showOnMarketplace: true,
     };
+
+    const andConditions: any[] = [];
 
     // Category / Subcategory filter
     if (categoryId && categoryId !== "all") {
@@ -60,15 +69,56 @@ export async function GET(request: NextRequest) {
 
     // Location / District Filter
     if (location && location !== "all" && location !== "All Sri Lanka" && location !== "Islandwide") {
-      where.OR = [
-        { district: { equals: location, mode: "insensitive" } },
-        { city: { contains: location, mode: "insensitive" } },
-        { serviceArea: { contains: location, mode: "insensitive" } },
-      ];
+      andConditions.push({
+        OR: [
+          { district: { equals: location, mode: "insensitive" } },
+          { city: { contains: location, mode: "insensitive" } },
+          { serviceArea: { contains: location, mode: "insensitive" } },
+        ],
+      });
     }
 
     if (city && city !== "all") {
       where.city = { contains: city, mode: "insensitive" };
+    }
+
+    // Shop / Provider Filter (Vendor or Ads Seller)
+    if (vendorId) {
+      where.vendorId = vendorId;
+    } else if (adsSellerId) {
+      where.adsSellerId = adsSellerId;
+    } else if (shop && shop !== "all") {
+      if (shop === "type:vendor") {
+        where.vendorId = { not: null };
+      } else if (shop === "type:adsseller") {
+        where.adsSellerId = { not: null };
+      } else if (shop.startsWith("vendor:")) {
+        where.vendorId = shop.replace("vendor:", "");
+      } else if (shop.startsWith("adsseller:")) {
+        where.adsSellerId = shop.replace("adsseller:", "");
+      } else {
+        andConditions.push({
+          OR: [
+            { vendorId: shop },
+            { adsSellerId: shop },
+            { vendor: { slug: shop } },
+            { adsSeller: { slug: shop } },
+          ],
+        });
+      }
+    } else if (providerType && providerType !== "all") {
+      if (providerType === "VENDOR" || providerType === "vendor") {
+        where.vendorId = { not: null };
+      } else if (providerType === "ADS_SELLER" || providerType === "adsseller") {
+        where.adsSellerId = { not: null };
+      }
+    } else if (shopSlug && shopSlug !== "all") {
+      andConditions.push({
+        OR: [
+          { vendor: { slug: shopSlug } },
+          { adsSeller: { slug: shopSlug } },
+        ],
+      });
     }
 
     // Text Search
@@ -87,16 +137,11 @@ export async function GET(request: NextRequest) {
         { serviceArea: { contains: q, mode: "insensitive" } },
         { address: { contains: q, mode: "insensitive" } },
       ];
+      andConditions.push({ OR: searchConditions });
+    }
 
-      if (where.OR) {
-        where.AND = [
-          { OR: where.OR },
-          { OR: searchConditions },
-        ];
-        delete where.OR;
-      } else {
-        where.OR = searchConditions;
-      }
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     // Price filter
@@ -122,7 +167,7 @@ export async function GET(request: NextRequest) {
       orderBy = { sortOrder: "asc" };
     }
 
-    const [services, total] = await Promise.all([
+    const [services, total, vendorShops, adsSellerShops] = await Promise.all([
       (prisma as any).websiteService.findMany({
         where,
         include: {
@@ -156,6 +201,41 @@ export async function GET(request: NextRequest) {
         take: limit,
       }),
       (prisma as any).websiteService.count({ where }),
+      (prisma as any).vendor.findMany({
+        where: {
+          services: {
+            some: {
+              isActive: true,
+              isDisabledByAdmin: false,
+              showOnMarketplace: true,
+            },
+          },
+        },
+        select: {
+          id: true,
+          businessName: true,
+          slug: true,
+          logo: true,
+        },
+        orderBy: { businessName: "asc" },
+      }),
+      (prisma as any).adsSeller.findMany({
+        where: {
+          services: {
+            some: {
+              isActive: true,
+              isDisabledByAdmin: false,
+              showOnMarketplace: true,
+            },
+          },
+        },
+        select: {
+          id: true,
+          businessName: true,
+          slug: true,
+        },
+        orderBy: { businessName: "asc" },
+      }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -169,6 +249,10 @@ export async function GET(request: NextRequest) {
           limit,
           total,
           totalPages,
+        },
+        providers: {
+          vendors: vendorShops || [],
+          adsSellers: adsSellerShops || [],
         },
       },
     });

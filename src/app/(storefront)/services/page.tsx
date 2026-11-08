@@ -72,6 +72,12 @@ function ServicesContent() {
   const locationParam = searchParams.get("location") || "all";
   const deliveryTypeParam = searchParams.get("deliveryType") || "all";
   const sortByParam = searchParams.get("sortBy") || "newest";
+  const shopParam = searchParams.get("shop") || "all";
+
+  const [providers, setProviders] = useState<{ vendors: any[]; adsSellers: any[] }>({
+    vendors: [],
+    adsSellers: [],
+  });
 
   const districtList = Object.keys(SL_LOCATIONS);
   const [searchInput, setSearchInput] = useState(searchParam);
@@ -133,6 +139,9 @@ function ServicesContent() {
       if (deliveryTypeParam && deliveryTypeParam !== "all") {
         params.set("deliveryType", deliveryTypeParam);
       }
+      if (shopParam && shopParam !== "all") {
+        params.set("shop", shopParam);
+      }
       if (sortByParam) params.set("sortBy", sortByParam);
       params.set("page", String(pagination.page));
       params.set("limit", "12");
@@ -142,6 +151,9 @@ function ServicesContent() {
       if (data.success) {
         setServices(data.data.services || []);
         setPagination(data.data.pagination);
+        if (data.data.providers) {
+          setProviders(data.data.providers);
+        }
       } else {
         toast({
           variant: "destructive",
@@ -162,7 +174,7 @@ function ServicesContent() {
 
   useEffect(() => {
     fetchServices();
-  }, [selectedCategoryId, searchParam, priceTypeParam, locationParam, deliveryTypeParam, sortByParam, pagination.page]);
+  }, [selectedCategoryId, searchParam, priceTypeParam, locationParam, deliveryTypeParam, sortByParam, shopParam, pagination.page]);
 
   // Update URL params
   const updateQuery = (key: string, value: string) => {
@@ -196,6 +208,24 @@ function ServicesContent() {
     }
     return "SERVICES";
   }, [categories, selectedCategoryId]);
+
+  // Find active shop filter label
+  const activeShopLabel = useMemo(() => {
+    if (!shopParam || shopParam === "all") return null;
+    if (shopParam === "type:vendor") return "Vendors Only";
+    if (shopParam === "type:adsseller") return "Ads Sellers Only";
+    if (shopParam.startsWith("vendor:")) {
+      const id = shopParam.replace("vendor:", "");
+      const v = providers.vendors.find((item) => item.id === id);
+      return v ? `Vendor: ${v.businessName}` : "Vendor Store";
+    }
+    if (shopParam.startsWith("adsseller:")) {
+      const id = shopParam.replace("adsseller:", "");
+      const s = providers.adsSellers.find((item) => item.id === id);
+      return s ? `Ads Seller: ${s.businessName}` : "Ads Seller";
+    }
+    return shopParam;
+  }, [shopParam, providers]);
 
   // WhatsApp quick trigger
   const handleOpenWhatsApp = (service: any) => {
@@ -333,12 +363,75 @@ function ServicesContent() {
       <div className="container mx-auto px-4 pb-16">
         {/* Filter & Sorting Controls Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6 bg-white dark:bg-slate-900 p-3.5 rounded-xl border shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-            <Filter className="w-4 h-4 text-[#FF6600]" />
-            <span>Found {pagination.total} service(s)</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-4 h-4 text-[#FF6600]" />
+              <span>Found {pagination.total} service(s)</span>
+            </div>
+            {activeShopLabel && (
+              <Badge
+                variant="secondary"
+                className="bg-orange-50 dark:bg-orange-950/40 text-[#FF6600] border border-orange-200 dark:border-orange-800 text-[11px] font-bold flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-lg"
+              >
+                <span>Shop: {activeShopLabel}</span>
+                <button
+                  type="button"
+                  onClick={() => updateQuery("shop", "all")}
+                  className="hover:bg-orange-200/50 dark:hover:bg-orange-800/50 rounded p-0.5 transition"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+            {/* Shop / Provider Filter (Vendor or Ads Seller) */}
+            <Select
+              value={shopParam}
+              onValueChange={(val) => updateQuery("shop", val)}
+            >
+              <SelectTrigger className="h-9 w-40 sm:w-52 text-xs bg-card">
+                <Store className="w-3.5 h-3.5 mr-1 text-[#FF6600] shrink-0" />
+                <SelectValue placeholder="All Providers / Shops" />
+              </SelectTrigger>
+              <SelectContent className="max-h-72 rounded-xl">
+                <SelectItem value="all">🏬 All Providers / Shops</SelectItem>
+                <SelectItem value="type:vendor" className="font-semibold text-blue-600 dark:text-blue-400">
+                  🏪 Vendors Only
+                </SelectItem>
+                <SelectItem value="type:adsseller" className="font-semibold text-purple-600 dark:text-purple-400">
+                  📢 Ads Sellers Only
+                </SelectItem>
+
+                {providers.vendors.length > 0 && (
+                  <>
+                    <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground bg-muted/40 mt-1">
+                      Vendors &amp; Stores ({providers.vendors.length})
+                    </div>
+                    {providers.vendors.map((v) => (
+                      <SelectItem key={v.id} value={`vendor:${v.id}`} className="text-xs">
+                        🏪 {v.businessName}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+
+                {providers.adsSellers.length > 0 && (
+                  <>
+                    <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground bg-muted/40 mt-1">
+                      Ads &amp; Classified Sellers ({providers.adsSellers.length})
+                    </div>
+                    {providers.adsSellers.map((s) => (
+                      <SelectItem key={s.id} value={`adsseller:${s.id}`} className="text-xs">
+                        📢 {s.businessName}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+
             {/* Location / District Filter */}
             <Select
               value={locationParam}
@@ -545,9 +638,17 @@ function ServicesContent() {
                       {/* Provider Row */}
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
                         <Store className="w-3.5 h-3.5 text-[#FF6600] shrink-0" />
-                        <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = svc.vendor ? `vendor:${svc.vendor.id}` : svc.adsSeller ? `adsseller:${svc.adsSeller.id}` : "all";
+                            if (val !== "all") updateQuery("shop", val);
+                          }}
+                          className="font-semibold text-slate-700 dark:text-slate-300 hover:text-[#FF6600] dark:hover:text-[#FF6600] truncate text-left transition-colors"
+                          title={`Filter by ${providerName}`}
+                        >
                           {providerName}
-                        </span>
+                        </button>
                         <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                       </div>
 

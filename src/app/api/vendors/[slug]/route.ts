@@ -39,6 +39,13 @@ export async function GET(
                 isDisabledByAdmin: false,
               },
             },
+            services: {
+              where: {
+                isActive: true,
+                isDisabledByAdmin: false,
+                showOnMarketplace: true,
+              },
+            },
           },
         },
       },
@@ -58,9 +65,9 @@ export async function GET(
       );
     }
 
-    // Optimized: Execute follower count, total sells, rating aggregation, and customer check concurrently in parallel
+    // Optimized: Execute follower count, total sells, rating aggregation, services, and customer check concurrently in parallel
     const user = getAuthUser(request);
-    const [followerCount, totalSellsSum, avgRatingAgg, customer] = await Promise.all([
+    const [followerCount, totalSellsSum, avgRatingAgg, vendorServices, customer] = await Promise.all([
       // 1. Follower count
       prisma.vendorFollower.count({
         where: { vendorId: vendor.id },
@@ -92,7 +99,26 @@ export async function GET(
         },
       }),
 
-      // 4. Customer lookup (if authenticated)
+      // 4. Vendor Services (Active and published on marketplace)
+      (prisma as any).websiteService.findMany({
+        where: {
+          vendorId: vendor.id,
+          isActive: true,
+          isDisabledByAdmin: false,
+          showOnMarketplace: true,
+        },
+        include: {
+          category: {
+            select: { id: true, name: true, slug: true, icon: true, image: true },
+          },
+          subCategory: {
+            select: { id: true, name: true, slug: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+
+      // 5. Customer lookup (if authenticated)
       user
         ? prisma.customer.findUnique({
             where: { userId: user.userId },
@@ -103,7 +129,7 @@ export async function GET(
     const totalSells = totalSellsSum._sum.quantity || 0;
     const rating = avgRatingAgg._avg.rating ? Math.round(avgRatingAgg._avg.rating * 10) / 10 : 0;
 
-    // 5. Check if following
+    // 6. Check if following
     let isFollowing = false;
     if (customer) {
       const follow = await prisma.vendorFollower.findUnique({
@@ -129,6 +155,9 @@ export async function GET(
           banner: vendor.banner,
           shopOpen: vendor.isShopOpen,
           productCount: vendor._count.products,
+          serviceCount: vendor._count.services,
+          services: vendorServices || [],
+          businessPhone: vendor.businessPhone,
           followerCount,
           totalSells,
           rating,
