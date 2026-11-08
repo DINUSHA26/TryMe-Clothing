@@ -5,7 +5,7 @@
 
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { Suspense, use, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
@@ -36,14 +36,35 @@ interface AdminOrderDetailsPageProps {
   }>;
 }
 
-export default function AdminOrderDetailsPage({
+function AdminOrderDetailsContent({
   params,
 }: AdminOrderDetailsPageProps) {
   const { orderId } = use(params);
+  const searchParams = useSearchParams();
+
   const [orderData, setOrderData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
   const [isMarkingDelivered, setIsMarkingDelivered] = useState(false);
+
+  const fetchOrderDetails = async () => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setOrderData(data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch order details:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrderDetails();
+  }, [orderId]);
 
   const handleMarkDelivered = async () => {
     if (!orderData) return;
@@ -96,25 +117,6 @@ export default function AdminOrderDetailsPage({
     }
   };
 
-  useEffect(() => {
-    fetchOrderDetails();
-  }, [orderId]);
-
-  const fetchOrderDetails = async () => {
-    try {
-      const response = await fetch(`/api/orders/${orderId}`);
-      const data = await response.json();
-
-      if (data.success) {
-        setOrderData(data.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch order details:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="p-8">
@@ -138,7 +140,6 @@ export default function AdminOrderDetailsPage({
     );
   }
 
-  const searchParams = useSearchParams();
   const rawSubOrder = searchParams.get("subOrder") || searchParams.get("package");
   const activeSubOrder = rawSubOrder && rawSubOrder !== "all" ? rawSubOrder : undefined;
 
@@ -450,21 +451,27 @@ export default function AdminOrderDetailsPage({
               <MapPin className="w-5 h-5" />
               Shipping Address
             </h3>
-            <div className="text-sm space-y-1">
-              <p className="font-medium">{order.shippingAddress.fullName}</p>
-              <p>{order.shippingAddress.addressLine1}</p>
-              {order.shippingAddress.addressLine2 && (
-                <p>{order.shippingAddress.addressLine2}</p>
-              )}
-              <p>
-                {order.shippingAddress.city},{" "}
-                {order.shippingAddress.province}
-              </p>
-              <p>{order.shippingAddress.postalCode}</p>
-              <p className="pt-2 text-muted-foreground">
-                Phone: {order.shippingAddress.phone}
-              </p>
-            </div>
+            {order.shippingAddress ? (
+              <div className="text-sm space-y-1">
+                <p className="font-medium">{order.shippingAddress.fullName}</p>
+                <p>{order.shippingAddress.addressLine1}</p>
+                {order.shippingAddress.addressLine2 && (
+                  <p>{order.shippingAddress.addressLine2}</p>
+                )}
+                <p>
+                  {order.shippingAddress.city}
+                  {order.shippingAddress.province ? `, ${order.shippingAddress.province}` : ""}
+                </p>
+                {order.shippingAddress.postalCode && <p>{order.shippingAddress.postalCode}</p>}
+                {order.shippingAddress.phone && (
+                  <p className="pt-2 text-muted-foreground">
+                    Phone: {order.shippingAddress.phone}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No shipping address recorded</p>
+            )}
           </div>
 
           {/* Payment Information */}
@@ -478,28 +485,40 @@ export default function AdminOrderDetailsPage({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status:</span>
                   <span className="font-medium capitalize">
-                    {order.payment.status.toLowerCase().replace("_", " ")}
+                    {order.payment.status.toLowerCase()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Method:</span>
-                  <span className="font-medium">
-                    {order.payment.method}
+                  <span className="font-medium capitalize">
+                    {order.payment.method.toLowerCase().replace(/_/g, " ")}
                   </span>
                 </div>
                 {order.payment.paidAt && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Paid:</span>
+                    <span className="text-muted-foreground">Paid At:</span>
                     <span className="font-medium">
-                      {format(new Date(order.payment.paidAt), "PPP")}
+                      {format(new Date(order.payment.paidAt), "PPp")}
                     </span>
+                  </div>
+                )}
+                {order.payment.paymentSlipUrl && (
+                  <div className="pt-2">
+                    <a
+                      href={order.payment.paymentSlipUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline flex items-center gap-1 text-xs"
+                    >
+                      View Payment Slip
+                    </a>
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* Coupon Applied */}
+          {/* Coupon Information */}
           {order.couponSnapshot && (
             <div className="border rounded-lg p-4 bg-card">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -509,7 +528,7 @@ export default function AdminOrderDetailsPage({
               <div className="text-sm space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Code:</span>
-                  <span className="font-medium">
+                  <span className="font-mono font-medium">
                     {order.couponSnapshot.code}
                   </span>
                 </div>
@@ -558,5 +577,21 @@ export default function AdminOrderDetailsPage({
         onSuccess={fetchOrderDetails}
       />
     </div>
+  );
+}
+
+export default function AdminOrderDetailsPage(props: AdminOrderDetailsPageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8">
+          <div className="flex items-center justify-center py-16">
+            <p className="text-muted-foreground">Loading order details...</p>
+          </div>
+        </div>
+      }
+    >
+      <AdminOrderDetailsContent {...props} />
+    </Suspense>
   );
 }
