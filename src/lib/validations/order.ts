@@ -106,6 +106,8 @@ export const orderFiltersSchema = z.object({
   dateTo: z.coerce.date().optional(),
   // Admin-only filters
   vendorId: z.string().optional(),
+  categoryId: z.string().optional(),
+  subCategoryId: z.string().optional(),
   minAmount: z.coerce.number().min(0).optional(),
   maxAmount: z.coerce.number().min(0).optional(),
 });

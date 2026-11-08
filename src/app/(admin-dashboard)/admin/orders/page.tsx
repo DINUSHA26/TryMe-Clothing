@@ -21,6 +21,8 @@ interface SearchParams {
   status?: OrderStatus;
   source?: "all" | "tryme" | "website";
   vendorId?: string;
+  categoryId?: string;
+  subCategoryId?: string;
 }
 async function getAdminOrders(searchParams: SearchParams) {
   const headersList = await headers();
@@ -37,6 +39,8 @@ async function getAdminOrders(searchParams: SearchParams) {
       status: searchParams.status,
       source: searchParams.source,
       vendorId: searchParams.vendorId,
+      categoryId: searchParams.categoryId,
+      subCategoryId: searchParams.subCategoryId,
       pageSize: "20",
     });
     return data;
@@ -74,10 +78,12 @@ export default async function AdminOrdersPage({
     );
   }
 
-  const { orders, pagination, stats, vendorsList = [] } = result;
+  const { orders, pagination, stats, vendorsList = [], categoriesList = [] } = result;
   const currentStatus = resolvedSearchParams.status;
   const currentSource = resolvedSearchParams.source || "all";
   const currentVendorId = resolvedSearchParams.vendorId || "all";
+  const currentCategoryId = resolvedSearchParams.categoryId || "all";
+  const currentSubCategoryId = resolvedSearchParams.subCategoryId || "all";
 
   // Helper to construct filter query URLs
   const buildFilterUrl = (overrides: { status?: string | null; page?: number }) => {
@@ -86,6 +92,8 @@ export default async function AdminOrdersPage({
     if (st) p.set("status", st);
     if (currentSource && currentSource !== "all") p.set("source", currentSource);
     if (currentVendorId && currentVendorId !== "all") p.set("vendorId", currentVendorId);
+    if (currentCategoryId && currentCategoryId !== "all") p.set("categoryId", currentCategoryId);
+    if (currentSubCategoryId && currentSubCategoryId !== "all") p.set("subCategoryId", currentSubCategoryId);
     if (overrides.page && overrides.page > 1) p.set("page", String(overrides.page));
     const qs = p.toString();
     return `/admin/orders${qs ? `?${qs}` : ""}`;
@@ -194,12 +202,15 @@ export default async function AdminOrdersPage({
         </div>
       </div>
 
-      {/* Channel & Vendor Filter Bar */}
+      {/* Channel & Vendor & Category Filter Bar */}
       <AdminOrderFilterBar
         currentSource={currentSource}
         currentVendorId={currentVendorId}
+        currentCategoryId={currentCategoryId}
+        currentSubCategoryId={currentSubCategoryId}
         currentStatus={currentStatus}
         vendors={vendorsList}
+        categories={categoriesList}
       />
 
       {/* Status Filters */}

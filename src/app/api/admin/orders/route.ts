@@ -27,6 +27,8 @@ export async function GET(request: NextRequest) {
       dateFrom: searchParams.get("dateFrom") || undefined,
       dateTo: searchParams.get("dateTo") || undefined,
       vendorId: searchParams.get("vendorId") || undefined,
+      categoryId: searchParams.get("categoryId") || undefined,
+      subCategoryId: searchParams.get("subCategoryId") || undefined,
       minAmount: searchParams.get("minAmount") || undefined,
       maxAmount: searchParams.get("maxAmount") || undefined,
       source: searchParams.get("source") || undefined,

@@ -9,6 +9,8 @@ export interface AdminOrderFilters {
   dateFrom?: string;
   dateTo?: string;
   vendorId?: string;
+  categoryId?: string;
+  subCategoryId?: string;
   minAmount?: string;
   maxAmount?: string;
   source?: string;
@@ -24,6 +26,8 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     dateFrom: filters.dateFrom || undefined,
     dateTo: filters.dateTo || undefined,
     vendorId: filters.vendorId || undefined,
+    categoryId: filters.categoryId || undefined,
+    subCategoryId: filters.subCategoryId || undefined,
     minAmount: filters.minAmount || undefined,
     maxAmount: filters.maxAmount || undefined,
     source: (filters.source === "tryme" || filters.source === "website" || filters.source === "inquiries") ? filters.source : undefined,
@@ -43,6 +47,8 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     dateFrom,
     dateTo,
     vendorId,
+    categoryId,
+    subCategoryId,
     minAmount,
     maxAmount,
     source,
@@ -84,8 +90,26 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
 
   if (vendorId && vendorId !== "all") {
     queryParamsRaw.push(vendorId);
-    whereClause += ` AND EXISTS (SELECT 1 FROM "OrderItem" i WHERE i."orderId" = o."id" AND i."vendorId" = ${queryParamsRaw.length})`;
+    whereClause += ` AND EXISTS (SELECT 1 FROM "OrderItem" i WHERE i."orderId" = o."id" AND i."vendorId" = $${queryParamsRaw.length})`;
   }
+
+  if (subCategoryId && subCategoryId !== "all") {
+    queryParamsRaw.push(subCategoryId);
+    whereClause += ` AND EXISTS (
+      SELECT 1 FROM "OrderItem" i 
+      JOIN "Product" pr ON i."productId" = pr."id" 
+      WHERE i."orderId" = o."id" AND pr."categoryId" = $${queryParamsRaw.length}
+    )`;
+  } else if (categoryId && categoryId !== "all") {
+    queryParamsRaw.push(categoryId);
+    whereClause += ` AND EXISTS (
+      SELECT 1 FROM "OrderItem" i 
+      JOIN "Product" pr ON i."productId" = pr."id" 
+      JOIN "Category" cat ON pr."categoryId" = cat."id" 
+      WHERE i."orderId" = o."id" AND (cat."id" = $${queryParamsRaw.length} OR cat."parentId" = $${queryParamsRaw.length})
+    )`;
+  }
+
   if (source === "tryme") {
     whereClause += ` AND o."orderNumber" NOT LIKE 'WEB-%'`;
   } else if (source === "website") {
@@ -114,6 +138,7 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
     revenueResult,
     trymeCommissionResult,
     vendorsList,
+    categoriesList,
   ] = await Promise.all([
     // 1. Total count
     prisma.$queryRawUnsafe<any[]>(
@@ -207,6 +232,23 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
       orderBy: {
         businessName: "asc",
       },
+    }),
+
+    // 7. Active categories and subcategories for filter dropdown
+    prisma.category.findMany({
+      where: {
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        parentId: true,
+      },
+      orderBy: [
+        { sortOrder: "asc" },
+        { name: "asc" },
+      ],
     }),
   ]);
 
@@ -331,5 +373,6 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
       websiteOrdersCount,
     },
     vendorsList,
+    categoriesList,
   };
 }
