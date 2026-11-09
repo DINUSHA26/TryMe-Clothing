@@ -87,3 +87,4 @@ export function parseUserAgent(uaString: string | null | undefined): ParsedUserA
     deviceType,
   };
 }
+

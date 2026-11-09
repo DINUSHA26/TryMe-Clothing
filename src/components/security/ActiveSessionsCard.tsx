@@ -262,3 +262,4 @@ export function ActiveSessionsCard({ maxAllowed = 2, roleLabel = "Admin" }: Acti
     </Card>
   );
 }
+
