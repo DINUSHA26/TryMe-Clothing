@@ -172,6 +172,7 @@ export async function PATCH(
         metadata: {
           orderId,
           orderNumber: order.orderNumber,
+          chimeTimes: 3,
         },
       });
     } catch (notifError) {

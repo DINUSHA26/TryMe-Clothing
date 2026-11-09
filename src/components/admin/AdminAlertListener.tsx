@@ -44,8 +44,9 @@ export function AdminAlertListener() {
     const handleAdminAlert = (data: AdminNotificationEvent) => {
       console.log("[AdminAlertListener] Received real-time alert:", data);
 
-      // 1. Play crystal bell chime (Web Audio + HTML5 Audio fallback)
-      playNotificationChime();
+      // 1. Play crystal bell chime 5 times for new orders and critical admin alerts
+      const times = data.data?.chimeTimes || 5;
+      playNotificationChime(times);
 
       // 2. Increment unread notification badge count
       const currentUnread = useNotificationStore.getState().unreadCount;

@@ -11,7 +11,6 @@
 let sharedAudio: HTMLAudioElement | null = null;
 let sharedCtx: AudioContext | null = null;
 let isUnlocked = false;
-let lastPlayedAt = 0;
 
 /**
  * Initialize audio unlock listeners on the window.
@@ -59,17 +58,8 @@ export function initAudioUnlock() {
   window.addEventListener("touchstart", unlock, { passive: true });
 }
 
-/**
- * Play pleasant crystal bell chime
- */
-export function playNotificationChime(): boolean {
-  if (typeof window === "undefined") return false;
-
-  const nowMs = Date.now();
-  if (nowMs - lastPlayedAt < 400) return true; // Debounce
-  lastPlayedAt = nowMs;
-
-  console.log("[NotificationSound] Playing notification bell chime...");
+function playSingleChime() {
+  if (typeof window === "undefined") return;
 
   // Strategy 1: Synthesize with Web Audio API (instant 0ms response)
   try {
@@ -91,31 +81,31 @@ export function playNotificationChime(): boolean {
       const gain1 = ctx.createGain();
       osc1.type = "sine";
       osc1.frequency.setValueAtTime(880, now);
-      osc1.frequency.exponentialRampToValueAtTime(875, now + 0.6);
+      osc1.frequency.exponentialRampToValueAtTime(875, now + 0.55);
 
       gain1.gain.setValueAtTime(0.5, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
 
       osc1.connect(gain1);
       gain1.connect(ctx.destination);
       osc1.start(now);
-      osc1.stop(now + 0.6);
+      osc1.stop(now + 0.55);
 
       // Note 2: 1174.66 Hz (D6 crystal chime)
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = "triangle";
-      osc2.frequency.setValueAtTime(1174.66, now + 0.15);
-      osc2.frequency.exponentialRampToValueAtTime(1170, now + 1.0);
+      osc2.frequency.setValueAtTime(1174.66, now + 0.12);
+      osc2.frequency.exponentialRampToValueAtTime(1170, now + 0.85);
 
       gain2.gain.setValueAtTime(0.001, now);
-      gain2.gain.setValueAtTime(0.55, now + 0.15);
-      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+      gain2.gain.setValueAtTime(0.55, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
 
       osc2.connect(gain2);
       gain2.connect(ctx.destination);
-      osc2.start(now + 0.15);
-      osc2.stop(now + 1.0);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.85);
     }
   } catch (err) {
     console.warn("[NotificationSound] Web Audio synthesis error:", err);
@@ -131,11 +121,29 @@ export function playNotificationChime(): boolean {
     const playPromise = sharedAudio.play();
     if (playPromise !== undefined) {
       playPromise.catch((err) => {
-        console.warn("[NotificationSound] HTML5 Audio autoplay policy notice:", err?.name, err?.message);
+        console.warn("[NotificationSound] HTML5 Audio notice:", err?.name);
       });
     }
   } catch (audioErr) {
     console.warn("[NotificationSound] HTML5 Audio error:", audioErr);
+  }
+}
+
+/**
+ * Play pleasant crystal bell chime
+ * @param times Number of repetitions (e.g. 5 for Admin/Vendor order alerts, 3 for Customer alerts)
+ * @param intervalMs Spacing between each chime in milliseconds (default 650ms)
+ */
+export function playNotificationChime(times: number = 1, intervalMs: number = 650): boolean {
+  if (typeof window === "undefined") return false;
+
+  const count = Math.max(1, Math.min(times, 10));
+  console.log(`[NotificationSound] Triggering bell chime (${count} times, spaced ${intervalMs}ms)...`);
+
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      playSingleChime();
+    }, i * intervalMs);
   }
 
   return true;

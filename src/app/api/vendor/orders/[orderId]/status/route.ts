@@ -277,6 +277,7 @@ export async function PATCH(
             orderId: order.id,
             orderNumber: order.orderNumber,
             trackingNumber: trackingNumber || undefined,
+            chimeTimes: 3,
           },
         });
       }

@@ -93,6 +93,11 @@ export interface NotificationMetadata {
   actionRequired?: boolean;
   customerId?: string;
   reason?: string;
+
+  // Real-time Audio alerts
+  chimeTimes?: number;
+  isNewOrder?: boolean;
+  isPaymentConfirmed?: boolean;
 }
 
 // Configuration for each notification type

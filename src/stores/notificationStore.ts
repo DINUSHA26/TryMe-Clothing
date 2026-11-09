@@ -5,7 +5,7 @@ import type { NotificationCategory } from "@/types/notification";
 import type { Notification } from "@prisma/client";
 import { pusherClient } from "@/lib/pusher-client";
 import { useAuthStore } from "@/stores/authStore";
-import { playNotificationChime } from "@/lib/utils/sound";
+import { playNotificationChime, initAudioUnlock } from "@/lib/utils/sound";
 
 interface NotificationFilters {
   category?: NotificationCategory;
@@ -316,9 +316,30 @@ export const useNotificationStore = create<NotificationState>()(
         // Listen for new notifications
         channel.bind("new-notification", (data: { notification: Notification }) => {
           get().addNotification(data.notification);
-          if (useAuthStore.getState().user?.role === "ADMIN") {
-            playNotificationChime();
+          
+          const meta = (data.notification?.metadata || {}) as any;
+          const userRole = useAuthStore.getState().user?.role;
+          const notifType = data.notification?.type;
+
+          let times = 1;
+          if (meta?.chimeTimes) {
+            times = Number(meta.chimeTimes);
+          } else if (notifType === "ORDER_PAYMENT_CONFIRMED" || meta?.isPaymentConfirmed || meta?.isNewOrder) {
+            // 5 times for Admin/Vendor/Ads Seller, 3 times for Customer
+            times = userRole === "CUSTOMER" ? 3 : 5;
+          } else if (
+            notifType === "ORDER_ITEM_SHIPPED" ||
+            notifType === "ORDER_ITEM_PROCESSING" ||
+            notifType === "ORDER_STATUS_OVERRIDE" ||
+            notifType === "ORDER_DELIVERY_CONFIRMED" ||
+            meta?.orderId
+          ) {
+            times = 3;
+          } else if (userRole === "ADMIN" || userRole === "VENDOR" || userRole === "ADS_SELLER") {
+            times = 5;
           }
+
+          playNotificationChime(times);
         });
 
         // Listen for unread count updates
@@ -346,6 +367,7 @@ export function useNotificationListeners() {
   const userId = useAuthStore((state) => state.user?.id);
 
   useEffect(() => {
+    initAudioUnlock();
     if (userId) {
       const cleanup = initializePusherListeners(userId);
       return cleanup;

@@ -13,6 +13,7 @@ import { verifyWebhookSignature, parseStatusCode } from "@/lib/payhere";
 import { calculateVendorEarnings, creditVendorWallets } from "@/lib/utils/wallet";
 import { createChatRoomsForOrder } from "@/lib/chat/roomManager";
 import { createNotification } from "@/lib/notifications/notificationService";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 import { NotificationType } from "@/types/notification";
 import { emailService } from "@/lib/email";
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
         coupon: { select: { vendorId: true } },
         items: {
           include: {
-            vendor: { select: { id: true, businessName: true, businessEmail: true, commissionRate: true } },
+            vendor: { select: { id: true, userId: true, businessName: true, businessEmail: true, commissionRate: true } },
           },
         },
       },
@@ -286,7 +287,7 @@ export async function POST(request: NextRequest) {
         console.error("[PayHere Webhook] Failed to create chat rooms:", chatError);
       }
 
-      // Send notification to customer
+      // Send notification to customer (3 chimes), vendors (5 chimes), and admin (5 chimes)
       try {
         await createNotification({
           userId: order.customer.user.id,
@@ -298,8 +299,43 @@ export async function POST(request: NextRequest) {
             orderId: order.id,
             orderNumber: order.orderNumber,
             amount: order.totalAmount.toNumber(),
+            chimeTimes: 3,
+            isPaymentConfirmed: true,
           },
         });
+
+        // Notify each Vendor with products in the order (5 chimes)
+        const vendorMap = new Map<string, string>();
+        for (const item of order.items) {
+          if (item.vendor?.userId && !vendorMap.has(item.vendor.userId)) {
+            vendorMap.set(item.vendor.userId, item.vendor.businessName);
+          }
+        }
+
+        for (const [vendorUserId, bName] of vendorMap.entries()) {
+          createNotification({
+            userId: vendorUserId,
+            type: NotificationType.ORDER_PAYMENT_CONFIRMED,
+            title: "💰 Order Payment Confirmed!",
+            message: `Online payment for order ${order.orderNumber} has been processed successfully via PayHere.`,
+            link: `/vendor/orders/${order.id}`,
+            metadata: {
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              chimeTimes: 5,
+              isPaymentConfirmed: true,
+            },
+          }).catch(() => {});
+        }
+
+        // Notify Admins (5 chimes)
+        triggerAdminAlert({
+          type: "NEW_ORDER",
+          title: "💰 Online Payment Confirmed!",
+          message: `Order #${order.orderNumber} (Rs. ${order.totalAmount.toNumber().toLocaleString("en-LK")}) paid online via PayHere.`,
+          link: `/admin/orders/${order.orderNumber}`,
+          data: { orderId: order.id, orderNumber: order.orderNumber, chimeTimes: 5 },
+        }).catch(() => {});
       } catch (notifError) {
         console.error("[PayHere Webhook] Failed to send notification:", notifError);
       }

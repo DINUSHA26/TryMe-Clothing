@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getOrCreateAdsSellerVendor, getOrCreateVendorProduct } from "@/lib/ads-seller-vendor";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
+import { createNotification } from "@/lib/notifications/notificationService";
+import { NotificationType } from "@/types/notification";
 
 async function generateMarketplaceOrderNumber(tx: any): Promise<string> {
   const now = new Date();
@@ -260,6 +263,33 @@ export async function POST(
         totalAmount,
       };
     });
+
+    // 1. Notify Admin (5 chimes)
+    triggerAdminAlert({
+      type: "NEW_ORDER",
+      title: "🛍️ New Ad Order Placed!",
+      message: `Ad order #${result.orderNumber} for "${ad.title}" (Rs. ${result.totalAmount.toLocaleString("en-LK")}) received.`,
+      link: `/admin/orders/${result.orderNumber}`,
+      data: { orderId: result.orderId, orderNumber: result.orderNumber, chimeTimes: 5 },
+    }).catch(() => {});
+
+    // 2. Notify Ads Seller (5 chimes)
+    const sellerUserId = ad.seller?.userId || ad.seller?.user?.id;
+    if (sellerUserId) {
+      createNotification({
+        userId: sellerUserId,
+        type: NotificationType.ORDER_PAYMENT_CONFIRMED,
+        title: "🛍️ New Order for Your Ad!",
+        message: `You received an order #${result.orderNumber} for "${ad.title}".`,
+        link: `/ads-seller/orders/${result.orderId}`,
+        metadata: {
+          orderId: result.orderId,
+          orderNumber: result.orderNumber,
+          chimeTimes: 5,
+          isNewOrder: true,
+        },
+      }).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,

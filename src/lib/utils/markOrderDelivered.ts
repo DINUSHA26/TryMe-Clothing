@@ -178,6 +178,7 @@ export async function markOrderDelivered(
           orderId,
           orderNumber: order.orderNumber,
           vendorName: targetVendor.businessName,
+          chimeTimes: 3,
         },
       });
     } catch (notifErr) {
@@ -264,6 +265,7 @@ export async function markOrderDelivered(
       metadata: {
         orderId,
         orderNumber: order.orderNumber,
+        chimeTimes: 3,
       },
     });
   } catch (notifErr) {

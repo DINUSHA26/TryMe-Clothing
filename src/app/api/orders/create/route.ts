@@ -17,6 +17,8 @@ import {
 } from "@/lib/utils/order";
 import { createAddressSnapshot } from "@/lib/utils/address";
 import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
+import { createNotification } from "@/lib/notifications/notificationService";
+import { NotificationType } from "@/types/notification";
 
 async function requireCustomer(request: NextRequest): Promise<string | null> {
   const userId = request.headers.get("X-User-Id");
@@ -379,14 +381,62 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    // Notify active admin sessions with bell sound & toast
+    // 1. Notify active admin sessions with bell sound (5 times) & toast
     triggerAdminAlert({
       type: "NEW_ORDER",
       title: "🛍️ New Order Placed!",
       message: `Order #${result.orderNumber} (Rs. ${Number(result.totalAmount).toLocaleString("en-LK")}) received with ${result.itemCount} items.`,
       link: `/admin/orders/${result.orderNumber}`,
-      data: { orderId: result.orderId, orderNumber: result.orderNumber },
+      data: { orderId: result.orderId, orderNumber: result.orderNumber, chimeTimes: 5 },
     }).catch(() => {});
+
+    // 2. Notify the Customer (3 chimes)
+    const customerUserId = request.headers.get("X-User-Id");
+    if (customerUserId) {
+      createNotification({
+        userId: customerUserId,
+        type: NotificationType.ORDER_PAYMENT_CONFIRMED,
+        title: "🎉 Order Placed Successfully!",
+        message: `Your order #${result.orderNumber} (Rs. ${Number(result.totalAmount).toLocaleString("en-LK")}) has been placed.`,
+        link: `/orders/${result.orderId}`,
+        metadata: {
+          orderId: result.orderId,
+          orderNumber: result.orderNumber,
+          chimeTimes: 3,
+          isNewOrder: true,
+        },
+      }).catch((e) => console.warn("[OrderCreate] Customer notif error:", e));
+    }
+
+    // 3. Notify each Vendor whose items are in the order (5 chimes)
+    const vendorMap = new Map<string, { vendorName: string; count: number }>();
+    for (const item of cart.items) {
+      const vendorUserId = item.product.vendor?.user?.id || (item.product.vendor as any)?.userId;
+      if (vendorUserId) {
+        const existing = vendorMap.get(vendorUserId) || {
+          vendorName: item.product.vendor?.businessName || "Vendor",
+          count: 0,
+        };
+        existing.count += item.quantity;
+        vendorMap.set(vendorUserId, existing);
+      }
+    }
+
+    for (const [vendorUserId, vData] of vendorMap.entries()) {
+      createNotification({
+        userId: vendorUserId,
+        type: NotificationType.ORDER_PAYMENT_CONFIRMED,
+        title: "🛍️ New Order Received!",
+        message: `You received a new order #${result.orderNumber} for ${vData.count} items.`,
+        link: `/vendor/orders/${result.orderId}`,
+        metadata: {
+          orderId: result.orderId,
+          orderNumber: result.orderNumber,
+          chimeTimes: 5,
+          isNewOrder: true,
+        },
+      }).catch((e) => console.warn("[OrderCreate] Vendor notif error:", e));
+    }
 
     return NextResponse.json({
       success: true,

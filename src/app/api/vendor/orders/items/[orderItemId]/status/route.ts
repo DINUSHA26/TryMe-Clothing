@@ -256,6 +256,7 @@ export async function PATCH(
           productName,
           vendorName,
           trackingNumber: trackingNumber || undefined,
+          chimeTimes: 3,
         },
       });
     } catch {}
