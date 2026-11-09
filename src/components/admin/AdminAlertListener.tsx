@@ -3,11 +3,11 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { pusherClient } from "@/lib/pusher-client";
-import { playNotificationChime } from "@/lib/utils/sound";
+import { playNotificationChime, initAudioUnlock } from "@/lib/utils/sound";
 import { useAuthStore } from "@/stores/authStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { toast } from "sonner";
-import { Bell, ShoppingBag, UserPlus, Store, Megaphone, Globe, CreditCard, ExternalLink } from "lucide-react";
+import { Bell, ShoppingBag, UserPlus, Store, Megaphone, Globe, CreditCard } from "lucide-react";
 
 export interface AdminNotificationEvent {
   type:
@@ -30,15 +30,21 @@ export function AdminAlertListener() {
   const isSubscribedRef = useRef(false);
 
   useEffect(() => {
-    // Only subscribe for authenticated Admin users
+    // 1. Initialize audio auto-unlock on user interactions
+    initAudioUnlock();
+
+    // 2. Only subscribe for authenticated Admin users
     if (!isAuthenticated || user?.role !== "ADMIN") return;
 
     const channelName = "admin-alerts";
+    console.log("[AdminAlertListener] Subscribing to channel:", channelName);
     const channel = pusherClient.subscribe(channelName);
     isSubscribedRef.current = true;
 
     const handleAdminAlert = (data: AdminNotificationEvent) => {
-      // 1. Play pleasant crystal bell chime
+      console.log("[AdminAlertListener] Received real-time alert:", data);
+
+      // 1. Play crystal bell chime (Web Audio + HTML5 Audio fallback)
       playNotificationChime();
 
       // 2. Increment unread notification badge count
@@ -58,7 +64,7 @@ export function AdminAlertListener() {
       toast(data.title, {
         description: data.message,
         icon: icon,
-        duration: 9000,
+        duration: 12000,
         action: {
           label: "View",
           onClick: () => {
@@ -74,6 +80,7 @@ export function AdminAlertListener() {
 
     return () => {
       if (isSubscribedRef.current) {
+        console.log("[AdminAlertListener] Unsubscribing from:", channelName);
         channel.unbind("admin-notification", handleAdminAlert);
         pusherClient.unsubscribe(channelName);
         isSubscribedRef.current = false;
@@ -83,3 +90,4 @@ export function AdminAlertListener() {
 
   return null;
 }
+

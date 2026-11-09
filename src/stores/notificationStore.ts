@@ -5,6 +5,7 @@ import type { NotificationCategory } from "@/types/notification";
 import type { Notification } from "@prisma/client";
 import { pusherClient } from "@/lib/pusher-client";
 import { useAuthStore } from "@/stores/authStore";
+import { playNotificationChime } from "@/lib/utils/sound";
 
 interface NotificationFilters {
   category?: NotificationCategory;
@@ -315,6 +316,9 @@ export const useNotificationStore = create<NotificationState>()(
         // Listen for new notifications
         channel.bind("new-notification", (data: { notification: Notification }) => {
           get().addNotification(data.notification);
+          if (useAuthStore.getState().user?.role === "ADMIN") {
+            playNotificationChime();
+          }
         });
 
         // Listen for unread count updates

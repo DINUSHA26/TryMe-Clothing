@@ -1,5 +1,6 @@
 import { pusherServer } from "@/lib/pusher";
 import { prisma } from "@/lib/prisma";
+import { broadcastNotification } from "@/lib/notifications/notificationBroadcast";
 
 export type AdminAlertType =
   | "NEW_ORDER"
@@ -32,29 +33,35 @@ export async function triggerAdminAlert(alert: AdminAlertPayload) {
     // 1. Broadcast instant event to Pusher channel
     await pusherServer.trigger("admin-alerts", "admin-notification", payload);
 
-    // 2. Persist notification records in DB for all ADMIN users
+    // 2. Persist notification records in DB for all ADMIN users and broadcast to their private channel
     try {
       const adminUsers = await prisma.user.findMany({
         where: { role: "ADMIN", isActive: true },
         select: { id: true },
       });
 
-      if (adminUsers.length > 0) {
-        await prisma.notification.createMany({
-          data: adminUsers.map((u) => ({
-            userId: u.id,
-            type: alert.type === "NEW_ORDER" ? "ORDER_PAYMENT_CONFIRMED" : "SYSTEM_ANNOUNCEMENT",
-            category: alert.type === "NEW_ORDER" ? "ORDER" : "SYSTEM",
-            priority: "HIGH",
-            title: alert.title,
-            message: alert.message,
-            link: alert.link,
-            isRead: false,
-          })),
-        });
+      for (const admin of adminUsers) {
+        try {
+          const notif = await prisma.notification.create({
+            data: {
+              userId: admin.id,
+              type: alert.type === "NEW_ORDER" ? "ORDER_PAYMENT_CONFIRMED" : "SYSTEM_ANNOUNCEMENT",
+              category: alert.type === "NEW_ORDER" ? "ORDER" : "SYSTEM",
+              priority: "HIGH",
+              title: alert.title,
+              message: alert.message,
+              link: alert.link,
+              isRead: false,
+            },
+          });
+
+          // Broadcast in real-time to admin's private channel
+          await broadcastNotification(admin.id, notif);
+        } catch (adminErr) {
+          console.warn(`[triggerAdminAlert] Broadcast to admin ${admin.id} failed:`, adminErr);
+        }
       }
     } catch (dbErr) {
-      // Non-fatal if notification schema differs
       console.warn("[triggerAdminAlert DB Notice]:", dbErr);
     }
   } catch (error) {
