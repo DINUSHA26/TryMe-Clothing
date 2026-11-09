@@ -142,11 +142,47 @@ export async function POST(request: NextRequest) {
 
     // (Password verification was already handled earlier)
 
+    // Admin 2-device concurrent session limit enforcement
+    let sessionId: string | undefined;
+
+    if (user.role === UserRole.ADMIN) {
+      // 1. Fetch current active sessions ordered from newest to oldest
+      const activeSessions = await prisma.adminSession.findMany({
+        where: { userId: user.id, isActive: true },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // 2. Allow at most 2 concurrent active sessions.
+      // If there are already >= 2 active sessions, revoke the oldest ones so only
+      // the single most recent stays active, leaving exactly 2 once the new one is created.
+      if (activeSessions.length >= 2) {
+        const sessionsToRevoke = activeSessions.slice(1);
+        await prisma.adminSession.updateMany({
+          where: { id: { in: sessionsToRevoke.map((s) => s.id) } },
+          data: { isActive: false },
+        });
+      }
+
+      // 3. Create the new session record
+      const userAgent = request.headers.get("user-agent") || "Unknown Device";
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+      const newSession = await prisma.adminSession.create({
+        data: {
+          userId: user.id,
+          device: userAgent.slice(0, 255),
+          ip,
+          isActive: true,
+        },
+      });
+      sessionId = newSession.id;
+    }
+
     // Generate tokens
     const tokens = tokenUtils.generateTokenPair({
       userId: user.id,
       email: user.email!,
       role: user.role,
+      ...(sessionId ? { sessionId } : {}),
     });
 
     // Create response with user data and tokens

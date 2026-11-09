@@ -177,6 +177,7 @@ model User {
   storyReactions          StoryReaction[]         @relation("UserStoryReactions")
   savedPosts              SavedPost[]             @relation("UserSavedPosts")
   staffMember             StaffMember?
+  adminSessions           AdminSession[]
 
   @@index([email])
   @@index([phone])
@@ -1537,5 +1538,20 @@ model AuditLog {
   @@index([scope])
   @@index([vendorId])
   @@index([adsSellerId])
+  @@index([createdAt])
+}
+
+model AdminSession {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device       String?
+  ip           String?
+  isActive     Boolean  @default(true)
+  lastActiveAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, isActive])
   @@index([createdAt])
 }

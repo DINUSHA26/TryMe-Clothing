@@ -52,11 +52,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Admin 2-device session check
+    let sessionId: string | undefined = payload.sessionId;
+    if (user.role === "ADMIN" && sessionId) {
+      const session = await prisma.adminSession.findUnique({
+        where: { id: sessionId },
+      });
+
+      if (!session || !session.isActive) {
+        // Clear auth cookies on expired session
+        const expiredResponse = NextResponse.json(
+          {
+            success: false,
+            error: "Session expired because your admin account was logged into 2 other devices",
+            sessionExpired: true,
+          },
+          { status: 401 }
+        );
+        expiredResponse.cookies.delete("accessToken");
+        expiredResponse.cookies.delete("refreshToken");
+        return expiredResponse;
+      }
+
+      // Update session activity time
+      await prisma.adminSession
+        .update({
+          where: { id: sessionId },
+          data: { lastActiveAt: new Date() },
+        })
+        .catch(() => {});
+    }
+
     // Generate new token pair
     const tokens = tokenUtils.generateTokenPair({
       userId: user.id,
       email: user.email!,
       role: user.role,
+      ...(sessionId ? { sessionId } : {}),
     });
 
     // Create response

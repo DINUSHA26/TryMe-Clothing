@@ -4,12 +4,13 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { Logo } from "@/components/layout/shared/Logo";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShieldAlert } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 function StaffLoginContent() {
     const searchParams = useSearchParams();
     const returnUrl = searchParams.get("returnUrl") || undefined;
+    const errorParam = searchParams.get("error");
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-blue-50 px-4 py-8">
@@ -34,6 +35,17 @@ function StaffLoginContent() {
 
                 {/* Login Card */}
                 <div className="border bg-white rounded-2xl shadow-xl p-8 border-gray-100">
+                    {errorParam === "session_limit_exceeded" && (
+                        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm flex items-start gap-3 animate-in fade-in duration-300">
+                            <ShieldAlert className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-semibold text-amber-900">Session Limit Exceeded</p>
+                                <p className="mt-0.5 text-amber-700 leading-relaxed">
+                                    You have been logged out because your admin account was logged into 2 other devices. Only 2 active devices are permitted simultaneously.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     <LoginForm userType="staff" redirectUrl={returnUrl} />
 
                     {/* Footer Links: Customer Login & Staff Register */}

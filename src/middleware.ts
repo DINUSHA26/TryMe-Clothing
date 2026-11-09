@@ -22,23 +22,31 @@ const storeAccessCache = new Map<string, { exp: number; data: StoreAccessInfo }>
  * Look up Admin RBAC permissions through the internal Node endpoint
  * (Edge runtime cannot use Prisma). Returns null when the lookup fails.
  */
-async function fetchAdminAccess(origin: string, userId: string): Promise<AdminAccessInfo | null> {
-  const cached = accessCache.get(userId);
+async function fetchAdminAccess(
+  origin: string,
+  userId: string,
+  sessionId?: string
+): Promise<AdminAccessInfo | null> {
+  const cacheKey = sessionId ? `${userId}:${sessionId}` : userId;
+  const cached = accessCache.get(cacheKey);
   if (cached && cached.exp > Date.now()) return cached.data;
 
   try {
-    const res = await fetch(
-      `${origin}/api/internal/admin-access?userId=${encodeURIComponent(userId)}`,
-      {
-        headers: { "x-internal-secret": process.env.JWT_SECRET || "" },
-        cache: "no-store",
-        signal: AbortSignal.timeout(5000),
-      }
-    );
+    const url = `${origin}/api/internal/admin-access?userId=${encodeURIComponent(userId)}${
+      sessionId ? `&sessionId=${encodeURIComponent(sessionId)}` : ""
+    }`;
+    const res = await fetch(url, {
+      headers: { "x-internal-secret": process.env.JWT_SECRET || "" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.status === 401) {
+      return { isSuper: false, isActive: false, permissions: [], sessionExpired: true };
+    }
     if (!res.ok) return null;
     const data = (await res.json()) as AdminAccessInfo;
     if (accessCache.size > 500) accessCache.clear();
-    accessCache.set(userId, { exp: Date.now() + ACCESS_CACHE_TTL_MS, data });
+    accessCache.set(cacheKey, { exp: Date.now() + ACCESS_CACHE_TTL_MS, data });
     return data;
   } catch {
     return null;
@@ -77,7 +85,7 @@ async function fetchStoreAccess(
 }
 
 // Verify JWT using jose (Edge Runtime compatible)
-async function verifyToken(token: string): Promise<{ userId: string; email: string; role: Role } | null> {
+async function verifyToken(token: string): Promise<{ userId: string; email: string; role: Role; sessionId?: string } | null> {
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
     const { payload } = await jwtVerify(token, secret);
@@ -85,6 +93,7 @@ async function verifyToken(token: string): Promise<{ userId: string; email: stri
       userId: payload.userId as string,
       email: payload.email as string,
       role: payload.role as Role,
+      sessionId: payload.sessionId as string | undefined,
     };
   } catch {
     return null;
@@ -92,7 +101,7 @@ async function verifyToken(token: string): Promise<{ userId: string; email: stri
 }
 
 // Verify Refresh JWT using jose (Edge Runtime compatible)
-async function verifyRefreshToken(token: string): Promise<{ userId: string; email: string; role: Role } | null> {
+async function verifyRefreshToken(token: string): Promise<{ userId: string; email: string; role: Role; sessionId?: string } | null> {
   try {
     const secret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET || "");
     const { payload } = await jwtVerify(token, secret);
@@ -100,6 +109,7 @@ async function verifyRefreshToken(token: string): Promise<{ userId: string; emai
       userId: payload.userId as string,
       email: payload.email as string,
       role: payload.role as Role,
+      sessionId: payload.sessionId as string | undefined,
     };
   } catch {
     return null;
@@ -107,7 +117,7 @@ async function verifyRefreshToken(token: string): Promise<{ userId: string; emai
 }
 
 // Generate new access token in Next.js middleware (Edge Runtime compatible)
-async function generateAccessToken(payload: { userId: string; email: string; role: Role }): Promise<string> {
+async function generateAccessToken(payload: { userId: string; email: string; role: Role; sessionId?: string }): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
@@ -116,7 +126,7 @@ async function generateAccessToken(payload: { userId: string; email: string; rol
 }
 
 // Generate new refresh token in Next.js middleware (Edge Runtime compatible)
-async function generateRefreshToken(payload: { userId: string; email: string; role: Role }): Promise<string> {
+async function generateRefreshToken(payload: { userId: string; email: string; role: Role; sessionId?: string }): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET || "");
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
@@ -337,6 +347,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
           userId: refreshPayload.userId,
           email: refreshPayload.email,
           role: refreshPayload.role,
+          sessionId: refreshPayload.sessionId,
         };
         try {
           newAccessToken = await generateAccessToken(payload);
@@ -399,7 +410,26 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     };
 
     const requirement = resolveRouteRequirement(pathname, request.method);
-    const access = await fetchAdminAccess(request.nextUrl.origin, payload.userId);
+    const access = await fetchAdminAccess(request.nextUrl.origin, payload.userId, payload.sessionId);
+
+    if (access?.sessionExpired) {
+      if (isApi) {
+        return NextResponse.json(
+          {
+            error: "session_limit_exceeded",
+            message: "Your session has expired because your admin account was logged into 2 other devices.",
+          },
+          { status: 401 }
+        );
+      }
+      const expiredUrl = request.nextUrl.clone();
+      expiredUrl.pathname = "/staff/login";
+      expiredUrl.searchParams.set("error", "session_limit_exceeded");
+      const resp = NextResponse.redirect(expiredUrl);
+      resp.cookies.delete("accessToken");
+      resp.cookies.delete("refreshToken");
+      return resp;
+    }
 
     if (!access) {
       // Fail closed: if we cannot verify permissions we do not let the request through

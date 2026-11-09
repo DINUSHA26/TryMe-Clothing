@@ -332,6 +332,7 @@ export interface AdminAccessInfo {
   permissions: string[];
   roleId?: string | null;
   roleName?: string | null;
+  sessionExpired?: boolean;
 }
 
 export interface StoreAccessInfo {
