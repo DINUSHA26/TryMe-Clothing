@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { passwordUtils, tokenUtils } from "@/lib/auth";
 import { UserRole } from "@prisma/client";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 import { generateSlug, generateUniqueSlug } from "@/lib/utils/slug";
 
 // Sri Lankan phone number regex
@@ -192,6 +193,15 @@ export async function POST(request: NextRequest) {
       resultUser = createdData.user;
       resultVendor = createdData.vendor;
     }
+
+    // Broadcast new vendor alert to admin sessions
+    triggerAdminAlert({
+      type: "NEW_VENDOR",
+      title: "🏪 New Vendor Registered!",
+      message: `${resultVendor.businessName} submitted an application for review.`,
+      link: "/admin/vendors",
+      data: { vendorId: resultVendor.id, businessName: resultVendor.businessName },
+    }).catch(() => {});
 
     // Generate tokens so they can log in immediately
     const tokens = tokenUtils.generateTokenPair({

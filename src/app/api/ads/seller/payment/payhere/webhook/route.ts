@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature, parseStatusCode } from "@/lib/payhere";
 import { payhereWebhookSchema } from "@/lib/validations/payment";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 
 /**
  * POST /api/ads/seller/payment/payhere/webhook
@@ -194,6 +195,16 @@ export async function POST(request: NextRequest) {
     });
 
     console.log("[PayHere Ads Webhook] Webhook processing completed successfully");
+
+    if (paymentStatus === "COMPLETED") {
+      triggerAdminAlert({
+        type: "NEW_ADS_SUBSCRIPTION",
+        title: "💎 Ads Plan Paid Online!",
+        message: `An ads plan subscription (${subscription.plan.name}) was successfully paid via PayHere.`,
+        link: "/admin/ads-plan-payments",
+      }).catch((err) => console.error("[AdminAlert] PayHere ads subscription alert error:", err));
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[PayHere Ads Webhook] Error processing webhook:", error);

@@ -10,6 +10,7 @@ import {
   AdsSubscriptionStatus,
 } from "@prisma/client";
 import { emailService } from "@/lib/email";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 
 // Sri Lankan phone number regex: accepts +947xxxxxxxx, 947xxxxxxxx, 07xxxxxxxx, 7xxxxxxxx (9 digits total for mobile number)
 const phoneRegex = /^(?:\+94|94|0)?7[0-9]{8}$/;
@@ -289,6 +290,15 @@ export async function POST(request: NextRequest) {
       resultUser = createdData.user;
       resultSeller = createdData.adsSeller;
     }
+
+    // Broadcast new ads seller alert to admin sessions
+    triggerAdminAlert({
+      type: "NEW_ADS_SELLER",
+      title: "📢 New Ads Seller Registered!",
+      message: `${resultSeller.businessName || `${resultUser.firstName} ${resultUser.lastName}`} registered as an Ads Seller.`,
+      link: "/admin/ads-sellers",
+      data: { sellerId: resultSeller.id, businessName: resultSeller.businessName },
+    }).catch(() => {});
 
     // Send notification email
     try {

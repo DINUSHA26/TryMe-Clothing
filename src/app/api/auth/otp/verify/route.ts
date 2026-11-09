@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { otpUtils } from "@/lib/otp";
 import { tokenUtils } from "@/lib/auth";
 import { UserRole } from "@prisma/client";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 
 // Validation schema supports email, phone or identifier
 const verifyOTPSchema = z.object({
@@ -109,6 +110,15 @@ export async function POST(request: NextRequest) {
           },
         },
       });
+
+      // Broadcast new customer alert to admin sessions
+      triggerAdminAlert({
+        type: "NEW_CUSTOMER",
+        title: "👤 New Customer Registered!",
+        message: `${user.email || user.phone} signed in via OTP.`,
+        link: "/admin/customers?source=fresh",
+        data: { userId: user.id, email: user.email },
+      }).catch(() => {});
     } else {
       // Ensure customer profile exists
       if (!user.customer) {

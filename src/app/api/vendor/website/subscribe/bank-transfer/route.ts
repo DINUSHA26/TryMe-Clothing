@@ -4,6 +4,7 @@ import { TIER_LIMITS, WebsiteTier } from "@/types/website-builder";
 import { uploadImage, uploadFile } from "@/lib/cloudinary";
 import { getAuthUser } from "@/lib/auth-helpers";
 import { resolveWebsiteEntity } from "@/lib/website-entity-helper";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,6 +81,14 @@ export async function POST(request: NextRequest) {
         bankSlipUrl: bankSlipUrl,
       },
     });
+
+    // Notify admins with bell chime & toast
+    triggerAdminAlert({
+      type: "NEW_WEBSITE_SUBSCRIPTION",
+      title: "🌐 New Website Subscription (Bank Slip)!",
+      message: `A new ${tier} website builder subscription bank slip was submitted for verification.`,
+      link: "/admin/website-subscriptions",
+    }).catch((err) => console.error("[AdminAlert] Website subscription alert error:", err));
 
     return NextResponse.json({
       success: true,

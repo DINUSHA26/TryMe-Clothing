@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature } from "@/lib/payhere";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,6 +64,13 @@ export async function POST(request: NextRequest) {
       });
 
       console.log(`Website subscription ${subId} successfully activated via PayHere!`);
+
+      triggerAdminAlert({
+        type: "NEW_WEBSITE_SUBSCRIPTION",
+        title: "🌐 Website Plan Paid Online!",
+        message: `Website builder subscription (${subscription.tier}) was successfully activated via PayHere.`,
+        link: "/admin/website-subscriptions",
+      }).catch((err) => console.error("[AdminAlert] Website PayHere subscription alert error:", err));
     } else {
       console.warn(`PayHere payment not successful for subscription ${subId}. Code: ${status_code}`);
     }

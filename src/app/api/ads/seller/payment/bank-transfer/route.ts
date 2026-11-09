@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdsSeller, handleAuthError } from "@/lib/auth-helpers";
 import { uploadFile } from "@/lib/cloudinary";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 
 /**
  * POST /api/ads/seller/payment/bank-transfer
@@ -109,6 +110,15 @@ export async function POST(request: NextRequest) {
         plan: { select: { name: true } },
       },
     });
+
+    // Notify active admin sessions with bell sound & toast
+    triggerAdminAlert({
+      type: "NEW_ADS_SUBSCRIPTION",
+      title: "💎 New Ads Plan Subscription!",
+      message: `${seller.businessName || "Ads Seller"} submitted a bank slip for ${subscription.plan.name} (Rs. ${Number(plan.price).toLocaleString("en-LK")}).`,
+      link: "/admin/ads-plan-payments",
+      data: { subscriptionId: subscription.id, sellerId: seller.id },
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

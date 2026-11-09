@@ -16,6 +16,7 @@ import {
   validateStockAvailability,
 } from "@/lib/utils/order";
 import { createAddressSnapshot } from "@/lib/utils/address";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 
 async function requireCustomer(request: NextRequest): Promise<string | null> {
   const userId = request.headers.get("X-User-Id");
@@ -377,6 +378,15 @@ export async function POST(request: NextRequest) {
         itemCount: itemsWithVariants.length,
       };
     });
+
+    // Notify active admin sessions with bell sound & toast
+    triggerAdminAlert({
+      type: "NEW_ORDER",
+      title: "🛍️ New Order Placed!",
+      message: `Order #${result.orderNumber} (Rs. ${Number(result.totalAmount).toLocaleString("en-LK")}) received with ${result.itemCount} items.`,
+      link: `/admin/orders/${result.orderNumber}`,
+      data: { orderId: result.orderId, orderNumber: result.orderNumber },
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

@@ -9,6 +9,7 @@ import { AdminSidebar } from "@/components/layout/admin/AdminSidebar";
 import { AdminHeader } from "@/components/layout/admin/AdminHeader";
 import { AdminMobileNav } from "@/components/layout/admin/AdminMobileNav";
 import { ChatDialog } from "@/components/chat/ChatDialog";
+import { AdminAlertListener } from "@/components/admin/AdminAlertListener";
 import { cn } from "@/lib/utils";
 
 export default function AdminDashboardLayout({
@@ -70,6 +71,7 @@ export default function AdminDashboardLayout({
         </main>
       </div>
       <ChatDialog />
+      <AdminAlertListener />
     </div>
   );
 }

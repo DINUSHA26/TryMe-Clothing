@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helpers";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,6 +75,15 @@ export async function POST(request: NextRequest) {
           expiresAt,
         },
       });
+
+      if (subscription.status === "PENDING_PAYMENT") {
+        triggerAdminAlert({
+          type: "NEW_WEBSITE_SUBSCRIPTION",
+          title: "🌐 Website Plan Paid Online!",
+          message: `Website builder subscription (${updated.tier}) was successfully activated.`,
+          link: "/admin/website-subscriptions",
+        }).catch((err) => console.error("[AdminAlert] Website verify subscription alert error:", err));
+      }
 
       return NextResponse.json({
         success: true,
