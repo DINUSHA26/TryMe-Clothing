@@ -28,6 +28,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
 import { validateImage, compressImage } from "@/lib/utils/image";
+import { ActiveSessionsCard } from "@/components/security/ActiveSessionsCard";
 
 interface VendorProfile {
   businessName: string;
@@ -514,6 +515,11 @@ export default function VendorSettingsPage() {
               </form>
             </CardContent>
           </Card>
+
+          {/* Active Devices & Security Sessions */}
+          <div className="mt-6">
+            <ActiveSessionsCard maxAllowed={5} roleLabel="Vendor" />
+          </div>
         </TabsContent>
       </Tabs>
 

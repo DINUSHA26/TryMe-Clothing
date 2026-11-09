@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { passwordUtils, tokenUtils, getTokenFromHeaders } from "@/lib/auth";
 import { emailService } from "@/lib/email";
+import { logAudit } from "@/lib/rbac";
 
 // Validation schema
 const changePasswordSchema = z.object({
@@ -140,6 +141,19 @@ export async function POST(request: NextRequest) {
         passwordHash: hashedPassword,
         mustChangePassword: false,
       },
+    });
+
+    // Record password change in AuditLog
+    await logAudit({
+      request,
+      actorId: user.id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: "auth.password_change",
+      entity: "User",
+      entityId: user.id,
+      metadata: { method: "password_reset_form" },
+      scope: user.role === "ADMIN" ? "ADMIN" : user.role === "VENDOR" ? "VENDOR" : "ADS_SELLER",
     });
 
     // Send password changed notification email

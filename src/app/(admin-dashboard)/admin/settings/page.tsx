@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { User, Lock, Mail, Building } from "lucide-react";
+import { ActiveSessionsCard } from "@/components/security/ActiveSessionsCard";
 
 export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -316,6 +317,9 @@ export default function AdminSettingsPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Active Devices & Security Sessions */}
+      <ActiveSessionsCard maxAllowed={2} roleLabel="Admin" />
 
       {/* Platform Information */}
       <Card>

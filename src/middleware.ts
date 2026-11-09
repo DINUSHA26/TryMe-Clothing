@@ -460,10 +460,12 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
           body: JSON.stringify({
             userId: payload.userId,
             email: payload.email,
+            role: payload.role,
             method: request.method,
             path: pathname,
             permission: requirement.type === "permission" ? requirement.permission : null,
             ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+            userAgent: request.headers.get("user-agent")?.slice(0, 500) || null,
           }),
         }).catch(() => undefined)
       );
@@ -516,10 +518,12 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
           body: JSON.stringify({
             userId: payload.userId,
             email: payload.email,
+            role: payload.role,
             method: request.method,
             path: pathname,
             permission: requirement.type === "permission" ? requirement.permission : null,
             ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+            userAgent: request.headers.get("user-agent")?.slice(0, 500) || null,
             scope: "VENDOR",
             vendorId: access.storeId || null,
           }),
@@ -575,10 +579,12 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
           body: JSON.stringify({
             userId: payload.userId,
             email: payload.email,
+            role: payload.role,
             method: request.method,
             path: pathname,
             permission: requirement.type === "permission" ? requirement.permission : null,
             ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+            userAgent: request.headers.get("user-agent")?.slice(0, 500) || null,
             scope: "ADS_SELLER",
             adsSellerId: access.storeId || null,
           }),

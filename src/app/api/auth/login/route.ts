@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { passwordUtils, tokenUtils } from "@/lib/auth";
 import { UserRole } from "@prisma/client";
+import { parseUserAgent } from "@/lib/user-agent";
+import { logAudit } from "@/lib/rbac";
 
 // Validation schema
 const loginSchema = z.object({
@@ -111,6 +113,18 @@ export async function POST(request: NextRequest) {
       );
 
       if (!isPasswordValid) {
+        // Record failed login in AuditLog
+        await logAudit({
+          request,
+          actorEmail: email,
+          actorRole: user.role,
+          action: "auth.failed_login",
+          entity: "User",
+          entityId: user.id,
+          metadata: { reason: "Invalid password attempt" },
+          scope: user.role === UserRole.ADMIN ? "ADMIN" : user.role === UserRole.VENDOR ? "VENDOR" : "ADS_SELLER",
+        });
+
         return NextResponse.json(
           { success: false, error: "Invalid email or password" },
           { status: 401 }
@@ -142,40 +156,90 @@ export async function POST(request: NextRequest) {
 
     // (Password verification was already handled earlier)
 
-    // Admin 2-device concurrent session limit enforcement
+    // Parse Device & User-Agent Information
+    const rawUserAgent = request.headers.get("user-agent") || "";
+    const parsedUa = parseUserAgent(rawUserAgent);
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+
+    // Database-backed Session Management
+    // Limits: Admin = max 2 devices, Vendor / Ads Seller = max 5 devices
     let sessionId: string | undefined;
 
+    const maxConcurrentSessions = user.role === UserRole.ADMIN ? 2 : 5;
+
+    // 1. Fetch current active UserSessions
+    const activeUserSessions = await prisma.userSession.findMany({
+      where: { userId: user.id, isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // 2. Revoke oldest sessions if at or above limit
+    if (activeUserSessions.length >= maxConcurrentSessions) {
+      const sessionsToRevoke = activeUserSessions.slice(maxConcurrentSessions - 1);
+      await prisma.userSession.updateMany({
+        where: { id: { in: sessionsToRevoke.map((s) => s.id) } },
+        data: { isActive: false },
+      });
+    }
+
+    // 3. Create the new UserSession
+    const newUserSession = await prisma.userSession.create({
+      data: {
+        userId: user.id,
+        device: parsedUa.device,
+        browser: parsedUa.browser,
+        os: parsedUa.os,
+        ip,
+        isActive: true,
+        expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
+      },
+    });
+    sessionId = newUserSession.id;
+
+    // 4. For Admin, also maintain AdminSession table for middleware checks
     if (user.role === UserRole.ADMIN) {
-      // 1. Fetch current active sessions ordered from newest to oldest
-      const activeSessions = await prisma.adminSession.findMany({
+      const activeAdminSessions = await prisma.adminSession.findMany({
         where: { userId: user.id, isActive: true },
         orderBy: { createdAt: "desc" },
       });
-
-      // 2. Allow at most 2 concurrent active sessions.
-      // If there are already >= 2 active sessions, revoke the oldest ones so only
-      // the single most recent stays active, leaving exactly 2 once the new one is created.
-      if (activeSessions.length >= 2) {
-        const sessionsToRevoke = activeSessions.slice(1);
+      if (activeAdminSessions.length >= 2) {
+        const adminSessionsToRevoke = activeAdminSessions.slice(1);
         await prisma.adminSession.updateMany({
-          where: { id: { in: sessionsToRevoke.map((s) => s.id) } },
+          where: { id: { in: adminSessionsToRevoke.map((s) => s.id) } },
           data: { isActive: false },
         });
       }
-
-      // 3. Create the new session record
-      const userAgent = request.headers.get("user-agent") || "Unknown Device";
-      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
-      const newSession = await prisma.adminSession.create({
+      await prisma.adminSession.create({
         data: {
+          id: newUserSession.id, // Match ID for seamless lookup
           userId: user.id,
-          device: userAgent.slice(0, 255),
+          device: parsedUa.device,
           ip,
           isActive: true,
         },
       });
-      sessionId = newSession.id;
     }
+
+    // 5. Record successful login in AuditLog
+    await logAudit({
+      request,
+      actorId: user.id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: "auth.login",
+      entity: "User",
+      entityId: user.id,
+      metadata: {
+        sessionId,
+        device: parsedUa.device,
+        browser: parsedUa.browser,
+        os: parsedUa.os,
+        ip,
+      },
+      scope: user.role === UserRole.ADMIN ? "ADMIN" : user.role === UserRole.VENDOR ? "VENDOR" : "ADS_SELLER",
+      vendorId: user.vendor?.id || user.staffMember?.vendorId || null,
+      adsSellerId: (user as any).adsSeller?.id || user.staffMember?.adsSellerId || null,
+    });
 
     // Generate tokens
     const tokens = tokenUtils.generateTokenPair({

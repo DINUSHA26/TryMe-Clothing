@@ -178,6 +178,7 @@ model User {
   savedPosts              SavedPost[]             @relation("UserSavedPosts")
   staffMember             StaffMember?
   adminSessions           AdminSession[]
+  userSessions            UserSession[]
 
   @@index([email])
   @@index([phone])
@@ -1521,11 +1522,13 @@ model AuditLog {
   id          String    @id @default(cuid())
   actorId     String?
   actorEmail  String?
-  action      String    // e.g. "staff.invite", "role.update", "api.mutation"
-  entity      String?   // e.g. "StaffMember", "StaffRole"
-  entityId    String?
-  metadata    Json?
-  ip          String?
+  actorRole   String?   // ADMIN, VENDOR, ADS_SELLER, STAFF, CUSTOMER
+  action      String    // e.g. "auth.login", "product.price_changed", "order.status_updated", etc.
+  entity      String?   // e.g. "Product", "Order", "Vendor", "StaffMember", "Wallet"
+  entityId    String?   // e.g. Order # or ID
+  metadata    Json?     // Diff / before & after state
+  ip          String?   // Client IP
+  userAgent   String?   // Browser & OS
   scope       String    @default("ADMIN") // "ADMIN" | "VENDOR" | "ADS_SELLER"
   vendorId    String?
   vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
@@ -1551,6 +1554,24 @@ model AdminSession {
   lastActiveAt DateTime @default(now())
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@index([userId, isActive])
+  @@index([createdAt])
+}
+
+model UserSession {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device       String?   // Formatted device description e.g. "Chrome 128 on Windows 11"
+  browser      String?   // e.g. "Chrome 128"
+  os           String?   // e.g. "Windows 11"
+  ip           String?
+  isActive     Boolean   @default(true)
+  lastActiveAt DateTime  @default(now())
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([userId, isActive])
   @@index([createdAt])

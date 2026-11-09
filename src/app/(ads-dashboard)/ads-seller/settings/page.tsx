@@ -10,6 +10,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Settings, Lock, User, Phone, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ActiveSessionsCard } from "@/components/security/ActiveSessionsCard";
 
 export default function AdsSellerSettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -335,6 +336,11 @@ export default function AdsSellerSettingsPage() {
               </form>
             </CardContent>
           </Card>
+
+          {/* Active Devices & Security Sessions */}
+          <div className="max-w-2xl mt-6">
+            <ActiveSessionsCard maxAllowed={5} roleLabel="Ads Seller" />
+          </div>
         </TabsContent>
       </Tabs>
 

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tokenUtils } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAudit } from "@/lib/rbac";
 
 /**
- * Logout endpoint - clears authentication cookies and deactivates admin session
+ * Logout endpoint - clears authentication cookies, deactivates session, and writes audit log
  */
 export async function POST(request: NextRequest) {
   try {
-    // If an admin is logging out, mark their AdminSession as inactive
+    // If a user is logging out, mark their session as inactive
     const accessToken =
       request.cookies.get("accessToken")?.value ||
       request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
@@ -18,12 +19,33 @@ export async function POST(request: NextRequest) {
       (refreshToken ? tokenUtils.decode(refreshToken) : null);
 
     if (payload?.sessionId) {
+      await prisma.userSession
+        .update({
+          where: { id: payload.sessionId },
+          data: { isActive: false },
+        })
+        .catch(() => {});
+
       await prisma.adminSession
         .update({
           where: { id: payload.sessionId },
           data: { isActive: false },
         })
         .catch(() => {});
+    }
+
+    if (payload?.userId) {
+      await logAudit({
+        request,
+        actorId: payload.userId,
+        actorEmail: payload.email,
+        actorRole: payload.role,
+        action: "auth.logout",
+        entity: "User",
+        entityId: payload.userId,
+        metadata: { sessionId: payload.sessionId || null },
+        scope: payload.role === "ADMIN" ? "ADMIN" : payload.role === "VENDOR" ? "VENDOR" : "ADS_SELLER",
+      });
     }
 
     // Create response

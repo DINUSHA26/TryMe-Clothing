@@ -11,6 +11,7 @@ import { updateOrderItemStatusSchema } from "@/lib/validations/order";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 import { emailService } from "@/lib/email";
+import { logAudit } from "@/lib/rbac";
 
 async function updateParentOrderStatus(orderId: string, tx: any): Promise<void> {
   const order = await tx.order.findUnique({
@@ -253,6 +254,27 @@ export async function PATCH(
       } else {
         await updateParentOrderStatus(order.id, tx);
       }
+    });
+
+    // Record order status update in AuditLog with before & after state diff
+    await logAudit({
+      request,
+      actorId: user.userId,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: "order.status_updated",
+      entity: "Order",
+      entityId: order.orderNumber || order.id,
+      metadata: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        previousStatus: order.status,
+        newStatus: status,
+        trackingNumber: trackingNumber || null,
+        vendorName: vendorRecord.businessName,
+      },
+      scope: "VENDOR",
+      vendorId: vendorRecord.id,
     });
 
     // Send customer notification

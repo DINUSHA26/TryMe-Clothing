@@ -12,6 +12,7 @@ import { releaseVendorFunds } from "@/lib/utils/wallet";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 import { emailService } from "@/lib/email";
+import { logAudit } from "@/lib/rbac";
 
 /**
  * PATCH /api/admin/orders/[orderId]/status
@@ -290,6 +291,26 @@ export async function PATCH(
         console.error("[Admin Override Status] Failed to send transactional emails:", emailError);
       }
     })();
+
+    // Record admin order override in AuditLog
+    await logAudit({
+      request,
+      actorId: adminUser.userId,
+      actorEmail: adminUser.email,
+      actorRole: "ADMIN",
+      action: "order.status_updated",
+      entity: "Order",
+      entityId: order.orderNumber || order.id,
+      metadata: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        previousStatus: order.status,
+        newStatus: result.status,
+        reason: reason || null,
+        overriddenByAdmin: true,
+      },
+      scope: "ADMIN",
+    });
 
     return NextResponse.json({
       success: true,

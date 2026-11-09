@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { userId, email, method, path, permission, ip, scope, vendorId, adsSellerId } = body || {};
+    const { userId, email, role, method, path, permission, ip, userAgent, scope, vendorId, adsSellerId } = body || {};
     if (!userId || !method || !path) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
@@ -21,11 +21,13 @@ export async function POST(request: NextRequest) {
     await logAudit({
       actorId: String(userId),
       actorEmail: email ? String(email) : null,
+      actorRole: role ? String(role) : (scope || "ADMIN"),
       action: "api.mutation",
       entity: scope === "VENDOR" ? "VendorApi" : scope === "ADS_SELLER" ? "AdsSellerApi" : "AdminApi",
       entityId: String(path).slice(0, 200),
       metadata: { method: String(method), path: String(path).slice(0, 300), permission: permission || null },
       ip: ip ? String(ip) : null,
+      userAgent: userAgent ? String(userAgent).slice(0, 500) : null,
       scope: scope || "ADMIN",
       vendorId: vendorId || null,
       adsSellerId: adsSellerId || null,

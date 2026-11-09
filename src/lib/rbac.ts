@@ -248,25 +248,34 @@ export async function logAudit(params: {
   request?: NextRequest;
   actorId?: string | null;
   actorEmail?: string | null;
+  actorRole?: string | null;
   action: string;
   entity?: string;
   entityId?: string;
   metadata?: Record<string, unknown>;
   ip?: string | null;
+  userAgent?: string | null;
   scope?: "ADMIN" | "VENDOR" | "ADS_SELLER";
   vendorId?: string | null;
   adsSellerId?: string | null;
 }) {
   try {
+    const ip = params.ip ?? (params.request ? getClientIp(params.request) : null);
+    const userAgent =
+      params.userAgent ??
+      (params.request ? params.request.headers.get("user-agent")?.slice(0, 500) ?? null : null);
+
     await prisma.auditLog.create({
       data: {
         actorId: params.actorId ?? null,
         actorEmail: params.actorEmail ?? null,
+        actorRole: params.actorRole ?? null,
         action: params.action,
         entity: params.entity ?? null,
         entityId: params.entityId ?? null,
         metadata: (params.metadata as any) ?? undefined,
-        ip: params.ip ?? (params.request ? getClientIp(params.request) : null),
+        ip,
+        userAgent,
         scope: params.scope ?? "ADMIN",
         vendorId: params.vendorId ?? null,
         adsSellerId: params.adsSellerId ?? null,

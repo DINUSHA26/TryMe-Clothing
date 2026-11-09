@@ -52,19 +52,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Admin 2-device session check
+    // Session validity check (Database-backed session management)
     let sessionId: string | undefined = payload.sessionId;
-    if (user.role === "ADMIN" && sessionId) {
-      const session = await prisma.adminSession.findUnique({
+    if (sessionId) {
+      const userSession = await prisma.userSession.findUnique({
         where: { id: sessionId },
       });
 
-      if (!session || !session.isActive) {
-        // Clear auth cookies on expired session
+      if (!userSession || !userSession.isActive) {
+        // Clear auth cookies on expired / revoked session
         const expiredResponse = NextResponse.json(
           {
             success: false,
-            error: "Session expired because your admin account was logged into 2 other devices",
+            error: "Your session has expired or was revoked from another device.",
             sessionExpired: true,
           },
           { status: 401 }
@@ -75,12 +75,21 @@ export async function POST(request: NextRequest) {
       }
 
       // Update session activity time
-      await prisma.adminSession
+      await prisma.userSession
         .update({
           where: { id: sessionId },
           data: { lastActiveAt: new Date() },
         })
         .catch(() => {});
+
+      if (user.role === "ADMIN") {
+        await prisma.adminSession
+          .update({
+            where: { id: sessionId },
+            data: { lastActiveAt: new Date() },
+          })
+          .catch(() => {});
+      }
     }
 
     // Generate new token pair

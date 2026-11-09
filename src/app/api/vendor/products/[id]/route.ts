@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { generateSlug, generateUniqueSlug } from "@/lib/utils/slug";
 import { updateProductSchema } from "@/lib/validations/product";
+import { logAudit } from "@/lib/rbac";
 
 /**
  * GET /api/vendor/products/[id]
@@ -274,6 +275,33 @@ export async function PATCH(
       return updated;
     });
 
+    // Record product update / price change in AuditLog
+    const isPriceChanged =
+      data.price !== undefined &&
+      Number(data.price) !== Number(existingProduct.price);
+
+    await logAudit({
+      request,
+      actorId: user.userId,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: isPriceChanged ? "product.price_changed" : "product.updated",
+      entity: "Product",
+      entityId: product?.id || id,
+      metadata: {
+        productName: product?.name || existingProduct.name,
+        ...(isPriceChanged
+          ? {
+              oldPrice: Number(existingProduct.price),
+              newPrice: Number(data.price),
+            }
+          : {}),
+        updatedFields: Object.keys(data),
+      },
+      scope: "VENDOR",
+      vendorId: vendorRecord.id,
+    });
+
     return NextResponse.json({
       success: true,
       data: { product },
@@ -343,6 +371,22 @@ export async function DELETE(
     await prisma.product.update({
       where: { id },
       data: { isActive: false },
+    });
+
+    await logAudit({
+      request,
+      actorId: user.userId,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: "product.deleted",
+      entity: "Product",
+      entityId: id,
+      metadata: {
+        productName: existingProduct.name,
+        sku: existingProduct.sku,
+      },
+      scope: "VENDOR",
+      vendorId: vendorRecord.id,
     });
 
     return NextResponse.json({
