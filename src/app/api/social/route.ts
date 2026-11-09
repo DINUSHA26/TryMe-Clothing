@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
                         lastName: true,
                         email: true,
                         role: true,
+                        avatar: true,
                         vendor: {
                             select: { id: true, businessName: true, logo: true, slug: true }
                         },
@@ -199,6 +200,8 @@ export async function POST(request: NextRequest) {
                         firstName: true,
                         lastName: true,
                         email: true,
+                        role: true,
+                        avatar: true,
                         vendor: { select: { id: true, businessName: true, logo: true, slug: true } },
                         adsSeller: { select: { id: true, businessName: true, slug: true, contactInfo: true } }
                     }

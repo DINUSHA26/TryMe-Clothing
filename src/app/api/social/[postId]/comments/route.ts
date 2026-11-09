@@ -18,6 +18,8 @@ export async function GET(
                         firstName: true,
                         lastName: true,
                         email: true,
+                        role: true,
+                        avatar: true,
                         vendor: { select: { businessName: true, logo: true } }
                     }
                 }
@@ -67,6 +69,8 @@ export async function POST(
                         firstName: true,
                         lastName: true,
                         email: true,
+                        role: true,
+                        avatar: true,
                         vendor: { select: { businessName: true, logo: true } }
                     }
                 }

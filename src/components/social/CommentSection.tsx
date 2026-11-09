@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
@@ -106,6 +106,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
             {/* Comment Input */}
             <div className="flex gap-3">
                 <Avatar className="h-8 w-8">
+                    {(user as any)?.avatar && <AvatarImage src={(user as any).avatar} alt={user?.firstName || "User"} />}
                     <AvatarFallback className="text-xs">
                         {user ? getInitials(user.firstName, user.lastName, user.email) : "G"}
                     </AvatarFallback>
@@ -128,6 +129,11 @@ export function CommentSection({ postId }: CommentSectionProps) {
                 {comments.map((comment) => (
                     <div key={comment.id} className="flex gap-3">
                         <Avatar className="h-8 w-8">
+                            {comment.user.vendor?.logo ? (
+                                <AvatarImage src={comment.user.vendor.logo} alt={comment.user.vendor.businessName} />
+                            ) : comment.user.avatar ? (
+                                <AvatarImage src={comment.user.avatar} alt={comment.user.firstName || "User"} />
+                            ) : null}
                             <AvatarFallback className="text-xs">
                                 {getInitials(comment.user.firstName, comment.user.lastName, comment.user.email)}
                             </AvatarFallback>
@@ -135,7 +141,10 @@ export function CommentSection({ postId }: CommentSectionProps) {
                         <div className="flex-1">
                             <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl py-2 px-3 inline-block">
                                 <span className="font-semibold text-sm mr-2 block text-foreground">
-                                    {comment.user.vendor?.businessName || `${comment.user.firstName || "User"} ${comment.user.lastName || ""}`.trim()}
+                                    {comment.user.vendor?.businessName ||
+                                     [comment.user.firstName, comment.user.lastName].filter(Boolean).join(" ") ||
+                                     comment.user.email?.split("@")[0] ||
+                                     "Customer"}
                                 </span>
                                 <span className="text-sm text-foreground">{comment.content}</span>
                             </div>

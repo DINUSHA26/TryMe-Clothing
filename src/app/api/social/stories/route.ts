@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
             lastName: true,
             email: true,
             role: true,
+            avatar: true,
             vendor: {
               select: {
                 id: true,
@@ -121,11 +122,11 @@ export async function GET(request: NextRequest) {
 
       if (story.user.role === "VENDOR" && story.user.vendor) {
         displayName = story.user.vendor.businessName;
-        logoUrl = story.user.vendor.logo;
+        logoUrl = story.user.vendor.logo || (story.user as any).avatar || null;
         slug = story.user.vendor.slug;
       } else if (story.user.adsSeller) {
         displayName = story.user.adsSeller.businessName || "Classified Seller";
-        logoUrl = (story.user.adsSeller.contactInfo as any)?.logo || null;
+        logoUrl = (story.user.adsSeller.contactInfo as any)?.logo || (story.user as any).avatar || null;
         slug = story.user.adsSeller.slug;
       } else {
         displayName =
@@ -133,7 +134,8 @@ export async function GET(request: NextRequest) {
             .filter(Boolean)
             .join(" ") ||
           story.user.email?.split("@")[0] ||
-          "User";
+          "Customer";
+        logoUrl = (story.user as any).avatar || null;
       }
 
       if (!groupedStoriesMap.has(storyUserId)) {

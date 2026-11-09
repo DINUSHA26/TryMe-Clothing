@@ -145,12 +145,22 @@ export function PostGalleryModal({
                 <div className="w-full md:w-[400px] bg-white dark:bg-slate-950 flex flex-col h-full md:flex-shrink-0 border-l">
                     <div className="p-4 flex flex-row items-center space-x-3 border-b">
                         <Avatar className="h-10 w-10 border shadow-sm">
-                            {post.user.vendor?.logo && <AvatarImage src={post.user.vendor.logo} />}
+                            {post.user.vendor?.logo ? (
+                                <AvatarImage src={post.user.vendor.logo} alt={post.user.vendor.businessName} />
+                            ) : (post.user.adsSeller?.contactInfo as any)?.logo ? (
+                                <AvatarImage src={(post.user.adsSeller?.contactInfo as any)?.logo} alt={post.user.adsSeller?.businessName} />
+                            ) : post.user.avatar ? (
+                                <AvatarImage src={post.user.avatar} alt={post.user.firstName || "Customer"} />
+                            ) : null}
                             <AvatarFallback>{getInitials(post.user.firstName, post.user.lastName, post.user.email)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold truncate">
-                                {post.user.vendor?.businessName || `${post.user.firstName || "User"} ${post.user.lastName || ""}`.trim()}
+                                {post.user.vendor?.businessName ||
+                                 post.user.adsSeller?.businessName ||
+                                 [post.user.firstName, post.user.lastName].filter(Boolean).join(" ") ||
+                                 post.user.email?.split("@")[0] ||
+                                 "Customer"}
                             </p>
                             <p className="text-xs text-muted-foreground">
                                 {new Date(post.createdAt).toLocaleDateString(undefined, {

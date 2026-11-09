@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, Suspense } from "react";
-import { Plus, X, ChevronLeft, ChevronRight, Store, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, MoreHorizontal, Edit2, Trash2, ShieldAlert, Heart, ChevronUp, Smile, Eye } from "lucide-react";
+import { Plus, X, ChevronLeft, ChevronRight, Store, User, Loader2, Camera, Sparkles, ImagePlus, WifiOff, Play, Pause, MoreHorizontal, Edit2, Trash2, ShieldAlert, Heart, ChevronUp, Smile, Eye } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/authStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -714,10 +714,17 @@ export function StoriesTray() {
                 alt="Logo"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
+            ) : (user as any)?.avatar ? (
+              // Live: Customer with profile avatar — show avatar
+              <img
+                src={(user as any)?.avatar}
+                alt={user?.firstName || "Avatar"}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
             ) : (
               // New user or no data at all — generic placeholder
               <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center">
-                <Store className="h-8 w-8 text-slate-300 dark:text-slate-700" />
+                <User className="h-8 w-8 text-slate-300 dark:text-slate-700" />
               </div>
             )}
             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
@@ -762,7 +769,7 @@ export function StoriesTray() {
                   {group.logoUrl ? (
                     <img src={group.logoUrl} alt={group.displayName} className="w-full h-full object-cover" />
                   ) : (
-                    <Store className="h-4 w-4 text-primary" />
+                    <User className="h-4 w-4 text-primary" />
                   )}
                 </div>
 
@@ -989,7 +996,7 @@ export function StoriesTray() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <Store className="h-5 w-5 text-white" />
+                    <User className="h-5 w-5 text-white" />
                   )}
                 </div>
                 <div>

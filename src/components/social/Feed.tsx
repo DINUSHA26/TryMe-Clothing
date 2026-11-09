@@ -14,6 +14,8 @@ export interface SocialUser {
     firstName: string | null;
     lastName: string | null;
     email: string | null;
+    avatar?: string | null;
+    role?: string | null;
     vendor: {
         id: string;
         businessName: string;
