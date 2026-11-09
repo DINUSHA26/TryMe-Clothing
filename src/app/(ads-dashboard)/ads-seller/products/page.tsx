@@ -107,7 +107,7 @@ export default function AdsSellerProductsPage() {
   const [newSubCategoryId, setNewSubCategoryId] = useState("");
   const [newImages, setNewImages] = useState<string[]>([]);
   const [newShowWebsite, setNewShowWebsite] = useState(true);
-  const [newShowMarketplace, setNewShowMarketplace] = useState(true);
+  const [newShowMarketplace, setNewShowMarketplace] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   // Edit Modal State
@@ -238,7 +238,7 @@ export default function AdsSellerProductsPage() {
       }
       toast({
         title: "Channel Updated",
-        description: `${channel === "marketplace" ? "TryMe Marketplace" : "Website"} visibility set to ${
+        description: `${channel === "marketplace" ? "TryMe Shop by Category" : "Website"} visibility set to ${
           newVal ? "LIVE" : "OFF"
         }.`,
       });
@@ -517,29 +517,30 @@ export default function AdsSellerProductsPage() {
         </div>
       </div>
 
-      {/* TryMe Commission Info Banner */}
+      {/* TryMe Shop & Category Info Banner */}
       <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border border-orange-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
         <div className="flex items-start sm:items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-[#FF6600] flex items-center justify-center shrink-0">
-            <Percent className="h-5 w-5" />
+            <Store className="h-5 w-5" />
           </div>
           <div>
             <h4 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
-              <span>TryMe Marketplace Online Checkout & Commission</span>
+              <span>TryMe Shop by Category & Online Checkout</span>
               <span className="text-[10px] bg-orange-600 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-wider">
-                Active
+                Integrated
               </span>
             </h4>
             <p className="text-[11px] sm:text-xs text-gray-600 mt-0.5">
-              Items marked <span className="font-semibold text-orange-700">Live</span> on TryMe Marketplace allow direct customer online checkout. Standard platform commission applies on successful marketplace sales.
+              Items marked <span className="font-semibold text-orange-700">Live</span> on TryMe Shop appear in the storefront <span className="font-medium text-gray-800">Shop by Category (/products)</span> with full online ordering, cart, and delivery.
             </p>
           </div>
         </div>
         <Link
-          href="/ads-seller/storefront"
+          href="/products"
+          target="_blank"
           className="text-xs font-bold text-[#FF6600] hover:underline flex items-center gap-1 shrink-0"
         >
-          View Storefront
+          View Shop by Category
           <ExternalLink className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -557,11 +558,11 @@ export default function AdsSellerProductsPage() {
 
         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-gray-500 text-xs font-semibold">
-            <span>Marketplace Live</span>
+            <span>TryMe Shop Live</span>
             <Store className="h-4 w-4 text-orange-500" />
           </div>
           <div className="text-2xl font-black text-orange-600 mt-2">{stats.marketplaceLive}</div>
-          <div className="text-[11px] text-gray-400 mt-1">Online buy enabled</div>
+          <div className="text-[11px] text-gray-400 mt-1">Shop by Category enabled</div>
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs">
@@ -648,7 +649,7 @@ export default function AdsSellerProductsPage() {
             }`}
           >
             <Store className="h-3 w-3" />
-            Marketplace Live ({stats.marketplaceLive})
+            TryMe Shop Live ({stats.marketplaceLive})
           </button>
           <button
             onClick={() => setActiveTab("website")}
@@ -826,11 +827,11 @@ export default function AdsSellerProductsPage() {
                               </button>
                             </div>
 
-                            {/* Marketplace Channel */}
+                            {/* TryMe Shop Channel */}
                             <div className="flex items-center justify-between gap-2 text-xs">
                               <span className="text-gray-500 text-[11px] font-medium flex items-center gap-1">
                                 <Store className="h-3 w-3 text-[#FF6600]" />
-                                TryMe:
+                                TryMe Shop:
                               </span>
                               <button
                                 onClick={() => handleToggleChannel(p.id, "marketplace", p.showOnMarketplace)}
@@ -840,6 +841,7 @@ export default function AdsSellerProductsPage() {
                                     ? "bg-orange-50 text-orange-700 border border-orange-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
                                     : "bg-gray-100 text-gray-400 border border-gray-200 hover:bg-orange-50 hover:text-orange-700"
                                 }`}
+                                title={p.showOnMarketplace ? "Active on TryMe Shop by Category. Click to remove." : "Click to publish on TryMe Shop by Category."}
                               >
                                 {isMktgToggling ? "..." : p.showOnMarketplace ? "Live" : "Off"}
                               </button>
@@ -974,7 +976,7 @@ export default function AdsSellerProductsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-gray-500">TryMe:</span>
+                      <span className="text-[11px] text-gray-500">TryMe Shop:</span>
                       <button
                         onClick={() => handleToggleChannel(p.id, "marketplace", p.showOnMarketplace)}
                         className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
@@ -982,6 +984,7 @@ export default function AdsSellerProductsPage() {
                             ? "bg-orange-50 text-orange-700 border border-orange-200"
                             : "bg-gray-100 text-gray-400"
                         }`}
+                        title={p.showOnMarketplace ? "Active on TryMe Shop by Category. Click to remove." : "Click to publish on TryMe Shop by Category."}
                       >
                         {p.showOnMarketplace ? "Live" : "Off"}
                       </button>
@@ -1245,10 +1248,10 @@ export default function AdsSellerProductsPage() {
                 <div>
                   <div className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
                     <Store className="h-3.5 w-3.5 text-[#FF6600]" />
-                    List on TryMe Marketplace (Online Buy)
+                    Add to TryMe Shop by Category
                   </div>
                   <div className="text-[11px] text-gray-500">
-                    Allow TryMe customers to purchase this item online (Platform commission applies)
+                    Publish this product to the public storefront Shop by Category (/products) with online ordering & cart
                   </div>
                 </div>
                 <Switch checked={newShowMarketplace} onCheckedChange={setNewShowMarketplace} />
@@ -1346,8 +1349,8 @@ export default function AdsSellerProductsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-gray-700">Show on TryMe Marketplace</span>
-                  <p className="text-[10px] text-gray-400">Commission applies on marketplace online orders</p>
+                  <span className="text-xs font-bold text-gray-700">Add to TryMe Shop by Category</span>
+                  <p className="text-[10px] text-gray-400">Publishes item to public Shop by Category (/products) with online ordering & cart</p>
                 </div>
                 <Switch checked={editShowMarketplace} onCheckedChange={setEditShowMarketplace} />
               </div>

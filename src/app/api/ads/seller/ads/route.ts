@@ -174,6 +174,9 @@ export async function POST(request: NextRequest) {
     });
 
     const parsedSpecs = specifications || {};
+    // Newly created classified ads are not published to TryMe Shop by default
+    // The seller can explicitly enable "TryMe Shop" in the Products & Inventory panel
+    parsedSpecs.showInTryMeShop = false;
     for (const field of fieldDefinitions) {
       if (field.isRequired) {
         const value = parsedSpecs[field.fieldKey];

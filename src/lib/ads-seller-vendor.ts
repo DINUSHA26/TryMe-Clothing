@@ -106,3 +106,165 @@ export async function getOrCreateVendorProduct(vendorId: string, tx: any = prism
 
   return product;
 }
+
+/**
+ * Finds or creates a matching storefront Category (prisma.category)
+ * for an ad's classifieds category name/slug.
+ */
+export async function findOrCreateStoreCategory(categoryName?: string, categorySlug?: string) {
+  const targetName = categoryName?.trim() || "General";
+  const targetSlug = (categorySlug?.trim() || targetName.toLowerCase().replace(/[^a-z0-9]+/g, "-")).replace(/^-|-$/g, "");
+
+  let category = await prisma.category.findFirst({
+    where: {
+      OR: [
+        { name: { equals: targetName, mode: "insensitive" } },
+        { slug: { equals: targetSlug, mode: "insensitive" } },
+      ],
+    },
+  });
+
+  if (!category) {
+    // Generate unique slug
+    let uniqueSlug = targetSlug;
+    const exists = await prisma.category.findUnique({ where: { slug: uniqueSlug } });
+    if (exists) {
+      uniqueSlug = `${targetSlug}-${Date.now().toString(36).slice(-4)}`;
+    }
+
+    category = await prisma.category.create({
+      data: {
+        name: targetName,
+        slug: uniqueSlug,
+        description: `${targetName} collection on TryMe Shop`,
+        isActive: true,
+      },
+    });
+  }
+
+  return category;
+}
+
+/**
+ * Synchronizes an Ads Seller item (from classified ad or standalone product)
+ * to the storefront Product table (Shop by Category /prisma.product)
+ * when TryMe Shop is enabled or disabled.
+ */
+export async function syncAdsSellerItemToStorefront({
+  ownerUserId,
+  adId,
+  title,
+  description,
+  price,
+  images = [],
+  categoryName,
+  categorySlug,
+  showOnWebsite = true,
+  specs = {},
+  showInTryMeShop,
+}: {
+  ownerUserId: string;
+  adId?: string;
+  title: string;
+  description?: string;
+  price?: number | null;
+  images?: string[];
+  categoryName?: string;
+  categorySlug?: string;
+  showOnWebsite?: boolean;
+  specs: any;
+  showInTryMeShop: boolean;
+}) {
+  const currentSpecs = { ...specs };
+
+  if (showInTryMeShop) {
+    const vendorResult = await getOrCreateAdsSellerVendor(ownerUserId);
+    if (!vendorResult) {
+      throw new Error("Unable to create or load vendor profile for this ads seller");
+    }
+    const { vendor } = vendorResult;
+    const storeCategory = await findOrCreateStoreCategory(categoryName, categorySlug);
+
+    const safePrice = price !== undefined && price !== null ? Number(price) : 0;
+    const safeStock = currentSpecs.stock !== undefined ? Number(currentSpecs.stock) : 10;
+    const safeSku = currentSpecs.sku || (adId ? `AD-${adId.slice(-6).toUpperCase()}` : `PRD-${Date.now().toString(36).toUpperCase()}`);
+    const safeDesc = description?.trim() || title.trim();
+
+    let product = null;
+    if (currentSpecs.linkedProductId) {
+      product = await prisma.product.findUnique({
+        where: { id: currentSpecs.linkedProductId },
+      });
+    }
+
+    if (product) {
+      // Update existing storefront product
+      await prisma.product.update({
+        where: { id: product.id },
+        data: {
+          name: title.trim(),
+          description: safeDesc,
+          price: safePrice,
+          stock: safeStock,
+          categoryId: storeCategory.id,
+          isActive: true,
+          isDisabledByAdmin: false,
+          showOnMarketplace: true,
+          showOnWebsite: !!showOnWebsite,
+        },
+      });
+    } else {
+      // Create new storefront product
+      const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      let uniqueSlug = `${baseSlug || "item"}-${Date.now().toString(36)}`;
+      const existingSlug = await prisma.product.findUnique({ where: { slug: uniqueSlug } });
+      if (existingSlug) {
+        uniqueSlug = `${baseSlug || "item"}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+      }
+
+      const validImages = Array.isArray(images) ? images.filter(Boolean) : [];
+
+      const created = await prisma.product.create({
+        data: {
+          vendorId: vendor.id,
+          categoryId: storeCategory.id,
+          name: title.trim(),
+          slug: uniqueSlug,
+          description: safeDesc,
+          price: safePrice,
+          stock: safeStock,
+          sku: safeSku,
+          isActive: true,
+          isDisabledByAdmin: false,
+          showOnMarketplace: true,
+          showOnWebsite: !!showOnWebsite,
+          images: {
+            create: validImages.map((url, idx) => ({
+              url,
+              position: idx,
+            })),
+          },
+        },
+      });
+      currentSpecs.linkedProductId = created.id;
+    }
+
+    currentSpecs.showInTryMeShop = true;
+  } else {
+    // Disable in storefront Shop by Category
+    if (currentSpecs.linkedProductId) {
+      await prisma.product.update({
+        where: { id: currentSpecs.linkedProductId },
+        data: {
+          showOnMarketplace: false,
+          isActive: false,
+        },
+      }).catch((e) => {
+        console.warn("Could not deactivate linked storefront product:", e?.message);
+      });
+    }
+    currentSpecs.showInTryMeShop = false;
+  }
+
+  return currentSpecs;
+}

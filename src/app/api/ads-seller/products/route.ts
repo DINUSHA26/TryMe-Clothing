@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdsSeller, handleAuthError, getEffectiveAdsSeller } from "@/lib/auth-helpers";
 import { Prisma } from "@prisma/client";
+import { syncAdsSellerItemToStorefront } from "@/lib/ads-seller-vendor";
 
 /**
  * GET /api/ads-seller/products
@@ -25,7 +26,6 @@ export async function GET(request: NextRequest) {
 
     const where: Prisma.ClassifiedAdWhereInput = {
       sellerId: adsSeller.id,
-      ...(channel === "marketplace" ? { showOnMarketplace: true } : {}),
       ...(channel === "website" ? { showOnWebsite: true } : {}),
       ...(statusFilter !== "all" ? { status: statusFilter as any } : {}),
       ...(categoryId ? { categoryId } : {}),
@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
       where,
       orderBy: { updatedAt: "desc" },
       include: {
-        category: { select: { id: true, name: true } },
-        subCategory: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        subCategory: { select: { id: true, name: true, slug: true } },
       },
     });
 
@@ -54,18 +54,20 @@ export async function GET(request: NextRequest) {
     let liveMarketplaceCount = 0;
     let liveWebsiteCount = 0;
 
-    const products = ads.map((ad: any) => {
+    const allMappedProducts = ads.map((ad: any) => {
       const specs = (typeof ad.specifications === "object" && ad.specifications) || {};
       const baseSku = specs.sku || `AD-${ad.id.slice(-6).toUpperCase()}`;
       const barcode = specs.barcode || baseSku;
       const stock = specs.stock !== undefined ? Number(specs.stock) : 10;
       const isStandalone = !!specs.isStandaloneProduct;
       const compareAtPrice = specs.compareAtPrice ? Number(specs.compareAtPrice) : null;
+      // An item is only live on TryMe Shop if explicitly enabled by seller
+      const isTryMeShopLive = specs.showInTryMeShop === true;
 
       totalProducts++;
       if (ad.status === "ACTIVE") activeProducts++;
       if (stock <= 5) lowStockProducts++;
-      if (ad.showOnMarketplace !== false) liveMarketplaceCount++;
+      if (isTryMeShopLive) liveMarketplaceCount++;
       if (ad.showOnWebsite !== false) liveWebsiteCount++;
 
       const variants = Array.isArray(specs.variants)
@@ -102,12 +104,18 @@ export async function GET(request: NextRequest) {
         imageUrl: ad.images?.[0] || null,
         variants,
         showOnWebsite: ad.showOnWebsite !== false,
-        showOnMarketplace: ad.showOnMarketplace !== false,
+        showOnMarketplace: isTryMeShopLive,
+        showInTryMeShop: isTryMeShopLive,
         status: ad.status,
         createdAt: ad.createdAt,
         updatedAt: ad.updatedAt,
       };
     });
+
+    // If filtered by marketplace (TryMe Shop), only return items with TryMe Shop Live
+    const products = channel === "marketplace"
+      ? allMappedProducts.filter((p: any) => p.showOnMarketplace)
+      : allMappedProducts;
 
     // Also fetch categories for filter and create modal
     const categories = await (prisma as any).adsCategory.findMany({
@@ -172,7 +180,7 @@ export async function POST(request: NextRequest) {
       subCategoryId,
       variants = [],
       showOnWebsite = true,
-      showOnMarketplace = true,
+      showOnMarketplace = false,
     } = body;
 
     if (!name || name.trim().length === 0) {
@@ -215,13 +223,14 @@ export async function POST(request: NextRequest) {
     const generatedSku = sku?.trim() || `PRD-${Date.now().toString(36).toUpperCase()}`;
     const generatedBarcode = barcode?.trim() || generatedSku;
 
-    const specifications = {
+    const specifications: any = {
       isStandaloneProduct: true,
       sku: generatedSku,
       barcode: generatedBarcode,
       stock: Math.max(0, parseInt(stock) || 0),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
       variants: Array.isArray(variants) ? variants : [],
+      showInTryMeShop: false,
     };
 
     const newAd = await (prisma as any).classifiedAd.create({
@@ -239,13 +248,40 @@ export async function POST(request: NextRequest) {
         specifications,
         status: "ACTIVE", // Direct standalone products are immediately active
         showOnWebsite: !!showOnWebsite,
-        showOnMarketplace: !!showOnMarketplace,
+        showOnMarketplace: true, // Classified visibility
       },
       include: {
-        category: { select: { id: true, name: true } },
-        subCategory: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        subCategory: { select: { id: true, name: true, slug: true } },
       },
     });
+
+    // If seller explicitly enabled TryMe Shop by Category on creation, sync to prisma.product
+    let isLiveOnTryMeShop = false;
+    if (showOnMarketplace) {
+      try {
+        const syncedSpecs = await syncAdsSellerItemToStorefront({
+          ownerUserId: user.userId,
+          adId: newAd.id,
+          title: newAd.title,
+          description: newAd.description,
+          price: Number(newAd.price || 0),
+          images: newAd.images || [],
+          categoryName: newAd.category?.name,
+          categorySlug: newAd.category?.slug,
+          showOnWebsite: newAd.showOnWebsite,
+          specs: specifications,
+          showInTryMeShop: true,
+        });
+        isLiveOnTryMeShop = true;
+        await (prisma as any).classifiedAd.update({
+          where: { id: newAd.id },
+          data: { specifications: syncedSpecs },
+        });
+      } catch (syncErr: any) {
+        console.error("Failed to sync new product to TryMe Shop:", syncErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -259,7 +295,8 @@ export async function POST(request: NextRequest) {
         categoryName: newAd.category?.name || "General",
         imageUrl: newAd.images?.[0] || null,
         showOnWebsite: newAd.showOnWebsite,
-        showOnMarketplace: newAd.showOnMarketplace,
+        showOnMarketplace: isLiveOnTryMeShop,
+        showInTryMeShop: isLiveOnTryMeShop,
         isStandalone: true,
         source: "DIRECT",
       },

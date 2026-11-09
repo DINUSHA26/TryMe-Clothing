@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdsSeller, handleAuthError, getEffectiveAdsSeller } from "@/lib/auth-helpers";
+import { syncAdsSellerItemToStorefront } from "@/lib/ads-seller-vendor";
 
 export async function PATCH(
   request: NextRequest,
@@ -18,7 +19,9 @@ export async function PATCH(
 
     const ad = await (prisma as any).classifiedAd.findUnique({
       where: { id },
-      select: { id: true, sellerId: true, specifications: true },
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+      },
     });
 
     if (!ad || ad.sellerId !== adsSeller.id) {
@@ -27,11 +30,8 @@ export async function PATCH(
 
     const body = await request.json();
     const updateData: any = {};
-    const specs = (typeof ad.specifications === "object" && ad.specifications) ? { ...ad.specifications } : {};
+    let specs = (typeof ad.specifications === "object" && ad.specifications) ? { ...ad.specifications } : {};
 
-    if (body.showOnMarketplace !== undefined) {
-      updateData.showOnMarketplace = !!body.showOnMarketplace;
-    }
     if (body.showOnWebsite !== undefined) {
       updateData.showOnWebsite = !!body.showOnWebsite;
     }
@@ -60,6 +60,31 @@ export async function PATCH(
       specs.compareAtPrice = body.compareAtPrice ? Number(body.compareAtPrice) : null;
     }
 
+    // Determine target TryMe Shop status
+    const currentTryMeShopStatus = specs.showInTryMeShop === true;
+    const targetTryMeShopStatus = body.showOnMarketplace !== undefined
+      ? !!body.showOnMarketplace
+      : currentTryMeShopStatus;
+
+    // Sync to storefront Product table (Shop by Category)
+    try {
+      specs = await syncAdsSellerItemToStorefront({
+        ownerUserId: user.userId,
+        adId: ad.id,
+        title: updateData.title || ad.title,
+        description: updateData.description !== undefined ? updateData.description : ad.description,
+        price: updateData.price !== undefined ? updateData.price : (ad.price ? Number(ad.price) : 0),
+        images: ad.images || [],
+        categoryName: ad.category?.name,
+        categorySlug: ad.category?.slug,
+        showOnWebsite: updateData.showOnWebsite !== undefined ? updateData.showOnWebsite : (ad.showOnWebsite !== false),
+        specs,
+        showInTryMeShop: targetTryMeShopStatus,
+      });
+    } catch (syncErr: any) {
+      console.error("Failed to sync storefront product:", syncErr);
+    }
+
     updateData.specifications = specs;
 
     const updated = await (prisma as any).classifiedAd.update({
@@ -67,13 +92,16 @@ export async function PATCH(
       data: updateData,
     });
 
+    const isLiveOnTryMeShop = specs.showInTryMeShop === true;
+
     return NextResponse.json({
       success: true,
       data: {
         id: updated.id,
         name: updated.title,
         price: Number(updated.price || 0),
-        showOnMarketplace: updated.showOnMarketplace,
+        showOnMarketplace: isLiveOnTryMeShop,
+        showInTryMeShop: isLiveOnTryMeShop,
         showOnWebsite: updated.showOnWebsite,
         specifications: updated.specifications,
       },
@@ -108,6 +136,14 @@ export async function DELETE(
 
     if (!ad || ad.sellerId !== adsSeller.id) {
       return NextResponse.json({ success: false, error: "Product not found or unauthorized" }, { status: 404 });
+    }
+
+    const specs = (typeof ad.specifications === "object" && ad.specifications) ? ad.specifications : {};
+    if (specs.linkedProductId) {
+      await prisma.product.update({
+        where: { id: specs.linkedProductId },
+        data: { isActive: false, showOnMarketplace: false },
+      }).catch((e) => console.warn("Failed to deactivate storefront product on delete:", e?.message));
     }
 
     // Delete item
