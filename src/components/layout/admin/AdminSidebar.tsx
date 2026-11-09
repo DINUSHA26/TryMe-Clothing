@@ -86,8 +86,8 @@ export function AdminSidebar({
     <aside
       className={cn(
         "flex flex-col h-screen transition-all duration-300",
-        "bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#0B0F19] dark:via-[#0E1526] dark:to-[#080B12]",
-        "border-r border-[#EAE4D9] dark:border-slate-800/80 shadow-xs",
+        "bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#18223c] dark:via-[#121a2f] dark:to-[#0d1324]",
+        "border-r border-[#EAE4D9] dark:border-[#223052] shadow-xs",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
@@ -96,7 +96,7 @@ export function AdminSidebar({
         <Logo variant="icon" href="/admin" className={cn(isCollapsed && "mx-auto")} size={isCollapsed ? "sm" : "md"} />
       </div>
 
-      <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
+      <Separator className="bg-[#EAE4D9] dark:bg-[#223052]" />
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
@@ -113,12 +113,12 @@ export function AdminSidebar({
         </TooltipProvider>
       </ScrollArea>
 
-      <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
+      <Separator className="bg-[#EAE4D9] dark:bg-[#223052]" />
 
       {/* User Info & Collapse Button */}
       <div className="p-4 space-y-3">
         {!isCollapsed && user && (
-          <div className="px-3 py-2 bg-white/70 dark:bg-slate-900/60 border border-[#EAE4D9] dark:border-slate-800/80 rounded-xl shadow-xs">
+          <div className="px-3 py-2 bg-white/70 dark:bg-[#18223c]/90 border border-[#EAE4D9] dark:border-[#283960] rounded-xl shadow-xs">
             <p className="text-sm font-semibold truncate text-gray-900 dark:text-gray-100">
               {user.firstName || "Admin"}
             </p>

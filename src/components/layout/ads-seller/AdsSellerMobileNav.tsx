@@ -44,21 +44,21 @@ export function AdsSellerMobileNav({ isOpen, onClose }: AdsSellerMobileNavProps)
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent
         side="left"
-        className="w-[85vw] max-w-[280px] p-0 flex flex-col h-full bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#0B0F19] dark:via-[#0E1526] dark:to-[#080B12] border-r border-[#EAE4D9] dark:border-slate-800"
+        className="w-[85vw] max-w-[280px] p-0 flex flex-col h-full bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#18223c] dark:via-[#121a2f] dark:to-[#0d1324] border-r border-[#EAE4D9] dark:border-[#223052]"
       >
-        <SheetHeader className="p-4 text-left border-b border-[#EAE4D9] dark:border-slate-800/80">
+        <SheetHeader className="p-4 text-left border-b border-[#EAE4D9] dark:border-[#223052]">
           <SheetTitle>
             <Logo variant="icon" href="/ads-seller" />
           </SheetTitle>
         </SheetHeader>
 
         {/* Store Title */}
-        <div className="mx-3 my-2 px-3.5 py-2.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-[#EAE4D9] dark:border-slate-800/80 shadow-xs">
+        <div className="mx-3 my-2 px-3.5 py-2.5 rounded-xl bg-white/70 dark:bg-[#18223c]/90 border border-[#EAE4D9] dark:border-[#283960] shadow-xs">
           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{businessName}</p>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">{user?.email}</p>
         </div>
 
-        <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
+        <Separator className="bg-[#EAE4D9] dark:bg-[#223052]" />
 
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="space-y-1">

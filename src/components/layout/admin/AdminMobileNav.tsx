@@ -42,7 +42,7 @@ export function AdminMobileNav({ isOpen, onClose }: AdminMobileNavProps) {
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent
         side="left"
-        className="w-[85vw] max-w-[280px] p-0 flex flex-col h-full bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#0B0F19] dark:via-[#0E1526] dark:to-[#080B12] border-r border-[#EAE4D9] dark:border-slate-800"
+        className="w-[85vw] max-w-[280px] p-0 flex flex-col h-full bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#18223c] dark:via-[#121a2f] dark:to-[#0d1324] border-r border-[#EAE4D9] dark:border-[#223052]"
       >
         <SheetHeader className="p-4 text-left">
           <SheetTitle>
@@ -50,7 +50,7 @@ export function AdminMobileNav({ isOpen, onClose }: AdminMobileNavProps) {
           </SheetTitle>
         </SheetHeader>
 
-        <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
+        <Separator className="bg-[#EAE4D9] dark:bg-[#223052]" />
 
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="space-y-1">
