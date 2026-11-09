@@ -61,3 +61,4 @@ export function playNotificationChime() {
     audio.play().catch(() => {});
   } catch (e) {}
 }
+
