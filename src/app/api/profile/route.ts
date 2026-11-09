@@ -15,7 +15,7 @@ export async function PUT(request: NextRequest) {
 
     // Get request body
     const body = await request.json();
-    const { firstName, lastName, avatar } = body;
+    const { firstName, lastName, avatar, phone } = body;
 
     // Update user profile
     const updatedUser = await prisma.user.update({
@@ -24,6 +24,7 @@ export async function PUT(request: NextRequest) {
         firstName: firstName !== undefined ? firstName : undefined,
         lastName: lastName !== undefined ? lastName : undefined,
         avatar: avatar !== undefined ? avatar : undefined,
+        phone: phone !== undefined ? phone : undefined,
       } as any,
       include: {
         vendor: {

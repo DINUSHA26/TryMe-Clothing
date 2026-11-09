@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 export interface AdminCustomerFilters {
   page?: string | number;
   pageSize?: string | number;
-  source?: "all" | "tryme" | "website" | "pos" | string;
+  source?: "all" | "fresh" | "tryme" | "website" | "pos" | string;
   vendorId?: string;
   search?: string;
   sortBy?: "recent" | "orders" | "spent" | "name" | string;
@@ -44,7 +44,9 @@ export async function getAdminCustomersData(filters: AdminCustomerFilters = {}) 
   }
 
   // If filtered by source
-  if (source === "tryme") {
+  if (source === "fresh") {
+    customerWhere.orders = { none: {} };
+  } else if (source === "tryme") {
     customerWhere.orders = {
       ...(customerWhere.orders || {}),
       some: {
@@ -77,12 +79,18 @@ export async function getAdminCustomersData(filters: AdminCustomerFilters = {}) 
     };
   }
 
-  // Parallel fetch: Total count, paginated customers with all orders, global statistics, vendors list
-  const [totalFilteredCount, rawCustomers, allCustomersForStats, vendorsList] = await Promise.all([
-    // 1. Filtered count
+  // Parallel fetch: Total count, filtered count, fresh count, paginated customers with all orders, global statistics, vendors list
+  const [totalRegisteredCustomers, totalFilteredCount, freshCustomersCount, rawCustomers, allCustomersForStats, vendorsList] = await Promise.all([
+    // 1. Total count
+    prisma.customer.count(),
+
+    // 2. Filtered count
     prisma.customer.count({ where: customerWhere }),
 
-    // 2. Customers with order histories
+    // 3. Fresh signups count (customers with 0 orders)
+    prisma.customer.count({ where: { orders: { none: {} } } }),
+
+    // 4. Customers with order histories & addresses
     prisma.customer.findMany({
       where: customerWhere,
       include: {
@@ -94,9 +102,27 @@ export async function getAdminCustomersData(filters: AdminCustomerFilters = {}) 
             email: true,
             phone: true,
             avatar: true,
+            emailVerified: true,
+            phoneVerified: true,
+            role: true,
             createdAt: true,
+            updatedAt: true,
             lastSeenAt: true,
           },
+        },
+        shippingAddresses: {
+          select: {
+            id: true,
+            fullName: true,
+            phone: true,
+            addressLine1: true,
+            city: true,
+            postalCode: true,
+            province: true,
+            isDefault: true,
+          },
+          orderBy: { isDefault: "desc" },
+          take: 3,
         },
         orders: {
           select: {
@@ -128,7 +154,7 @@ export async function getAdminCustomersData(filters: AdminCustomerFilters = {}) 
       orderBy: { createdAt: "desc" },
     }),
 
-    // 3. Aggregate all orders globally for channel breakdown stats
+    // 5. Aggregate all orders globally for channel breakdown stats
     prisma.order.findMany({
       select: {
         customerId: true,
@@ -138,7 +164,7 @@ export async function getAdminCustomersData(filters: AdminCustomerFilters = {}) 
       },
     }),
 
-    // 4. Vendors List for filter dropdown
+    // 6. Vendors List for filter dropdown
     prisma.vendor.findMany({
       select: {
         id: true,
@@ -174,14 +200,21 @@ export async function getAdminCustomersData(filters: AdminCustomerFilters = {}) 
     }
   }
 
-  const totalRegisteredCustomers = await prisma.customer.count();
-
   // Process & format customers list
   const formattedCustomers = rawCustomers.map((c) => {
     const user = c.user;
-    const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Customer";
+    const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || (user.email ? user.email.split("@")[0] : "Customer");
     const isFakePosEmail = user.email ? user.email.includes("@pos.tryme.lk") : false;
     const displayEmail = isFakePosEmail ? null : user.email;
+
+    // Contact and location resolution
+    const phoneFromAddress = (c as any).shippingAddresses?.[0]?.phone;
+    const phoneFromOrder = (c.orders?.[0]?.shippingAddressJson as any)?.phone;
+    const resolvedPhone = user.phone || phoneFromAddress || phoneFromOrder || null;
+
+    const defaultAddress = (c as any).shippingAddresses?.[0] || null;
+    const city = defaultAddress?.city || (c.orders?.[0]?.shippingAddressJson as any)?.city || null;
+    const isFresh = c.orders.length === 0;
 
     let totalSpent = 0;
     const channelsSet = new Set<"TRYME" | "WEBSITE" | "POS">();
@@ -227,9 +260,14 @@ export async function getAdminCustomersData(filters: AdminCustomerFilters = {}) 
       userId: user.id,
       fullName,
       email: displayEmail,
-      phone: user.phone || null,
+      phone: resolvedPhone,
       avatar: user.avatar || null,
+      city: city || null,
+      emailVerified: user.emailVerified || false,
+      role: user.role,
+      isFresh,
       createdAt: new Date(user.createdAt).toISOString(),
+      updatedAt: user.updatedAt ? new Date(user.updatedAt).toISOString() : new Date(user.createdAt).toISOString(),
       lastSeenAt: user.lastSeenAt ? new Date(user.lastSeenAt).toISOString() : null,
       channels: Array.from(channelsSet),
       totalOrders: c.orders.length,
@@ -283,6 +321,7 @@ export async function getAdminCustomersData(filters: AdminCustomerFilters = {}) 
   return {
     stats: {
       totalCustomers: totalRegisteredCustomers,
+      freshCustomersCount,
       trymeCustomersCount: trymeCustomerIds.size,
       websiteCustomersCount: websiteCustomerIds.size,
       posCustomersCount: posCustomerIds.size,

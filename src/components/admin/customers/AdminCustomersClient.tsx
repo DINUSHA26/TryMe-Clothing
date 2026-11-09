@@ -22,6 +22,8 @@ import {
   X,
   UserCheck,
   Receipt,
+  Sparkles,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +89,7 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
 
   const stats = data?.stats || {
     totalCustomers: 0,
+    freshCustomersCount: 0,
     trymeCustomersCount: 0,
     websiteCustomersCount: 0,
     posCustomersCount: 0,
@@ -129,83 +132,104 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
       </div>
 
       {/* KPI Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {/* Total Customers */}
-        <div className="p-5 rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs relative overflow-hidden">
+        <div className="p-4 rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               Total Customers
             </span>
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <Users className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl md:text-3xl font-black text-foreground">
+          <div className="mt-2.5">
+            <div className="text-2xl font-black text-foreground">
               {stats.totalCustomers}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Registered platform users & buyers
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              All registered users & buyers
+            </p>
+          </div>
+        </div>
+
+        {/* Fresh / New Signups */}
+        <div className="p-4 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/40 dark:bg-amber-950/20 backdrop-blur-xs shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-500" />
+              <span>Fresh Signups</span>
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <UserCheck className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2.5">
+            <div className="text-2xl font-black text-amber-950 dark:text-amber-100">
+              {stats.freshCustomersCount || 0}
+            </div>
+            <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+              Registered via Email / OTP
             </p>
           </div>
         </div>
 
         {/* TryMe.lk Marketplace Buyers */}
-        <div className="p-5 rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs relative overflow-hidden">
+        <div className="p-4 rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               TryMe.lk Buyers
             </span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <Store className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <Store className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl md:text-3xl font-black text-foreground">
+          <div className="mt-2.5">
+            <div className="text-2xl font-black text-foreground">
               {stats.trymeCustomersCount}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Ordered via TryMe.lk marketplace
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Ordered via TryMe marketplace
             </p>
           </div>
         </div>
 
         {/* Direct Vendor Websites Buyers */}
-        <div className="p-5 rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs relative overflow-hidden">
+        <div className="p-4 rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               Direct Site Buyers
             </span>
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-              <Globe className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+              <Globe className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl md:text-3xl font-black text-foreground">
+          <div className="mt-2.5">
+            <div className="text-2xl font-black text-foreground">
               {stats.websiteCustomersCount}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Ordered directly from shop websites
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Ordered directly from shop sites
             </p>
           </div>
         </div>
 
         {/* POS Walk-in Customers */}
-        <div className="p-5 rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs relative overflow-hidden">
+        <div className="p-4 rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               POS In-Store Buyers
             </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <ScanBarcode className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <ScanBarcode className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl md:text-3xl font-black text-foreground">
+          <div className="mt-2.5">
+            <div className="text-2xl font-black text-foreground">
               {stats.posCustomersCount}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Billed through physical POS systems
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Billed via in-store POS
             </p>
           </div>
         </div>
@@ -226,6 +250,22 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
           }`}
         >
           All Customers ({stats.totalCustomers})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedSource("fresh");
+            setCurrentPage(1);
+          }}
+          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            selectedSource === "fresh"
+              ? "bg-amber-600 text-white shadow-xs"
+              : "bg-muted text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Fresh Signups ({stats.freshCustomersCount || 0})</span>
         </button>
 
         <button
@@ -379,11 +419,26 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
                     <tr key={c.id} className="hover:bg-muted/40 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center shrink-0 text-xs">
-                            {c.fullName.slice(0, 1).toUpperCase()}
-                          </div>
+                          {c.avatar ? (
+                            <img
+                              src={c.avatar}
+                              alt={c.fullName}
+                              className="w-8 h-8 rounded-full object-cover border border-border shadow-xs shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center shrink-0 text-xs">
+                              {c.fullName.slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
                           <div>
-                            <div className="font-bold text-foreground">{c.fullName}</div>
+                            <div className="font-bold text-foreground flex items-center gap-1.5">
+                              <span>{c.fullName}</span>
+                              {c.isFresh && (
+                                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                                  Fresh
+                                </span>
+                              )}
+                            </div>
                             <div className="text-[10px] text-muted-foreground">
                               Joined {format(new Date(c.createdAt), "MMM yyyy")}
                             </div>
@@ -393,7 +448,7 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
 
                       <td className="px-4 py-3">
                         {c.email ? (
-                          <div className="flex items-center gap-1.5 text-foreground">
+                          <div className="flex items-center gap-1.5 text-foreground font-medium">
                             <Mail className="w-3 h-3 text-muted-foreground" />
                             <span>{c.email}</span>
                           </div>
@@ -401,7 +456,7 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
                           <span className="text-muted-foreground italic">No email</span>
                         )}
                         {c.phone && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5 font-mono">
                             <Phone className="w-3 h-3" />
                             <span>{c.phone}</span>
                           </div>
@@ -410,32 +465,43 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
 
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
-                          {c.channels.includes("TRYME") && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                              <Store className="w-2.5 h-2.5" />
-                              <span>TryMe</span>
-                            </span>
-                          )}
-                          {c.channels.includes("WEBSITE") && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                              <Globe className="w-2.5 h-2.5" />
-                              <span>Direct Site</span>
-                            </span>
-                          )}
-                          {c.channels.includes("POS") && (
+                          {c.isFresh ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                              <ScanBarcode className="w-2.5 h-2.5" />
-                              <span>POS</span>
+                              <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                              <span>Fresh Signup (OTP)</span>
                             </span>
-                          )}
-                          {c.channels.length === 0 && (
-                            <span className="text-[10px] text-muted-foreground italic">No orders yet</span>
+                          ) : (
+                            <>
+                              {c.channels.includes("TRYME") && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                  <Store className="w-2.5 h-2.5" />
+                                  <span>TryMe</span>
+                                </span>
+                              )}
+                              {c.channels.includes("WEBSITE") && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                  <Globe className="w-2.5 h-2.5" />
+                                  <span>Direct Site</span>
+                                </span>
+                              )}
+                              {c.channels.includes("POS") && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                  <ScanBarcode className="w-2.5 h-2.5" />
+                                  <span>POS</span>
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>
 
                       <td className="px-4 py-3">
-                        {c.stores.length > 0 ? (
+                        {c.isFresh ? (
+                          <span className="text-[10px] text-muted-foreground italic flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-amber-500" />
+                            <span>Awaiting 1st Order</span>
+                          </span>
+                        ) : c.stores.length > 0 ? (
                           <div className="flex flex-wrap gap-1 max-w-[200px]">
                             {c.stores.map((st: any) => (
                               <span
@@ -453,7 +519,11 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
                       </td>
 
                       <td className="px-4 py-3 text-center font-bold text-foreground">
-                        {c.totalOrders}
+                        {c.isFresh ? (
+                          <span className="text-muted-foreground font-mono">0</span>
+                        ) : (
+                          c.totalOrders
+                        )}
                       </td>
 
                       <td className="px-4 py-3 text-right font-black text-foreground text-sm">
@@ -461,7 +531,14 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
                       </td>
 
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                        {c.lastOrderAt ? format(new Date(c.lastOrderAt), "MMM d, yyyy") : "Never"}
+                        {c.lastOrderAt ? (
+                          format(new Date(c.lastOrderAt), "MMM d, yyyy")
+                        ) : (
+                          <span className="text-[11px] flex items-center gap-1 text-amber-700 dark:text-amber-400 font-medium">
+                            <Clock className="w-3 h-3" />
+                            <span>{format(new Date(c.createdAt), "MMM d, yyyy")}</span>
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-4 py-3 text-right">
@@ -471,7 +548,7 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
                           onClick={() => setSelectedCustomer(c)}
                           className="h-7 text-xs font-bold gap-1 text-primary hover:text-primary hover:bg-primary/10"
                         >
-                          <span>Orders History</span>
+                          <span>{c.isFresh ? "View Profile" : "Orders History"}</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </Button>
                       </td>
@@ -513,7 +590,7 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
         )}
       </div>
 
-      {/* Customer Orders History Modal */}
+      {/* Customer Orders History / Profile Modal */}
       <Dialog open={Boolean(selectedCustomer)} onOpenChange={(open) => !open && setSelectedCustomer(null)}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden bg-background">
           {selectedCustomer && (
@@ -521,25 +598,44 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
               {/* Header */}
               <div className="p-6 border-b bg-muted/20">
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 text-primary font-black text-lg flex items-center justify-center shrink-0">
-                      {selectedCustomer.fullName.slice(0, 1).toUpperCase()}
-                    </div>
+                  <div className="flex items-center gap-3.5">
+                    {selectedCustomer.avatar ? (
+                      <img
+                        src={selectedCustomer.avatar}
+                        alt={selectedCustomer.fullName}
+                        className="w-13 h-13 rounded-full object-cover border-2 border-primary/20 shadow-xs shrink-0"
+                      />
+                    ) : (
+                      <div className="w-13 h-13 rounded-full bg-primary/10 text-primary font-black text-lg flex items-center justify-center shrink-0">
+                        {selectedCustomer.fullName.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
                     <div>
-                      <h3 className="font-extrabold text-lg text-foreground">
-                        {selectedCustomer.fullName}
+                      <h3 className="font-extrabold text-lg text-foreground flex items-center gap-2">
+                        <span>{selectedCustomer.fullName}</span>
+                        {selectedCustomer.isFresh && (
+                          <Badge variant="outline" className="text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300">
+                            ✨ Fresh Signup
+                          </Badge>
+                        )}
                       </h3>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mt-0.5">
                         {selectedCustomer.email && (
-                          <span className="flex items-center gap-1">
-                            <Mail className="w-3 h-3" />
+                          <span className="flex items-center gap-1 font-medium">
+                            <Mail className="w-3 h-3 text-primary" />
                             {selectedCustomer.email}
                           </span>
                         )}
                         {selectedCustomer.phone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3" />
+                          <span className="flex items-center gap-1 font-mono">
+                            <Phone className="w-3 h-3 text-emerald-600" />
                             {selectedCustomer.phone}
+                          </span>
+                        )}
+                        {selectedCustomer.city && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-indigo-500" />
+                            {selectedCustomer.city}
                           </span>
                         )}
                       </div>
@@ -556,22 +652,30 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
                 {/* Quick Channels breakdown */}
                 <div className="mt-4 pt-3 border-t flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Channels Used:</span>
+                    <span className="text-muted-foreground">Customer Status:</span>
                     <div className="flex gap-1.5">
-                      {selectedCustomer.channels.includes("TRYME") && (
-                        <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-50 text-emerald-700">
-                          <Store className="w-3 h-3" /> TryMe Marketplace
+                      {selectedCustomer.isFresh ? (
+                        <Badge variant="outline" className="text-[10px] gap-1 bg-amber-50 text-amber-700 border-amber-200">
+                          <Sparkles className="w-3 h-3" /> OTP Registered (No Orders Yet)
                         </Badge>
-                      )}
-                      {selectedCustomer.channels.includes("WEBSITE") && (
-                        <Badge variant="outline" className="text-[10px] gap-1 bg-indigo-50 text-indigo-700">
-                          <Globe className="w-3 h-3" /> Direct Web
-                        </Badge>
-                      )}
-                      {selectedCustomer.channels.includes("POS") && (
-                        <Badge variant="outline" className="text-[10px] gap-1 bg-amber-50 text-amber-700">
-                          <ScanBarcode className="w-3 h-3" /> POS Walk-in
-                        </Badge>
+                      ) : (
+                        <>
+                          {selectedCustomer.channels.includes("TRYME") && (
+                            <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-50 text-emerald-700">
+                              <Store className="w-3 h-3" /> TryMe Marketplace
+                            </Badge>
+                          )}
+                          {selectedCustomer.channels.includes("WEBSITE") && (
+                            <Badge variant="outline" className="text-[10px] gap-1 bg-indigo-50 text-indigo-700">
+                              <Globe className="w-3 h-3" /> Direct Web
+                            </Badge>
+                          )}
+                          {selectedCustomer.channels.includes("POS") && (
+                            <Badge variant="outline" className="text-[10px] gap-1 bg-amber-50 text-amber-700">
+                              <ScanBarcode className="w-3 h-3" /> POS Walk-in
+                            </Badge>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -581,73 +685,120 @@ export function AdminCustomersClient({ initialData }: AdminCustomersClientProps)
                 </div>
               </div>
 
-              {/* Order History List */}
+              {/* Order History List OR Fresh Signup Profile Card */}
               <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                <h4 className="font-bold text-sm flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-primary" />
-                  <span>Recent Customer Orders</span>
-                </h4>
+                {selectedCustomer.isFresh ? (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/20 flex items-start gap-3">
+                      <Sparkles className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-bold text-sm text-amber-900 dark:text-amber-200">
+                          Fresh Registered Customer (Signed in via Email & OTP)
+                        </h4>
+                        <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-1">
+                          This customer entered their email address and verified with OTP on TryMe.lk. Their account and profile data auto-sync immediately.
+                        </p>
+                      </div>
+                    </div>
 
-                {selectedCustomer.recentOrders.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-muted-foreground">
-                    No order history recorded for this customer yet.
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3.5 rounded-xl border bg-card">
+                        <div className="text-muted-foreground text-[11px]">Registered Date & Time</div>
+                        <div className="font-bold text-foreground mt-1">
+                          {format(new Date(selectedCustomer.createdAt), "PPP 'at' p")}
+                        </div>
+                      </div>
+                      <div className="p-3.5 rounded-xl border bg-card">
+                        <div className="text-muted-foreground text-[11px]">Authentication Method</div>
+                        <div className="font-bold text-foreground mt-1 flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5 text-primary" />
+                          <span>Email & OTP Login</span>
+                        </div>
+                      </div>
+                      <div className="p-3.5 rounded-xl border bg-card">
+                        <div className="text-muted-foreground text-[11px]">Platform Role</div>
+                        <div className="font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>Active Customer</span>
+                        </div>
+                      </div>
+                      <div className="p-3.5 rounded-xl border bg-card">
+                        <div className="text-muted-foreground text-[11px]">Order Activity</div>
+                        <div className="font-bold text-muted-foreground mt-1">
+                          0 Orders Placed (Browsing Platform)
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-2.5">
-                    {selectedCustomer.recentOrders.map((ord: any) => {
-                      return (
-                        <div
-                          key={ord.id}
-                          className="p-3.5 rounded-xl border bg-card hover:border-primary/40 transition-colors flex items-center justify-between gap-3 text-xs"
-                        >
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 font-mono font-bold text-foreground">
-                              <span>{ord.orderNumber}</span>
-                              {ord.channel === "TRYME" && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                                  TryMe Marketplace
-                                </span>
-                              )}
-                              {ord.channel === "WEBSITE" && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">
-                                  Vendor Direct Web
-                                </span>
-                              )}
-                              {ord.channel === "POS" && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">
-                                  POS In-Store
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-muted-foreground flex items-center gap-2">
-                              <span>{format(new Date(ord.createdAt), "PPP 'at' p")}</span>
-                              <span>•</span>
-                              <span>Shops: {ord.stores.join(", ") || "General"}</span>
-                            </div>
-                          </div>
+                  <>
+                    <h4 className="font-bold text-sm flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-primary" />
+                      <span>Recent Customer Orders</span>
+                    </h4>
 
-                          <div className="text-right flex items-center gap-3">
-                            <div>
-                              <div className="font-black text-foreground text-sm">
-                                Rs. {Number(ord.totalAmount).toLocaleString("en-LK")}
-                              </div>
-                              <span className="text-[10px] text-muted-foreground font-semibold uppercase">
-                                {ord.status.replace(/_/g, " ")}
-                              </span>
-                            </div>
-
-                            <Link
-                              href={`/admin/orders/${ord.orderNumber || ord.id}`}
-                              className="p-2 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-colors"
-                              title="View Order Details"
+                    {selectedCustomer.recentOrders.length === 0 ? (
+                      <div className="py-8 text-center text-sm text-muted-foreground">
+                        No order history recorded for this customer yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {selectedCustomer.recentOrders.map((ord: any) => {
+                          return (
+                            <div
+                              key={ord.id}
+                              className="p-3.5 rounded-xl border bg-card hover:border-primary/40 transition-colors flex items-center justify-between gap-3 text-xs"
                             >
-                              <ExternalLink className="w-4 h-4" />
-                            </Link>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 font-mono font-bold text-foreground">
+                                  <span>{ord.orderNumber}</span>
+                                  {ord.channel === "TRYME" && (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                                      TryMe Marketplace
+                                    </span>
+                                  )}
+                                  {ord.channel === "WEBSITE" && (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">
+                                      Vendor Direct Web
+                                    </span>
+                                  )}
+                                  {ord.channel === "POS" && (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">
+                                      POS In-Store
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                                  <span>{format(new Date(ord.createdAt), "PPP 'at' p")}</span>
+                                  <span>•</span>
+                                  <span>Shops: {ord.stores.join(", ") || "General"}</span>
+                                </div>
+                              </div>
+
+                              <div className="text-right flex items-center gap-3">
+                                <div>
+                                  <div className="font-black text-foreground text-sm">
+                                    Rs. {Number(ord.totalAmount).toLocaleString("en-LK")}
+                                  </div>
+                                  <span className="text-[10px] text-muted-foreground font-semibold uppercase">
+                                    {ord.status.replace(/_/g, " ")}
+                                  </span>
+                                </div>
+
+                                <Link
+                                  href={`/admin/orders/${ord.orderNumber || ord.id}`}
+                                  className="p-2 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-colors"
+                                  title="View Order Details"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </Link>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

@@ -20,6 +20,7 @@ export default function ProfilePage() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -35,6 +36,7 @@ export default function ProfilePage() {
     if (user) {
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
+      setPhone(user.phone || "");
       setAvatar((user as any).avatar || "");
     }
   }, [user]);
@@ -102,6 +104,7 @@ export default function ProfilePage() {
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
+          phone: phone.trim() || null,
           avatar: avatar,
         }),
       });
@@ -111,7 +114,6 @@ export default function ProfilePage() {
         // Update local auth store user
         setUser(result.data.user);
         toast.success("Profile updated successfully!");
-        router.push("/");
       } else {
         toast.error(result.error || "Failed to update profile.");
       }
@@ -247,6 +249,17 @@ export default function ProfilePage() {
                   required
                 />
               </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="phone-number" className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Phone Number</Label>
+                <Input
+                  id="phone-number"
+                  type="tel"
+                  placeholder="e.g. 0771234567 or +94771234567"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="bg-slate-50/50 dark:bg-slate-900/50"
+                />
+              </div>
             </div>
 
             {/* Read-Only Account Details */}
@@ -254,10 +267,6 @@ export default function ProfilePage() {
               <div className="flex justify-between items-center text-sm border-b pb-2">
                 <span className="text-muted-foreground">Email Address</span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{user.email || "N/A"}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b pb-2">
-                <span className="text-muted-foreground">Phone Number</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">{user.phone || "N/A"}</span>
               </div>
               <div className="flex justify-between items-center text-sm border-b pb-2">
                 <span className="text-muted-foreground">Account Role</span>
