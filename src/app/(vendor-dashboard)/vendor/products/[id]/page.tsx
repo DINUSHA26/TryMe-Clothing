@@ -55,6 +55,7 @@ export default function EditProductPage({
         unit: productData.unit || "PCS",
         showOnWebsite: productData.showOnWebsite !== undefined ? productData.showOnWebsite : true,
         showOnMarketplace: productData.showOnMarketplace !== undefined ? productData.showOnMarketplace : true,
+        showOnPos: productData.showOnPos !== undefined ? productData.showOnPos : true,
         sizeChart: productData.sizeChart || "",
         images: productData.images.map((img: any) => ({
           id: img.id,

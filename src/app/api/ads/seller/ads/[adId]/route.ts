@@ -111,6 +111,7 @@ export async function PUT(
     if (body.specifications !== undefined) updateData.specifications = body.specifications;
     if (body.showOnWebsite !== undefined) updateData.showOnWebsite = !!body.showOnWebsite;
     if (body.showOnMarketplace !== undefined) updateData.showOnMarketplace = !!body.showOnMarketplace;
+    if (body.showOnPos !== undefined) updateData.showOnPos = !!body.showOnPos;
 
     const updatedAd = await prisma.classifiedAd.update({
       where: { id: adId },
@@ -196,6 +197,7 @@ export async function PATCH(
     const updateData: any = {};
     if (body.showOnWebsite !== undefined) updateData.showOnWebsite = Boolean(body.showOnWebsite);
     if (body.showOnMarketplace !== undefined) updateData.showOnMarketplace = Boolean(body.showOnMarketplace);
+    if (body.showOnPos !== undefined) updateData.showOnPos = Boolean(body.showOnPos);
     if (body.status !== undefined && ["ACTIVE", "PAUSED"].includes(body.status) && existingAd.status !== "PENDING" && existingAd.status !== "REJECTED") {
       updateData.status = body.status;
     }

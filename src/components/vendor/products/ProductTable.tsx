@@ -89,11 +89,12 @@ export function ProductTable({
 
   const handleToggleChannel = async (
     productId: string,
-    channel: "website" | "marketplace",
+    channel: "website" | "marketplace" | "pos",
     currentValue: boolean
   ) => {
     try {
-      const field = channel === "website" ? "showOnWebsite" : "showOnMarketplace";
+      const field = channel === "website" ? "showOnWebsite" : channel === "marketplace" ? "showOnMarketplace" : "showOnPos";
+      const channelLabel = channel === "website" ? "My Website" : channel === "marketplace" ? "Marketplace" : "POS Counter";
       const response = await fetch(`/api/vendor/products/${productId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -113,7 +114,7 @@ export function ProductTable({
 
       toast({
         title: "Channel Updated",
-        description: `${channel === "website" ? "My Website" : "Marketplace"} visibility ${!currentValue ? "enabled" : "disabled"}.`,
+        description: `${channelLabel} visibility ${!currentValue ? "enabled" : "disabled"}.`,
       });
 
       onProductUpdated();
@@ -343,6 +344,22 @@ export function ProductTable({
                                   className={`text-[9px] py-0 px-2 h-4 font-bold transition-colors ${(product as any).showOnMarketplace !== false ? "bg-orange-50 text-orange-700 border-orange-200 group-hover:bg-red-50 group-hover:text-red-600" : "bg-gray-100 text-gray-400 border-gray-200 group-hover:bg-orange-50 group-hover:text-orange-700"}`}
                                 >
                                   {(product as any).showOnMarketplace !== false ? "Live" : "Off"}
+                                </Badge>
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-gray-500 w-[60px] shrink-0 font-medium">📟 POS:</span>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleChannel(product.id, "pos", (product as any).showOnPos !== false)}
+                                title="Click to toggle POS Counter visibility"
+                                className="cursor-pointer group"
+                              >
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[9px] py-0 px-2 h-4 font-bold transition-colors ${(product as any).showOnPos !== false ? "bg-purple-50 text-purple-700 border-purple-200 group-hover:bg-red-50 group-hover:text-red-600" : "bg-gray-100 text-gray-400 border-gray-200 group-hover:bg-purple-50 group-hover:text-purple-700"}`}
+                                >
+                                  {(product as any).showOnPos !== false ? "Live" : "Off"}
                                 </Badge>
                               </button>
                             </div>

@@ -91,4 +91,5 @@ export interface ProductFormData {
   sizeChart?: string | null;
   showOnWebsite?: boolean;
   showOnMarketplace?: boolean;
+  showOnPos?: boolean;
 }

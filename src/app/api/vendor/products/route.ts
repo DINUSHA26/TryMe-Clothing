@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
           isDraft: !!data.isDraft,
           showOnWebsite: data.showOnWebsite !== undefined ? !!data.showOnWebsite : true,
           showOnMarketplace: data.showOnMarketplace !== undefined ? !!data.showOnMarketplace : true,
+          showOnPos: data.showOnPos !== undefined ? !!data.showOnPos : true,
         },
       });
 

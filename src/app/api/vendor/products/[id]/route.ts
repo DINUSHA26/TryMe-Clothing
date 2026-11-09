@@ -210,6 +210,7 @@ export async function PATCH(
           ...(data.isDraft !== undefined && { isDraft: data.isDraft }),
           ...(data.showOnWebsite !== undefined && { showOnWebsite: data.showOnWebsite }),
           ...(data.showOnMarketplace !== undefined && { showOnMarketplace: data.showOnMarketplace }),
+          ...(data.showOnPos !== undefined && { showOnPos: data.showOnPos }),
         },
         include: {
           category: {

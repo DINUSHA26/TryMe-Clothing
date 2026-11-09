@@ -158,6 +158,7 @@ export async function POST(request: NextRequest) {
       specifications,
       showOnWebsite,
       showOnMarketplace,
+      showOnPos,
     } = body;
 
     // Basic fields validation
@@ -218,6 +219,7 @@ export async function POST(request: NextRequest) {
         status: "PENDING",
         showOnWebsite: showOnWebsite !== undefined ? !!showOnWebsite : true,
         showOnMarketplace: showOnMarketplace !== undefined ? !!showOnMarketplace : true,
+        showOnPos: showOnPos !== undefined ? !!showOnPos : true,
       },
     });
 

@@ -23,6 +23,7 @@ export const createProductSchema = z
     isDraft: z.boolean().default(false).optional(),
     showOnWebsite: z.boolean().default(true).optional(),
     showOnMarketplace: z.boolean().default(true).optional(),
+    showOnPos: z.boolean().default(true).optional(),
     categoryId: z.string().cuid("Invalid category"),
     name: z
       .string()
@@ -120,6 +121,7 @@ export const updateProductSchema = z.object({
   isActive: z.boolean().optional(),
   showOnWebsite: z.boolean().optional(),
   showOnMarketplace: z.boolean().optional(),
+  showOnPos: z.boolean().optional(),
   images: z
     .array(
       z.object({

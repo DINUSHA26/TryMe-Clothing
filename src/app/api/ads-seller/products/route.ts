@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
     let lowStockProducts = 0;
     let liveMarketplaceCount = 0;
     let liveWebsiteCount = 0;
+    let livePosCount = 0;
 
     const allMappedProducts = ads.map((ad: any) => {
       const specs = (typeof ad.specifications === "object" && ad.specifications) || {};
@@ -63,12 +64,14 @@ export async function GET(request: NextRequest) {
       const compareAtPrice = specs.compareAtPrice ? Number(specs.compareAtPrice) : null;
       // An item is only live on TryMe Shop if explicitly enabled by seller
       const isTryMeShopLive = specs.showInTryMeShop === true;
+      const isPosLive = ad.showOnPos !== false && specs.showOnPos !== false;
 
       totalProducts++;
       if (ad.status === "ACTIVE") activeProducts++;
       if (stock <= 5) lowStockProducts++;
       if (isTryMeShopLive) liveMarketplaceCount++;
       if (ad.showOnWebsite !== false) liveWebsiteCount++;
+      if (isPosLive) livePosCount++;
 
       const variants = Array.isArray(specs.variants)
         ? specs.variants.map((v: any, idx: number) => ({
@@ -106,6 +109,7 @@ export async function GET(request: NextRequest) {
         showOnWebsite: ad.showOnWebsite !== false,
         showOnMarketplace: isTryMeShopLive,
         showInTryMeShop: isTryMeShopLive,
+        showOnPos: isPosLive,
         status: ad.status,
         createdAt: ad.createdAt,
         updatedAt: ad.updatedAt,
@@ -115,6 +119,8 @@ export async function GET(request: NextRequest) {
     // If filtered by marketplace (TryMe Shop), only return items with TryMe Shop Live
     const products = channel === "marketplace"
       ? allMappedProducts.filter((p: any) => p.showOnMarketplace)
+      : channel === "pos"
+      ? allMappedProducts.filter((p: any) => p.showOnPos)
       : allMappedProducts;
 
     // Also fetch categories for filter and create modal
@@ -140,6 +146,7 @@ export async function GET(request: NextRequest) {
           lowStockProducts,
           liveMarketplaceCount,
           liveWebsiteCount,
+          livePosCount,
         },
         categories,
       },
@@ -231,6 +238,7 @@ export async function POST(request: NextRequest) {
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
       variants: Array.isArray(variants) ? variants : [],
       showInTryMeShop: false,
+      showOnPos: body.showOnPos !== undefined ? !!body.showOnPos : true,
     };
 
     const newAd = await (prisma as any).classifiedAd.create({
@@ -249,6 +257,7 @@ export async function POST(request: NextRequest) {
         status: "ACTIVE", // Direct standalone products are immediately active
         showOnWebsite: !!showOnWebsite,
         showOnMarketplace: true, // Classified visibility
+        showOnPos: body.showOnPos !== undefined ? !!body.showOnPos : true,
       },
       include: {
         category: { select: { id: true, name: true, slug: true } },
@@ -297,6 +306,7 @@ export async function POST(request: NextRequest) {
         showOnWebsite: newAd.showOnWebsite,
         showOnMarketplace: isLiveOnTryMeShop,
         showInTryMeShop: isLiveOnTryMeShop,
+        showOnPos: newAd.showOnPos !== false,
         isStandalone: true,
         source: "DIRECT",
       },

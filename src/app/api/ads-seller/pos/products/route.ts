@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
       where: {
         sellerId: adsSeller.id,
         status: "ACTIVE",
+        showOnPos: true,
         ...(search
           ? {
               OR: [
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
         price: true,
         images: true,
         specifications: true,
+        showOnPos: true,
         category: {
           select: { name: true },
         },
@@ -42,7 +44,12 @@ export async function GET(request: NextRequest) {
       take: 100,
     });
 
-    const products = ads.map((ad: any) => {
+    const activePosAds = ads.filter((ad: any) => {
+      const specs = (typeof ad.specifications === "object" && ad.specifications) || {};
+      return specs.showOnPos !== false && ad.showOnPos !== false;
+    });
+
+    const products = activePosAds.map((ad: any) => {
       const specs = (typeof ad.specifications === "object" && ad.specifications) || {};
       const baseSku = specs.sku || `AD-${ad.id.slice(-6).toUpperCase()}`;
       const stock = specs.stock !== undefined ? Number(specs.stock) : 10;

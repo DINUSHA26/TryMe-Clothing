@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   Globe,
   ShoppingCart,
+  ScanBarcode,
 } from "lucide-react";
 import { compressImage } from "@/lib/utils/image";
 
@@ -53,6 +54,7 @@ export default function PostAdPage() {
   const [images, setImages] = useState<string[]>([]);
   const [showOnWebsite, setShowOnWebsite] = useState(true);
   const [showOnMarketplace, setShowOnMarketplace] = useState(true);
+  const [showOnPos, setShowOnPos] = useState(true);
 
   // UI utility states
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -173,11 +175,11 @@ export default function PostAdPage() {
       return;
     }
 
-    if (!showOnWebsite && !showOnMarketplace) {
+    if (!showOnWebsite && !showOnMarketplace && !showOnPos) {
       toast({
         variant: "destructive",
         title: "Validation Error",
-        description: "Please select at least one publishing destination (My Website or TryMe Marketplace).",
+        description: "Please select at least one publishing destination (Website, Marketplace, or POS).",
       });
       return;
     }
@@ -197,6 +199,7 @@ export default function PostAdPage() {
         specifications,
         showOnWebsite,
         showOnMarketplace,
+        showOnPos,
       };
 
       const response = await fetch("/api/ads/seller/ads", {
@@ -576,10 +579,10 @@ export default function PostAdPage() {
             <div className="pt-4 border-t border-gray-100 dark:border-slate-800 space-y-3">
               <div>
                 <Label className="text-xs font-bold text-gray-800 dark:text-slate-200">Publishing Channels</Label>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400">Choose where this classified ad should be published (both enabled by default).</p>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">Choose where this classified ad should be published (all enabled by default).</p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div
                   onClick={() => setShowOnWebsite(!showOnWebsite)}
                   className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
@@ -596,7 +599,7 @@ export default function PostAdPage() {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-gray-900 dark:text-white block">My Website</span>
-                      <span className="text-[10px] text-gray-500 dark:text-slate-400 block">Instantly live on your website</span>
+                      <span className="text-[10px] text-gray-500 dark:text-slate-400 block">Live on your website</span>
                     </div>
                   </div>
                   <Switch
@@ -621,13 +624,39 @@ export default function PostAdPage() {
                       <ShoppingCart className="h-5 w-5" />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-gray-900 dark:text-white block">TryMe Marketplace</span>
-                      <span className="text-[10px] text-gray-500 dark:text-slate-400 block">Show on TryMe public portal</span>
+                      <span className="text-xs font-bold text-gray-900 dark:text-white block">Marketplace</span>
+                      <span className="text-[10px] text-gray-500 dark:text-slate-400 block">Show on TryMe ads</span>
                     </div>
                   </div>
                   <Switch
                     checked={showOnMarketplace}
                     onCheckedChange={setShowOnMarketplace}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+
+                <div
+                  onClick={() => setShowOnPos(!showOnPos)}
+                  className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
+                    showOnPos
+                      ? "border-purple-200 dark:border-purple-800 bg-purple-50/40 dark:bg-purple-950/20"
+                      : "border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/30 opacity-60"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      showOnPos ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400" : "bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
+                    }`}>
+                      <ScanBarcode className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 dark:text-white block">POS Counter</span>
+                      <span className="text-[10px] text-gray-500 dark:text-slate-400 block">In-store POS billing</span>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={showOnPos}
+                    onCheckedChange={setShowOnPos}
                     onClick={(e) => e.stopPropagation()}
                   />
                 </div>

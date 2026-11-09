@@ -151,6 +151,7 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
       lowStockThreshold: initialData?.lowStockThreshold || 5,
       showOnWebsite: (initialData as any)?.showOnWebsite !== undefined ? (initialData as any).showOnWebsite : true,
       showOnMarketplace: (initialData as any)?.showOnMarketplace !== undefined ? (initialData as any).showOnMarketplace : true,
+      showOnPos: (initialData as any)?.showOnPos !== undefined ? (initialData as any).showOnPos : true,
       images: initialData?.images || [],
       variants: initialData?.variants || [],
       sizeChart: initialData?.sizeChart || "",
@@ -180,6 +181,7 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
         sizeChart: initialData.sizeChart || "",
         showOnWebsite: (initialData as any).showOnWebsite !== undefined ? (initialData as any).showOnWebsite : true,
         showOnMarketplace: (initialData as any).showOnMarketplace !== undefined ? (initialData as any).showOnMarketplace : true,
+        showOnPos: (initialData as any).showOnPos !== undefined ? (initialData as any).showOnPos : true,
       });
 
       // Update local states
@@ -810,11 +812,11 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
           <div>
             <h2 className="text-xl font-bold">Publishing Channels</h2>
             <p className="text-sm text-muted-foreground">
-              Choose where this product should be displayed (both channels are active by default).
+              Choose where this product should be displayed (all channels are active by default).
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="showOnWebsite"
@@ -853,6 +855,31 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
                     </FormLabel>
                     <FormDescription className="text-xs">
                       List on the public TryMe.lk marketplace.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value !== false}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="showOnPos"
+              render={({ field }) => (
+                <FormItem className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                  field.value !== false ? "border-purple-200 bg-purple-50/30" : "border-gray-200 bg-gray-50/50 opacity-70"
+                }`}>
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-sm font-semibold flex items-center gap-1.5 cursor-pointer">
+                      <span>📟</span> POS Counter
+                    </FormLabel>
+                    <FormDescription className="text-xs">
+                      Sell at physical store POS checkout counter.
                     </FormDescription>
                   </div>
                   <FormControl>

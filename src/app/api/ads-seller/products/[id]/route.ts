@@ -35,6 +35,10 @@ export async function PATCH(
     if (body.showOnWebsite !== undefined) {
       updateData.showOnWebsite = !!body.showOnWebsite;
     }
+    if (body.showOnPos !== undefined) {
+      updateData.showOnPos = !!body.showOnPos;
+      specs.showOnPos = !!body.showOnPos;
+    }
     if (body.price !== undefined) {
       updateData.price = Number(body.price);
     }
@@ -103,6 +107,7 @@ export async function PATCH(
         showOnMarketplace: isLiveOnTryMeShop,
         showInTryMeShop: isLiveOnTryMeShop,
         showOnWebsite: updated.showOnWebsite,
+        showOnPos: updated.showOnPos !== false,
         specifications: updated.specifications,
       },
       message: "Product updated successfully",

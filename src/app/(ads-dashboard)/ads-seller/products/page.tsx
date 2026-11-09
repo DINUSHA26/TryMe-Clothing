@@ -73,6 +73,7 @@ interface ProductItem {
   source: "AD" | "DIRECT";
   showOnWebsite: boolean;
   showOnMarketplace: boolean;
+  showOnPos?: boolean;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -91,7 +92,7 @@ export default function AdsSellerProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [activeTab, setActiveTab] = useState<"all" | "marketplace" | "website" | "low_stock">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "marketplace" | "website" | "pos" | "low_stock">("all");
 
   // Create Product Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -108,6 +109,7 @@ export default function AdsSellerProductsPage() {
   const [newImages, setNewImages] = useState<string[]>([]);
   const [newShowWebsite, setNewShowWebsite] = useState(true);
   const [newShowMarketplace, setNewShowMarketplace] = useState(false);
+  const [newShowPos, setNewShowPos] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
 
   // Edit Modal State
@@ -119,6 +121,7 @@ export default function AdsSellerProductsPage() {
   const [editBarcode, setEditBarcode] = useState("");
   const [editShowWebsite, setEditShowWebsite] = useState(true);
   const [editShowMarketplace, setEditShowMarketplace] = useState(true);
+  const [editShowPos, setEditShowPos] = useState(true);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Delete State
@@ -184,6 +187,8 @@ export default function AdsSellerProductsPage() {
         matchesTab = p.showOnMarketplace;
       } else if (activeTab === "website") {
         matchesTab = p.showOnWebsite;
+      } else if (activeTab === "pos") {
+        matchesTab = p.showOnPos !== false;
       } else if (activeTab === "low_stock") {
         matchesTab = p.stock <= 5;
       }
@@ -199,13 +204,14 @@ export default function AdsSellerProductsPage() {
     const lowStock = products.filter((p) => p.stock <= 5).length;
     const marketplaceLive = products.filter((p) => p.showOnMarketplace).length;
     const websiteLive = products.filter((p) => p.showOnWebsite).length;
-    return { total, active, lowStock, marketplaceLive, websiteLive };
+    const posLive = products.filter((p) => p.showOnPos !== false).length;
+    return { total, active, lowStock, marketplaceLive, websiteLive, posLive };
   }, [products]);
 
   // Channel Toggle Handler
   const handleToggleChannel = async (
     productId: string,
-    channel: "marketplace" | "website",
+    channel: "marketplace" | "website" | "pos",
     currentVal: boolean
   ) => {
     const newVal = !currentVal;
@@ -219,26 +225,41 @@ export default function AdsSellerProductsPage() {
               ...p,
               showOnMarketplace: channel === "marketplace" ? newVal : p.showOnMarketplace,
               showOnWebsite: channel === "website" ? newVal : p.showOnWebsite,
+              showOnPos: channel === "pos" ? newVal : (p.showOnPos !== false),
             }
           : p
       )
     );
 
     try {
+      const payloadKey =
+        channel === "marketplace"
+          ? "showOnMarketplace"
+          : channel === "website"
+          ? "showOnWebsite"
+          : "showOnPos";
+
       const res = await fetch(`/api/ads-seller/products/${productId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          [channel === "marketplace" ? "showOnMarketplace" : "showOnWebsite"]: newVal,
+          [payloadKey]: newVal,
         }),
       });
       const data = await res.json();
       if (!data.success) {
         throw new Error(data.error || "Update failed");
       }
+      const label =
+        channel === "marketplace"
+          ? "TryMe Shop by Category"
+          : channel === "website"
+          ? "Website"
+          : "POS Counter";
+
       toast({
         title: "Channel Updated",
-        description: `${channel === "marketplace" ? "TryMe Shop by Category" : "Website"} visibility set to ${
+        description: `${label} visibility set to ${
           newVal ? "LIVE" : "OFF"
         }.`,
       });
@@ -251,6 +272,7 @@ export default function AdsSellerProductsPage() {
                 ...p,
                 showOnMarketplace: channel === "marketplace" ? currentVal : p.showOnMarketplace,
                 showOnWebsite: channel === "website" ? currentVal : p.showOnWebsite,
+                showOnPos: channel === "pos" ? currentVal : (p.showOnPos !== false),
               }
             : p
         )
@@ -345,6 +367,7 @@ export default function AdsSellerProductsPage() {
           images: newImages,
           showOnWebsite: newShowWebsite,
           showOnMarketplace: newShowMarketplace,
+          showOnPos: newShowPos,
         }),
       });
 
@@ -367,6 +390,9 @@ export default function AdsSellerProductsPage() {
       setNewSku("");
       setNewBarcode("");
       setNewImages([]);
+      setNewShowWebsite(true);
+      setNewShowMarketplace(false);
+      setNewShowPos(true);
       setIsCreateOpen(false);
 
       // Refresh list
@@ -391,6 +417,7 @@ export default function AdsSellerProductsPage() {
     setEditBarcode(p.barcode);
     setEditShowWebsite(p.showOnWebsite);
     setEditShowMarketplace(p.showOnMarketplace);
+    setEditShowPos(p.showOnPos !== false);
     setIsEditOpen(true);
   };
 
@@ -409,12 +436,36 @@ export default function AdsSellerProductsPage() {
           barcode: editBarcode.trim(),
           showOnWebsite: editShowWebsite,
           showOnMarketplace: editShowMarketplace,
+          showOnPos: editShowPos,
         }),
       });
       const data = await res.json();
       if (!data.success) {
         throw new Error(data.error || "Failed to update product");
       }
+
+      toast({
+        title: "Saved",
+        description: `Updated product "${editProduct.name}".`,
+      });
+
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === editProduct.id
+            ? {
+                ...item,
+                price: Number(editPrice),
+                stock: parseInt(editStock) || 0,
+                sku: editSku.trim(),
+                barcode: editBarcode.trim(),
+                showOnWebsite: editShowWebsite,
+                showOnMarketplace: editShowMarketplace,
+                showOnPos: editShowPos,
+              }
+            : item
+        )
+      );
+      setIsEditOpen(false);
 
       toast({
         title: "Saved",
@@ -546,7 +597,7 @@ export default function AdsSellerProductsPage() {
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-gray-500 text-xs font-semibold">
             <span>Total Catalog</span>
@@ -572,6 +623,15 @@ export default function AdsSellerProductsPage() {
           </div>
           <div className="text-2xl font-black text-blue-600 mt-2">{stats.websiteLive}</div>
           <div className="text-[11px] text-gray-400 mt-1">Shown on your site</div>
+        </div>
+
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between text-gray-500 text-xs font-semibold">
+            <span>POS Live</span>
+            <ScanBarcode className="h-4 w-4 text-purple-600" />
+          </div>
+          <div className="text-2xl font-black text-purple-600 mt-2">{stats.posLive}</div>
+          <div className="text-[11px] text-gray-400 mt-1">POS terminal enabled</div>
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs">
@@ -661,6 +721,17 @@ export default function AdsSellerProductsPage() {
           >
             <Globe className="h-3 w-3" />
             Website Live ({stats.websiteLive})
+          </button>
+          <button
+            onClick={() => setActiveTab("pos")}
+            className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              activeTab === "pos"
+                ? "bg-purple-600 text-white shadow-xs"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            <ScanBarcode className="h-3 w-3" />
+            POS Live ({stats.posLive})
           </button>
           <button
             onClick={() => setActiveTab("low_stock")}
@@ -846,6 +917,26 @@ export default function AdsSellerProductsPage() {
                                 {isMktgToggling ? "..." : p.showOnMarketplace ? "Live" : "Off"}
                               </button>
                             </div>
+
+                            {/* POS Channel */}
+                            <div className="flex items-center justify-between gap-2 text-xs">
+                              <span className="text-gray-500 text-[11px] font-medium flex items-center gap-1">
+                                <ScanBarcode className="h-3 w-3 text-purple-600" />
+                                POS:
+                              </span>
+                              <button
+                                onClick={() => handleToggleChannel(p.id, "pos", p.showOnPos !== false)}
+                                disabled={togglingId === `${p.id}-pos`}
+                                className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${
+                                  p.showOnPos !== false
+                                    ? "bg-purple-50 text-purple-700 border border-purple-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                                    : "bg-gray-100 text-gray-400 border border-gray-200 hover:bg-purple-50 hover:text-purple-700"
+                                }`}
+                                title={p.showOnPos !== false ? "Active on POS retail counter. Click to remove from POS." : "Click to enable on POS counter."}
+                              >
+                                {togglingId === `${p.id}-pos` ? "..." : p.showOnPos !== false ? "Live" : "Off"}
+                              </button>
+                            </div>
                           </div>
                         </td>
 
@@ -960,8 +1051,8 @@ export default function AdsSellerProductsPage() {
                   </div>
 
                   {/* Channel toggles on mobile */}
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-50 text-xs">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-50 text-xs">
+                    <div className="flex items-center gap-1.5">
                       <span className="text-[11px] text-gray-500">Website:</span>
                       <button
                         onClick={() => handleToggleChannel(p.id, "website", p.showOnWebsite)}
@@ -975,7 +1066,7 @@ export default function AdsSellerProductsPage() {
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <span className="text-[11px] text-gray-500">TryMe Shop:</span>
                       <button
                         onClick={() => handleToggleChannel(p.id, "marketplace", p.showOnMarketplace)}
@@ -987,6 +1078,20 @@ export default function AdsSellerProductsPage() {
                         title={p.showOnMarketplace ? "Active on TryMe Shop by Category. Click to remove." : "Click to publish on TryMe Shop by Category."}
                       >
                         {p.showOnMarketplace ? "Live" : "Off"}
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-gray-500">POS:</span>
+                      <button
+                        onClick={() => handleToggleChannel(p.id, "pos", p.showOnPos !== false)}
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          p.showOnPos !== false
+                            ? "bg-purple-50 text-purple-700 border border-purple-200"
+                            : "bg-gray-100 text-gray-400"
+                        }`}
+                      >
+                        {p.showOnPos !== false ? "Live" : "Off"}
                       </button>
                     </div>
                   </div>
@@ -1256,6 +1361,19 @@ export default function AdsSellerProductsPage() {
                 </div>
                 <Switch checked={newShowMarketplace} onCheckedChange={setNewShowMarketplace} />
               </div>
+
+              <div className="flex items-center justify-between p-3 rounded-xl bg-purple-50/60 border border-purple-100">
+                <div>
+                  <div className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                    <ScanBarcode className="h-3.5 w-3.5 text-purple-600" />
+                    Show on In-Store POS Terminal
+                  </div>
+                  <div className="text-[11px] text-gray-500">
+                    Enable barcode scanning and cashier checkout at your physical retail counter
+                  </div>
+                </div>
+                <Switch checked={newShowPos} onCheckedChange={setNewShowPos} />
+              </div>
             </div>
 
             <DialogFooter className="pt-2">
@@ -1353,6 +1471,13 @@ export default function AdsSellerProductsPage() {
                   <p className="text-[10px] text-gray-400">Publishes item to public Shop by Category (/products) with online ordering & cart</p>
                 </div>
                 <Switch checked={editShowMarketplace} onCheckedChange={setEditShowMarketplace} />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-gray-700">Show on In-Store POS</span>
+                  <p className="text-[10px] text-gray-400">Enables in-store cashier barcode billing and checkout</p>
+                </div>
+                <Switch checked={editShowPos} onCheckedChange={setEditShowPos} />
               </div>
             </div>
           </div>

@@ -106,8 +106,8 @@ export default function MyAdsPage() {
     }
   };
 
-  const handleToggleChannel = async (adId: string, channel: "website" | "marketplace", currentValue: boolean) => {
-    const field = channel === "website" ? "showOnWebsite" : "showOnMarketplace";
+  const handleToggleChannel = async (adId: string, channel: "website" | "marketplace" | "pos", currentValue: boolean) => {
+    const field = channel === "website" ? "showOnWebsite" : channel === "marketplace" ? "showOnMarketplace" : "showOnPos";
     const nextVal = !currentValue;
 
     // Optimistic update
@@ -135,7 +135,7 @@ export default function MyAdsPage() {
 
       toast({
         title: "Channel Visibility Updated",
-        description: `${channel === "website" ? "My Website" : "Marketplace"} visibility is now ${nextVal ? "ON" : "OFF"}.`,
+        description: `${channel === "website" ? "My Website" : channel === "marketplace" ? "Marketplace" : "In-Store POS"} visibility is now ${nextVal ? "ON" : "OFF"}.`,
       });
     } catch (err: any) {
       toast({
@@ -366,6 +366,35 @@ export default function MyAdsPage() {
                             <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0">
                               {ad.status}
                             </Badge>
+                          )}
+                        </div>
+
+                        {/* 📟 POS Counter Status */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-gray-500 dark:text-slate-400 font-medium whitespace-nowrap w-[96px] shrink-0 flex items-center gap-1">
+                            <span>📟</span>
+                            <span className="font-semibold text-gray-700 dark:text-slate-300">POS Counter:</span>
+                          </span>
+                          {ad.showOnPos === false ? (
+                            <button
+                              onClick={() => handleToggleChannel(ad.id, "pos", false)}
+                              title="Click to enable on In-Store POS"
+                              className="cursor-pointer group"
+                            >
+                              <Badge variant="outline" className="bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700 group-hover:bg-purple-50 dark:group-hover:bg-purple-950/40 group-hover:text-purple-700 dark:group-hover:text-purple-400 group-hover:border-purple-200 dark:group-hover:border-purple-800 text-[10px] font-medium py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                                Off (Hidden)
+                              </Badge>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleChannel(ad.id, "pos", true)}
+                              title="Click to hide from In-Store POS"
+                              className="cursor-pointer group"
+                            >
+                              <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800 group-hover:bg-red-50 dark:group-hover:bg-red-950/40 group-hover:text-red-600 dark:group-hover:text-red-400 group-hover:border-red-200 dark:group-hover:border-red-800 text-[10px] font-bold py-0.5 px-2.5 h-auto whitespace-nowrap shrink-0 transition-colors">
+                                Live
+                              </Badge>
+                            </button>
                           )}
                         </div>
                       </div>

@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
         vendorId: vendor.id,
         isActive: true,
         isDisabledByAdmin: false,
+        showOnPos: true,
         ...(search
           ? {
               OR: [
