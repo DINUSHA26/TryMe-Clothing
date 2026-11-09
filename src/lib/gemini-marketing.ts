@@ -69,3 +69,4 @@ export async function callGeminiMarketing(
 
   throw lastError || new Error("Failed to generate marketing post from Gemini API.");
 }
+

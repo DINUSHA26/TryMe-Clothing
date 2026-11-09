@@ -122,3 +122,4 @@ SPECIFICATIONS: ${item.specifications ? JSON.stringify(item.specifications) : "S
     );
   }
 }
+
