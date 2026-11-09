@@ -42,20 +42,23 @@ export function AdsSellerMobileNav({ isOpen, onClose }: AdsSellerMobileNavProps)
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-[85vw] max-w-[280px] p-0 flex flex-col h-full bg-white">
-        <SheetHeader className="p-4 text-left border-b border-gray-100">
+      <SheetContent
+        side="left"
+        className="w-[85vw] max-w-[280px] p-0 flex flex-col h-full bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#0B0F19] dark:via-[#0E1526] dark:to-[#080B12] border-r border-[#EAE4D9] dark:border-slate-800"
+      >
+        <SheetHeader className="p-4 text-left border-b border-[#EAE4D9] dark:border-slate-800/80">
           <SheetTitle>
             <Logo variant="icon" href="/ads-seller" />
           </SheetTitle>
         </SheetHeader>
 
         {/* Store Title */}
-        <div className="px-6 py-4 bg-gray-50/50">
-          <p className="text-sm font-semibold text-gray-900 truncate">{businessName}</p>
-          <p className="text-xs text-gray-500 mt-0.5 truncate">{user?.email}</p>
+        <div className="mx-3 my-2 px-3.5 py-2.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-[#EAE4D9] dark:border-slate-800/80 shadow-xs">
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{businessName}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">{user?.email}</p>
         </div>
 
-        <Separator />
+        <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
 
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="space-y-1">

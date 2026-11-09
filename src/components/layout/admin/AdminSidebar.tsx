@@ -85,7 +85,9 @@ export function AdminSidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-card border-r border-border transition-all duration-300",
+        "flex flex-col h-screen transition-all duration-300",
+        "bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#0B0F19] dark:via-[#0E1526] dark:to-[#080B12]",
+        "border-r border-[#EAE4D9] dark:border-slate-800/80 shadow-xs",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
@@ -94,7 +96,7 @@ export function AdminSidebar({
         <Logo variant="icon" href="/admin" className={cn(isCollapsed && "mx-auto")} size={isCollapsed ? "sm" : "md"} />
       </div>
 
-      <Separator />
+      <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
@@ -111,20 +113,20 @@ export function AdminSidebar({
         </TooltipProvider>
       </ScrollArea>
 
-      <Separator />
+      <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
 
       {/* User Info & Collapse Button */}
       <div className="p-4 space-y-3">
         {!isCollapsed && user && (
-          <div className="px-3 py-2 bg-accent rounded-lg">
-            <p className="text-sm font-medium truncate">
+          <div className="px-3 py-2 bg-white/70 dark:bg-slate-900/60 border border-[#EAE4D9] dark:border-slate-800/80 rounded-xl shadow-xs">
+            <p className="text-sm font-semibold truncate text-gray-900 dark:text-gray-100">
               {user.firstName || "Admin"}
             </p>
             <p className="text-xs text-muted-foreground truncate">
               {user.email}
             </p>
             {roleName && !isSuper && (
-              <p className="mt-1 inline-block text-[10px] font-semibold uppercase tracking-wide bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+              <p className="mt-1 inline-block text-[10px] font-bold uppercase tracking-wide bg-[#FF6600]/10 text-[#FF6600] px-2 py-0.5 rounded-full">
                 {roleName}
               </p>
             )}

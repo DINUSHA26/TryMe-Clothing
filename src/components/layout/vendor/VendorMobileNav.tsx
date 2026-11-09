@@ -45,17 +45,20 @@ export function VendorMobileNav({ isOpen, onClose }: VendorMobileNavProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-72 p-0 flex flex-col h-full">
+      <SheetContent
+        side="left"
+        className="w-72 p-0 flex flex-col h-full bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#0B0F19] dark:via-[#0E1526] dark:to-[#080B12] border-r border-[#EAE4D9] dark:border-slate-800"
+      >
         <SheetHeader className="p-4 flex flex-row items-center justify-between space-y-0">
           <SheetTitle>
             <Logo variant="icon" href="/vendor" />
           </SheetTitle>
         </SheetHeader>
 
-        <Separator />
+        <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
 
         {/* Shop Status */}
-        <div className="px-4 py-3 bg-muted/50">
+        <div className="mx-3 my-2 px-3.5 py-2.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-[#EAE4D9] dark:border-slate-800/80 shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <StoreIcon className="w-4 h-4" />

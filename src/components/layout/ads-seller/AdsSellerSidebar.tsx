@@ -107,7 +107,9 @@ export function AdsSellerSidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-card border-r border-border transition-all duration-300",
+        "flex flex-col h-screen transition-all duration-300",
+        "bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F4EFE6] dark:from-[#0B0F19] dark:via-[#0E1526] dark:to-[#080B12]",
+        "border-r border-[#EAE4D9] dark:border-slate-800/80 shadow-xs",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
@@ -116,20 +118,20 @@ export function AdsSellerSidebar({
         <Logo variant="icon" href="/ads-seller" className={cn(isCollapsed && "mx-auto")} size={isCollapsed ? "sm" : "md"} />
       </div>
 
-      <Separator />
+      <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
 
       {/* Seller Status */}
       {!isCollapsed && (
-        <div className="px-4 py-3 bg-muted/50">
+        <div className="mx-3 my-2 px-3.5 py-2.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-[#EAE4D9] dark:border-slate-800/80 shadow-xs">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Megaphone className="w-4 h-4 text-[#FF6600]" />
-              <span className="text-sm font-medium truncate">{sellerName}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <Megaphone className="w-4 h-4 text-[#FF6600] shrink-0" />
+              <span className="text-sm font-semibold truncate text-gray-900 dark:text-gray-100">{sellerName}</span>
             </div>
             <Badge
               variant={isShopOpen ? "default" : "secondary"}
               className={cn(
-                "text-xs font-semibold",
+                "text-xs font-semibold shrink-0",
                 isShopOpen
                   ? "bg-emerald-600 text-white hover:bg-emerald-700"
                   : "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300"
@@ -139,7 +141,7 @@ export function AdsSellerSidebar({
             </Badge>
           </div>
           {isOwner || can("wallet.view") || canAccessPath("/ads-seller/wallet") ? (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
               Available: {availableBalance === null ? "..." : `Rs. ${availableBalance.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </p>
           ) : (
@@ -153,7 +155,7 @@ export function AdsSellerSidebar({
         </div>
       )}
 
-      <Separator />
+      <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
@@ -170,14 +172,14 @@ export function AdsSellerSidebar({
         </TooltipProvider>
       </ScrollArea>
 
-      <Separator />
+      <Separator className="bg-[#EAE4D9] dark:bg-slate-800/80" />
 
       {/* Footer Info */}
       <div className="p-4 space-y-3">
         {!isCollapsed && user && (
-          <div className="px-3 py-2 bg-accent rounded-lg">
+          <div className="px-3 py-2 bg-white/70 dark:bg-slate-900/60 border border-[#EAE4D9] dark:border-slate-800/80 rounded-xl shadow-xs">
             <div className="flex items-center justify-between gap-1">
-              <p className="text-sm font-medium truncate">
+              <p className="text-sm font-semibold truncate text-gray-900 dark:text-gray-100">
                 {user.firstName || "Ads Seller"}
               </p>
               <Badge variant={isOwner ? "default" : "outline"} className="text-[10px] px-1.5 py-0 shrink-0">
