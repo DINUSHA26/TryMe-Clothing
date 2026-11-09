@@ -12,8 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Eye, LayoutGrid, PlusCircle, RefreshCw, Edit, Barcode } from "lucide-react";
+import { Trash2, Eye, LayoutGrid, PlusCircle, RefreshCw, Edit, Barcode, Sparkles } from "lucide-react";
 import { BarcodeGeneratorModal } from "@/components/products/BarcodeGeneratorModal";
+import { AiSocialPostModal } from "@/components/ai/AiSocialPostModal";
 import Link from "next/link";
 import { formatDistance } from "date-fns";
 
@@ -384,6 +385,29 @@ export default function MyAdsPage() {
                             </a>
                           </Button>
                         )}
+                        <AiSocialPostModal
+                          item={{
+                            type: "AD",
+                            id: ad.id,
+                            name: ad.title,
+                            price: Number(ad.price || 0),
+                            category: ad.primaryCategory || "Classified Ad",
+                            description: ad.description,
+                            imageUrl: ad.images?.[0],
+                            specifications: ad.specifications,
+                            location: [ad.locationCity, ad.locationDistrict].filter(Boolean).join(", "),
+                          }}
+                          triggerButton={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Generate AI Facebook & Instagram Posts"
+                              className="text-amber-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/50 rounded-lg"
+                            >
+                              <Sparkles className="h-4.5 w-4.5" />
+                            </Button>
+                          }
+                        />
                         <BarcodeGeneratorModal
                           product={{
                             id: ad.id,

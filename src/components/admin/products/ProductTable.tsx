@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, Shield, ShieldOff, AlertCircle } from "lucide-react";
+import { MoreHorizontal, Shield, ShieldOff, AlertCircle, Sparkles } from "lucide-react";
+import { AiSocialPostModal } from "@/components/ai/AiSocialPostModal";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -152,31 +153,54 @@ export function ProductTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {product.isDisabledByAdmin ? (
-                        <DropdownMenuItem
-                          onClick={() => setDisablingProduct(product)}
+                  <div className="flex items-center gap-1">
+                    <AiSocialPostModal
+                      item={{
+                        type: "PRODUCT",
+                        id: product.id,
+                        name: product.name,
+                        price: Number(product.price),
+                        category: (product as any).category?.name || "Marketplace Product",
+                        description: (product as any).description,
+                        imageUrl: product.images?.[0]?.url,
+                      }}
+                      triggerButton={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Generate AI Social Posts (Facebook & Instagram)"
+                          className="h-8 w-8 p-0 text-amber-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
                         >
-                          <Shield className="mr-2 h-4 w-4" />
-                          Enable Product
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem
-                          onClick={() => setDisablingProduct(product)}
-                          className="text-destructive"
-                        >
-                          <ShieldOff className="mr-2 h-4 w-4" />
-                          Disable Product
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                          <Sparkles className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {product.isDisabledByAdmin ? (
+                          <DropdownMenuItem
+                            onClick={() => setDisablingProduct(product)}
+                          >
+                            <Shield className="mr-2 h-4 w-4" />
+                            Enable Product
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={() => setDisablingProduct(product)}
+                            className="text-destructive"
+                          >
+                            <ShieldOff className="mr-2 h-4 w-4" />
+                            Disable Product
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

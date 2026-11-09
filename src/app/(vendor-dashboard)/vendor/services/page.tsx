@@ -27,10 +27,12 @@ import {
   Mail,
   Store,
   Layers,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceFormModal } from "@/components/services/ServiceFormModal";
 import { ServiceInquiriesManager } from "@/components/services/ServiceInquiriesManager";
+import { AiSocialPostModal } from "@/components/ai/AiSocialPostModal";
 
 export default function VendorServicesPage() {
   const { toast } = useToast();
@@ -400,40 +402,64 @@ export default function VendorServicesPage() {
 
                         {/* Actions */}
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44 dark:bg-slate-900 dark:border-slate-800">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setEditingService(srv);
-                                  setIsModalOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Service
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                asChild
-                                className="cursor-pointer"
-                              >
-                                <Link href={`/services/${srv.slug || srv.id}`} target="_blank">
-                                  <ExternalLink className="h-4 w-4 mr-2" />
-                                  View on TryMe
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(srv.id, srv.name)}
-                                className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Service
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex items-center justify-end gap-1">
+                            <AiSocialPostModal
+                              item={{
+                                type: "SERVICE",
+                                id: srv.id,
+                                name: srv.name,
+                                price: srv.price ? Number(srv.price) : null,
+                                category: srv.category?.name || "Service",
+                                description: srv.description || srv.shortDesc,
+                                imageUrl: srv.images?.[0],
+                                location: [srv.city, srv.district].filter(Boolean).join(", "),
+                              }}
+                              triggerButton={
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="AI Social Posts (Facebook & Instagram)"
+                                  className="h-8 w-8 text-amber-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
+                                >
+                                  <Sparkles className="h-4 w-4" />
+                                </Button>
+                              }
+                            />
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48 dark:bg-slate-900 dark:border-slate-800">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setEditingService(srv);
+                                    setIsModalOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Service
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  asChild
+                                  className="cursor-pointer"
+                                >
+                                  <Link href={`/services/${srv.slug || srv.id}`} target="_blank">
+                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                    View on TryMe
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDelete(srv.id, srv.name)}
+                                  className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Service
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

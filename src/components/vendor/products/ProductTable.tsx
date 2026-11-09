@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Edit, Trash, MoreHorizontal, AlertCircle, Barcode } from "lucide-react";
+import { Edit, Trash, MoreHorizontal, AlertCircle, Barcode, Sparkles } from "lucide-react";
 import { BarcodeGeneratorModal } from "@/components/products/BarcodeGeneratorModal";
+import { AiSocialPostModal } from "@/components/ai/AiSocialPostModal";
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -370,6 +371,27 @@ export function ProductTable({
                           className="h-8 w-8 p-0 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950"
                         >
                           <Barcode className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                    <AiSocialPostModal
+                      item={{
+                        type: "PRODUCT",
+                        id: product.id,
+                        name: product.name,
+                        price: Number(product.price),
+                        category: (product as any).category?.name || "Apparel",
+                        description: (product as any).description,
+                        imageUrl: product.images?.[0]?.url,
+                      }}
+                      triggerButton={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Generate AI Facebook & Instagram Posts"
+                          className="h-8 w-8 p-0 text-amber-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
+                        >
+                          <Sparkles className="h-4 w-4" />
                         </Button>
                       }
                     />
