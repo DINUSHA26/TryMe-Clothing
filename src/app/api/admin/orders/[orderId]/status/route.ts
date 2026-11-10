@@ -56,8 +56,10 @@ export async function PATCH(
             vendor: {
               select: {
                 id: true,
+                userId: true,
                 businessName: true,
                 businessEmail: true,
+                user: { select: { role: true } },
               },
             },
           },
@@ -178,6 +180,44 @@ export async function PATCH(
       });
     } catch (notifError) {
       console.error("[Admin Override Status] Failed to send notification:", notifError);
+    }
+
+    // If order was in pending payment / verification and is now confirmed or processing, notify vendors
+    const wasPending = order.status === "PENDING_PAYMENT" || order.status === "PENDING_VERIFICATION";
+    const isNowConfirmed = status === "PAYMENT_CONFIRMED" || status === "PROCESSING";
+
+    if (wasPending && isNowConfirmed) {
+      try {
+        const sellerMap = new Map<string, { businessName: string; role?: string }>();
+        for (const item of order.items) {
+          if (item.vendor?.userId && !sellerMap.has(item.vendor.userId)) {
+            sellerMap.set(item.vendor.userId, {
+              businessName: item.vendor.businessName,
+              role: (item.vendor as any).user?.role,
+            });
+          }
+        }
+
+        for (const [sellerUserId, sData] of sellerMap.entries()) {
+          const isAdsSeller = sData.role === "ADS_SELLER";
+          createNotification({
+            userId: sellerUserId,
+            type: NotificationType.ORDER_PAYMENT_CONFIRMED,
+            title: "🛍️ New Order Received!",
+            message: `You received a new order #${order.orderNumber}! Payment has been confirmed by Admin.`,
+            link: isAdsSeller ? `/ads-seller/orders/${order.id}` : `/vendor/orders/${order.id}`,
+            metadata: {
+              orderId,
+              orderNumber: order.orderNumber,
+              chimeTimes: 5,
+              isNewOrder: true,
+              isPaymentConfirmed: true,
+            },
+          }).catch(() => {});
+        }
+      } catch (sellerNotifErr) {
+        console.error("[Admin Override Status] Failed to notify seller:", sellerNotifErr);
+      }
     }
 
     // Trigger transactional emails asynchronously (non-blocking) based on new status

@@ -408,35 +408,9 @@ export async function POST(request: NextRequest) {
       }).catch((e) => console.warn("[OrderCreate] Customer notif error:", e));
     }
 
-    // 3. Notify each Vendor whose items are in the order (5 chimes)
-    const vendorMap = new Map<string, { vendorName: string; count: number }>();
-    for (const item of cart.items) {
-      const vendorUserId = item.product.vendor?.user?.id || (item.product.vendor as any)?.userId;
-      if (vendorUserId) {
-        const existing = vendorMap.get(vendorUserId) || {
-          vendorName: item.product.vendor?.businessName || "Vendor",
-          count: 0,
-        };
-        existing.count += item.quantity;
-        vendorMap.set(vendorUserId, existing);
-      }
-    }
-
-    for (const [vendorUserId, vData] of vendorMap.entries()) {
-      createNotification({
-        userId: vendorUserId,
-        type: NotificationType.ORDER_PAYMENT_CONFIRMED,
-        title: "🛍️ New Order Received!",
-        message: `You received a new order #${result.orderNumber} for ${vData.count} items.`,
-        link: `/vendor/orders/${result.orderId}`,
-        metadata: {
-          orderId: result.orderId,
-          orderNumber: result.orderNumber,
-          chimeTimes: 5,
-          isNewOrder: true,
-        },
-      }).catch((e) => console.warn("[OrderCreate] Vendor notif error:", e));
-    }
+    // NOTE: Vendors and Ads Sellers are intentionally NOT notified when an order is created with PENDING payment.
+    // They will ONLY receive the "New Order Received!" notification and see order details once payment
+    // is successfully confirmed or approved by Admin (via PayHere webhook or admin verify-payment).
 
     return NextResponse.json({
       success: true,

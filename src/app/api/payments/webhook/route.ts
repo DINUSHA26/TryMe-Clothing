@@ -69,7 +69,16 @@ export async function POST(request: NextRequest) {
         coupon: { select: { vendorId: true } },
         items: {
           include: {
-            vendor: { select: { id: true, userId: true, businessName: true, businessEmail: true, commissionRate: true } },
+            vendor: {
+              select: {
+                id: true,
+                userId: true,
+                businessName: true,
+                businessEmail: true,
+                commissionRate: true,
+                user: { select: { role: true } },
+              },
+            },
           },
         },
       },
@@ -304,25 +313,30 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        // Notify each Vendor with products in the order (5 chimes)
-        const vendorMap = new Map<string, string>();
+        // Notify each Vendor / Ads Seller with products in the order (5 chimes)
+        const sellerMap = new Map<string, { businessName: string; role?: string }>();
         for (const item of order.items) {
-          if (item.vendor?.userId && !vendorMap.has(item.vendor.userId)) {
-            vendorMap.set(item.vendor.userId, item.vendor.businessName);
+          if (item.vendor?.userId && !sellerMap.has(item.vendor.userId)) {
+            sellerMap.set(item.vendor.userId, {
+              businessName: item.vendor.businessName,
+              role: (item.vendor as any).user?.role,
+            });
           }
         }
 
-        for (const [vendorUserId, bName] of vendorMap.entries()) {
+        for (const [sellerUserId, sData] of sellerMap.entries()) {
+          const isAdsSeller = sData.role === "ADS_SELLER";
           createNotification({
-            userId: vendorUserId,
+            userId: sellerUserId,
             type: NotificationType.ORDER_PAYMENT_CONFIRMED,
-            title: "💰 Order Payment Confirmed!",
-            message: `Online payment for order ${order.orderNumber} has been processed successfully via PayHere.`,
-            link: `/vendor/orders/${order.id}`,
+            title: "🛍️ New Order Received!",
+            message: `You received a new order #${order.orderNumber}! Online payment has been verified successfully.`,
+            link: isAdsSeller ? `/ads-seller/orders/${order.id}` : `/vendor/orders/${order.id}`,
             metadata: {
               orderId: order.id,
               orderNumber: order.orderNumber,
               chimeTimes: 5,
+              isNewOrder: true,
               isPaymentConfirmed: true,
             },
           }).catch(() => {});

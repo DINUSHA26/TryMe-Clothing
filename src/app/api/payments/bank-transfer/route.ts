@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import { uploadFile } from "@/lib/cloudinary";
+import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 
 /**
  * Helper to get authenticated customer
@@ -164,6 +165,15 @@ export async function POST(request: NextRequest) {
         note: "Bank transfer slip uploaded by customer. Awaiting admin verification.",
       },
     });
+
+    // Alert Admin that a bank transfer slip is uploaded and ready for verification
+    triggerAdminAlert({
+      type: "NEW_ORDER",
+      title: "📄 Bank Slip Uploaded!",
+      message: `Bank payment slip uploaded for order #${order.orderNumber} (Rs. ${order.totalAmount.toNumber().toLocaleString("en-LK")}). Awaiting verification.`,
+      link: `/admin/orders/${order.orderNumber}`,
+      data: { orderId: order.id, orderNumber: order.orderNumber, chimeTimes: 5 },
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

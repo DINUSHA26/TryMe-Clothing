@@ -43,6 +43,16 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
     whereClause += ` AND o."orderNumber" NOT LIKE 'WEB-%' AND o."orderNumber" NOT LIKE 'POS-%' AND (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN')`;
   }
 
+  // CRITICAL SECURITY & COMPLIANCE RULE:
+  // Marketplace orders that are PENDING_PAYMENT or PENDING_VERIFICATION belong strictly to Admin.
+  // Vendors and Ads Sellers must NEVER see or receive them under any filter until payment is confirmed/approved!
+  whereClause += ` AND NOT (
+    o."orderNumber" NOT LIKE 'WEB-%' AND
+    o."orderNumber" NOT LIKE 'POS-%' AND
+    (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN') AND
+    o."status" IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus")
+  )`;
+
   if (status) {
     if (status === "DELIVERED") {
       whereClause += ` AND o."status" = 'DELIVERED'::"OrderStatus"`;
@@ -57,10 +67,10 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
       whereClause += ` AND o."status" = $${queryParamsRaw.length}::"OrderStatus"`;
     }
   } else {
-    // For TryMe marketplace orders, exclude unpaid/cancelled by default;
+    // For TryMe marketplace orders, exclude cancelled by default;
     // For Website Direct and POS orders, show all relevant orders
     if (source === "tryme") {
-      whereClause += ` AND o."status" NOT IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus", 'CANCELLED'::"OrderStatus")`;
+      whereClause += ` AND o."status" != 'CANCELLED'::"OrderStatus"`;
     }
   }
 
@@ -161,6 +171,12 @@ export async function getVendorOrders(vendorId: string, filters: VendorOrderFilt
        FROM "OrderItem" i
        JOIN "Order" o ON i."orderId" = o."id"
        WHERE i."vendorId" = $1 ${sourceCondition}
+       AND NOT (
+         o."orderNumber" NOT LIKE 'WEB-%' AND
+         o."orderNumber" NOT LIKE 'POS-%' AND
+         (o."shippingAddressJson"->>'orderSource' IS NULL OR o."shippingAddressJson"->>'orderSource' != 'POS_WALK_IN') AND
+         o."status" IN ('PENDING_PAYMENT'::"OrderStatus", 'PENDING_VERIFICATION'::"OrderStatus")
+       )
        GROUP BY i."status"`,
       vendorId
     ),
@@ -333,6 +349,22 @@ export async function getVendorOrderDetail(vendorId: string, orderIdOrNumber: st
 
   if (!order) {
     throw new Error("Order not found");
+  }
+
+  // CRITICAL SECURITY & COMPLIANCE RULE:
+  // Marketplace orders that are PENDING_PAYMENT or PENDING_VERIFICATION belong strictly to Admin.
+  // Vendors and Ads Sellers must NEVER view order details or customer contact information before payment confirmation!
+  const isMarketplaceOrder =
+    !String(order.orderNumber).startsWith("WEB-") &&
+    !String(order.orderNumber).startsWith("POS-") &&
+    order.shippingAddressJson?.orderSource !== "POS_WALK_IN" &&
+    order.shippingAddressJson?.orderSource !== "VENDOR_WEBSITE";
+
+  if (
+    isMarketplaceOrder &&
+    (order.status === "PENDING_PAYMENT" || order.status === "PENDING_VERIFICATION")
+  ) {
+    throw new Error("This marketplace order is awaiting payment confirmation / admin verification and is not yet available to vendors.");
   }
 
   const vendorItemsRaw = await prisma.$queryRawUnsafe<any[]>(

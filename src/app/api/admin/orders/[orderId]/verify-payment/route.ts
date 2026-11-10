@@ -51,6 +51,7 @@ export async function POST(
                 businessName: true,
                 businessEmail: true,
                 commissionRate: true,
+                user: { select: { role: true } },
               },
             },
           },
@@ -148,25 +149,30 @@ export async function POST(
           },
         });
 
-        // Notify each Vendor in the order (5 chimes)
-        const vendorMap = new Map<string, string>();
+        // Notify each Vendor / Ads Seller in the order (5 chimes)
+        const sellerMap = new Map<string, { businessName: string; role?: string }>();
         for (const item of order.items) {
-          if (item.vendor?.userId && !vendorMap.has(item.vendor.userId)) {
-            vendorMap.set(item.vendor.userId, item.vendor.businessName);
+          if (item.vendor?.userId && !sellerMap.has(item.vendor.userId)) {
+            sellerMap.set(item.vendor.userId, {
+              businessName: item.vendor.businessName,
+              role: (item.vendor as any).user?.role,
+            });
           }
         }
 
-        for (const [vendorUserId, bName] of vendorMap.entries()) {
+        for (const [sellerUserId, sData] of sellerMap.entries()) {
+          const isAdsSeller = sData.role === "ADS_SELLER";
           createNotification({
-            userId: vendorUserId,
+            userId: sellerUserId,
             type: NotificationType.ORDER_PAYMENT_CONFIRMED,
-            title: "💰 Order Payment Confirmed!",
-            message: `Bank payment for order ${order.orderNumber} has been verified by Admin.`,
-            link: `/vendor/orders/${order.id}`,
+            title: "🛍️ New Order Received!",
+            message: `You received a new order #${order.orderNumber}! Payment has been verified & approved by Admin.`,
+            link: isAdsSeller ? `/ads-seller/orders/${order.id}` : `/vendor/orders/${order.id}`,
             metadata: {
               orderId: order.id,
               orderNumber: order.orderNumber,
               chimeTimes: 5,
+              isNewOrder: true,
               isPaymentConfirmed: true,
             },
           }).catch(() => {});
