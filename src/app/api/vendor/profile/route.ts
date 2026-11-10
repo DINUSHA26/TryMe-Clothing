@@ -45,6 +45,13 @@ export async function PATCH(req: NextRequest) {
         }
         const currentVendor = effective.vendor;
 
+        if (isShopOpen === true && currentVendor.status !== "ACTIVE") {
+            return NextResponse.json({
+                success: false,
+                error: "Shop cannot be opened while vendor account is inactive or pending approval."
+            }, { status: 400 });
+        }
+
         const oldName = currentVendor.businessName;
         const isNameChanged = businessName !== undefined && oldName !== businessName;
         const isStatusChanged = isShopOpen !== undefined && currentVendor.isShopOpen !== isShopOpen;

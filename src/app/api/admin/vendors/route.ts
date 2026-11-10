@@ -204,7 +204,19 @@ export async function GET(request: NextRequest) {
         },
       }),
       ...(query.isShopOpen !== undefined && {
-        isShopOpen: query.isShopOpen === "true",
+        ...(query.isShopOpen === "true"
+          ? {
+              isShopOpen: true,
+              status: "ACTIVE",
+              user: { isActive: true },
+            }
+          : {
+              OR: [
+                { isShopOpen: false },
+                { status: { not: "ACTIVE" } },
+                { user: { isActive: false } },
+              ],
+            }),
       }),
       ...(query.status && {
         status: query.status as any,
@@ -246,10 +258,16 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Sanitize isShopOpen: a shop can ONLY be open if vendor is ACTIVE and login is allowed
+    const sanitizedVendors = vendors.map((v) => ({
+      ...v,
+      isShopOpen: v.status === "ACTIVE" && Boolean(v.user?.isActive) && Boolean(v.isShopOpen),
+    }));
+
     return NextResponse.json({
       success: true,
       data: {
-        vendors,
+        vendors: sanitizedVendors,
         pagination: {
           page: query.page,
           pageSize: query.pageSize,

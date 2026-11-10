@@ -98,33 +98,33 @@ export default function VendorsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div className="bg-card rounded-lg border p-4">
           <p className="text-sm text-muted-foreground">Total Vendors</p>
           <p className="text-2xl font-bold mt-1">{pagination.totalCount}</p>
         </div>
         <div className="bg-card rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Active Vendors</p>
-          <p className="text-2xl font-bold mt-1 text-green-600">
-            {vendors.filter((v) => v.user.isActive).length}
+          <p className="text-sm text-muted-foreground">Approved Stores</p>
+          <p className="text-2xl font-bold mt-1 text-emerald-600">
+            {vendors.filter((v) => v.status === "ACTIVE").length}
           </p>
         </div>
         <div className="bg-card rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Inactive Vendors</p>
-          <p className="text-2xl font-bold mt-1 text-muted-foreground">
-            {vendors.filter((v) => !v.user.isActive).length}
-          </p>
-        </div>
-        <div className="bg-card rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Pending Verification</p>
-          <p className="text-2xl font-bold mt-1 text-orange-600">
+          <p className="text-sm text-muted-foreground">Pending Approval</p>
+          <p className="text-2xl font-bold mt-1 text-amber-600">
             {vendors.filter((v: any) => v.status === "PENDING").length}
+          </p>
+        </div>
+        <div className="bg-card rounded-lg border p-4">
+          <p className="text-sm text-muted-foreground">Login Blocked</p>
+          <p className="text-2xl font-bold mt-1 text-rose-600">
+            {vendors.filter((v) => !v.user.isActive).length}
           </p>
         </div>
         <div className="bg-card rounded-lg border p-4">
           <p className="text-sm text-muted-foreground">Shops Open</p>
           <p className="text-2xl font-bold mt-1 text-blue-600">
-            {vendors.filter((v) => v.isShopOpen).length}
+            {vendors.filter((v) => v.status === "ACTIVE" && v.isShopOpen).length}
           </p>
         </div>
       </div>
@@ -141,15 +141,15 @@ export default function VendorsPage() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full md:w-[180px]">
+          <SelectTrigger className="w-full md:w-[190px]">
             <Filter className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder="Vendor Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="all">All Vendor Status</SelectItem>
             <SelectItem value="PENDING">Pending Approval</SelectItem>
-            <SelectItem value="ACTIVE">Active (Approved)</SelectItem>
-            <SelectItem value="INACTIVE">Inactive (Suspended)</SelectItem>
+            <SelectItem value="ACTIVE">Approved (Active)</SelectItem>
+            <SelectItem value="INACTIVE">Rejected / Suspended</SelectItem>
           </SelectContent>
         </Select>
         <Select value={shopFilter} onValueChange={setShopFilter}>

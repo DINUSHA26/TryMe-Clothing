@@ -130,6 +130,18 @@ export async function PATCH(
       }
     }
 
+    // Determine effective status and enforce shop closed rule if not ACTIVE
+    const effectiveStatus = data.status || existingVendor.status;
+    let effectiveIsShopOpen = data.isShopOpen !== undefined ? data.isShopOpen : existingVendor.isShopOpen;
+    let shopClosedReason = data.shopClosedReason !== undefined ? data.shopClosedReason : existingVendor.shopClosedReason;
+
+    if (effectiveStatus !== "ACTIVE") {
+      effectiveIsShopOpen = false;
+      if (effectiveStatus === "INACTIVE" && !shopClosedReason) {
+        shopClosedReason = "Vendor account is inactive or suspended";
+      }
+    }
+
     // Update vendor
     const updatedVendor = await prisma.vendor.update({
       where: { id },
@@ -144,10 +156,8 @@ export async function PATCH(
         ...(data.commissionRate !== undefined && {
           commissionRate: data.commissionRate,
         }),
-        ...(data.isShopOpen !== undefined && { isShopOpen: data.isShopOpen }),
-        ...(data.shopClosedReason !== undefined && {
-          shopClosedReason: data.shopClosedReason,
-        }),
+        isShopOpen: effectiveIsShopOpen,
+        ...(shopClosedReason !== undefined && { shopClosedReason }),
         ...(data.status && { status: data.status }),
       },
       include: {

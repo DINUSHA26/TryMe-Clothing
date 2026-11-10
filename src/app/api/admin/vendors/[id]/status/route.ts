@@ -56,6 +56,17 @@ export async function PATCH(
       data: { isActive },
     });
 
+    // If login access is disabled, ensure the vendor's shop is immediately closed
+    if (!isActive && vendor.isShopOpen) {
+      await prisma.vendor.update({
+        where: { id: vendor.id },
+        data: {
+          isShopOpen: false,
+          shopClosedReason: "Vendor login access has been disabled by administrator",
+        },
+      });
+    }
+
     return NextResponse.json({
       success: true,
       data: {

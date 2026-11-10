@@ -66,7 +66,7 @@ export function VendorStatusToggle({
 
       toast({
         title: "Success",
-        description: `Vendor ${pendingStatus ? "enabled" : "disabled"} successfully`,
+        description: `Vendor login access has been ${pendingStatus ? "enabled (allowed)" : "disabled (blocked)"} successfully`,
       });
 
       onStatusChanged();
@@ -85,35 +85,51 @@ export function VendorStatusToggle({
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : (
-          <Switch checked={isActive} onCheckedChange={handleToggle} />
+          <Switch
+            checked={isActive}
+            onCheckedChange={handleToggle}
+            className="data-[state=checked]:bg-emerald-600"
+          />
         )}
-        <span className={isActive ? "text-green-600" : "text-muted-foreground"}>
-          {isActive ? "Active" : "Inactive"}
-        </span>
+        <div className="flex flex-col">
+          <span
+            className={`text-xs font-semibold leading-tight ${
+              isActive ? "text-emerald-700" : "text-rose-600"
+            }`}
+          >
+            {isActive ? "Allowed" : "Blocked"}
+          </span>
+          <span className="text-[10px] text-muted-foreground leading-tight">
+            {isActive ? "Can log in" : "Login blocked"}
+          </span>
+        </div>
       </div>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {pendingStatus ? "Enable" : "Disable"} Vendor?
+              {pendingStatus ? "Allow Login Access?" : "Block Login Access?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {pendingStatus
-                ? `Are you sure you want to enable ${businessName}? They will be able to log in and manage their products.`
-                : `Are you sure you want to disable ${businessName}? They will not be able to log in or sell products.`}
+                ? `Are you sure you want to allow login access for ${businessName}? They will be able to log in to their account.`
+                : `Are you sure you want to block login access for ${businessName}? They will immediately be prevented from logging into the platform.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setPendingStatus(null)}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmStatusChange}>
-              Confirm
+            <AlertDialogAction
+              onClick={confirmStatusChange}
+              className={pendingStatus ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-rose-600 hover:bg-rose-700 text-white"}
+            >
+              {pendingStatus ? "Confirm Allow" : "Confirm Block"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

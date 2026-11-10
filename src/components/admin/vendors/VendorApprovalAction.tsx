@@ -61,10 +61,10 @@ export function VendorApprovalAction({
   if (status !== "PENDING") return null;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5 pt-1">
       <Button
         size="sm"
-        className="bg-green-600 hover:bg-green-700 h-8"
+        className="bg-emerald-600 hover:bg-emerald-700 h-7 px-2.5 text-xs shadow-none"
         onClick={() => handleUpdateStatus("ACTIVE")}
         disabled={isLoading}
       >
@@ -74,7 +74,7 @@ export function VendorApprovalAction({
       <Button
         size="sm"
         variant="outline"
-        className="text-red-600 hover:text-red-700 h-8"
+        className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 h-7 px-2.5 text-xs"
         onClick={() => handleUpdateStatus("INACTIVE")}
         disabled={isLoading}
       >

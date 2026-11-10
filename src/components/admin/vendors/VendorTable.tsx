@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatDistance } from "date-fns";
-import { Edit, Eye, KeyRound, MoreVertical } from "lucide-react";
+import { CheckCircle2, Clock, Edit, Eye, KeyRound, MoreVertical, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -84,7 +84,8 @@ export function VendorTable({ vendors, onVendorUpdated }: VendorTableProps) {
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Commission</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Vendor Status</TableHead>
+              <TableHead>Login Access</TableHead>
               <TableHead>Shop</TableHead>
               <TableHead>Wallet</TableHead>
               <TableHead>Created</TableHead>
@@ -94,7 +95,7 @@ export function VendorTable({ vendors, onVendorUpdated }: VendorTableProps) {
           <TableBody>
             {vendors.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                   No vendors found
                 </TableCell>
               </TableRow>
@@ -103,45 +104,56 @@ export function VendorTable({ vendors, onVendorUpdated }: VendorTableProps) {
                 <TableRow key={vendor.id}>
                   <TableCell className="font-medium">{vendor.businessName}</TableCell>
                   <TableCell className="text-sm">{vendor.businessEmail}</TableCell>
-                  <TableCell className="text-sm">{vendor.businessPhone}</TableCell>
+                  <TableCell className="text-sm">{vendor.businessPhone || "-"}</TableCell>
                   <TableCell className="text-sm">{Number(vendor.commissionRate)}%</TableCell>
                   <TableCell>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        {vendor.status === "PENDING" && (
-                          <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200">
-                            Pending
+                    <div className="space-y-1.5">
+                      {vendor.status === "PENDING" && (
+                        <>
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 inline-flex items-center gap-1 font-medium">
+                            <Clock className="w-3 h-3" />
+                            Pending Approval
                           </Badge>
-                        )}
-                        {vendor.status === "ACTIVE" && (
-                          <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-                            Active
-                          </Badge>
-                        )}
-                        {vendor.status === "INACTIVE" && (
-                          <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-                            Inactive
-                          </Badge>
-                        )}
-                        <VendorStatusToggle
-                          vendorId={vendor.id}
-                          isActive={vendor.user.isActive}
-                          businessName={vendor.businessName}
-                          onStatusChanged={onVendorUpdated}
-                        />
-                      </div>
-                      <VendorApprovalAction
-                        vendorId={vendor.id}
-                        status={vendor.status}
-                        businessName={vendor.businessName}
-                        onActionComplete={onVendorUpdated}
-                      />
+                          <VendorApprovalAction
+                            vendorId={vendor.id}
+                            status={vendor.status}
+                            businessName={vendor.businessName}
+                            onActionComplete={onVendorUpdated}
+                          />
+                        </>
+                      )}
+                      {vendor.status === "ACTIVE" && (
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 inline-flex items-center gap-1 font-medium">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Approved
+                        </Badge>
+                      )}
+                      {vendor.status === "INACTIVE" && (
+                        <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 inline-flex items-center gap-1 font-medium">
+                          <XCircle className="w-3 h-3" />
+                          Rejected / Inactive
+                        </Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={vendor.isShopOpen ? "default" : "secondary"}>
-                      {vendor.isShopOpen ? "Open" : "Closed"}
-                    </Badge>
+                    <VendorStatusToggle
+                      vendorId={vendor.id}
+                      isActive={vendor.user.isActive}
+                      businessName={vendor.businessName}
+                      onStatusChanged={onVendorUpdated}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {vendor.status === "ACTIVE" && vendor.isShopOpen ? (
+                      <Badge variant="default" className="bg-slate-900 text-white font-medium">
+                        Open
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-muted-foreground font-normal">
+                        Closed
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     {vendor.wallet ? (
