@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { evaluateAndEnforceSubscriptionLifecycle } from "@/lib/website-subscription-guard";
 
@@ -6,7 +7,7 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
     const cleanParam = decodeURIComponent(domainOrSlug).toLowerCase().replace(/^www\./, "");
 
     // 1. Try finding by Custom Domain first
-    const domainRecord = await (prisma as any).vendorCustomDomain.findFirst({
+    let domainRecord = await (prisma as any).vendorCustomDomain.findFirst({
       where: {
         OR: [{ domain: cleanParam }, { domain: `www.${cleanParam}` }],
       },
@@ -143,6 +144,12 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
     const entity = vendor || adsSeller;
     let linkedVendorId = vendor ? vendor.id : null;
     let linkedAdsSellerId = adsSeller ? adsSeller.id : null;
+
+    if (!domainRecord && entity?.id) {
+      domainRecord = await (prisma as any).vendorCustomDomain.findFirst({
+        where: vendor ? { vendorId: vendor.id } : { adsSellerId: adsSeller.id },
+      });
+    }
 
     if (entity?.userId) {
       if (!linkedVendorId) {
@@ -289,6 +296,15 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
         email: (entity as any).businessEmail,
         address: (entity as any).businessAddress,
       },
+      customDomain: domainRecord
+        ? {
+            id: domainRecord.id,
+            domain: domainRecord.domain,
+            dnsStatus: domainRecord.dnsStatus,
+            verificationKey: domainRecord.verificationKey,
+            sslActive: domainRecord.sslActive,
+          }
+        : null,
       config,
       subscription: activeSub,
       subscriptionLifecycle: lifecycle,
@@ -301,3 +317,12 @@ export async function getStandaloneSiteData(domainOrSlug: string) {
     return null;
   }
 }
+
+/**
+ * Deduplicated, request-scoped cached version of getStandaloneSiteData.
+ * In Next.js Server Components, calling this in generateMetadata() and StandaloneSitePage()
+ * executes the database queries only ONCE per request lifecycle.
+ */
+export const getStandaloneSiteDataCached = cache(async (domainOrSlug: string) => {
+  return getStandaloneSiteData(domainOrSlug);
+});

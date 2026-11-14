@@ -257,6 +257,20 @@ export async function PUT(request: NextRequest) {
       where: target.flexibleWhere,
     });
 
+    const effectiveFooterSection = body.footerSection !== undefined
+      ? { ...body.footerSection }
+      : existingConfig?.footerSection
+      ? { ...(existingConfig.footerSection as any) }
+      : {};
+
+    if (body.metaVerificationCode !== undefined || body.facebookAppId !== undefined) {
+      effectiveFooterSection.seoConfig = {
+        ...(effectiveFooterSection.seoConfig || {}),
+        ...(body.metaVerificationCode !== undefined ? { metaVerificationCode: body.metaVerificationCode } : {}),
+        ...(body.facebookAppId !== undefined ? { facebookAppId: body.facebookAppId } : {}),
+      };
+    }
+
     let updatedConfig;
     if (existingConfig) {
       updatedConfig = await (prisma as any).vendorWebsiteConfig.update({
@@ -274,7 +288,7 @@ export async function PUT(request: NextRequest) {
           gallerySection: body.gallerySection,
           reviewsSection: body.reviewsSection,
           contactSection: body.contactSection,
-          footerSection: body.footerSection,
+          footerSection: effectiveFooterSection,
           customSections: body.customSections !== undefined ? body.customSections : undefined,
           sectionsOrder: body.sectionsOrder !== undefined ? body.sectionsOrder : undefined,
           metaTitle: body.metaTitle,
@@ -305,7 +319,7 @@ export async function PUT(request: NextRequest) {
           gallerySection: body.gallerySection || null,
           reviewsSection: body.reviewsSection || null,
           contactSection: body.contactSection || null,
-          footerSection: body.footerSection || null,
+          footerSection: Object.keys(effectiveFooterSection).length > 0 ? effectiveFooterSection : null,
           customSections: body.customSections !== undefined ? body.customSections : null,
           sectionsOrder: body.sectionsOrder !== undefined ? body.sectionsOrder : null,
           metaTitle: body.metaTitle || null,

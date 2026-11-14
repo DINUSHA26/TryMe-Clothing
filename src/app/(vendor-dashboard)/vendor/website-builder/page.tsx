@@ -796,6 +796,12 @@ export default function WebsiteBuilderPage() {
               images: [...(prev.gallerySection?.images || []), url],
             },
           }));
+        } else if (targetField === "ogImage") {
+          setConfig((prev: any) => {
+            const updated = { ...prev, ogImage: url };
+            autoSaveConfig(updated);
+            return updated;
+          });
         }
         toast.success("Image uploaded successfully!", { id: "upload-img" });
       } else {
@@ -6926,6 +6932,255 @@ export default function WebsiteBuilderPage() {
                     </div>
                   </div>
                 )}
+
+                {/* ── META / FACEBOOK / WHATSAPP VERIFICATION & SEO SECTION ── */}
+                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 bg-white dark:bg-slate-900/90 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-black">
+                        M
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                          Meta &amp; WhatsApp Verification
+                          <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] py-0 px-2">
+                            Auto-Optimized
+                          </Badge>
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Fixes &quot;The website you entered seems broken&quot; error in Meta &amp; WhatsApp Business setup.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Informational checklist */}
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-2 text-xs">
+                    <div className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>
+                        <strong>Open Graph Tags Active:</strong> <code>og:type</code>, <code>og:url</code>, <code>og:title</code>, <code>og:image</code>, and <code>canonical</code> are automatically served on your live domain.
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>
+                        <strong>Crawler Compliance:</strong> <code>/robots.txt</code> and <code>/sitemap.xml</code> respond with HTTP 200 OK allowing Facebook, WhatsApp, and Google bots.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Meta Domain Verification Code Input */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        Meta Domain Verification Code
+                      </Label>
+                      <span className="text-[10px] text-slate-400">
+                        From Meta Business Manager &gt; Brand Safety &gt; Domains
+                      </span>
+                    </div>
+                    <Input
+                      value={config.footerSection?.seoConfig?.metaVerificationCode || config.metaVerificationCode || ""}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const match = raw.match(/content=["']([^"']+)["']/i);
+                        const cleanCode = match ? match[1] : raw.trim();
+                        const updated = {
+                          ...config,
+                          metaVerificationCode: cleanCode,
+                          footerSection: {
+                            ...(config.footerSection || {}),
+                            seoConfig: {
+                              ...((config.footerSection as any)?.seoConfig || {}),
+                              metaVerificationCode: cleanCode,
+                            },
+                          },
+                        };
+                        setConfig(updated);
+                        autoSaveConfig(updated);
+                      }}
+                      placeholder="e.g. abcdef1234567890 or paste <meta ... /> tag"
+                      className="font-mono text-xs rounded-xl"
+                    />
+                    <p className="text-[11px] text-slate-400">
+                      Paste either the code or the entire <code>&lt;meta name=&quot;facebook-domain-verification&quot; ...&gt;</code> tag. It will be injected directly into your website&apos;s <code>&lt;head&gt;</code>!
+                    </p>
+                  </div>
+
+                  {/* Facebook Sharing Debugger Test Button */}
+                  <div className="pt-2 flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const targetDomain = customDomain?.domain || `${entityInfo?.slug}.tryme.lk`;
+                        window.open(
+                          `https://developers.facebook.com/tools/debug/?q=https%3A%2F%2F${encodeURIComponent(targetDomain)}`,
+                          "_blank"
+                        );
+                      }}
+                      className="rounded-xl text-xs font-bold gap-1.5"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Test in Facebook Sharing Debugger</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const targetDomain = customDomain?.domain || `${entityInfo?.slug}.tryme.lk`;
+                        navigator.clipboard.writeText(`https://${targetDomain}/`);
+                        toast.success("Copied clean website URL for Meta setup!");
+                      }}
+                      className="rounded-xl text-xs font-bold gap-1.5 text-slate-600"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy Website URL for Meta</span>
+                    </Button>
+                  </div>
+
+                  {/* Tracking Pixels & Analytics Accordion */}
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                    <h5 className="text-xs font-black uppercase tracking-wider text-slate-500">
+                      Tracking &amp; Analytics
+                    </h5>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          Meta (Facebook) Pixel ID
+                        </Label>
+                        <Input
+                          value={config.facebookPixelId || ""}
+                          onChange={(e) => {
+                            const updated = { ...config, facebookPixelId: e.target.value.trim() };
+                            setConfig(updated);
+                            autoSaveConfig(updated);
+                          }}
+                          placeholder="e.g. 123456789012345"
+                          className="mt-1 h-9 text-xs rounded-xl font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          Facebook App ID (fb:app_id)
+                        </Label>
+                        <Input
+                          value={config.footerSection?.seoConfig?.facebookAppId || config.facebookAppId || ""}
+                          onChange={(e) => {
+                            const clean = e.target.value.trim();
+                            const updated = {
+                              ...config,
+                              facebookAppId: clean,
+                              footerSection: {
+                                ...(config.footerSection || {}),
+                                seoConfig: {
+                                  ...((config.footerSection as any)?.seoConfig || {}),
+                                  facebookAppId: clean,
+                                },
+                              },
+                            };
+                            setConfig(updated);
+                            autoSaveConfig(updated);
+                          }}
+                          placeholder="e.g. 1126919989933564"
+                          className="mt-1 h-9 text-xs rounded-xl font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <Label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          Google Analytics ID (GA4)
+                        </Label>
+                        <Input
+                          value={config.googleAnalyticsId || ""}
+                          onChange={(e) => {
+                            const updated = { ...config, googleAnalyticsId: e.target.value.trim() };
+                            setConfig(updated);
+                            autoSaveConfig(updated);
+                          }}
+                          placeholder="e.g. G-XXXXXXXXXX"
+                          className="mt-1 h-9 text-xs rounded-xl font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          Custom Meta Title (SEO)
+                        </Label>
+                        <Input
+                          value={config.metaTitle || ""}
+                          onChange={(e) => {
+                            const updated = { ...config, metaTitle: e.target.value };
+                            setConfig(updated);
+                            autoSaveConfig(updated);
+                          }}
+                          placeholder={`e.g. ${entityInfo?.businessName || "Store"} | Official Store`}
+                          className="mt-1 h-9 text-xs rounded-xl"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                        Custom Meta Description (Social &amp; Google Search)
+                      </Label>
+                      <Input
+                        value={config.metaDescription || ""}
+                        onChange={(e) => {
+                          const updated = { ...config, metaDescription: e.target.value };
+                          setConfig(updated);
+                          autoSaveConfig(updated);
+                        }}
+                        placeholder="e.g. Discover curated premium products with islandwide delivery..."
+                        className="mt-1 h-9 text-xs rounded-xl"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                        Social Share Preview Image (OG Image)
+                      </Label>
+                      <div className="flex items-center gap-3 mt-1.5">
+                        {config.ogImage ? (
+                          <div className="relative w-16 h-10 rounded-lg overflow-hidden border">
+                            <Image src={config.ogImage} alt="OG Preview" fill className="object-cover" />
+                          </div>
+                        ) : null}
+                        <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-slate-50 dark:bg-slate-800 text-xs font-bold hover:bg-slate-100">
+                          <CloudUpload className="w-3.5 h-3.5" />
+                          <span>{config.ogImage ? "Change Image" : "Upload Social Preview Image"}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleImageUpload(e, "ogImage")}
+                          />
+                        </label>
+                        {config.ogImage && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = { ...config, ogImage: null };
+                              setConfig(updated);
+                              autoSaveConfig(updated);
+                            }}
+                            className="text-xs text-red-500 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>

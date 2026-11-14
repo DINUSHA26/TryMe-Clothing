@@ -254,6 +254,59 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   if (!isTryMeHost) {
     // Custom domain request! e.g., fashiondora.lk, apple26.vercel.app, coolworld.vercel.app
     const cleanHost = host.replace(/^www\./, "");
+
+    // ── 1. robots.txt for Custom Domains ──
+    // Give Meta, Facebook, WhatsApp, and search crawlers instant 200 OK access
+    if (pathname === "/robots.txt") {
+      const robotsTxt = `User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /ads-seller/
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+Sitemap: https://${host}/sitemap.xml
+`;
+      return new NextResponse(robotsTxt, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "public, max-age=86400, s-maxage=86400",
+        },
+      });
+    }
+
+    // ── 2. sitemap.xml for Custom Domains ──
+    if (pathname === "/sitemap.xml") {
+      const url = request.nextUrl.clone();
+      url.pathname = `/api/site/${cleanHost}/sitemap`;
+      return NextResponse.rewrite(url);
+    }
+
+    // ── 3. Meta / Google Domain Verification HTML File ──
+    if (pathname.endsWith(".html") && !pathname.startsWith("/site") && !pathname.startsWith("/api")) {
+      const url = request.nextUrl.clone();
+      const fileName = pathname.replace(/^\//, "");
+      url.pathname = `/api/site/${cleanHost}/verify-file`;
+      url.searchParams.set("file", fileName);
+      return NextResponse.rewrite(url);
+    }
+
     // If browser URL accidentally contains /site/<domain> on a custom domain, redirect cleanly to "/"
     // so the browser address bar directly shows ONLY the website domain name!
     if (pathname.startsWith("/site/")) {

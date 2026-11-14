@@ -221,6 +221,13 @@ export interface FooterSectionConfig {
   showPoweredBy?: boolean;
   poweredByText?: string;
   customLinks?: Array<{ label: string; url: string }>;
+  ecommerceConfig?: any;
+  seoConfig?: {
+    metaVerificationCode?: string;
+    facebookAppId?: string;
+    facebookPixelId?: string;
+    googleAnalyticsId?: string;
+  };
 }
 
 
@@ -324,6 +331,8 @@ export interface VendorWebsiteConfigData {
   ogImage?: string;
   googleAnalyticsId?: string;
   facebookPixelId?: string;
+  metaVerificationCode?: string;
+  facebookAppId?: string;
   isPublished: boolean;
   publishedAt?: string | null;
   pages?: VendorWebsitePageData[];
