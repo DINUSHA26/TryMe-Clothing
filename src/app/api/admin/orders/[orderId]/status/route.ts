@@ -12,6 +12,7 @@ import { releaseVendorFunds } from "@/lib/utils/wallet";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 import { emailService } from "@/lib/email";
+import { whatsappService } from "@/lib/whatsapp";
 import { logAudit } from "@/lib/rbac";
 
 /**
@@ -48,7 +49,7 @@ export async function PATCH(
         payment: true,
         customer: {
           include: {
-            user: { select: { id: true, email: true, firstName: true, lastName: true } },
+            user: { select: { id: true, email: true, firstName: true, lastName: true, phone: true } },
           },
         },
         items: {
@@ -326,6 +327,21 @@ export async function PATCH(
               })
             )
           );
+        }
+
+        // WhatsApp notification to customer on admin status override
+        const customerPhone =
+          (order.shippingAddressJson as any)?.phone || order.customer.user.phone;
+
+        if (customerPhone) {
+          whatsappService.sendCustomerOrderStatusAlert({
+            customerPhone,
+            customerName,
+            orderNumber: order.orderNumber,
+            orderId: order.id,
+            status,
+            cancelReason: status === "CANCELLED" ? reason || undefined : undefined,
+          }).catch((e) => console.warn("[Admin Status Override] Customer WhatsApp error:", e));
         }
       } catch (emailError) {
         console.error("[Admin Override Status] Failed to send transactional emails:", emailError);

@@ -16,6 +16,7 @@ import { releaseVendorFunds } from "@/lib/utils/wallet";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 import { emailService } from "@/lib/email";
+import { whatsappService } from "@/lib/whatsapp";
 
 export type DeliveryTrigger = "customer" | "admin" | "tracking";
 
@@ -47,7 +48,7 @@ export async function markOrderDelivered(
     include: {
       customer: {
         include: {
-          user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          user: { select: { id: true, email: true, firstName: true, lastName: true, phone: true } },
         },
       },
       items: {
@@ -329,6 +330,20 @@ export async function markOrderDelivered(
           })
         )
       );
+
+      // WhatsApp notification to customer (Order Delivered)
+      const customerPhone =
+        (order.shippingAddressJson as any)?.phone || order.customer.user.phone;
+
+      if (customerPhone) {
+        whatsappService.sendCustomerOrderStatusAlert({
+          customerPhone,
+          customerName,
+          orderNumber: order.orderNumber,
+          orderId: order.id,
+          status: "DELIVERED",
+        }).catch((e) => console.warn("[markOrderDelivered] Customer WhatsApp error:", e));
+      }
     } catch (emailError) {
       console.error("[markOrderDelivered] Failed to send completion transactional emails:", emailError);
     }

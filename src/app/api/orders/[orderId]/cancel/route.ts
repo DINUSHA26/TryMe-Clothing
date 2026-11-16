@@ -12,6 +12,7 @@ import { refundOrder } from "@/lib/utils/wallet";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 import { emailService } from "@/lib/email";
+import { whatsappService } from "@/lib/whatsapp";
 
 async function requireCustomer(request: NextRequest): Promise<string | null> {
   const userId = request.headers.get("X-User-Id");
@@ -78,7 +79,7 @@ export async function POST(
         payment: true,
         customer: {
           include: {
-            user: { select: { id: true, email: true, firstName: true, lastName: true } },
+            user: { select: { id: true, email: true, firstName: true, lastName: true, phone: true } },
           },
         },
         items: {
@@ -266,6 +267,21 @@ export async function POST(
             })
           )
         );
+
+        // WhatsApp notification to customer (Order Cancelled)
+        const customerPhone =
+          (order.shippingAddressJson as any)?.phone || order.customer.user.phone;
+
+        if (customerPhone) {
+          whatsappService.sendCustomerOrderStatusAlert({
+            customerPhone,
+            customerName,
+            orderNumber: order.orderNumber,
+            orderId: order.id,
+            status: "CANCELLED",
+            cancelReason: reason || undefined,
+          }).catch((e) => console.warn("[Order Cancel] Customer WhatsApp error:", e));
+        }
       } catch (emailError) {
         console.error("[Order Cancel API] Failed to send cancellation transactional emails:", emailError);
       }

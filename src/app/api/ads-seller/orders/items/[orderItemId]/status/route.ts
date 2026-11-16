@@ -12,6 +12,7 @@ import { validateStatusTransition } from "@/lib/utils/order";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 import { emailService } from "@/lib/email";
+import { whatsappService } from "@/lib/whatsapp";
 import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
 
 async function updateParentOrderStatus(orderId: string, tx: any): Promise<void> {
@@ -115,7 +116,7 @@ export async function PATCH(
           include: {
             customer: {
               include: {
-                user: { select: { id: true, email: true, firstName: true, lastName: true } },
+                user: { select: { id: true, email: true, firstName: true, lastName: true, phone: true } },
               },
             },
           },
@@ -299,6 +300,25 @@ export async function PATCH(
               orderLink: `/orders/${orderItem.orderId}`,
             });
           }
+        }
+
+        // WhatsApp notification to customer on item status change
+        const customerPhone =
+          (orderItem.order.shippingAddressJson as any)?.phone ||
+          orderItem.order.customer.user.phone;
+
+        if (customerPhone) {
+          whatsappService.sendCustomerOrderStatusAlert({
+            customerPhone,
+            customerName,
+            orderNumber: orderItem.order.orderNumber,
+            orderId: orderItem.orderId,
+            status,
+            productName,
+            vendorName,
+            trackingNumber: trackingNumber || undefined,
+            courierName: (orderItem.order.shippingAddressJson as any)?.courier || undefined,
+          }).catch((e) => console.warn("[Ads Seller Status] Customer WhatsApp error:", e));
         }
       } catch {}
     })();

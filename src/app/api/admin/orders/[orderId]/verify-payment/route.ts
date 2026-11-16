@@ -8,6 +8,7 @@ import { NotificationType } from "@/types/notification";
 import { triggerAdminAlert } from "@/lib/notifications/admin-alerts";
 import { Decimal } from "@prisma/client/runtime/library";
 import { emailService } from "@/lib/email";
+import { whatsappService } from "@/lib/whatsapp";
 
 export async function POST(
   request: NextRequest,
@@ -34,7 +35,7 @@ export async function POST(
         payment: true,
         customer: {
           include: {
-            user: { select: { id: true, email: true, firstName: true, lastName: true } },
+            user: { select: { id: true, email: true, firstName: true, lastName: true, phone: true } },
           },
         },
         coupon: {
@@ -50,8 +51,9 @@ export async function POST(
                 userId: true,
                 businessName: true,
                 businessEmail: true,
+                businessPhone: true,
                 commissionRate: true,
-                user: { select: { role: true } },
+                user: { select: { role: true, phone: true } },
               },
             },
           },
@@ -261,6 +263,63 @@ export async function POST(
               })
             )
           );
+
+          // 4. WhatsApp Notifications (Admin, Vendors, Customer)
+          const shippingJson = order.shippingAddressJson as any;
+          const customerPhone = shippingJson?.phone || order.customer.user.phone || undefined;
+          const deliveryCity = shippingJson?.city || undefined;
+
+          // 4a. WhatsApp Alert to Admin
+          whatsappService.sendAdminNewOrderAlert({
+            orderNumber: order.orderNumber,
+            orderId: order.id,
+            totalAmount: order.totalAmount.toNumber(),
+            customerName,
+            customerPhone,
+            city: deliveryCity,
+            paymentMethod: "Bank Transfer Approved",
+            vendorNames,
+          }).catch((e) => console.warn("[Verify Payment] Admin WhatsApp error:", e));
+
+          // 4b. WhatsApp Alert to each Vendor / Ads Seller
+          for (const [vendorId, items] of vendorItemsMap.entries()) {
+            const vendor = items[0].vendor;
+            const vendorPhone = vendor.businessPhone || (vendor.user as any)?.phone;
+            const isAdsSeller = (vendor.user as any)?.role === "ADS_SELLER";
+
+            if (vendorPhone) {
+              whatsappService.sendVendorNewOrderAlert({
+                vendorPhone,
+                vendorName: vendor.businessName,
+                orderNumber: order.orderNumber,
+                orderId: order.id,
+                totalAmount: items.reduce((sum, item) => sum + item.totalPrice.toNumber(), 0),
+                city: deliveryCity,
+                isAdsSeller,
+                items: items.map((item) => {
+                  const snap = item.productSnapshot as any;
+                  const varSnap = item.variantSnapshot as any;
+                  return {
+                    name: snap?.name || "Product",
+                    quantity: item.quantity,
+                    price: item.unitPrice.toNumber(),
+                    variant: varSnap?.name || varSnap?.value || undefined,
+                  };
+                }),
+              }).catch((e) => console.warn(`[Verify Payment] Vendor WhatsApp error (${vendor.businessName}):`, e));
+            }
+          }
+
+          // 4c. WhatsApp Alert to Customer (Payment Confirmed)
+          if (customerPhone) {
+            whatsappService.sendCustomerOrderStatusAlert({
+              customerPhone,
+              customerName,
+              orderNumber: order.orderNumber,
+              orderId: order.id,
+              status: "PAYMENT_CONFIRMED",
+            }).catch((e) => console.warn("[Verify Payment] Customer WhatsApp error:", e));
+          }
         } catch (emailError) {
           console.error("Failed to send transactional emails for order confirmation:", emailError);
         }
