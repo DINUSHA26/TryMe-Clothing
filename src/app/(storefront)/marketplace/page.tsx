@@ -133,9 +133,10 @@ function MarketplacePortalPageContent() {
     try {
       const response = await fetch("/api/ads/public/categories");
       const result = await response.json();
-      if (result.success) {
-        setCategories(result.data);
-        localStorage.setItem("marketplace_categories_cache", JSON.stringify(result.data));
+      if (result.success && result.data) {
+        const catList = Array.isArray(result.data) ? result.data : (result.data.categories || []);
+        setCategories(catList);
+        localStorage.setItem("marketplace_categories_cache", JSON.stringify(catList));
       }
     } catch (error) {
       console.error("Error loading categories tree:", error);
@@ -199,11 +200,23 @@ function MarketplacePortalPageContent() {
       const response = await fetch(`/api/ads/public?${params}`);
       const result = await response.json();
 
-      if (result.success) {
-        setAds(result.data.ads);
-        setPagination(result.data.pagination);
+      if (result.success && result.data) {
+        const fetchedAds = result.data.ads || result.data.items || (Array.isArray(result.data) ? result.data : []);
+        const fetchedPagination = result.data.pagination || result.data.meta || {
+          page: currentPage,
+          pageSize: 20,
+          totalCount: fetchedAds.length,
+          totalPages: Math.ceil(fetchedAds.length / 20) || 1,
+        };
+        setAds(fetchedAds);
+        setPagination({
+          page: Number(fetchedPagination.page) || currentPage,
+          pageSize: Number(fetchedPagination.pageSize || fetchedPagination.limit) || 20,
+          totalCount: Number(fetchedPagination.totalCount || fetchedPagination.total) || fetchedAds.length,
+          totalPages: Number(fetchedPagination.totalPages) || 1,
+        });
         if (!hasActiveFilters && currentPage === 1) {
-          localStorage.setItem("marketplace_feed_cache", JSON.stringify(result.data.ads));
+          localStorage.setItem("marketplace_feed_cache", JSON.stringify(fetchedAds));
         }
       } else {
         toast({
@@ -233,9 +246,10 @@ function MarketplacePortalPageContent() {
     try {
       const response = await fetch("/api/ads/public?isTopAd=true&pageSize=6");
       const result = await response.json();
-      if (result.success) {
-        setFeaturedAds(result.data.ads);
-        localStorage.setItem("marketplace_featured_cache", JSON.stringify(result.data.ads));
+      if (result.success && result.data) {
+        const topAds = result.data.ads || result.data.items || (Array.isArray(result.data) ? result.data : []);
+        setFeaturedAds(topAds);
+        localStorage.setItem("marketplace_featured_cache", JSON.stringify(topAds));
       }
     } catch (err) {
       console.error("Error loading top ads:", err);

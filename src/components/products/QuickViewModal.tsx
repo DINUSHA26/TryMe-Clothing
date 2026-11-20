@@ -97,13 +97,23 @@ export function QuickViewModal({ slug, isOpen, onClose }: QuickViewModalProps) {
                             <Skeleton className="w-full h-full rounded-lg" />
                         ) : product ? (
                             <div className="relative w-full h-full">
-                                <Image
-                                    src={selectedImageUrl || product.images[0]}
-                                    alt={product.name}
-                                    fill
-                                    className="object-contain"
-                                    sizes="(max-width: 768px) 100vw, 50vw"
-                                />
+                                {(() => {
+                                    const rawImg = selectedImageUrl || product.images?.[0];
+                                    const src = typeof rawImg === "string" ? rawImg : (rawImg?.url || rawImg?.src || "");
+                                    return src ? (
+                                        <Image
+                                            src={src}
+                                            alt={product.name}
+                                            fill
+                                            className="object-contain"
+                                            sizes="(max-width: 768px) 100vw, 50vw"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                            No Image
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         ) : null}
                     </div>
@@ -130,10 +140,10 @@ export function QuickViewModal({ slug, isOpen, onClose }: QuickViewModalProps) {
                                     <div className="flex items-center gap-4">
                                         <div className="flex items-center text-yellow-500 bg-yellow-400/10 px-2 py-1 rounded">
                                             <Star className="w-4 h-4 fill-yellow-500 mr-1" />
-                                            <span className="text-sm font-bold">{product.averageRating.toFixed(1)}</span>
+                                            <span className="text-sm font-bold">{(product.averageRating || 0).toFixed(1)}</span>
                                         </div>
                                         <span className="text-sm text-muted-foreground border-l pl-4">
-                                            {product.reviewCount} reviews
+                                            {product.reviewCount || 0} reviews
                                         </span>
                                     </div>
 
@@ -172,7 +182,9 @@ export function QuickViewModal({ slug, isOpen, onClose }: QuickViewModalProps) {
                                             slug: product.slug,
                                             price: product.price,
                                             stock: product.stock,
-                                            images: product.images.map((url: string) => ({ url })),
+                                            images: (product.images || []).map((img: any) => ({
+                                                url: typeof img === "string" ? img : (img?.url || img?.src || "")
+                                            })),
                                             vendor: {
                                                 id: product.vendor.id,
                                                 businessName: product.vendor.businessName,

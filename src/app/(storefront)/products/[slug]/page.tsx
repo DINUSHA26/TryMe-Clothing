@@ -155,12 +155,27 @@ export default function ProductDetailPage() {
         const response = await fetch(`/api/products/${slug}`);
         const data = await response.json();
 
-        if (data.success) {
-          setProduct(data.data.product);
-          setRelatedProducts(data.data.relatedProducts);
+        if (data.success && data.data) {
+          const rawProd = data.data.product || data.data;
+          const formattedImages = (rawProd.images || [])
+            .map((img: any) => (typeof img === "string" ? img : (img?.url || img?.src || "")))
+            .filter(Boolean);
+          const formattedProduct = {
+            ...rawProd,
+            price: Number(rawProd.price) || 0,
+            images: formattedImages,
+            averageRating: Number(rawProd.averageRating) || 0,
+            reviewCount: Number(rawProd.reviewCount) || 0,
+            variants: (rawProd.variants || []).map((v: any) => ({
+              ...v,
+              priceAdjustment: v.priceAdjustment ? Number(v.priceAdjustment) : null,
+            })),
+          };
+          setProduct(formattedProduct);
+          setRelatedProducts(data.data.relatedProducts || []);
           // Track category view
-          if (data.data.product.category?.id) {
-            trackCategory(data.data.product.category.id);
+          if (formattedProduct.category?.id) {
+            trackCategory(formattedProduct.category.id);
           }
         } else {
           toast.error("Product not found");
@@ -360,10 +375,10 @@ export default function ProductDetailPage() {
             <div className="flex items-center gap-3">
               <div className="flex items-center bg-yellow-400/10 text-yellow-600 px-2 py-1 rounded-lg font-bold">
                 <Star className="w-4 h-4 fill-yellow-500 text-yellow-500 mr-1.5" />
-                <span>{product.averageRating.toFixed(1)}</span>
+                <span>{(product.averageRating || 0).toFixed(1)}</span>
               </div>
               <span className="text-sm text-muted-foreground border-l pl-3">
-                {product.reviewCount} total reviews
+                {product.reviewCount || 0} total reviews
               </span>
             </div>
 
@@ -493,7 +508,7 @@ export default function ProductDetailPage() {
               slug: product.slug,
               price: product.price,
               stock: product.stock,
-              images: product.images.map((url) => ({ url })),
+              images: product.images.map((img: any) => typeof img === "string" ? { url: img } : { url: img?.url || "" }),
               vendor: {
                 id: product.vendor.id,
                 businessName: product.vendor.businessName,
@@ -558,14 +573,14 @@ export default function ProductDetailPage() {
               <span className="font-extrabold text-foreground">{product.reviewCount} Reviews</span>
               <span className="text-muted-foreground/60">|</span>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-foreground">{product.averageRating.toFixed(1)}</span>
+                <span className="font-extrabold text-foreground">{(product.averageRating || 0).toFixed(1)}</span>
                 <div className="flex items-center text-yellow-500">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       className={cn(
                         "w-4 h-4",
-                        i < Math.round(product.averageRating) ? "fill-yellow-500 text-yellow-500" : "text-gray-200"
+                        i < Math.round(product.averageRating || 0) ? "fill-yellow-500 text-yellow-500" : "text-gray-200"
                       )}
                     />
                   ))}

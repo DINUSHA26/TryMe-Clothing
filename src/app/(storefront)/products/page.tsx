@@ -177,9 +177,16 @@ function ProductsPageContent() {
         const response = await fetch(`/api/products?${params}`);
         const data = await response.json();
 
-        if (data.success) {
-          setProducts(data.data.products);
-          setPagination(data.data.pagination);
+        if (data.success && data.data) {
+          const fetchedProducts = data.data.products || data.data.items || (Array.isArray(data.data) ? data.data : []);
+          const fetchedPagination = data.data.pagination || data.data.meta || {
+            page: Number(page) || 1,
+            limit: 20,
+            total: fetchedProducts.length,
+            totalPages: Math.ceil(fetchedProducts.length / 20) || 1,
+          };
+          setProducts(fetchedProducts || []);
+          setPagination(fetchedPagination);
         }
       } catch (error) {
         console.error("Error fetching products:", error);

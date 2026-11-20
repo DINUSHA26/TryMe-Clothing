@@ -19,11 +19,11 @@ interface ProductCardProps {
     id: string;
     name: string;
     slug: string;
-    price: number;
-    displayPrice?: number;
+    price: number | string;
+    displayPrice?: number | string;
     totalStock?: number;
     hasVariants?: boolean;
-    images: string[];
+    images: any[];
     stock: number;
     averageRating?: number;
     reviewCount?: number;
@@ -37,6 +37,13 @@ interface ProductCardProps {
       slug: string;
     };
   };
+}
+
+function getImageUrl(img: any): string {
+  if (!img) return "";
+  if (typeof img === "string") return img;
+  if (typeof img === "object") return img.url || img.src || "";
+  return "";
 }
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -73,6 +80,7 @@ export function ProductCard({ product }: ProductCardProps) {
     // Direct add for simple products
     setIsAdding(true);
     try {
+      const firstImage = getImageUrl(product.images?.[0]);
       if (isAuthenticated) {
         const success = await addToCart(product.id, 1);
         if (success) {
@@ -84,11 +92,11 @@ export function ProductCard({ product }: ProductCardProps) {
           productId: product.id,
           productName: product.name,
           productSlug: product.slug,
-          productImage: product.images[0] || "",
-          basePrice: product.price,
+          productImage: firstImage || "",
+          basePrice: Number(product.price) || 0,
           quantity: 1,
           priceAdjustment: 0,
-          finalPrice: product.price,
+          finalPrice: Number(product.price) || 0,
           stock: product.stock,
           vendorId: product.vendor?.id || "",
           vendorName: product.vendor?.businessName || "Generic Vendor",
@@ -140,9 +148,9 @@ export function ProductCard({ product }: ProductCardProps) {
 
           <Link href={`/products/${product.slug}`} className="block h-full cursor-pointer">
             <div className="relative aspect-[3/4] overflow-hidden bg-muted/40">
-              {product.images?.[activeImageIndex] ? (
+              {getImageUrl(product.images?.[activeImageIndex]) ? (
                 <Image
-                  src={product.images[activeImageIndex]}
+                  src={getImageUrl(product.images?.[activeImageIndex])}
                   alt={product.name}
                   fill
                   className={cn(
@@ -202,34 +210,38 @@ export function ProductCard({ product }: ProductCardProps) {
                   className="flex items-center gap-1.5 py-0.5"
                   onMouseLeave={() => setHoveredImageIndex(null)}
                 >
-                  {product.images.slice(0, 3).map((imgUrl, idx) => (
-                    <button
-                      key={imgUrl}
-                      type="button"
-                      onMouseEnter={() => setHoveredImageIndex(idx)}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setSelectedImageIndex(idx);
-                      }}
-                      className={cn(
-                        "w-6 h-6 rounded-full border-2 overflow-hidden transition-all duration-200 hover:scale-110 relative flex items-center justify-center p-0.5 bg-background",
-                        activeImageIndex === idx
-                          ? "border-slate-800 scale-105"
-                          : "border-gray-200 hover:border-gray-400"
-                      )}
-                    >
-                      <div className="relative w-full h-full rounded-full overflow-hidden">
-                        <Image
-                          src={imgUrl}
-                          alt={`Variant preview ${idx + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="24px"
-                        />
-                      </div>
-                    </button>
-                  ))}
+                  {product.images.slice(0, 3).map((imgItem, idx) => {
+                    const imgSrc = getImageUrl(imgItem);
+                    if (!imgSrc) return null;
+                    return (
+                      <button
+                        key={imgSrc + idx}
+                        type="button"
+                        onMouseEnter={() => setHoveredImageIndex(idx)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedImageIndex(idx);
+                        }}
+                        className={cn(
+                          "w-6 h-6 rounded-full border-2 overflow-hidden transition-all duration-200 hover:scale-110 relative flex items-center justify-center p-0.5 bg-background",
+                          activeImageIndex === idx
+                            ? "border-slate-800 scale-105"
+                            : "border-gray-200 hover:border-gray-400"
+                        )}
+                      >
+                        <div className="relative w-full h-full rounded-full overflow-hidden">
+                          <Image
+                            src={imgSrc}
+                            alt={`Variant preview ${idx + 1}`}
+                            fill
+                            className="object-cover"
+                            sizes="24px"
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
@@ -251,11 +263,11 @@ export function ProductCard({ product }: ProductCardProps) {
                   <div className="flex items-center">
                     <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
                     <span className="text-xs font-bold ml-1">
-                      {product.averageRating.toFixed(1)}
+                      {(product.averageRating || 0).toFixed(1)}
                     </span>
                   </div>
                   <span className="text-[10px] text-muted-foreground font-medium border-l pl-2">
-                    {product.reviewCount} reviews
+                    {product.reviewCount || 0} reviews
                   </span>
                 </div>
               )}
@@ -263,7 +275,7 @@ export function ProductCard({ product }: ProductCardProps) {
               {/* Price & Vendor */}
               <div className="flex flex-col gap-0.5 md:gap-1 pt-0.5 md:pt-1">
                 <p className="text-sm md:text-base font-black text-primary">
-                  Rs. {shownPrice.toLocaleString("en-LK")}
+                  Rs. {Number(shownPrice || 0).toLocaleString("en-LK")}
                 </p>
                 {product.vendor && (
                   <p className="text-[9px] md:text-[10px] text-muted-foreground font-semibold truncate">
