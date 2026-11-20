@@ -41,9 +41,19 @@ interface ProductCardProps {
 
 function getImageUrl(img: any): string {
   if (!img) return "";
-  if (typeof img === "string") return img;
-  if (typeof img === "object") return img.url || img.src || "";
-  return "";
+  let url = "";
+  if (typeof img === "string") url = img;
+  else if (typeof img === "object") url = img.url || img.src || "";
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const clean = url.startsWith("/") ? url.slice(1) : url;
+  if (clean.startsWith("images/") || clean.startsWith("static/") || clean.startsWith("icons/") || clean.includes("placeholder")) {
+    return `/${clean}`;
+  }
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "dylen3nql";
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${clean}`;
 }
 
 export function ProductCard({ product }: ProductCardProps) {

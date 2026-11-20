@@ -13,10 +13,24 @@ interface ImageLoaderProps {
 export function optimizeImageUrl(src: string, width: number, quality?: number): string {
   if (!src) return "";
 
-  // 0. If src is a Cloudinary public ID or filename without http/slash, prepend Cloudinary base URL
-  if (!src.startsWith("http://") && !src.startsWith("https://") && !src.startsWith("/") && !src.startsWith("data:")) {
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "dylen3nql";
-    src = `https://res.cloudinary.com/${cloudName}/image/upload/${src}`;
+  // 0. Cloudinary ID or missing prefix resolution
+  const isHttp = src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:");
+  if (!isHttp) {
+    const clean = src.startsWith("/") ? src.slice(1) : src;
+    const isStaticAsset =
+      clean.startsWith("images/") ||
+      clean.startsWith("static/") ||
+      clean.startsWith("icons/") ||
+      clean.startsWith("logos/") ||
+      clean.startsWith("assets/") ||
+      clean.startsWith("favicon") ||
+      clean.startsWith("manifest") ||
+      clean.includes("placeholder");
+
+    if (!isStaticAsset && clean.length > 0) {
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "dylen3nql";
+      src = `https://res.cloudinary.com/${cloudName}/image/upload/${clean}`;
+    }
   }
 
   // 1. Cloudinary optimization

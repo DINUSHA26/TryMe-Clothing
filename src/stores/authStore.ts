@@ -50,13 +50,22 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       _hasHydrated: false,
 
-      setAuth: (user, accessToken, refreshToken) =>
-        set({
+      setAuth: (user, accessToken, refreshToken) => {
+        if (typeof document !== "undefined") {
+          if (accessToken) {
+            document.cookie = `accessToken=${accessToken}; path=/; max-age=259200; SameSite=Lax`;
+          }
+          if (refreshToken) {
+            document.cookie = `refreshToken=${refreshToken}; path=/; max-age=604800; SameSite=Lax`;
+          }
+        }
+        return set({
           user,
           accessToken,
           refreshToken,
           isAuthenticated: true,
-        }),
+        });
+      },
 
       setUser: (user) =>
         set((state) => ({
@@ -64,14 +73,27 @@ export const useAuthStore = create<AuthState>()(
           user,
         })),
 
-      updateTokens: (accessToken, refreshToken) =>
-        set((state) => ({
+      updateTokens: (accessToken, refreshToken) => {
+        if (typeof document !== "undefined") {
+          if (accessToken) {
+            document.cookie = `accessToken=${accessToken}; path=/; max-age=259200; SameSite=Lax`;
+          }
+          if (refreshToken) {
+            document.cookie = `refreshToken=${refreshToken}; path=/; max-age=604800; SameSite=Lax`;
+          }
+        }
+        return set((state) => ({
           ...state,
           accessToken,
           refreshToken,
-        })),
+        }));
+      },
 
       logout: async () => {
+        if (typeof document !== "undefined") {
+          document.cookie = "accessToken=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          document.cookie = "refreshToken=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        }
         try {
           // Call logout API to clear cookies
           await fetch("/api/auth/logout", {

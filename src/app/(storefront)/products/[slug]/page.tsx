@@ -215,13 +215,13 @@ export default function ProductDetailPage() {
 
   const handleFollowToggle = async () => {
     if (!product?.vendor?.slug) return;
-    
+
     if (!isAuthenticated) {
       toast.error("Please register or login first to follow this shop.");
       router.push(`/login?returnUrl=/products/${slug}`);
       return;
     }
-    
+
     setFollowingLoading(true);
     try {
       const response = await fetch(`/api/vendors/${product.vendor.slug}/follow`, {
@@ -567,7 +567,7 @@ export default function ProductDetailPage() {
               <h2 className="text-3xl font-extrabold tracking-tight">Customer Feedbacks</h2>
               <p className="text-sm text-muted-foreground mt-1">What our customers think about this product</p>
             </div>
-            
+
             {/* Verified Purchases Info Row */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm bg-muted/50 px-4 py-2.5 rounded-xl border w-fit">
               <span className="font-extrabold text-foreground">{product.reviewCount} Reviews</span>

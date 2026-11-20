@@ -148,11 +148,22 @@ function ServicesContent() {
 
       const res = await fetch(`/api/services?${params.toString()}`);
       const data = await res.json();
-      if (data.success) {
-        setServices(data.data.services || []);
-        setPagination(data.data.pagination);
+      if (data.success && data.data) {
+        const sList = data.data.services || (Array.isArray(data.data) ? data.data : []);
+        setServices(sList);
+        setPagination(
+          data.data.pagination || {
+            page: data.data.page || 1,
+            limit: data.data.limit || 12,
+            total: data.data.total || sList.length,
+            totalPages: data.data.totalPages || 1,
+          }
+        );
         if (data.data.providers) {
-          setProviders(data.data.providers);
+          setProviders({
+            vendors: Array.isArray(data.data.providers.vendors) ? data.data.providers.vendors : [],
+            adsSellers: Array.isArray(data.data.providers.adsSellers) ? data.data.providers.adsSellers : [],
+          });
         }
       } else {
         toast({
@@ -404,12 +415,12 @@ function ServicesContent() {
                   📢 Ads Sellers Only
                 </SelectItem>
 
-                {providers.vendors.length > 0 && (
+                {(providers?.vendors?.length ?? 0) > 0 && (
                   <>
                     <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground bg-muted/40 mt-1">
-                      Vendors &amp; Stores ({providers.vendors.length})
+                      Vendors &amp; Stores ({providers?.vendors?.length || 0})
                     </div>
-                    {providers.vendors.map((v) => (
+                    {providers?.vendors?.map((v) => (
                       <SelectItem key={v.id} value={`vendor:${v.id}`} className="text-xs">
                         🏪 {v.businessName}
                       </SelectItem>
@@ -417,12 +428,12 @@ function ServicesContent() {
                   </>
                 )}
 
-                {providers.adsSellers.length > 0 && (
+                {(providers?.adsSellers?.length ?? 0) > 0 && (
                   <>
                     <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground bg-muted/40 mt-1">
-                      Ads &amp; Classified Sellers ({providers.adsSellers.length})
+                      Ads &amp; Classified Sellers ({providers?.adsSellers?.length || 0})
                     </div>
-                    {providers.adsSellers.map((s) => (
+                    {providers?.adsSellers?.map((s) => (
                       <SelectItem key={s.id} value={`adsseller:${s.id}`} className="text-xs">
                         📢 {s.businessName}
                       </SelectItem>

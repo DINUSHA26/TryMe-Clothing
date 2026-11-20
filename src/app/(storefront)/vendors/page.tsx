@@ -66,9 +66,13 @@ export default function VendorsPage() {
       const data = await response.json();
 
       if (data.success) {
-        setSellers(data.data || []);
-        if (data.categories && data.categories.length > 0) {
-          setCategories(data.categories);
+        const rawList = Array.isArray(data.data)
+          ? data.data
+          : (data.data?.sellers || data.data?.vendors || data.sellers || data.vendors || []);
+        setSellers(Array.isArray(rawList) ? rawList : []);
+        const rawCats = data.categories || data.data?.categories || [];
+        if (Array.isArray(rawCats) && rawCats.length > 0) {
+          setCategories(rawCats);
         }
       }
     } catch (error) {
@@ -98,8 +102,9 @@ export default function VendorsPage() {
     }
   };
 
-  const filteredSellers = sellers.filter((seller) =>
-    seller.businessName.toLowerCase().includes(searchQuery.toLowerCase())
+  const sellerArray = Array.isArray(sellers) ? sellers : [];
+  const filteredSellers = sellerArray.filter((seller) =>
+    (seller?.businessName || "").toLowerCase().includes((searchQuery || "").toLowerCase())
   );
 
   return (

@@ -52,9 +52,16 @@ export default function DealsPage() {
       try {
         const response = await fetch("/api/deals");
         const data = await response.json();
-        if (data.success) {
-          setDeals(data.data.deals);
-          setStats(data.data.stats);
+        if (data.success && data.data) {
+          setDeals(Array.isArray(data.data.deals) ? data.data.deals : (Array.isArray(data.data) ? data.data : []));
+          setStats(
+            data.data.stats || {
+              total: 0,
+              platformDeals: 0,
+              vendorDeals: 0,
+              expiringSoon: 0,
+            }
+          );
         }
       } catch (error) {
         console.error("Error fetching deals:", error);
@@ -66,7 +73,8 @@ export default function DealsPage() {
   }, []);
 
   // Client-side filtering by tab
-  const filteredDeals = deals.filter((deal) => {
+  const dealList = Array.isArray(deals) ? deals : [];
+  const filteredDeals = dealList.filter((deal) => {
     if (activeTab === "platform") return deal.vendor === null;
     if (activeTab === "vendor") return deal.vendor !== null;
     if (activeTab === "expiring") return deal.isExpiringSoon;

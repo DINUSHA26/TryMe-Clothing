@@ -101,19 +101,25 @@ export function Feed() {
             const res = await fetch(`/api/social?page=${pageNum}&limit=10`);
             const data = await res.json();
 
-            if (data.success) {
+            if (data.success && data.data) {
+                const fetchedPosts = Array.isArray(data.data.posts)
+                    ? data.data.posts
+                    : (Array.isArray(data.data) ? data.data : []);
+                const pag = data.data.pagination || { page: pageNum, totalPages: 1 };
                 if (append) {
                     setPosts(prev => {
                         // Prevent duplicates if background fetch runs while we already have posts
                         const existingIds = new Set(prev.map(p => p.id));
-                        const newPosts = data.data.posts.filter((p: any) => !existingIds.has(p.id));
+                        const newPosts = fetchedPosts.filter((p: any) => !existingIds.has(p.id));
                         return [...prev, ...newPosts];
                     });
                 } else {
-                    setPosts(data.data.posts);
-                    localStorage.setItem("social_feed_cache", JSON.stringify(data.data.posts));
+                    setPosts(fetchedPosts);
+                    try {
+                        localStorage.setItem("social_feed_cache", JSON.stringify(fetchedPosts));
+                    } catch (e) {}
                 }
-                setHasMore(data.data.pagination.page < data.data.pagination.totalPages);
+                setHasMore((pag.page || 1) < (pag.totalPages || 1));
             }
         } catch (error) {
             console.error("Failed to fetch posts:", error);

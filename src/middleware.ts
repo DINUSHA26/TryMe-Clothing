@@ -94,10 +94,10 @@ async function fetchStoreAccess(
 // Verify JWT using jose (Edge Runtime compatible)
 async function verifyToken(token: string): Promise<{ userId: string; email: string; role: Role; sessionId?: string } | null> {
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || "e9a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6");
     const { payload } = await jwtVerify(token, secret);
     return {
-      userId: payload.userId as string,
+      userId: (payload.userId || payload.sub) as string,
       email: payload.email as string,
       role: payload.role as Role,
       sessionId: payload.sessionId as string | undefined,
@@ -110,10 +110,10 @@ async function verifyToken(token: string): Promise<{ userId: string; email: stri
 // Verify Refresh JWT using jose (Edge Runtime compatible)
 async function verifyRefreshToken(token: string): Promise<{ userId: string; email: string; role: Role; sessionId?: string } | null> {
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET || "");
+    const secret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET || "d1e2f3a4b5c6e9a2b3c4d5e6f7a8b9c0");
     const { payload } = await jwtVerify(token, secret);
     return {
-      userId: payload.userId as string,
+      userId: (payload.userId || payload.sub) as string,
       email: payload.email as string,
       role: payload.role as Role,
       sessionId: payload.sessionId as string | undefined,

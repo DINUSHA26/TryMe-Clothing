@@ -45,7 +45,7 @@ export function QuickViewModal({ slug, isOpen, onClose }: QuickViewModalProps) {
             const response = await fetch(`/api/products/${slug}`);
             const data = await response.json();
             if (data.success) {
-                setProduct(data.data.product);
+                setProduct(data.data?.product || data.data);
             } else {
                 toast.error("Failed to load product details");
                 onClose();
