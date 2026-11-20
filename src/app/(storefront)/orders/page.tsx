@@ -75,7 +75,22 @@ export default async function OrdersPage({
     );
   }
 
-  const { orders, pagination, stats } = result;
+  const rawOrders = Array.isArray(result) ? result : result?.orders || [];
+  const orders = Array.isArray(rawOrders) ? rawOrders : [];
+  const pagination = result?.pagination || {
+    page: 1,
+    limit: 10,
+    total: orders.length,
+    totalPages: 1,
+  };
+  const stats = result?.stats || {
+    total: orders.length,
+    pending: orders.filter((o: any) => o.status === "PENDING_PAYMENT").length,
+    processing: orders.filter((o: any) =>
+      ["PAYMENT_CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED"].includes(o.status)
+    ).length,
+    completed: orders.filter((o: any) => o.status === "DELIVERY_CONFIRMED").length,
+  };
   const currentStatus = resolvedParams.status;
 
   return (

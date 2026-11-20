@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { tokenUtils } from '@/lib/auth';
-import { getServerAppUrl } from '@/lib/server-env';
+import { serverApiFetch } from '@/lib/api-client';
 import { DisputeCard } from '@/components/disputes/DisputeCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,22 +31,12 @@ async function getDisputes(filters: any) {
   if (filters.search) params.set('search', filters.search);
   if (filters.page) params.set('page', filters.page);
 
-  const appUrl = await getServerAppUrl();
-  const response = await fetch(
-    `${appUrl}/api/disputes?${params.toString()}`,
-    {
-      headers: {
-        Cookie: `accessToken=${token}`,
-      },
-      cache: 'no-store',
-    }
-  );
-
-  if (!response.ok) {
+  try {
+    return await serverApiFetch(`/api/v1/disputes?${params.toString()}`);
+  } catch (error) {
+    console.error('[MyDisputesPage] Error:', error);
     return null;
   }
-
-  return response.json();
 }
 
 export default async function MyDisputesPage({
@@ -80,7 +70,22 @@ export default async function MyDisputesPage({
     );
   }
 
-  const { data: disputes, pagination, stats } = result;
+  const payloadData = result.data || result;
+  const rawDisputes = Array.isArray(payloadData) ? payloadData : payloadData?.disputes || [];
+  const disputes = Array.isArray(rawDisputes) ? rawDisputes : [];
+  const pagination = payloadData?.pagination || result.pagination || {
+    page: 1,
+    limit: 10,
+    total: disputes.length,
+    totalPages: 1,
+  };
+  const stats = payloadData?.stats || result.stats || {
+    total: disputes.length,
+    open: disputes.filter((d: any) => d.status === 'OPEN').length,
+    inReview: disputes.filter((d: any) => d.status === 'IN_REVIEW' || d.status === 'UNDER_REVIEW').length,
+    resolvedCustomerFavor: disputes.filter((d: any) => d.status === 'RESOLVED_CUSTOMER_FAVOR').length,
+    closed: disputes.filter((d: any) => d.status === 'CLOSED' || d.status === 'RESOLVED_VENDOR_FAVOR').length,
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">

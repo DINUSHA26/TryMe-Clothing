@@ -62,8 +62,18 @@ export default async function OrderDetailsPage({
     redirect("/orders");
   }
 
-  const { order } = orderData;
-  const { statusHistory, itemsByVendor, actions } = order;
+  const order = orderData?.order || orderData;
+  if (!order || !order.id) {
+    redirect("/orders");
+  }
+  const statusHistory = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+  const itemsByVendor = Array.isArray(order.itemsByVendor) ? order.itemsByVendor : [];
+  const actions = order.actions || {
+    canCancel: ["PENDING_PAYMENT", "PAYMENT_CONFIRMED"].includes(order.status),
+    canConfirmDelivery: order.status === "DELIVERED",
+    canRequestReturn: ["DELIVERED", "DELIVERY_CONFIRMED"].includes(order.status),
+    canDispute: ["PAYMENT_CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED"].includes(order.status),
+  };
 
   const isMultiVendor = itemsByVendor.length > 1;
 
