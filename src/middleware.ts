@@ -240,6 +240,11 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     return NextResponse.next();
   }
 
+  // Pass all API routes straight through to the dedicated NestJS backend (handled by Next.js rewrites & NestJS guards)
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
   // ── Custom Domain Multi-Tenant Rewrite (Vercel for Platforms) ──
   const rawHost = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
   const host = rawHost.toLowerCase().replace(/:\d+$/, "");

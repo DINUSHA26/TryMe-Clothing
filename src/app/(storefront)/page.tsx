@@ -81,19 +81,19 @@ export default function Home() {
         // Fetch featured products (latest 10 products)
         const productsResponse = await fetch("/api/products?limit=10&sortBy=createdAt&sortOrder=desc");
         const productsData = await productsResponse.json();
-        if (productsData.success) {
-          const fetchedFeatured = productsData.data.products;
-          setFeaturedProducts(fetchedFeatured);
-          localStorage.setItem("swr_featured_products", JSON.stringify(fetchedFeatured));
+        if (productsData.success && productsData.data) {
+          const fetchedFeatured = productsData.data.products || productsData.data.items || (Array.isArray(productsData.data) ? productsData.data : []);
+          setFeaturedProducts(fetchedFeatured || []);
+          localStorage.setItem("swr_featured_products", JSON.stringify(fetchedFeatured || []));
         }
 
         // Fetch parent categories only
         const categoriesResponse = await fetch("/api/categories?parentId=null");
         const categoriesData = await categoriesResponse.json();
         let allCategories: Category[] = [];
-        if (categoriesData.success && categoriesData.data.categories) {
-          allCategories = categoriesData.data.categories;
-          const slicedCategories = allCategories.slice(0, 8);
+        if (categoriesData.success && categoriesData.data) {
+          allCategories = categoriesData.data.categories || (Array.isArray(categoriesData.data) ? categoriesData.data : []);
+          const slicedCategories = (allCategories || []).slice(0, 8);
           setCategories(slicedCategories); // Show first 8 active categories
           localStorage.setItem("swr_categories", JSON.stringify(slicedCategories));
         }
@@ -103,10 +103,10 @@ export default function Home() {
         if (womensCategory) {
           const womensResponse = await fetch(`/api/products?categoryId=${womensCategory.id}&limit=6`);
           const womensData = await womensResponse.json();
-          if (womensData.success) {
-            const fetchedWomens = womensData.data.products;
-            setWomensProducts(fetchedWomens);
-            localStorage.setItem("swr_womens_products", JSON.stringify(fetchedWomens));
+          if (womensData.success && womensData.data) {
+            const fetchedWomens = womensData.data.products || womensData.data.items || (Array.isArray(womensData.data) ? womensData.data : []);
+            setWomensProducts(fetchedWomens || []);
+            localStorage.setItem("swr_womens_products", JSON.stringify(fetchedWomens || []));
           }
         }
         setWomensLoading(false);
@@ -116,19 +116,20 @@ export default function Home() {
         if (mensCategory) {
           const mensResponse = await fetch(`/api/products?categoryId=${mensCategory.id}&limit=6`);
           const mensData = await mensResponse.json();
-          if (mensData.success) {
-            const fetchedMens = mensData.data.products;
-            setMensProducts(fetchedMens);
-            localStorage.setItem("swr_mens_products", JSON.stringify(fetchedMens));
+          if (mensData.success && mensData.data) {
+            const fetchedMens = mensData.data.products || mensData.data.items || (Array.isArray(mensData.data) ? mensData.data : []);
+            setMensProducts(fetchedMens || []);
+            localStorage.setItem("swr_mens_products", JSON.stringify(fetchedMens || []));
           }
         }
-        setMensLoading(false);
+        setWomensLoading(false);
 
         // Fetch ads categories
         const adsCatResponse = await fetch("/api/ads/public/categories");
         const adsCatData = await adsCatResponse.json();
-        if (adsCatData.success) {
-          const slicedAds = adsCatData.data.slice(0, 10);
+        if (adsCatData.success && adsCatData.data) {
+          const rawAds = Array.isArray(adsCatData.data) ? adsCatData.data : (adsCatData.data.categories || []);
+          const slicedAds = (rawAds || []).slice(0, 10);
           setAdsCategories(slicedAds); // First 5 categories
           localStorage.setItem("swr_ads_categories", JSON.stringify(slicedAds));
         }
