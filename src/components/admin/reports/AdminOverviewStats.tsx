@@ -96,7 +96,7 @@ export function AdminOverviewStats({
 
       <StatCard
         label="Active Vendors"
-        value={stats ? stats.activeVendors.toString() : "-"}
+        value={stats ? (stats.activeVendors !== undefined && stats.activeVendors !== null ? stats.activeVendors.toString() : "0") : "-"}
         icon={Users}
         color="orange"
         isLoading={isLoading}
@@ -105,7 +105,7 @@ export function AdminOverviewStats({
 
       <StatCard
         label="Total Orders"
-        value={stats ? stats.totalOrders.toLocaleString() : "-"}
+        value={stats ? (stats.totalOrders !== undefined && stats.totalOrders !== null ? stats.totalOrders.toLocaleString() : "0") : "-"}
         icon={ShoppingCart}
         color="blue"
         isLoading={isLoading}

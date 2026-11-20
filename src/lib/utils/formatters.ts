@@ -20,8 +20,9 @@ export function maskAccountNumber(accountNumber: string): string {
  * @param decimals - Number of decimal places (default: 2)
  * @returns Formatted currency string (e.g., "Rs. 1,234.56")
  */
-export function formatCurrency(amount: number, decimals: number = 2): string {
-  return `Rs. ${amount.toLocaleString("en-LK", {
+export function formatCurrency(amount: number | null | undefined, decimals: number = 2): string {
+  const num = typeof amount === "number" && !isNaN(amount) ? amount : (Number(amount) || 0);
+  return `Rs. ${num.toLocaleString("en-LK", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })}`;

@@ -586,7 +586,7 @@ Sitemap: https://${host}/sitemap.xml
             ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
             userAgent: request.headers.get("user-agent")?.slice(0, 500) || null,
             scope: "VENDOR",
-            vendorId: access.storeId || null,
+            vendorId: access?.storeId || null,
           }),
         }).catch(() => undefined)
       );
@@ -645,7 +645,7 @@ Sitemap: https://${host}/sitemap.xml
             ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
             userAgent: request.headers.get("user-agent")?.slice(0, 500) || null,
             scope: "ADS_SELLER",
-            adsSellerId: access.storeId || null,
+            adsSellerId: access?.storeId || null,
           }),
         }).catch(() => undefined)
       );
