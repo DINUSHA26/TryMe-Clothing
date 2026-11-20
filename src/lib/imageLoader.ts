@@ -14,15 +14,25 @@ export function optimizeImageUrl(src: string, width: number, quality?: number): 
   if (!src) return "";
 
   // 0. Cloudinary ID or missing prefix resolution
-  const isHttp = src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:");
+  const isHttp = src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:") || src.startsWith("blob:");
   if (!isHttp) {
     const clean = src.startsWith("/") ? src.slice(1) : src;
+    const isLocalRootAsset =
+      src.startsWith("/") &&
+      !clean.startsWith("primewear/") &&
+      !clean.startsWith("fashiondora/");
     const isStaticAsset =
+      isLocalRootAsset ||
       clean.startsWith("images/") ||
       clean.startsWith("static/") ||
       clean.startsWith("icons/") ||
       clean.startsWith("logos/") ||
       clean.startsWith("assets/") ||
+      clean.startsWith("sounds/") ||
+      clean.startsWith("logo") ||
+      clean.startsWith("icon") ||
+      clean.startsWith("apple-icon") ||
+      clean.startsWith("hero-") ||
       clean.startsWith("favicon") ||
       clean.startsWith("manifest") ||
       clean.includes("placeholder");

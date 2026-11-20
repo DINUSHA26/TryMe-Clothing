@@ -78,77 +78,104 @@ export default function Home() {
 
     const fetchData = async () => {
       try {
-        // Fetch featured products (latest 10 products)
-        const productsResponse = await fetch("/api/products?limit=10&sortBy=createdAt&sortOrder=desc");
-        const productsData = await productsResponse.json();
-        if (productsData.success && productsData.data) {
-          const fetchedFeatured = productsData.data.products || productsData.data.items || (Array.isArray(productsData.data) ? productsData.data : []);
-          setFeaturedProducts(fetchedFeatured || []);
-          localStorage.setItem("swr_featured_products", JSON.stringify(fetchedFeatured || []));
-        }
+        const featuredPromise = fetch("/api/products?limit=10&sortBy=createdAt&sortOrder=desc")
+          .then((res) => res.json())
+          .then((productsData) => {
+            if (productsData.success && productsData.data) {
+              const fetchedFeatured =
+                productsData.data.products ||
+                productsData.data.items ||
+                (Array.isArray(productsData.data) ? productsData.data : []);
+              setFeaturedProducts(fetchedFeatured || []);
+              localStorage.setItem("swr_featured_products", JSON.stringify(fetchedFeatured || []));
+            }
+          })
+          .catch((err) => console.error("Error fetching featured products:", err));
 
-        // Fetch parent categories only
-        const categoriesResponse = await fetch("/api/categories?parentId=null");
-        const categoriesData = await categoriesResponse.json();
-        let allCategories: Category[] = [];
-        if (categoriesData.success && categoriesData.data) {
-          allCategories = categoriesData.data.categories || (Array.isArray(categoriesData.data) ? categoriesData.data : []);
-          const slicedCategories = (allCategories || []).slice(0, 8);
-          setCategories(slicedCategories); // Show first 8 active categories
-          localStorage.setItem("swr_categories", JSON.stringify(slicedCategories));
-        }
+        const categoriesPromise = fetch("/api/categories?parentId=null")
+          .then((res) => res.json())
+          .then(async (categoriesData) => {
+            let allCategories: Category[] = [];
+            if (categoriesData.success && categoriesData.data) {
+              allCategories =
+                categoriesData.data.categories ||
+                (Array.isArray(categoriesData.data) ? categoriesData.data : []);
+              const slicedCategories = (allCategories || []).slice(0, 8);
+              setCategories(slicedCategories);
+              localStorage.setItem("swr_categories", JSON.stringify(slicedCategories));
+            }
+            setLoading(false);
 
-        // Fetch products for Women's wear
-        const womensCategory = allCategories.find(c => c.slug === "womens-clothing");
-        if (womensCategory) {
-          const womensResponse = await fetch(`/api/products?categoryId=${womensCategory.id}&limit=6`);
-          const womensData = await womensResponse.json();
-          if (womensData.success && womensData.data) {
-            const fetchedWomens = womensData.data.products || womensData.data.items || (Array.isArray(womensData.data) ? womensData.data : []);
-            setWomensProducts(fetchedWomens || []);
-            localStorage.setItem("swr_womens_products", JSON.stringify(fetchedWomens || []));
-          }
-        }
-        setWomensLoading(false);
+            const womensCategory = allCategories.find((c) => c.slug === "womens-clothing");
+            const mensCategory = allCategories.find((c) => c.slug === "mens-clothing");
 
-        // Fetch products for Men's wear
-        const mensCategory = allCategories.find(c => c.slug === "mens-clothing");
-        if (mensCategory) {
-          const mensResponse = await fetch(`/api/products?categoryId=${mensCategory.id}&limit=6`);
-          const mensData = await mensResponse.json();
-          if (mensData.success && mensData.data) {
-            const fetchedMens = mensData.data.products || mensData.data.items || (Array.isArray(mensData.data) ? mensData.data : []);
-            setMensProducts(fetchedMens || []);
-            localStorage.setItem("swr_mens_products", JSON.stringify(fetchedMens || []));
-          }
-        }
-        setWomensLoading(false);
+            await Promise.allSettled([
+              womensCategory
+                ? fetch(`/api/products?categoryId=${womensCategory.id}&limit=6`)
+                    .then((res) => res.json())
+                    .then((womensData) => {
+                      if (womensData.success && womensData.data) {
+                        const fetchedWomens =
+                          womensData.data.products ||
+                          womensData.data.items ||
+                          (Array.isArray(womensData.data) ? womensData.data : []);
+                        setWomensProducts(fetchedWomens || []);
+                        localStorage.setItem("swr_womens_products", JSON.stringify(fetchedWomens || []));
+                      }
+                    })
+                    .finally(() => setWomensLoading(false))
+                : Promise.resolve().then(() => setWomensLoading(false)),
+              mensCategory
+                ? fetch(`/api/products?categoryId=${mensCategory.id}&limit=6`)
+                    .then((res) => res.json())
+                    .then((mensData) => {
+                      if (mensData.success && mensData.data) {
+                        const fetchedMens =
+                          mensData.data.products ||
+                          mensData.data.items ||
+                          (Array.isArray(mensData.data) ? mensData.data : []);
+                        setMensProducts(fetchedMens || []);
+                        localStorage.setItem("swr_mens_products", JSON.stringify(fetchedMens || []));
+                      }
+                    })
+                    .finally(() => setMensLoading(false))
+                : Promise.resolve().then(() => setMensLoading(false)),
+            ]);
+          })
+          .catch((err) => {
+            console.error("Error fetching categories:", err);
+            setWomensLoading(false);
+            setMensLoading(false);
+          });
 
-        // Fetch ads categories
-        const adsCatResponse = await fetch("/api/ads/public/categories");
-        const adsCatData = await adsCatResponse.json();
-        if (adsCatData.success && adsCatData.data) {
-          const rawAds = Array.isArray(adsCatData.data) ? adsCatData.data : (adsCatData.data.categories || []);
-          const slicedAds = (rawAds || []).slice(0, 10);
-          setAdsCategories(slicedAds); // First 5 categories
-          localStorage.setItem("swr_ads_categories", JSON.stringify(slicedAds));
-        }
-        setAdsCategoriesLoading(false);
+        const adsCatPromise = fetch("/api/ads/public/categories")
+          .then((res) => res.json())
+          .then((adsCatData) => {
+            if (adsCatData.success && adsCatData.data) {
+              const rawAds = Array.isArray(adsCatData.data)
+                ? adsCatData.data
+                : adsCatData.data.categories || [];
+              const slicedAds = (rawAds || []).slice(0, 10);
+              setAdsCategories(slicedAds);
+              localStorage.setItem("swr_ads_categories", JSON.stringify(slicedAds));
+            }
+          })
+          .catch((err) => console.error("Error fetching ads categories:", err))
+          .finally(() => setAdsCategoriesLoading(false));
 
-        // Fetch stories
-        try {
-          const storiesResponse = await fetch("/api/social/stories");
-          const storiesData = await storiesResponse.json();
-          if (storiesData.success && storiesData.data.groupedStories) {
-            const slicedStories = storiesData.data.groupedStories.slice(0, 5);
-            setHomeStories(slicedStories);
-            localStorage.setItem("swr_stories", JSON.stringify(slicedStories));
-          }
-        } catch (storiesError) {
-          console.error("Error fetching homepage stories:", storiesError);
-        } finally {
-          setStoriesLoading(false);
-        }
+        const storiesPromise = fetch("/api/social/stories")
+          .then((res) => res.json())
+          .then((storiesData) => {
+            if (storiesData.success && storiesData.data?.groupedStories) {
+              const slicedStories = storiesData.data.groupedStories.slice(0, 5);
+              setHomeStories(slicedStories);
+              localStorage.setItem("swr_stories", JSON.stringify(slicedStories));
+            }
+          })
+          .catch((storiesError) => console.error("Error fetching homepage stories:", storiesError))
+          .finally(() => setStoriesLoading(false));
+
+        await Promise.allSettled([featuredPromise, categoriesPromise, adsCatPromise, storiesPromise]);
       } catch (error) {
         console.error("Error fetching homepage data:", error);
       } finally {

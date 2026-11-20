@@ -93,7 +93,7 @@ function ServicesContent() {
 
   // Fetch Categories
   useEffect(() => {
-    fetch("/api/admin/services/categories")
+    fetch("/api/services/categories")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {
