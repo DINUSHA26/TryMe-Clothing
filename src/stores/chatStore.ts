@@ -168,20 +168,21 @@ export const useChatStore = create<ChatState>()(
         const data = await response.json();
         
         if (data.success) {
-          set((state) => {
-            // Check if room already exists
-            const exists = state.rooms.some((r) => r.id === roomId);
-            if (!exists) {
-              state.rooms.unshift(data.room);
-            } else {
-              // Update existing room data
-              const index = state.rooms.findIndex((r) => r.id === roomId);
-              state.rooms[index] = { ...state.rooms[index], ...data.room };
-            }
-          });
-          
-          // Auto-subscribe to the room channel
-          get().subscribeToRoom(roomId);
+          const roomData = data.data?.room || data.room || data.data;
+          if (roomData && roomData.id) {
+            set((state) => {
+              if (!Array.isArray(state.rooms)) state.rooms = [];
+              const exists = state.rooms.some((r) => r.id === roomId);
+              if (!exists) {
+                state.rooms.unshift(roomData);
+              } else {
+                const index = state.rooms.findIndex((r) => r.id === roomId);
+                state.rooms[index] = { ...state.rooms[index], ...roomData };
+              }
+            });
+            
+            get().subscribeToRoom(roomId);
+          }
         }
       } catch (error) {
         console.error('[ChatStore] Failed to fetch room:', error);
@@ -276,18 +277,24 @@ export const useChatStore = create<ChatState>()(
           throw new Error(data.error || 'Failed to load chat rooms');
         }
 
+        const rawRooms = data.data?.rooms || data.rooms || (Array.isArray(data.data) ? data.data : []);
+        const safeRooms = Array.isArray(rawRooms) ? rawRooms : [];
+
         set((state) => {
-          state.rooms = data.rooms;
+          state.rooms = safeRooms;
           state.isLoadingRooms = false;
         });
         
         // Subscribe to all rooms for real-time updates
-        data.rooms.forEach((room: ChatRoom) => {
-          get().subscribeToRoom(room.id);
+        safeRooms.forEach((room: ChatRoom) => {
+          if (room && room.id) {
+            get().subscribeToRoom(room.id);
+          }
         });
       } catch (error: any) {
         console.error('Failed to load chat rooms:', error);
         set((state) => {
+          state.rooms = state.rooms || [];
           state.error = error.message;
           state.isLoadingRooms = false;
         });
@@ -326,18 +333,22 @@ export const useChatStore = create<ChatState>()(
           throw new Error(data.error || 'Failed to load messages');
         }
 
+        const rawMessages = data.data?.messages || data.messages || (Array.isArray(data.data) ? data.data : []);
+        const safeMessages = Array.isArray(rawMessages) ? rawMessages : [];
+
         set((state) => {
+          if (!state.messages) state.messages = {};
           if (offset === 0) {
             // Initial load or background refresh: preserve any pending temp messages
             const pendingTemps = (state.messages[roomId] || []).filter(
               (m) => m.tempId && m.id.startsWith('temp_')
             );
-            const serverIds = new Set(data.messages.map((m: any) => m.id));
+            const serverIds = new Set(safeMessages.map((m: any) => m.id));
             const remainingTemps = pendingTemps.filter((m) => !serverIds.has(m.id));
-            state.messages[roomId] = [...data.messages, ...remainingTemps];
+            state.messages[roomId] = [...safeMessages, ...remainingTemps];
           } else {
             // Load more (prepend older messages)
-            state.messages[roomId] = [...data.messages, ...(state.messages[roomId] || [])];
+            state.messages[roomId] = [...safeMessages, ...(state.messages[roomId] || [])];
           }
           state.isLoadingMessages[roomId] = false;
         });

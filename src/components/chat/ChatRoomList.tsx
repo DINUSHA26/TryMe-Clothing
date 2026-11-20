@@ -17,20 +17,23 @@ export function ChatRoomList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'unread'>('all');
 
+  const safeRooms = Array.isArray(rooms) ? rooms : [];
+
   // Load rooms on mount
   useEffect(() => {
-    if (rooms.length === 0 && !isLoadingRooms) {
+    if (safeRooms.length === 0 && !isLoadingRooms) {
       loadRooms();
     }
   }, []);
 
   const totalUnreadCount = useMemo(() => {
-    return rooms.reduce((sum, r) => sum + (r.unreadCount || 0), 0);
-  }, [rooms]);
+    return safeRooms.reduce((sum, r) => sum + (r?.unreadCount || 0), 0);
+  }, [safeRooms]);
 
   // Filtered rooms
   const filteredRooms = useMemo(() => {
-    return rooms.filter((room) => {
+    return safeRooms.filter((room) => {
+      if (!room) return false;
       // Filter by unread
       if (filterMode === 'unread' && (!room.unreadCount || room.unreadCount === 0)) {
         return false;
@@ -54,9 +57,9 @@ export function ChatRoomList() {
         lastMessage.includes(q)
       );
     });
-  }, [rooms, searchQuery, filterMode]);
+  }, [safeRooms, searchQuery, filterMode]);
 
-  if (isLoadingRooms && rooms.length === 0) {
+  if (isLoadingRooms && safeRooms.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-6 gap-3">
         <div className="relative">

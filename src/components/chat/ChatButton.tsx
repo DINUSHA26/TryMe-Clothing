@@ -21,7 +21,7 @@ export function ChatButton({ className }: ChatButtonProps) {
   if (!isAuthenticated) return null;
 
   // Calculate total unread messages across all rooms
-  const totalUnread = rooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0);
+  const totalUnread = (rooms || []).reduce((sum, room) => sum + (room?.unreadCount || 0), 0);
 
   return (
     <Button

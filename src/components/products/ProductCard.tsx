@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Eye, Star, Loader2, ShoppingCart } from "lucide-react";
+import { Heart, Eye, Star, Loader2, ShoppingCart, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -61,6 +61,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [hoveredImageIndex, setHoveredImageIndex] = useState<number | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   const activeImageIndex = hoveredImageIndex !== null ? hoveredImageIndex : selectedImageIndex;
 
@@ -158,11 +159,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
           <Link href={`/products/${product.slug}`} className="block h-full cursor-pointer">
             <div className="relative aspect-[3/4] overflow-hidden bg-muted/40">
-              {getImageUrl(product.images?.[activeImageIndex]) ? (
+              {getImageUrl(product.images?.[activeImageIndex]) && !imageError ? (
                 <Image
                   src={getImageUrl(product.images?.[activeImageIndex])}
                   alt={product.name}
                   fill
+                  onError={() => setImageError(true)}
                   className={cn(
                     "object-cover group-hover:scale-110 transition-transform duration-500 ease-in-out",
                     isAdding && "opacity-50 grayscale"
@@ -170,8 +172,9 @@ export function ProductCard({ product }: ProductCardProps) {
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  No Image
+                <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground p-4 text-center bg-muted/20">
+                  <Package className="w-8 h-8 mb-1.5 opacity-30" />
+                  <span className="text-[11px] font-medium line-clamp-2">{product.name}</span>
                 </div>
               )}
 

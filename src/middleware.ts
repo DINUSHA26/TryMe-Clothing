@@ -146,7 +146,7 @@ const protectedRoutes: Record<string, Role[]> = {
   // ── Page routes ──────────────────────────────────────────────────────────
   "/admin": ["ADMIN"],
   "/vendor/website-builder": ["VENDOR", "ADS_SELLER", "ADMIN"],
-  "/vendor": ["VENDOR"],
+  "/vendor": ["VENDOR", "ADMIN", "ADS_SELLER"],
   "/orders": ["CUSTOMER", "ADMIN", "VENDOR", "ADS_SELLER"],
   "/checkout": ["CUSTOMER", "VENDOR", "ADMIN", "ADS_SELLER"],
   "/payment": ["CUSTOMER", "VENDOR", "ADMIN", "ADS_SELLER"],
@@ -179,9 +179,9 @@ const protectedRoutes: Record<string, Role[]> = {
   "/api/admin/ads-plans": ["ADMIN"],
   "/api/admin/marketplace": ["ADMIN"],
   "/api/admin": ["ADMIN"],
-  "/api/vendor": ["VENDOR"],
-  "/ads-seller": ["ADS_SELLER"],
-  "/api/ads/seller": ["ADS_SELLER"],
+  "/api/vendor": ["VENDOR", "ADMIN", "ADS_SELLER"],
+  "/ads-seller": ["ADS_SELLER", "ADMIN", "VENDOR"],
+  "/api/ads/seller": ["ADS_SELLER", "ADMIN", "VENDOR"],
   "/api/ads-seller": ["ADS_SELLER", "VENDOR", "ADMIN"],
 };
 
@@ -446,7 +446,13 @@ Sitemap: https://${host}/sitemap.xml
 
   // Check if user has the required role for this route
   const requiredRoles = protectedRoutes[protectedRoute];
-  if (!requiredRoles.includes(payload.role)) {
+  const isAdmin = payload.role === "ADMIN";
+  const isAllowed =
+    isAdmin ||
+    requiredRoles.includes(payload.role) ||
+    (payload.role as string === "STAFF" && (pathname.startsWith("/admin") || pathname.startsWith("/vendor") || pathname.startsWith("/ads-seller")));
+
+  if (!isAllowed) {
     const url = request.nextUrl.clone();
     if (pathname.startsWith("/api")) {
       return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
@@ -542,7 +548,7 @@ Sitemap: https://${host}/sitemap.xml
     pathname === "/api/vendor" ||
     pathname.startsWith("/api/vendor/");
 
-  if (payload.role === "VENDOR" && isVendorArea && process.env.RBAC_ENFORCE !== "false") {
+  if (payload.role !== "ADMIN" && (payload.role === "VENDOR" || payload.role === "ADS_SELLER" || (payload.role as string) === "STAFF") && isVendorArea && process.env.RBAC_ENFORCE !== "false") {
     const isApi = pathname.startsWith("/api");
     const deny = (status: number, message: string) => {
       if (isApi) return NextResponse.json({ error: message }, { status });
@@ -554,14 +560,16 @@ Sitemap: https://${host}/sitemap.xml
 
     const requirement = resolveVendorRouteRequirement(pathname, request.method);
     const access = await fetchStoreAccess(request.nextUrl.origin, payload.userId, "VENDOR");
-    const vendorAccess = access || { isOwner: true, isActive: true, permissions: [], scope: "VENDOR" };
 
-    if (!vendorAccess.isOwner && !vendorAccess.isActive) {
-      return deny(403, "Forbidden: your store staff account is disabled");
-    }
-    if (!hasStoreRoutePermission(vendorAccess.permissions, vendorAccess.isOwner, requirement)) {
-      const needed = requirement.type === "permission" ? requirement.permission : "store-owner";
-      return deny(403, `Forbidden: missing permission (${needed})`);
+    // Only enforce restrictions if this is an explicit staff member record that is disabled or lacks permission
+    if (access && !access.isOwner) {
+      if (!access.isActive) {
+        return deny(403, "Forbidden: your store staff account is disabled");
+      }
+      if (!hasStoreRoutePermission(access.permissions, false, requirement)) {
+        const needed = requirement.type === "permission" ? requirement.permission : "store-owner";
+        return deny(403, `Forbidden: missing permission (${needed})`);
+      }
     }
 
     const isMutation = !["GET", "HEAD", "OPTIONS"].includes(request.method);
@@ -601,7 +609,7 @@ Sitemap: https://${host}/sitemap.xml
     pathname.startsWith("/api/ads-seller/") ||
     pathname.startsWith("/api/ads/seller");
 
-  if (payload.role === "ADS_SELLER" && isAdsSellerArea && process.env.RBAC_ENFORCE !== "false") {
+  if (payload.role !== "ADMIN" && (payload.role === "ADS_SELLER" || payload.role === "VENDOR" || (payload.role as string) === "STAFF") && isAdsSellerArea && process.env.RBAC_ENFORCE !== "false") {
     const isApi = pathname.startsWith("/api");
     const deny = (status: number, message: string) => {
       if (isApi) return NextResponse.json({ error: message }, { status });
@@ -613,14 +621,16 @@ Sitemap: https://${host}/sitemap.xml
 
     const requirement = resolveAdsSellerRouteRequirement(pathname, request.method);
     const access = await fetchStoreAccess(request.nextUrl.origin, payload.userId, "ADS_SELLER");
-    const adsAccess = access || { isOwner: true, isActive: true, permissions: [], scope: "ADS_SELLER" };
 
-    if (!adsAccess.isOwner && !adsAccess.isActive) {
-      return deny(403, "Forbidden: your store staff account is disabled");
-    }
-    if (!hasStoreRoutePermission(adsAccess.permissions, adsAccess.isOwner, requirement)) {
-      const needed = requirement.type === "permission" ? requirement.permission : "store-owner";
-      return deny(403, `Forbidden: missing permission (${needed})`);
+    // Only enforce restrictions if this is an explicit staff member record that is disabled or lacks permission
+    if (access && !access.isOwner) {
+      if (!access.isActive) {
+        return deny(403, "Forbidden: your store staff account is disabled");
+      }
+      if (!hasStoreRoutePermission(access.permissions, false, requirement)) {
+        const needed = requirement.type === "permission" ? requirement.permission : "store-owner";
+        return deny(403, `Forbidden: missing permission (${needed})`);
+      }
     }
 
     const isMutation = !["GET", "HEAD", "OPTIONS"].includes(request.method);

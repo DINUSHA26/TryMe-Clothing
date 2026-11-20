@@ -6,6 +6,7 @@ import {
   hasStoreRoutePermission,
   resolveAdsSellerRouteRequirement,
 } from "@/lib/permissions";
+import { useAuthStore } from "@/stores/authStore";
 
 let cached: StoreAccessInfo | null = null;
 let inflight: Promise<StoreAccessInfo | null> | null = null;
@@ -17,7 +18,8 @@ async function loadAccess(force = false): Promise<StoreAccessInfo | null> {
   inflight = fetch("/api/ads-seller/access/me", { credentials: "include" })
     .then((r) => r.json())
     .then((json) => {
-      cached = json?.success ? (json.data as StoreAccessInfo) : null;
+      const data = json?.data || json;
+      cached = json?.success ? (data as StoreAccessInfo) : null;
       listeners.forEach((l) => l(cached));
       return cached;
     })
@@ -29,6 +31,7 @@ async function loadAccess(force = false): Promise<StoreAccessInfo | null> {
 }
 
 export function useAdsSellerAccess() {
+  const { user } = useAuthStore();
   const [access, setAccess] = useState<StoreAccessInfo | null>(cached);
   const [loading, setLoading] = useState(!cached);
 
@@ -46,22 +49,27 @@ export function useAdsSellerAccess() {
     };
   }, []);
 
+  const isRoleOwner = user?.role === "ADS_SELLER" || user?.role === "VENDOR" || user?.role === "ADMIN";
+  const effectiveIsOwner = access ? access.isOwner : isRoleOwner;
+
   const can = useCallback(
     (permission: string) => {
-      if (!access) return false;
-      return access.isOwner || access.permissions.includes(permission);
+      if (effectiveIsOwner) return true;
+      if (!access) return isRoleOwner;
+      return access.isOwner || access.permissions.includes(permission) || access.permissions.includes("*");
     },
-    [access]
+    [access, effectiveIsOwner, isRoleOwner]
   );
 
   const canAccessPath = useCallback(
     (pathname: string) => {
-      if (!access) return false;
+      if (effectiveIsOwner) return true;
+      if (!access) return isRoleOwner;
       if (access.isOwner) return true;
       const req = resolveAdsSellerRouteRequirement(pathname, "GET");
       return hasStoreRoutePermission(access.permissions, false, req);
     },
-    [access]
+    [access, effectiveIsOwner, isRoleOwner]
   );
 
   const refresh = useCallback(() => loadAccess(true), []);
@@ -69,10 +77,10 @@ export function useAdsSellerAccess() {
   return {
     access,
     loading,
-    isOwner: access?.isOwner ?? false,
-    isActive: access?.isActive ?? false,
-    permissions: access?.permissions ?? [],
-    roleName: access?.roleName ?? (access?.isOwner ? "Store Owner" : "Staff Member"),
+    isOwner: effectiveIsOwner,
+    isActive: access?.isActive ?? true,
+    permissions: access?.permissions ?? (effectiveIsOwner ? ["*"] : []),
+    roleName: access?.roleName ?? (effectiveIsOwner ? "Store Owner" : "Staff Member"),
     storeName: access?.storeName ?? "My Store",
     can,
     canAccessPath,
