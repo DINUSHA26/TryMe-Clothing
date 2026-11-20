@@ -24,6 +24,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@prisma/client": [
+        "./src/types/prisma-shim"
+      ],
+      "@prisma/client/*": [
+        "./src/types/prisma-shim"
       ]
     },
     "target": "ES2017"

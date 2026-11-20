@@ -6,9 +6,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
-import { getEffectiveVendor } from "@/lib/auth-helpers";
-import { prisma } from "@/lib/prisma";
-import { getVendorOrderDetail } from "@/lib/services/vendor-order-service";
+import { serverApiFetch } from "@/lib/api-client";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderItemCard } from "@/components/orders/OrderItemCard";
 import { UpdateOrderItemStatusForm } from "@/components/vendor/orders/UpdateOrderItemStatusForm";
@@ -54,15 +52,8 @@ async function getVendorOrderDetailsDirectCall(orderId: string) {
   }
 
   try {
-    const effective = await getEffectiveVendor(payload.userId);
-
-    if (!effective) {
-      return null;
-    }
-    const vendorRecord = effective.vendor;
-
-    const data = await getVendorOrderDetail(vendorRecord.id, orderId);
-    return data;
+    const res = await serverApiFetch(`/api/v1/vendor/orders/${orderId}`);
+    return res?.data || res;
   } catch (error: any) {
     console.error("[VendorOrderDetailPage] Error:", error);
     return null;

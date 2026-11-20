@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '../../lib/prisma';
 import { getAppUrl } from '../../lib/env';
+import { serverApiFetch } from '../../lib/api-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,40 +8,25 @@ export async function GET() {
   const baseUrl = getAppUrl();
 
   try {
-    // 1. Fetch active categories
-    const categories = await prisma.category.findMany({
-      where: {
-        isActive: true,
-      },
-      select: {
-        slug: true,
-        updatedAt: true,
-      },
-    });
+    // 1. Fetch active categories from NestJS
+    const categoriesRes = await serverApiFetch('/api/v1/storefront/categories').catch(() => []);
+    const categories: any[] = Array.isArray(categoriesRes)
+      ? categoriesRes
+      : categoriesRes?.data || [];
 
-    // 2. Fetch active and non-disabled products
-    const products = await prisma.product.findMany({
-      where: {
-        isActive: true,
-        isDisabledByAdmin: false,
-      },
-      select: {
-        slug: true,
-        updatedAt: true,
-      },
-    });
+    // 2. Fetch active products from NestJS
+    const productsRes = await serverApiFetch('/api/v1/storefront/products?limit=500').catch(() => ({}));
+    const products: any[] = Array.isArray(productsRes?.products)
+      ? productsRes.products
+      : Array.isArray(productsRes)
+      ? productsRes
+      : [];
 
-    // 3. Fetch active vendor shops
-    const vendors = await prisma.vendor.findMany({
-      where: {
-        status: 'ACTIVE',
-        isShopOpen: true,
-      },
-      select: {
-        slug: true,
-        updatedAt: true,
-      },
-    });
+    // 3. Fetch active vendors from NestJS
+    const vendorsRes = await serverApiFetch('/api/v1/vendors').catch(() => []);
+    const vendors: any[] = Array.isArray(vendorsRes)
+      ? vendorsRes
+      : vendorsRes?.data || [];
 
     // 4. Core static pages with SEO priorities
     const staticPages = [
@@ -69,31 +54,40 @@ export async function GET() {
       xml += '  </url>\n';
     }
 
-    // Add categories (high priority for storefront browsing)
+    // Add categories
     for (const category of categories) {
+      if (!category?.slug) continue;
       xml += '  <url>\n';
       xml += `    <loc>${baseUrl}/categories/${category.slug}</loc>\n`;
-      xml += `    <lastmod>${category.updatedAt.toISOString()}</lastmod>\n`;
+      if (category.updatedAt) {
+        xml += `    <lastmod>${new Date(category.updatedAt).toISOString()}</lastmod>\n`;
+      }
       xml += '    <changefreq>weekly</changefreq>\n';
       xml += '    <priority>0.8</priority>\n';
       xml += '  </url>\n';
     }
 
-    // Add products (medium-high priority, daily updates if prices/stocks change)
+    // Add products
     for (const product of products) {
+      if (!product?.slug) continue;
       xml += '  <url>\n';
       xml += `    <loc>${baseUrl}/products/${product.slug}</loc>\n`;
-      xml += `    <lastmod>${product.updatedAt.toISOString()}</lastmod>\n`;
+      if (product.updatedAt) {
+        xml += `    <lastmod>${new Date(product.updatedAt).toISOString()}</lastmod>\n`;
+      }
       xml += '    <changefreq>daily</changefreq>\n';
       xml += '    <priority>0.7</priority>\n';
       xml += '  </url>\n';
     }
 
-    // Add active vendor storefronts (medium-low priority)
+    // Add active vendor storefronts
     for (const vendor of vendors) {
+      if (!vendor?.slug) continue;
       xml += '  <url>\n';
       xml += `    <loc>${baseUrl}/vendors/${vendor.slug}</loc>\n`;
-      xml += `    <lastmod>${vendor.updatedAt.toISOString()}</lastmod>\n`;
+      if (vendor.updatedAt) {
+        xml += `    <lastmod>${new Date(vendor.updatedAt).toISOString()}</lastmod>\n`;
+      }
       xml += '    <changefreq>weekly</changefreq>\n';
       xml += '    <priority>0.6</priority>\n';
       xml += '  </url>\n';
@@ -110,7 +104,7 @@ export async function GET() {
   } catch (error) {
     console.error('Failed to generate dynamic sitemap:', error);
     
-    // Graceful fallback with static pages if database connection fails
+    // Graceful fallback with static pages if backend fails
     const staticPages = [
       { url: '', changefreq: 'daily', priority: 1.0 },
       { url: '/marketplace', changefreq: 'daily', priority: 0.9 },

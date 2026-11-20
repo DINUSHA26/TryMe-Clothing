@@ -6,8 +6,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
-import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
-import { getVendorOrderDetail } from "@/lib/services/vendor-order-service";
+import { serverApiFetch } from "@/lib/api-client";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderItemCard } from "@/components/orders/OrderItemCard";
 import { UpdateOrderItemStatusForm } from "@/components/vendor/orders/UpdateOrderItemStatusForm";
@@ -53,14 +52,8 @@ async function getAdsSellerOrderDetailsDirectCall(orderId: string) {
   }
 
   try {
-    const sellerVendor = await getOrCreateAdsSellerVendor(payload.userId);
-
-    if (!sellerVendor) {
-      return null;
-    }
-
-    const data = await getVendorOrderDetail(sellerVendor.vendor.id, orderId);
-    return data;
+    const res = await serverApiFetch(`/api/v1/vendor/orders/${orderId}`);
+    return res?.data || res;
   } catch (error: any) {
     console.error("[AdsSellerOrderDetailPage] Error:", error);
     return null;

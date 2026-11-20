@@ -6,9 +6,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
-import { getEffectiveVendor } from "@/lib/auth-helpers";
-import { prisma } from "@/lib/prisma";
-import { getVendorOrders as getVendorOrdersDirect } from "@/lib/services/vendor-order-service";
+import { serverApiFetch } from "@/lib/api-client";
 import { VendorOrdersTable } from "@/components/vendor/orders/VendorOrdersTable";
 import { WebsiteInquiriesManager } from "@/components/vendor/orders/WebsiteInquiriesManager";
 import { Package, Store, Globe, Inbox, Receipt } from "lucide-react";
@@ -37,20 +35,14 @@ async function getVendorOrders(searchParams: SearchParams) {
   }
 
   try {
-    const effective = await getEffectiveVendor(payload.userId);
+    const q = new URLSearchParams();
+    if (searchParams.page) q.set("page", searchParams.page);
+    if (searchParams.status) q.set("status", searchParams.status);
+    q.set("source", searchParams.source || "tryme");
+    q.set("limit", "20");
 
-    if (!effective) {
-      return { error: "Vendor profile not found" };
-    }
-    const vendorRecord = effective.vendor;
-
-    const data = await getVendorOrdersDirect(vendorRecord.id, {
-      page: searchParams.page,
-      status: searchParams.status,
-      source: searchParams.source || "tryme",
-      pageSize: "20",
-    });
-    return data;
+    const res = await serverApiFetch(`/api/v1/vendor/orders?${q.toString()}`);
+    return res?.data || res;
   } catch (error: any) {
     console.error("[VendorOrdersPage] Error:", error);
     return { error: error.message || "Failed to fetch orders" };

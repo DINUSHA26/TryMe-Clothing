@@ -13,6 +13,11 @@ import {
 // Plain string role type — avoids importing @prisma/client in Edge Runtime
 type Role = "ADMIN" | "VENDOR" | "CUSTOMER" | "ADS_SELLER";
 
+const BACKEND_INTERNAL_URL =
+  process.env.INTERNAL_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "http://localhost:4000";
+
 // ── Admin & Store RBAC: per-isolate cache of permissions (short TTL) ──────────
 const ACCESS_CACHE_TTL_MS = 15_000;
 const accessCache = new Map<string, { exp: number; data: AdminAccessInfo }>();
@@ -32,7 +37,8 @@ async function fetchAdminAccess(
   if (cached && cached.exp > Date.now()) return cached.data;
 
   try {
-    const url = `${origin}/api/internal/admin-access?userId=${encodeURIComponent(userId)}${
+    const base = BACKEND_INTERNAL_URL || origin;
+    const url = `${base}/api/internal/admin-access?userId=${encodeURIComponent(userId)}${
       sessionId ? `&sessionId=${encodeURIComponent(sessionId)}` : ""
     }`;
     const res = await fetch(url, {
@@ -66,8 +72,9 @@ async function fetchStoreAccess(
   if (cached && cached.exp > Date.now()) return cached.data;
 
   try {
+    const base = BACKEND_INTERNAL_URL || origin;
     const res = await fetch(
-      `${origin}/api/internal/store-access?userId=${encodeURIComponent(userId)}&scope=${scope}`,
+      `${base}/api/internal/store-access?userId=${encodeURIComponent(userId)}&scope=${scope}`,
       {
         headers: { "x-internal-secret": process.env.JWT_SECRET || "" },
         cache: "no-store",
@@ -504,7 +511,7 @@ Sitemap: https://${host}/sitemap.xml
       (requirement.feature === "staff" || requirement.feature === "roles");
     if (isMutation && isApi && !isOwnAudited) {
       event.waitUntil(
-        fetch(`${request.nextUrl.origin}/api/internal/audit`, {
+        fetch(`${BACKEND_INTERNAL_URL}/api/internal/audit`, {
           method: "POST",
           headers: {
             "content-type": "application/json",
@@ -562,7 +569,7 @@ Sitemap: https://${host}/sitemap.xml
       (requirement.feature === "staff" || requirement.feature === "roles");
     if (isMutation && isApi && !isOwnAudited) {
       event.waitUntil(
-        fetch(`${request.nextUrl.origin}/api/internal/audit`, {
+        fetch(`${BACKEND_INTERNAL_URL}/api/internal/audit`, {
           method: "POST",
           headers: {
             "content-type": "application/json",
@@ -623,7 +630,7 @@ Sitemap: https://${host}/sitemap.xml
       (requirement.feature === "staff" || requirement.feature === "roles");
     if (isMutation && isApi && !isOwnAudited) {
       event.waitUntil(
-        fetch(`${request.nextUrl.origin}/api/internal/audit`, {
+        fetch(`${BACKEND_INTERNAL_URL}/api/internal/audit`, {
           method: "POST",
           headers: {
             "content-type": "application/json",

@@ -1,13 +1,14 @@
 import { Suspense } from "react";
 import { AdminCustomersClient } from "@/components/admin/customers/AdminCustomersClient";
-import { getAdminCustomersData } from "@/lib/services/admin-customer-service";
+import { serverApiFetch } from "@/lib/api-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminCustomersPage() {
   let initialData = null;
   try {
-    initialData = await getAdminCustomersData({ page: 1, pageSize: 20 });
+    const res = await serverApiFetch("/api/v1/admin/customers?page=1&limit=20");
+    initialData = res?.data || res || null;
   } catch (error) {
     console.error("[AdminCustomersPage] Failed to prefetch customer data:", error);
   }
@@ -26,4 +27,3 @@ export default async function AdminCustomersPage() {
     </div>
   );
 }
-

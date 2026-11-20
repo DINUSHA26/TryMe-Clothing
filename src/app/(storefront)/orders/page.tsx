@@ -6,8 +6,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { getCustomerOrders } from "@/lib/services/order-service";
+import { serverApiFetch } from "@/lib/api-client";
 import { OrderCard } from "@/components/orders/OrderCard";
 import { OrderStatus } from "@prisma/client";
 import { Package } from "lucide-react";
@@ -29,37 +28,13 @@ async function getOrders(searchParams: SearchParams) {
     return null;
   }
 
-  // Use headers info if available (faster, already verified by middleware)
-  const userId = xUserId;
-  
-  if (!userId) {
-    // If no header, we'd need to verify the token here, but middleware handles it.
-    // For safety, redirect to login if we can't identify the user.
-    return null;
-  }
-
   try {
-    // Fetch customer profile directly
-    const customer = await prisma.customer.findUnique({
-      where: { userId },
-    });
+    const q = new URLSearchParams();
+    if (searchParams.page) q.set("page", searchParams.page);
+    if (searchParams.status) q.set("status", searchParams.status);
 
-    if (!customer) {
-      // Create profile if it doesn't exist (e.g. first time customer)
-      try {
-        const newCustomer = await prisma.customer.create({
-          data: { userId },
-        });
-        return await getCustomerOrders(newCustomer.id, searchParams);
-      } catch (e) {
-        console.error("Failed to create customer profile:", e);
-        return { error: "Failed to initialize account" };
-      }
-    }
-
-    // Call the service directly
-    const data = await getCustomerOrders(customer.id, searchParams);
-    return data;
+    const res = await serverApiFetch(`/api/v1/storefront/orders?${q.toString()}`);
+    return res?.data || res;
   } catch (error: any) {
     console.error("[OrdersPage] Error:", error);
     return { error: error.message || "Failed to fetch orders" };

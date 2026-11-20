@@ -6,7 +6,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
-import { getAdminOrders as getAdminOrdersDirect } from "@/lib/services/admin-order-service";
+import { serverApiFetch } from "@/lib/api-client";
 import { headers } from "next/headers";
 import { AdminOrdersTable } from "@/components/admin/orders/AdminOrdersTable";
 import { AdminOrderFilterBar } from "@/components/admin/orders/AdminOrderFilterBar";
@@ -34,16 +34,17 @@ async function getAdminOrders(searchParams: SearchParams) {
   }
 
   try {
-    const data = await getAdminOrdersDirect({
-      page: searchParams.page,
-      status: searchParams.status,
-      source: searchParams.source,
-      vendorId: searchParams.vendorId,
-      categoryId: searchParams.categoryId,
-      subCategoryId: searchParams.subCategoryId,
-      pageSize: "20",
-    });
-    return data;
+    const q = new URLSearchParams();
+    if (searchParams.page) q.set("page", searchParams.page);
+    if (searchParams.status) q.set("status", searchParams.status);
+    if (searchParams.source) q.set("source", searchParams.source);
+    if (searchParams.vendorId) q.set("vendorId", searchParams.vendorId);
+    if (searchParams.categoryId) q.set("categoryId", searchParams.categoryId);
+    if (searchParams.subCategoryId) q.set("subCategoryId", searchParams.subCategoryId);
+    q.set("limit", "20");
+
+    const res = await serverApiFetch(`/api/v1/admin/orders?${q.toString()}`);
+    return res?.data || res;
   } catch (error: any) {
     console.error("[AdminOrdersPage] Error:", error);
     return { error: error.message || "Failed to fetch orders" };

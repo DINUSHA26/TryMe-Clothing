@@ -6,8 +6,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
-import { getOrCreateAdsSellerVendor } from "@/lib/ads-seller-vendor";
-import { getVendorOrders as getVendorOrdersDirect } from "@/lib/services/vendor-order-service";
+import { serverApiFetch } from "@/lib/api-client";
 import { VendorOrdersTable } from "@/components/vendor/orders/VendorOrdersTable";
 import { WebsiteInquiriesManager } from "@/components/vendor/orders/WebsiteInquiriesManager";
 import { Package, Store, Globe, Inbox, Receipt } from "lucide-react";
@@ -36,19 +35,14 @@ async function getAdsSellerOrders(searchParams: SearchParams) {
   }
 
   try {
-    const sellerVendor = await getOrCreateAdsSellerVendor(payload.userId);
+    const q = new URLSearchParams();
+    if (searchParams.page) q.set("page", searchParams.page);
+    if (searchParams.status) q.set("status", searchParams.status);
+    q.set("source", searchParams.source || "tryme");
+    q.set("limit", "20");
 
-    if (!sellerVendor) {
-      return { error: "Ads seller profile not found" };
-    }
-
-    const data = await getVendorOrdersDirect(sellerVendor.vendor.id, {
-      page: searchParams.page,
-      status: searchParams.status,
-      source: searchParams.source || "tryme",
-      pageSize: "20",
-    });
-    return data;
+    const res = await serverApiFetch(`/api/v1/vendor/orders?${q.toString()}`);
+    return res?.data || res;
   } catch (error: any) {
     console.error("[AdsSellerOrdersPage] Error:", error);
     return { error: error.message || "Failed to fetch orders" };

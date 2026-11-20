@@ -6,8 +6,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { getOrderDetails } from "@/lib/services/order-service";
+import { serverApiFetch } from "@/lib/api-client";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { VendorOrderGroup } from "@/components/orders/VendorOrderGroup";
@@ -33,28 +32,14 @@ async function getOrderDetailsDirectCall(orderId: string) {
   const accessToken = cookieStore.get("accessToken")?.value;
   const headersList = await headers();
   const xUserId = headersList.get("X-User-Id");
-  const xUserRole = headersList.get("X-User-Role");
 
   if (!accessToken && !xUserId) {
     return null;
   }
 
-  // Verification is handled by middleware
-  const userId = xUserId;
-  if (!userId) return null;
-
   try {
-    const customer = await prisma.customer.findUnique({
-      where: { userId },
-    });
-
-    const data = await getOrderDetails(orderId, {
-      userId,
-      role: xUserRole || "CUSTOMER",
-      customerId: customer?.id,
-    });
-    
-    return data;
+    const res = await serverApiFetch(`/api/v1/storefront/orders/${orderId}`);
+    return res?.data || res;
   } catch (error: any) {
     console.error("[OrderDetailPage] Error:", error);
     return null;

@@ -1,13 +1,14 @@
 import { Suspense } from "react";
 import { AdminPosClient } from "@/components/admin/pos/AdminPosClient";
-import { getAdminPosData } from "@/lib/services/admin-pos-service";
+import { serverApiFetch } from "@/lib/api-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPosPage() {
   let initialData = null;
   try {
-    initialData = await getAdminPosData({ page: 1, pageSize: 20 });
+    const res = await serverApiFetch("/api/v1/admin/pos?page=1&limit=20");
+    initialData = res?.data || res || null;
   } catch (error) {
     console.error("[AdminPosPage] Failed to prefetch POS data:", error);
   }
@@ -26,4 +27,3 @@ export default async function AdminPosPage() {
     </div>
   );
 }
-
